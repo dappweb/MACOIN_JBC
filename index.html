@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MACOIN | RWA Jinbao</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              macoin: {
+                50: '#f0fdf4',
+                100: '#dcfce7',
+                300: '#86efac',
+                400: '#4ade80',
+                500: '#00dc82', // Primary Green
+                600: '#16a34a',
+                700: '#15803d',
+                800: '#166534',
+                900: '#020617',
+                950: '#010409',
+              },
+            },
+            fontFamily: {
+              sans: ['Inter', 'sans-serif'],
+              mono: ['Fira Code', 'monospace'],
+            },
+          }
+        }
+      }
+    </script>
+    <style>
+      body {
+        background-color: #f8fafc; /* Slate 50 */
+        color: #0f172a; /* Slate 900 */
+      }
+      .glass-panel {
+        background: rgba(255, 255, 255, 0.9);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(226, 232, 240, 1); /* Slate 200 */
+        box-shadow: 0 4px 20px -5px rgba(0, 0, 0, 0.05);
+      }
+      .neon-text {
+        color: #166534; /* Darker green for text on white */
+        text-shadow: none;
+      }
+      .neon-text-dark {
+        /* For dark backgrounds elements that remain */
+         text-shadow: 0 0 10px rgba(74, 222, 128, 0.5);
+      }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "recharts": "https://esm.sh/recharts@^3.5.1",
+    "lucide-react": "https://esm.sh/lucide-react@^0.559.0",
+    "react/": "https://esm.sh/react@^19.2.1/",
+    "react": "https://esm.sh/react@^19.2.1",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.1/"
+  }
+}
+</script>
+</head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>

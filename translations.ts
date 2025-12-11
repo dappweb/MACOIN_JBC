@@ -12,7 +12,7 @@ export const translations = {
     },
     stats: {
       protocol: 'DeFi 4.0 协议',
-      title: 'RWA 金宝',
+      title: '金宝 RWA',
       subtitle: '真实黄金资产锚定',
       desc: '基于 MACOIN Chain 自研公链。参与即有25%部分进行黄金对标，由紫金矿业提供5000万黄金托底。',
       join: '立即参与',
@@ -28,7 +28,7 @@ export const translations = {
       estValue: '预估价值'
     },
     mining: {
-      title: 'RWA 黄金矿池',
+      title: '黄金 RWA 矿池',
       subtitle: '选择门票与流动性周期，开启 DeFi 4.0 双币高收益挖矿',
       step1: '1. 选择门票 (Ticket)',
       liquidity: '流动性',
@@ -54,6 +54,11 @@ export const translations = {
     team: {
       title: 'V系列 极差裂变机制',
       subtitle: '推广有效地址，获取高达 45% 的极差收益',
+      bindTitle: '绑定上级',
+      bindDesc: '请输入邀请人的钱包地址进行绑定',
+      bindPlaceholder: '输入邀请码或地址',
+      bindButton: '确认绑定',
+      bindSuccess: '绑定成功！',
       colLevel: '等级 (Level)',
       colCount: '有效地址数',
       colReward: '极差奖励比例',
@@ -94,7 +99,7 @@ export const translations = {
     },
     stats: {
       protocol: 'DeFi 4.0 Protocol',
-      title: 'RWA Jinbao',
+      title: 'Jinbao RWA',
       subtitle: 'Real Gold Asset Anchored',
       desc: 'Built on MACOIN Chain. 25% of participation is benchmarked against gold, backed by 50 million gold reserves from Zijin Mining.',
       join: 'Join Now',
@@ -110,7 +115,7 @@ export const translations = {
       estValue: 'Est. Value'
     },
     mining: {
-      title: 'RWA Gold Pool',
+      title: 'Gold RWA Pool',
       subtitle: 'Select ticket and liquidity cycle to start DeFi 4.0 high-yield mining',
       step1: '1. Select Ticket',
       liquidity: 'Liquidity',
@@ -136,6 +141,11 @@ export const translations = {
     team: {
       title: 'V-Series Differential Mechanism',
       subtitle: 'Promote effective addresses to get up to 45% differential revenue',
+      bindTitle: 'Bind Referrer',
+      bindDesc: 'Enter referrer wallet address to bind',
+      bindPlaceholder: 'Referral Code or Address',
+      bindButton: 'Confirm Bind',
+      bindSuccess: 'Bind Success!',
       colLevel: 'Level',
       colCount: 'Active Addrs',
       colReward: 'Reward Ratio',

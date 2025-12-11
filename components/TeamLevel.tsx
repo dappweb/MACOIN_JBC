@@ -1,16 +1,63 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { TEAM_LEVELS } from '../constants';
-import { Crown, Users, Percent } from 'lucide-react';
+import { Crown, Users, Percent, Link } from 'lucide-react';
 import { useLanguage } from '../LanguageContext';
 
 const TeamLevel: React.FC = () => {
   const { t } = useLanguage();
+  const [referrer, setReferrer] = useState('');
+  const [isBound, setIsBound] = useState(false);
+
+  const handleBind = () => {
+    if (referrer.trim()) {
+      setIsBound(true);
+      // Logic to bind referrer would go here
+    }
+  };
 
   return (
     <div className="max-w-5xl mx-auto space-y-8 animate-fade-in">
        <div className="text-center space-y-2">
         <h2 className="text-3xl font-bold text-slate-900">{t.team.title}</h2>
         <p className="text-slate-500">{t.team.subtitle}</p>
+      </div>
+
+      {/* Bind Referrer Section */}
+      <div className="glass-panel p-6 rounded-2xl bg-white border-l-4 border-macoin-500 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+            <div className="bg-macoin-100 p-3 rounded-full text-macoin-600">
+                <Link size={24} />
+            </div>
+            <div>
+                <h3 className="font-bold text-slate-900">{t.team.bindTitle}</h3>
+                <p className="text-sm text-slate-500">{t.team.bindDesc}</p>
+            </div>
+        </div>
+        <div className="flex w-full sm:w-auto gap-2">
+            {isBound ? (
+                 <div className="px-6 py-3 bg-green-100 text-green-700 font-bold rounded-lg border border-green-200 flex items-center gap-2">
+                    <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                    {t.team.bindSuccess}
+                 </div>
+            ) : (
+                <>
+                    <input 
+                        type="text" 
+                        value={referrer}
+                        onChange={(e) => setReferrer(e.target.value)}
+                        placeholder={t.team.bindPlaceholder}
+                        className="w-full sm:w-64 px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-macoin-500 text-slate-900"
+                    />
+                    <button 
+                        onClick={handleBind}
+                        disabled={!referrer.trim()}
+                        className="px-6 py-3 bg-macoin-500 hover:bg-macoin-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold rounded-lg transition-colors shadow-lg shadow-macoin-500/20 whitespace-nowrap"
+                    >
+                        {t.team.bindButton}
+                    </button>
+                </>
+            )}
+        </div>
       </div>
 
       <div className="glass-panel rounded-2xl overflow-hidden border border-slate-200 bg-white">

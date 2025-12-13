@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { AppTab } from '../types';
-import { Diamond, Home, Pickaxe, Users, ArrowLeftRight, Settings } from 'lucide-react';
+import { Diamond, Home, Pickaxe, Users, ArrowLeftRight, Settings, PlusCircle } from 'lucide-react';
 import { useLanguage } from '../LanguageContext';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { useWeb3 } from '../Web3Context';
@@ -31,85 +31,126 @@ const Navbar: React.FC<NavbarProps> = ({ currentTab, setTab }) => {
     checkOwner();
   }, [protocolContract, account]);
 
+  const addMcChain = async () => {
+    if (typeof window.ethereum !== 'undefined') {
+        try {
+            await window.ethereum.request({
+                method: 'wallet_addEthereumChain',
+                params: [{
+                    chainId: '0x15AF5', // 88813 in hex
+                    chainName: 'MACOIN chain',
+                    nativeCurrency: {
+                        name: 'MC',
+                        symbol: 'MC',
+                        decimals: 18
+                    },
+                    rpcUrls: ['https://chain.mcerscan.com/'],
+                    blockExplorerUrls: ['https://mcerscan.com']
+                }]
+            });
+        } catch (error) {
+            console.error("Failed to add network", error);
+        }
+    } else {
+        alert("Please install a wallet extension like MetaMask.");
+    }
+  };
+
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-200">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-20">
-          
-          {/* Logo */}
-          <div className="flex items-center gap-2 cursor-pointer" onClick={() => setTab(AppTab.HOME)}>
-            <div className="bg-gradient-to-tr from-macoin-600 to-macoin-400 p-2 rounded-xl shadow-lg shadow-macoin-500/20">
-                <Diamond size={24} className="text-white" />
+    <>
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-20">
+            
+            {/* Logo */}
+            <div className="flex items-center gap-2 cursor-pointer" onClick={() => setTab(AppTab.HOME)}>
+              <div className="bg-gradient-to-tr from-macoin-600 to-macoin-400 p-2 rounded-xl shadow-lg shadow-macoin-500/20">
+                  <Diamond size={24} className="text-white" />
+              </div>
+              <span className="text-2xl font-black text-slate-900 tracking-tight">MACOIN <span className="text-macoin-600">RWA</span></span>
             </div>
-            <span className="text-2xl font-black text-slate-900 tracking-tight">MACOIN <span className="text-macoin-600">RWA</span></span>
-          </div>
 
-          {/* Desktop Nav */}
-          <div className="hidden md:flex items-center gap-8">
-            <button 
-                onClick={() => setTab(AppTab.HOME)} 
-                className={`flex items-center gap-2 font-bold transition-colors ${currentTab === AppTab.HOME ? 'text-macoin-600' : 'text-slate-500 hover:text-slate-900'}`}
-            >
-                <Home size={18} /> {t.nav.home}
-            </button>
-            <button 
-                onClick={() => setTab(AppTab.MINING)} 
-                className={`flex items-center gap-2 font-bold transition-colors ${currentTab === AppTab.MINING ? 'text-macoin-600' : 'text-slate-500 hover:text-slate-900'}`}
-            >
-                <Pickaxe size={18} /> {t.nav.mining}
-            </button>
-            <button 
-                onClick={() => setTab(AppTab.TEAM)} 
-                className={`flex items-center gap-2 font-bold transition-colors ${currentTab === AppTab.TEAM ? 'text-macoin-600' : 'text-slate-500 hover:text-slate-900'}`}
-            >
-                <Users size={18} /> {t.nav.team}
-            </button>
-            <button 
-                onClick={() => setTab(AppTab.SWAP)} 
-                className={`flex items-center gap-2 font-bold transition-colors ${currentTab === AppTab.SWAP ? 'text-macoin-600' : 'text-slate-500 hover:text-slate-900'}`}
-            >
-                <ArrowLeftRight size={18} /> Swap
-            </button>
-            {isOwner && (
-                <button 
-                    onClick={() => setTab(AppTab.ADMIN)} 
-                    className={`flex items-center gap-2 font-bold transition-colors ${currentTab === AppTab.ADMIN ? 'text-red-600' : 'text-slate-500 hover:text-red-600'}`}
-                >
-                    <Settings size={18} /> Admin
-                </button>
-            )}
-          </div>
+            {/* Desktop Nav */}
+            <div className="hidden md:flex items-center gap-8">
+              <button 
+                  onClick={() => setTab(AppTab.HOME)} 
+                  className={`flex items-center gap-2 font-bold transition-colors ${currentTab === AppTab.HOME ? 'text-macoin-600' : 'text-slate-500 hover:text-slate-900'}`}
+              >
+                  <Home size={18} /> {t.nav.home}
+              </button>
+              <button 
+                  onClick={() => setTab(AppTab.MINING)} 
+                  className={`flex items-center gap-2 font-bold transition-colors ${currentTab === AppTab.MINING ? 'text-macoin-600' : 'text-slate-500 hover:text-slate-900'}`}
+              >
+                  <Pickaxe size={18} /> {t.nav.mining}
+              </button>
+              <button 
+                  onClick={() => setTab(AppTab.TEAM)} 
+                  className={`flex items-center gap-2 font-bold transition-colors ${currentTab === AppTab.TEAM ? 'text-macoin-600' : 'text-slate-500 hover:text-slate-900'}`}
+              >
+                  <Users size={18} /> {t.nav.team}
+              </button>
+              <button 
+                  onClick={() => setTab(AppTab.SWAP)} 
+                  className={`flex items-center gap-2 font-bold transition-colors ${currentTab === AppTab.SWAP ? 'text-macoin-600' : 'text-slate-500 hover:text-slate-900'}`}
+              >
+                  <ArrowLeftRight size={18} /> Swap
+              </button>
+              {isOwner && (
+                  <button 
+                      onClick={() => setTab(AppTab.ADMIN)} 
+                      className={`flex items-center gap-2 font-bold transition-colors ${currentTab === AppTab.ADMIN ? 'text-red-600' : 'text-slate-500 hover:text-red-600'}`}
+                  >
+                      <Settings size={18} /> Admin
+                  </button>
+              )}
+            </div>
 
-          {/* Wallet Connect */}
-          <div className="flex items-center gap-4">
-            <ConnectButton showBalance={false} chainStatus="icon" accountStatus="address" />
+            {/* Wallet Connect & Add Network */}
+            <div className="flex items-center gap-4">
+               {/* Add Network Button - Visible on desktop/tablet */}
+               <button 
+                  onClick={addMcChain}
+                  className="hidden sm:flex items-center gap-2 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-sm font-bold transition-colors"
+                  title="Add MACOIN Chain to Wallet"
+              >
+                  <PlusCircle size={16} /> <span className="hidden lg:inline">Add MC Chain</span>
+              </button>
+
+              <ConnectButton showBalance={false} chainStatus="icon" accountStatus="address" />
+            </div>
           </div>
         </div>
-      </div>
+      </nav>
 
-      {/* Mobile Nav (Simple Bottom Bar) */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 pb-safe">
+      {/* Mobile Nav (Simple Bottom Bar) - Moved out of nav to ensure fixed positioning works correctly */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 pb-safe z-50 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
         <div className="flex justify-around items-center h-16">
-            <button onClick={() => setTab(AppTab.HOME)} className={`p-2 rounded-lg ${currentTab === AppTab.HOME ? 'text-macoin-600 bg-macoin-50' : 'text-slate-400'}`}>
-                <Home size={24} />
+            <button onClick={() => setTab(AppTab.HOME)} className={`p-2 rounded-lg flex flex-col items-center gap-1 ${currentTab === AppTab.HOME ? 'text-macoin-600 bg-macoin-50' : 'text-slate-400'}`}>
+                <Home size={20} />
+                <span className="text-[10px] font-medium">{t.nav.home}</span>
             </button>
-            <button onClick={() => setTab(AppTab.MINING)} className={`p-2 rounded-lg ${currentTab === AppTab.MINING ? 'text-macoin-600 bg-macoin-50' : 'text-slate-400'}`}>
-                <Pickaxe size={24} />
+            <button onClick={() => setTab(AppTab.MINING)} className={`p-2 rounded-lg flex flex-col items-center gap-1 ${currentTab === AppTab.MINING ? 'text-macoin-600 bg-macoin-50' : 'text-slate-400'}`}>
+                <Pickaxe size={20} />
+                <span className="text-[10px] font-medium">{t.nav.mining}</span>
             </button>
-            <button onClick={() => setTab(AppTab.SWAP)} className={`p-2 rounded-lg ${currentTab === AppTab.SWAP ? 'text-macoin-600 bg-macoin-50' : 'text-slate-400'}`}>
-                <ArrowLeftRight size={24} />
+            <button onClick={() => setTab(AppTab.SWAP)} className={`p-2 rounded-lg flex flex-col items-center gap-1 ${currentTab === AppTab.SWAP ? 'text-macoin-600 bg-macoin-50' : 'text-slate-400'}`}>
+                <ArrowLeftRight size={20} />
+                <span className="text-[10px] font-medium">Swap</span>
             </button>
-            <button onClick={() => setTab(AppTab.TEAM)} className={`p-2 rounded-lg ${currentTab === AppTab.TEAM ? 'text-macoin-600 bg-macoin-50' : 'text-slate-400'}`}>
-                <Users size={24} />
+            <button onClick={() => setTab(AppTab.TEAM)} className={`p-2 rounded-lg flex flex-col items-center gap-1 ${currentTab === AppTab.TEAM ? 'text-macoin-600 bg-macoin-50' : 'text-slate-400'}`}>
+                <Users size={20} />
+                <span className="text-[10px] font-medium">{t.nav.team}</span>
             </button>
              {isOwner && (
-                <button onClick={() => setTab(AppTab.ADMIN)} className={`p-2 rounded-lg ${currentTab === AppTab.ADMIN ? 'text-red-600 bg-red-50' : 'text-slate-400'}`}>
-                    <Settings size={24} />
+                <button onClick={() => setTab(AppTab.ADMIN)} className={`p-2 rounded-lg flex flex-col items-center gap-1 ${currentTab === AppTab.ADMIN ? 'text-red-600 bg-red-50' : 'text-slate-400'}`}>
+                    <Settings size={20} />
+                    <span className="text-[10px] font-medium">Admin</span>
                 </button>
             )}
         </div>
       </div>
-    </nav>
+    </>
   );
 };
 

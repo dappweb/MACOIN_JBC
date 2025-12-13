@@ -32,5 +32,10 @@ module.exports = {
       gasPrice: 20000000000,
       accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
     },
+    mc: {
+      url: "https://chain.mcerscan.com/",
+      chainId: 88813,
+      accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
+    },
   },
 };

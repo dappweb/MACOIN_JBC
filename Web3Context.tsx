@@ -31,9 +31,9 @@ export const PROTOCOL_ABI = [
 
 // Contract Addresses (Mock for now, replace with real deployment)
 export const CONTRACT_ADDRESSES = {
-  MC_TOKEN: "0x5FbDB2315678afecb367f032d93F642f64180aa3", 
-  JBC_TOKEN: "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512", // Replace with real JBC Address
-  PROTOCOL: "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0" 
+  MC_TOKEN: "0x86FF3EE03A7BC674e1AB00D24402c879CD3f3Fb7", 
+  JBC_TOKEN: "0x2c269b9AC86f1Ee8D6D36f1D9A6dc984723bbD89", // Replace with real JBC Address
+  PROTOCOL: "0xF38EaC9cDB449F52DEFf11707c97Fe7e7b005eBE" 
 };
 
 interface Web3ContextType {

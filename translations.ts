@@ -72,7 +72,17 @@ export const translations = {
       l2: '推 2 有效账户',
       r2: '拿 10 层每单 1%',
       l3: '推 3 有效账户',
-      r3: '拿 15 层每单 1%'
+      r3: '拿 15 层每单 1%',
+      networkTitle: '直推网络',
+      networkSubtitle: '您的直推成员',
+      networkLoading: '正在加载网络...',
+      netWallet: '钱包地址',
+      netStatus: '状态',
+      netJoined: '加入时间',
+      netActive: '活跃',
+      netRecent: '近期',
+      netNone: '暂无直推成员',
+      netShare: '分享您的链接以扩大团队！'
     },
     swap: {
       title: 'JBC 闪兑 (Swap)',
@@ -159,7 +169,17 @@ export const translations = {
       l2: 'Refer 2 Active',
       r2: 'Get 10 Layers 1%',
       l3: 'Refer 3 Active',
-      r3: 'Get 15 Layers 1%'
+      r3: 'Get 15 Layers 1%',
+      networkTitle: 'Direct Network',
+      networkSubtitle: 'Your directly referred members',
+      networkLoading: 'Loading network...',
+      netWallet: 'Wallet Address',
+      netStatus: 'Status',
+      netJoined: 'Joined',
+      netActive: 'Active',
+      netRecent: 'Recently',
+      netNone: 'No direct referrals yet',
+      netShare: 'Share your link to grow your team!'
     },
     swap: {
       title: 'JBC Swap',

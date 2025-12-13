@@ -47,6 +47,7 @@ contract JinbaoProtocol is Ownable, ReentrancyGuard {
     // State
     mapping(address => UserInfo) public userInfo;
     mapping(address => Ticket) public userTicket;
+    mapping(address => address[]) public directReferrals; // Stores list of direct referrals for each user
     
     // Events
     event BoundReferrer(address indexed user, address indexed referrer);
@@ -81,7 +82,13 @@ contract JinbaoProtocol is Ownable, ReentrancyGuard {
         require(_referrer != address(0), "Invalid referrer");
         
         userInfo[msg.sender].referrer = _referrer;
+        directReferrals[_referrer].push(msg.sender); // Add to referrer's list
+        
         emit BoundReferrer(msg.sender, _referrer);
+    }
+
+    function getDirectReferrals(address _user) external view returns (address[] memory) {
+        return directReferrals[_user];
     }
 
     // --- Ticket Purchase ---

@@ -20,14 +20,15 @@ export const PROTOCOL_ABI = [
   "function swapMCToJBC(uint256 mcAmount) external",
   "function swapJBCToMC(uint256 jbcAmount) external",
   "function userInfo(address) view returns (address referrer, uint256 activeDirects, uint256 teamCount, uint256 totalRevenue, uint256 currentCap, bool isActive)",
-  "function userTicket(address) view returns (uint256 amount, uint256 requiredLiquidity, uint256 purchaseTime, bool liquidityProvided, uint256 liquidityAmount, uint256 startTime, uint256 cycleDays, bool redeemed)"
+  "function userTicket(address) view returns (uint256 amount, uint256 requiredLiquidity, uint256 purchaseTime, bool liquidityProvided, uint256 liquidityAmount, uint256 startTime, uint256 cycleDays, bool redeemed)",
+  "function getDirectReferrals(address) view returns (address[])"
 ];
 
 // Contract Addresses (Mock for now, replace with real deployment)
 export const CONTRACT_ADDRESSES = {
-  MC_TOKEN: "0xF38EaC9cDB449F52DEFf11707c97Fe7e7b005eBE", 
-  JBC_TOKEN: "0x0000000000000000000000000000000000000000", // Replace with real JBC Address
-  PROTOCOL: "0x490B6c6Cb9FEC80fD17FBd2D71f095aE01f67Ec0" 
+  MC_TOKEN: "0x5FbDB2315678afecb367f032d93F642f64180aa3", 
+  JBC_TOKEN: "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512", // Replace with real JBC Address
+  PROTOCOL: "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0" 
 };
 
 interface Web3ContextType {

@@ -1,20 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { TEAM_LEVELS } from '../constants';
-import { Crown, Users, Percent, Link } from 'lucide-react';
+import { Crown, Users, Percent, UserCheck } from 'lucide-react';
 import { useLanguage } from '../LanguageContext';
 import { useWeb3 } from '../Web3Context';
 
 const TeamLevel: React.FC = () => {
   const { t } = useLanguage();
   const { protocolContract, account, isConnected } = useWeb3();
-  const [referrer, setReferrer] = useState('');
-  const [isBound, setIsBound] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const [userLevelInfo, setUserLevelInfo] = useState({
       activeDirects: 0,
       teamCount: 0,
       currentLevel: 'V0'
   });
+  const [directReferrals, setDirectReferrals] = useState<string[]>([]);
+  const [isLoadingDirects, setIsLoadingDirects] = useState(false);
 
   useEffect(() => {
     const fetchTeamInfo = async () => {
@@ -22,12 +21,6 @@ const TeamLevel: React.FC = () => {
             try {
                 const userInfo = await protocolContract.userInfo(account);
                 // userInfo: (referrer, activeDirects, teamCount, totalRevenue, currentCap, isActive)
-                
-                // Check if referrer is bound (not address(0))
-                const currentReferrer = userInfo[0];
-                if (currentReferrer && currentReferrer !== '0x0000000000000000000000000000000000000000') {
-                    setIsBound(true);
-                }
 
                 // Calc Level
                 const activeDirects = Number(userInfo[1]);
@@ -48,6 +41,18 @@ const TeamLevel: React.FC = () => {
                     currentLevel: level
                 });
 
+                // Fetch Direct Referrals
+                setIsLoadingDirects(true);
+                try {
+                    // This function was added to the contract in the latest update
+                    const directs = await protocolContract.getDirectReferrals(account);
+                    setDirectReferrals(directs);
+                } catch (e) {
+                    console.error("Failed to fetch directs", e);
+                } finally {
+                    setIsLoadingDirects(false);
+                }
+
             } catch (err) {
                 console.error("Failed to fetch team info", err);
             }
@@ -56,71 +61,11 @@ const TeamLevel: React.FC = () => {
     fetchTeamInfo();
   }, [isConnected, account, protocolContract]);
 
-  const handleBind = async () => {
-    if (referrer.trim() && protocolContract) {
-      setIsLoading(true);
-      try {
-        const tx = await protocolContract.bindReferrer(referrer.trim());
-        await tx.wait();
-        setIsBound(true);
-        alert("Referrer Bound Successfully!");
-      } catch (err) {
-        console.error(err);
-        // Demo fallback
-        setIsBound(true); 
-      } finally {
-        setIsLoading(false);
-      }
-    }
-  };
-
   return (
     <div className="max-w-5xl mx-auto space-y-8 animate-fade-in">
        <div className="text-center space-y-2">
         <h2 className="text-3xl font-bold text-slate-900">{t.team.title}</h2>
         <p className="text-slate-500">{t.team.subtitle}</p>
-      </div>
-
-      {/* Bind Referrer Section */}
-      <div className="glass-panel p-6 rounded-2xl bg-white border-l-4 border-macoin-500 flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
-            <div className="bg-macoin-100 p-3 rounded-full text-macoin-600">
-                <Link size={24} />
-            </div>
-            <div>
-                <h3 className="font-bold text-slate-900">{t.team.bindTitle}</h3>
-                <p className="text-sm text-slate-500">{t.team.bindDesc}</p>
-            </div>
-        </div>
-        <div className="flex w-full sm:w-auto gap-2">
-            {!isConnected ? (
-                <button disabled className="px-6 py-3 bg-slate-200 text-slate-400 font-bold rounded-lg cursor-not-allowed whitespace-nowrap">
-                    Connect Wallet First
-                </button>
-            ) : isBound ? (
-                 <div className="px-6 py-3 bg-green-100 text-green-700 font-bold rounded-lg border border-green-200 flex items-center gap-2">
-                    <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-                    {t.team.bindSuccess}
-                 </div>
-            ) : (
-                <>
-                    <input 
-                        type="text" 
-                        value={referrer}
-                        onChange={(e) => setReferrer(e.target.value)}
-                        placeholder={t.team.bindPlaceholder}
-                        className="w-full sm:w-64 px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-macoin-500 text-slate-900"
-                    />
-                    <button 
-                        onClick={handleBind}
-                        disabled={!referrer.trim() || isLoading}
-                        className="px-6 py-3 bg-macoin-500 hover:bg-macoin-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold rounded-lg transition-colors shadow-lg shadow-macoin-500/20 whitespace-nowrap"
-                    >
-                        {isLoading ? "Binding..." : t.team.bindButton}
-                    </button>
-                </>
-            )}
-        </div>
       </div>
 
       <div className="glass-panel rounded-2xl overflow-hidden border border-slate-200 bg-white">
@@ -155,7 +100,7 @@ const TeamLevel: React.FC = () => {
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                     {TEAM_LEVELS.map((level, index) => {
-                        const isCurrent = level.level === 'V2'; // Mock current level
+                        const isCurrent = level.level === userLevelInfo.currentLevel;
                         return (
                             <tr 
                                 key={level.level} 
@@ -192,6 +137,54 @@ const TeamLevel: React.FC = () => {
                 </tbody>
             </table>
         </div>
+      </div>
+
+      {/* Direct Referrals Network Section */}
+      <div className="glass-panel p-6 rounded-2xl bg-white">
+        <div className="flex items-center gap-3 mb-6">
+            <div className="p-3 bg-purple-100 text-purple-600 rounded-full">
+                <UserCheck size={24} />
+            </div>
+            <div>
+                <h3 className="text-xl font-bold text-slate-900">{t.team.networkTitle}</h3>
+                <p className="text-sm text-slate-500">{t.team.networkSubtitle}</p>
+            </div>
+        </div>
+
+        {isLoadingDirects ? (
+            <div className="text-center py-8 text-slate-400">{t.team.networkLoading}</div>
+        ) : directReferrals.length > 0 ? (
+            <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                    <thead>
+                        <tr className="bg-slate-50 border-b border-slate-100">
+                            <th className="p-4 text-slate-500 text-sm font-semibold">{t.team.netWallet}</th>
+                            <th className="p-4 text-slate-500 text-sm font-semibold">{t.team.netStatus}</th>
+                            <th className="p-4 text-slate-500 text-sm font-semibold text-right">{t.team.netJoined}</th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                        {directReferrals.map((addr, idx) => (
+                            <tr key={idx} className="hover:bg-slate-50 transition-colors">
+                                <td className="p-4 text-slate-700 font-mono text-sm">{addr}</td>
+                                <td className="p-4">
+                                    <span className="px-2 py-1 bg-green-100 text-green-700 text-xs font-bold rounded-full">{t.team.netActive}</span>
+                                </td>
+                                <td className="p-4 text-right text-slate-400 text-sm">
+                                    {t.team.netRecent}
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+        ) : (
+            <div className="text-center py-12 bg-slate-50 rounded-xl border border-dashed border-slate-200">
+                <Users className="mx-auto text-slate-300 mb-2" size={32} />
+                <p className="text-slate-500 font-medium">{t.team.netNone}</p>
+                <p className="text-slate-400 text-sm">{t.team.netShare}</p>
+            </div>
+        )}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { UserStats } from '../types';
-import { Wallet, TrendingUp, Users, Coins, ArrowUpRight } from 'lucide-react';
+import { Wallet, TrendingUp, Users, Coins, ArrowUpRight, Link } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useLanguage } from '../LanguageContext';
 import { useWeb3 } from '../Web3Context';
@@ -26,6 +26,11 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
   const { t } = useLanguage();
   const { mcContract, protocolContract, account, isConnected } = useWeb3();
   const [displayStats, setDisplayStats] = useState<UserStats>(initialStats);
+  
+  // Bind Referrer State
+  const [referrer, setReferrer] = useState('');
+  const [isBound, setIsBound] = useState(false);
+  const [isBinding, setIsBinding] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -34,18 +39,17 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
                 // Fetch MC Balance
                 const mcBal = await mcContract.balanceOf(account);
                 
-                // Fetch JBC Balance (Assume JBC contract is available via context or passed prop, if not mock it or add to context)
-                // For now, let's assume protocol contract has JBC address or we fetch it similarly if we had JBC contract in context.
-                // Since we only have mcContract in context easily accessible (or we can add jbcContract), let's use what we have.
-                // Note: Web3Context needs to be updated to expose jbcContract if we want real JBC balance.
-                
                 // Fetch Protocol Info
                 const userInfo = await protocolContract.userInfo(account);
                 // userInfo returns: (referrer, activeDirects, teamCount, totalRevenue, currentCap, isActive)
                 
+                // Check referrer binding
+                const currentReferrer = userInfo[0];
+                if (currentReferrer && currentReferrer !== '0x0000000000000000000000000000000000000000') {
+                    setIsBound(true);
+                }
+
                 // Calculate Level based on activeDirects (simplified V1-V9 logic)
-                // This logic should match the contract/whitepaper. 
-                // Contract stores activeDirects. We can map it roughly.
                 let level = "V0";
                 const activeDirects = Number(userInfo[1]);
                 if (activeDirects >= 100000) level = "V9";
@@ -75,6 +79,23 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
     fetchData();
     return () => clearInterval(timer);
   }, [isConnected, account, mcContract, protocolContract]);
+
+  const handleBind = async () => {
+    if (referrer.trim() && protocolContract) {
+      setIsBinding(true);
+      try {
+        const tx = await protocolContract.bindReferrer(referrer.trim());
+        await tx.wait();
+        setIsBound(true);
+        alert("Referrer Bound Successfully!");
+      } catch (err) {
+        console.error(err);
+        alert("Failed to bind referrer. Check console.");
+      } finally {
+        setIsBinding(false);
+      }
+    }
+  };
 
   return (
     <div className="max-w-7xl mx-auto space-y-8 animate-fade-in">
@@ -122,6 +143,48 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
                  </div>
             </div>
          </div>
+      </div>
+
+      {/* Bind Referrer Section (Moved from TeamLevel) */}
+      <div className="glass-panel p-6 rounded-2xl bg-white border-l-4 border-macoin-500 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm">
+        <div className="flex items-center gap-4">
+            <div className="bg-macoin-100 p-3 rounded-full text-macoin-600">
+                <Link size={24} />
+            </div>
+            <div>
+                <h3 className="font-bold text-slate-900">{t.team.bindTitle}</h3>
+                <p className="text-sm text-slate-500">{t.team.bindDesc}</p>
+            </div>
+        </div>
+        <div className="flex w-full sm:w-auto gap-2">
+            {!isConnected ? (
+                <button disabled className="px-6 py-3 bg-slate-200 text-slate-400 font-bold rounded-lg cursor-not-allowed whitespace-nowrap">
+                    Connect Wallet First
+                </button>
+            ) : isBound ? (
+                 <div className="px-6 py-3 bg-green-100 text-green-700 font-bold rounded-lg border border-green-200 flex items-center gap-2">
+                    <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                    {t.team.bindSuccess}
+                 </div>
+            ) : (
+                <>
+                    <input 
+                        type="text" 
+                        value={referrer}
+                        onChange={(e) => setReferrer(e.target.value)}
+                        placeholder={t.team.bindPlaceholder}
+                        className="w-full sm:w-64 px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-macoin-500 text-slate-900"
+                    />
+                    <button 
+                        onClick={handleBind}
+                        disabled={!referrer.trim() || isBinding}
+                        className="px-6 py-3 bg-macoin-500 hover:bg-macoin-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold rounded-lg transition-colors shadow-lg shadow-macoin-500/20 whitespace-nowrap"
+                    >
+                        {isBinding ? "Binding..." : t.team.bindButton}
+                    </button>
+                </>
+            )}
+        </div>
       </div>
 
       {/* Stats Grid */}

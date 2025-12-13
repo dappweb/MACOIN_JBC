@@ -66,7 +66,7 @@ const Navbar: React.FC<NavbarProps> = ({ currentTab, setTab }) => {
                 method: 'wallet_addEthereumChain',
                 params: [{
                     chainId: '0x15AF5', // 88813 in hex
-                    chainName: 'JBC Chain',
+                    chainName: 'MC Chain',
                     nativeCurrency: {
                         name: 'MC',
                         symbol: 'MC',

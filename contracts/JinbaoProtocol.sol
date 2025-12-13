@@ -20,6 +20,12 @@ contract JinbaoProtocol is Ownable, ReentrancyGuard {
         bool isActive;
     }
 
+    struct ReferralData {
+        address user;
+        uint256 ticketAmount;
+        uint256 joinTime;
+    }
+
     struct Ticket {
         uint256 amount; // MC Amount
         uint256 requiredLiquidity; // MC Amount
@@ -139,6 +145,20 @@ contract JinbaoProtocol is Ownable, ReentrancyGuard {
 
     function getDirectReferrals(address _user) external view returns (address[] memory) {
         return directReferrals[_user];
+    }
+
+    function getDirectReferralsData(address _user) external view returns (ReferralData[] memory) {
+        address[] memory directs = directReferrals[_user];
+        ReferralData[] memory data = new ReferralData[](directs.length);
+        
+        for (uint256 i = 0; i < directs.length; i++) {
+            data[i] = ReferralData({
+                user: directs[i],
+                ticketAmount: userTicket[directs[i]].amount,
+                joinTime: userTicket[directs[i]].purchaseTime
+            });
+        }
+        return data;
     }
 
     // --- Ticket Purchase ---

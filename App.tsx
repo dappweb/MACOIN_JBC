@@ -91,6 +91,10 @@ const AppContent: React.FC = () => {
   );
 };
 
+import { Toaster } from 'react-hot-toast';
+
+// ...
+
 const App: React.FC = () => {
     return (
         <WagmiProvider config={config}>
@@ -99,6 +103,7 @@ const App: React.FC = () => {
                     <LanguageProvider>
                         <Web3Provider>
                             <AppContent />
+                            <Toaster position="top-center" />
                         </Web3Provider>
                     </LanguageProvider>
                 </RainbowKitProvider>

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useWeb3 } from '../Web3Context';
 import { Settings, Save, AlertTriangle } from 'lucide-react';
 import { useLanguage } from '../LanguageContext';
+import toast from 'react-hot-toast';
 
 const AdminPanel: React.FC = () => {
   const { t } = useLanguage();
@@ -37,9 +38,9 @@ const AdminPanel: React.FC = () => {
         direct, level, marketing, buyback, lp, treasury
       );
       await tx.wait();
-      alert(t.admin.success);
+      toast.success(t.admin.success);
     } catch (err: any) {
-      alert(t.admin.failed + (err.reason || err.message));
+      toast.error(t.admin.failed + (err.reason || err.message));
     } finally {
       setLoading(false);
     }
@@ -51,9 +52,9 @@ const AdminPanel: React.FC = () => {
     try {
       const tx = await protocolContract.setSwapTaxes(buyTax, sellTax);
       await tx.wait();
-      alert(t.admin.success);
+      toast.success(t.admin.success);
     } catch (err: any) {
-      alert(t.admin.failed + (err.reason || err.message));
+      toast.error(t.admin.failed + (err.reason || err.message));
     } finally {
       setLoading(false);
     }
@@ -65,9 +66,9 @@ const AdminPanel: React.FC = () => {
     try {
       const tx = await protocolContract.setRedemptionFee(redeemFee);
       await tx.wait();
-      alert(t.admin.success);
+      toast.success(t.admin.success);
     } catch (err: any) {
-      alert(t.admin.failed + (err.reason || err.message));
+      toast.error(t.admin.failed + (err.reason || err.message));
     } finally {
       setLoading(false);
     }
@@ -79,14 +80,14 @@ const AdminPanel: React.FC = () => {
     try {
         // Simple check
         if (!marketingWallet || !treasuryWallet || !lpWallet || !buybackWallet) {
-            alert(t.admin.required);
+            toast.error(t.admin.required);
             return;
         }
       const tx = await protocolContract.setWallets(marketingWallet, treasuryWallet, lpWallet, buybackWallet);
       await tx.wait();
-      alert(t.admin.success);
+      toast.success(t.admin.success);
     } catch (err: any) {
-      alert(t.admin.failed + (err.reason || err.message));
+      toast.error(t.admin.failed + (err.reason || err.message));
     } finally {
       setLoading(false);
     }

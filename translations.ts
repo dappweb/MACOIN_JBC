@@ -77,6 +77,7 @@ export const translations = {
       networkSubtitle: '您的直推成员',
       networkLoading: '正在加载网络...',
       netWallet: '钱包地址',
+      netTicket: '门票金额',
       netStatus: '状态',
       netJoined: '加入时间',
       netActive: '活跃',
@@ -91,7 +92,8 @@ export const translations = {
       get: '获得 (预估)',
       slipSell: '卖出滑点 25% (25% 销毁)',
       slipBuy: '买入滑点 50% (50% 销毁)',
-      confirm: '确认兑换'
+      confirm: '确认兑换',
+      poolLiquidity: '池子总量'
     },
     admin: {
       title: '管理员控制面板',

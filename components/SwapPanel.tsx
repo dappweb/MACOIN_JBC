@@ -4,6 +4,7 @@ import { useWeb3, CONTRACT_ADDRESSES } from '../Web3Context';
 import { ArrowLeftRight, RotateCw } from 'lucide-react';
 import { ethers } from 'ethers';
 import { MOCK_USER_STATS } from '../constants';
+import toast from 'react-hot-toast';
 
 const SwapPanel: React.FC = () => {
   const { t } = useLanguage();
@@ -74,13 +75,13 @@ const SwapPanel: React.FC = () => {
           }
           
           await tx.wait();
-          alert("Swap Successful!");
+          toast.success("Swap Successful!");
           setPayAmount('');
           setGetAmount('');
           // Refresh balances (optional, or rely on useEffect dependency if logic added)
       } catch (err: any) {
           console.error(err);
-          alert("Swap Failed: " + (err.reason || err.message));
+          toast.error("Swap Failed: " + (err.reason || err.message));
       } finally {
           setIsLoading(false);
       }

@@ -5,6 +5,7 @@ import { Zap, Clock, TrendingUp, AlertCircle, ArrowRight, ShieldCheck, Lock } fr
 import { useLanguage } from '../LanguageContext';
 import { useWeb3 } from '../Web3Context';
 import { ethers } from 'ethers';
+import toast from 'react-hot-toast';
 
 const MiningPanel: React.FC = () => {
   const [selectedTicket, setSelectedTicket] = useState<TicketTier>(TICKET_TIERS[0]);
@@ -55,9 +56,10 @@ const MiningPanel: React.FC = () => {
           const tx = await mcContract.approve(await protocolContract.getAddress(), ethers.MaxUint256);
           await tx.wait();
           setIsApproved(true);
-          alert("Approval Successful!");
-      } catch (err) {
+          toast.success("Approval Successful!");
+      } catch (err: any) {
           console.error(err);
+          toast.error("Approval Failed: " + (err.reason || err.message));
           // Fallback for demo
           setIsApproved(true); 
       } finally {
@@ -73,9 +75,10 @@ const MiningPanel: React.FC = () => {
           const tx = await protocolContract.buyTicket(amountWei);
           await tx.wait();
           setIsTicketBought(true);
-          alert("Ticket Purchased Successfully!");
-      } catch (err) {
+          toast.success("Ticket Purchased Successfully!");
+      } catch (err: any) {
           console.error(err);
+          toast.error("Purchase Failed: " + (err.reason || err.message));
           // Fallback for demo
           setIsTicketBought(true);
       } finally {

@@ -5,6 +5,7 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { useLanguage } from '../LanguageContext';
 import { useWeb3 } from '../Web3Context';
 import { ethers } from 'ethers';
+import toast from 'react-hot-toast';
 
 interface StatsPanelProps {
   stats: UserStats;
@@ -87,10 +88,10 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
         const tx = await protocolContract.bindReferrer(referrer.trim());
         await tx.wait();
         setIsBound(true);
-        alert("Referrer Bound Successfully!");
-      } catch (err) {
+        toast.success("Referrer Bound Successfully!");
+      } catch (err: any) {
         console.error(err);
-        alert("Failed to bind referrer. Check console.");
+        toast.error("Failed to bind: " + (err.reason || err.message));
       } finally {
         setIsBinding(false);
       }

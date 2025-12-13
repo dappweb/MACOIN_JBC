@@ -1,5 +1,8 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { ethers } from 'ethers';
+import { useAccount, useChainId } from 'wagmi';
+import { useEthersProvider, useEthersSigner } from './wagmi-adapters';
+import { useConnectModal } from '@rainbow-me/rainbowkit';
 
 // Partial ABIs
 export const MC_ABI = [
@@ -25,10 +28,10 @@ export const CONTRACT_ADDRESSES = {
 };
 
 interface Web3ContextType {
-  provider: ethers.BrowserProvider | null;
-  signer: ethers.JsonRpcSigner | null;
+  provider: ethers.Provider | null;
+  signer: ethers.Signer | null;
   account: string | null;
-  connectWallet: () => Promise<void>;
+  connectWallet: () => void;
   isConnected: boolean;
   mcContract: ethers.Contract | null;
   protocolContract: ethers.Contract | null;
@@ -37,45 +40,47 @@ interface Web3ContextType {
 const Web3Context = createContext<Web3ContextType | undefined>(undefined);
 
 export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [provider, setProvider] = useState<ethers.BrowserProvider | null>(null);
-  const [signer, setSigner] = useState<ethers.JsonRpcSigner | null>(null);
-  const [account, setAccount] = useState<string | null>(null);
+  const { address, isConnected } = useAccount();
+  const chainId = useChainId();
+  const provider = useEthersProvider({ chainId });
+  const signer = useEthersSigner({ chainId });
+  const { openConnectModal } = useConnectModal();
+
   const [mcContract, setMcContract] = useState<ethers.Contract | null>(null);
   const [protocolContract, setProtocolContract] = useState<ethers.Contract | null>(null);
 
-  const connectWallet = async () => {
-    if (window.ethereum) {
-      try {
-        const _provider = new ethers.BrowserProvider(window.ethereum);
-        const _signer = await _provider.getSigner();
-        const _account = await _signer.getAddress();
-        
-        setProvider(_provider);
-        setSigner(_signer);
-        setAccount(_account);
-
-        // Init Contracts
-        const _mc = new ethers.Contract(CONTRACT_ADDRESSES.MC_TOKEN, MC_ABI, _signer);
-        const _protocol = new ethers.Contract(CONTRACT_ADDRESSES.PROTOCOL, PROTOCOL_ABI, _signer);
-        
+  useEffect(() => {
+    if (signer) {
+        // Init Contracts with Signer (Write access)
+        const _mc = new ethers.Contract(CONTRACT_ADDRESSES.MC_TOKEN, MC_ABI, signer);
+        const _protocol = new ethers.Contract(CONTRACT_ADDRESSES.PROTOCOL, PROTOCOL_ABI, signer);
         setMcContract(_mc);
         setProtocolContract(_protocol);
-
-      } catch (err) {
-        console.error("User rejected connection or error", err);
-      }
+    } else if (provider) {
+        // Init Contracts with Provider (Read only)
+        const _mc = new ethers.Contract(CONTRACT_ADDRESSES.MC_TOKEN, MC_ABI, provider);
+        const _protocol = new ethers.Contract(CONTRACT_ADDRESSES.PROTOCOL, PROTOCOL_ABI, provider);
+        setMcContract(_mc);
+        setProtocolContract(_protocol);
     } else {
-      alert("Please install MetaMask!");
+        setMcContract(null);
+        setProtocolContract(null);
+    }
+  }, [signer, provider]);
+
+  const connectWallet = () => {
+    if (openConnectModal) {
+        openConnectModal();
     }
   };
 
   return (
     <Web3Context.Provider value={{
-      provider,
-      signer,
-      account,
+      provider: provider || null,
+      signer: signer || null,
+      account: address || null,
       connectWallet,
-      isConnected: !!account,
+      isConnected,
       mcContract,
       protocolContract
     }}>

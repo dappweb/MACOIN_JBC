@@ -11,13 +11,20 @@ import { ArrowLeftRight } from 'lucide-react';
 import { LanguageProvider, useLanguage } from './LanguageContext';
 import { Web3Provider, useWeb3 } from './Web3Context';
 
+import { WagmiProvider } from 'wagmi';
+import { RainbowKitProvider } from '@rainbow-me/rainbowkit';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { config } from './config';
+import '@rainbow-me/rainbowkit/styles.css';
+
+const queryClient = new QueryClient();
+
 // Create an inner component to use the hook
 const AppContent: React.FC = () => {
   const [currentTab, setCurrentTab] = useState<AppTab>(AppTab.HOME);
   const [loading, setLoading] = useState(true);
   const [showWhitepaper, setShowWhitepaper] = useState(false);
   const { t } = useLanguage();
-  const { connectWallet, isConnected } = useWeb3();
 
   useEffect(() => {
     // Simulate initial loading
@@ -44,8 +51,6 @@ const AppContent: React.FC = () => {
       <Navbar 
         currentTab={currentTab} 
         setTab={setCurrentTab} 
-        walletConnected={isConnected} 
-        connectWallet={connectWallet}
       />
       
       <WhitepaperModal 
@@ -85,11 +90,17 @@ const AppContent: React.FC = () => {
 
 const App: React.FC = () => {
     return (
-        <LanguageProvider>
-            <Web3Provider>
-                <AppContent />
-            </Web3Provider>
-        </LanguageProvider>
+        <WagmiProvider config={config}>
+            <QueryClientProvider client={queryClient}>
+                <RainbowKitProvider>
+                    <LanguageProvider>
+                        <Web3Provider>
+                            <AppContent />
+                        </Web3Provider>
+                    </LanguageProvider>
+                </RainbowKitProvider>
+            </QueryClientProvider>
+        </WagmiProvider>
     )
 }
 

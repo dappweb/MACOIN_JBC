@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { AppTab } from '../types';
-import { Diamond, Home, Pickaxe, Users, ArrowLeftRight, Settings, PlusCircle } from 'lucide-react';
+import { Diamond, Home, Pickaxe, Users, ArrowLeftRight, Settings, PlusCircle, Globe } from 'lucide-react';
 import { useLanguage } from '../LanguageContext';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { useWeb3 } from '../Web3Context';
@@ -14,7 +14,7 @@ interface NavbarProps {
 }
 
 const Navbar: React.FC<NavbarProps> = ({ currentTab, setTab }) => {
-  const { t } = useLanguage();
+  const { t, language, setLanguage } = useLanguage();
   const { protocolContract, account, isConnected } = useWeb3();
   const [isOwner, setIsOwner] = useState(false);
   
@@ -66,7 +66,7 @@ const Navbar: React.FC<NavbarProps> = ({ currentTab, setTab }) => {
                 method: 'wallet_addEthereumChain',
                 params: [{
                     chainId: '0x15AF5', // 88813 in hex
-                    chainName: 'MACOIN chain',
+                    chainName: 'JBC Chain',
                     nativeCurrency: {
                         name: 'MC',
                         symbol: 'MC',
@@ -96,7 +96,7 @@ const Navbar: React.FC<NavbarProps> = ({ currentTab, setTab }) => {
               <div className="bg-gradient-to-tr from-macoin-600 to-macoin-400 p-2 rounded-xl shadow-lg shadow-macoin-500/20">
                   <Diamond size={24} className="text-white" />
               </div>
-              <span className="text-2xl font-black text-slate-900 tracking-tight">MACOIN <span className="text-macoin-600">RWA</span></span>
+              <span className="text-2xl font-black text-slate-900 tracking-tight">JBC <span className="text-macoin-600">RWA</span></span>
             </div>
 
             {/* Desktop Nav */}
@@ -137,6 +137,14 @@ const Navbar: React.FC<NavbarProps> = ({ currentTab, setTab }) => {
 
             {/* Wallet Connect */}
             <div className="flex items-center gap-4">
+               <button
+                  onClick={() => setLanguage(language === 'zh' ? 'en' : 'zh')}
+                  className="p-2 rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors flex items-center gap-2"
+                  title="Switch Language"
+               >
+                  <Globe size={20} />
+                  <span className="text-sm font-bold">{language === 'zh' ? 'EN' : '中文'}</span>
+               </button>
                {/* Button removed as requested for auto-logic */}
               <ConnectButton showBalance={false} chainStatus="icon" accountStatus="address" />
             </div>

@@ -3,6 +3,13 @@ import { TEAM_LEVELS } from '../constants';
 import { Crown, Users, Percent, UserCheck } from 'lucide-react';
 import { useLanguage } from '../LanguageContext';
 import { useWeb3 } from '../Web3Context';
+import { ethers } from 'ethers';
+
+interface DirectReferral {
+    user: string;
+    ticketAmount: bigint;
+    joinTime: bigint;
+}
 
 const TeamLevel: React.FC = () => {
   const { t } = useLanguage();
@@ -12,8 +19,11 @@ const TeamLevel: React.FC = () => {
       teamCount: 0,
       currentLevel: 'V0'
   });
-  const [directReferrals, setDirectReferrals] = useState<string[]>([]);
+  const [directReferrals, setDirectReferrals] = useState<DirectReferral[]>([]);
   const [isLoadingDirects, setIsLoadingDirects] = useState(false);
+
+  // Calculate total ticket amount from direct referrals
+  const totalTicketAmount = directReferrals.reduce((acc, curr) => acc + curr.ticketAmount, 0n);
 
   useEffect(() => {
     const fetchTeamInfo = async () => {
@@ -45,8 +55,15 @@ const TeamLevel: React.FC = () => {
                 setIsLoadingDirects(true);
                 try {
                     // This function was added to the contract in the latest update
-                    const directs = await protocolContract.getDirectReferrals(account);
-                    setDirectReferrals(directs);
+                    // Returns array of structs: (user, ticketAmount, joinTime)
+                    const data = await protocolContract.getDirectReferralsData(account);
+                    // data is a Result object that behaves like an array of Results
+                    const formattedData: DirectReferral[] = data.map((item: any) => ({
+                        user: item.user,
+                        ticketAmount: item.ticketAmount,
+                        joinTime: item.joinTime
+                    }));
+                    setDirectReferrals(formattedData);
                 } catch (e) {
                     console.error("Failed to fetch directs", e);
                 } finally {
@@ -141,13 +158,22 @@ const TeamLevel: React.FC = () => {
 
       {/* Direct Referrals Network Section */}
       <div className="glass-panel p-6 rounded-2xl bg-white">
-        <div className="flex items-center gap-3 mb-6">
-            <div className="p-3 bg-purple-100 text-purple-600 rounded-full">
-                <UserCheck size={24} />
+        <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+                <div className="p-3 bg-purple-100 text-purple-600 rounded-full">
+                    <UserCheck size={24} />
+                </div>
+                <div>
+                    <h3 className="text-xl font-bold text-slate-900">{t.team.networkTitle}</h3>
+                    <p className="text-sm text-slate-500">{t.team.networkSubtitle}</p>
+                </div>
             </div>
-            <div>
-                <h3 className="text-xl font-bold text-slate-900">{t.team.networkTitle}</h3>
-                <p className="text-sm text-slate-500">{t.team.networkSubtitle}</p>
+            
+            <div className="text-right">
+                <p className="text-xs text-slate-500 uppercase font-bold tracking-wider">{t.team.netTotalAmount}</p>
+                <p className="text-xl font-black text-purple-600 font-mono">
+                    {ethers.formatEther(totalTicketAmount)} <span className="text-sm font-bold text-purple-400">MC</span>
+                </p>
             </div>
         </div>
 
@@ -159,19 +185,27 @@ const TeamLevel: React.FC = () => {
                     <thead>
                         <tr className="bg-slate-50 border-b border-slate-100">
                             <th className="p-4 text-slate-500 text-sm font-semibold">{t.team.netWallet}</th>
+                            <th className="p-4 text-slate-500 text-sm font-semibold">{t.team.netTicket}</th>
                             <th className="p-4 text-slate-500 text-sm font-semibold">{t.team.netStatus}</th>
                             <th className="p-4 text-slate-500 text-sm font-semibold text-right">{t.team.netJoined}</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
-                        {directReferrals.map((addr, idx) => (
+                        {directReferrals.map((item, idx) => (
                             <tr key={idx} className="hover:bg-slate-50 transition-colors">
-                                <td className="p-4 text-slate-700 font-mono text-sm">{addr}</td>
+                                <td className="p-4 text-slate-700 font-mono text-sm">
+                                    {item.user.substring(0, 6)}...{item.user.substring(38)}
+                                </td>
+                                <td className="p-4 text-slate-700 font-bold text-sm">
+                                    {ethers.formatEther(item.ticketAmount)} MC
+                                </td>
                                 <td className="p-4">
-                                    <span className="px-2 py-1 bg-green-100 text-green-700 text-xs font-bold rounded-full">{t.team.netActive}</span>
+                                    <span className={`px-2 py-1 text-xs font-bold rounded-full ${item.ticketAmount > 0n ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-500'}`}>
+                                        {item.ticketAmount > 0n ? t.team.netActive : 'Inactive'}
+                                    </span>
                                 </td>
                                 <td className="p-4 text-right text-slate-400 text-sm">
-                                    {t.team.netRecent}
+                                    {item.joinTime > 0n ? new Date(Number(item.joinTime) * 1000).toLocaleDateString() : '-'}
                                 </td>
                             </tr>
                         ))}

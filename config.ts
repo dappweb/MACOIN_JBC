@@ -4,7 +4,7 @@ import { http } from 'wagmi';
 
 const mcChain = {
   id: 88813,
-  name: 'MACOIN chain',
+  name: 'JBC Chain',
   nativeCurrency: { name: 'MC', symbol: 'MC', decimals: 18 },
   rpcUrls: {
     default: { http: ['https://chain.mcerscan.com/'] },

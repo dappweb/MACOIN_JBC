@@ -27,14 +27,16 @@ export const PROTOCOL_ABI = [
   "function setWallets(address, address, address, address) external",
   "function setDistributionPercents(uint256, uint256, uint256, uint256, uint256, uint256) external",
   "function setSwapTaxes(uint256, uint256) external",
-  "function setRedemptionFee(uint256) external"
+  "function setRedemptionFee(uint256) external",
+  "function adminSetUserStats(address, uint256, uint256) external",
+  "function adminSetReferrer(address, address) external"
 ];
 
 // Contract Addresses (Mock for now, replace with real deployment)
 export const CONTRACT_ADDRESSES = {
-  MC_TOKEN: "0xCfFBd88f4367161B5B8F5fc71732d18Cc33C8890", 
-  JBC_TOKEN: "0xE7146cE72a91942e45B45113791f2d2CEC9CFfd5", // Replace with real JBC Address
-  PROTOCOL: "0xcbD419Cb0c7a001C6F030733e129AE98E3143c5A" 
+  MC_TOKEN: "0xB2B8777BcBc7A8DEf49F022773d392a8787cf9EF", 
+  JBC_TOKEN: "0xA743cB357a9f59D349efB7985072779a094658dD", // Replace with real JBC Address
+  PROTOCOL: "0x941E18CB27BA8326a1F962D4C1B94360D5A3e29f" 
 };
 
 interface Web3ContextType {

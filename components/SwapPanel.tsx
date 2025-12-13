@@ -15,6 +15,8 @@ const SwapPanel: React.FC = () => {
   const [isSelling, setIsSelling] = useState(false); // false = Buy JBC (Pay MC), true = Sell JBC (Pay JBC)
   const [balanceMC, setBalanceMC] = useState<string>('0.0');
   const [balanceJBC, setBalanceJBC] = useState<string>('0.0');
+  const [poolMC, setPoolMC] = useState<string>('0.0');
+  const [poolJBC, setPoolJBC] = useState<string>('0.0');
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
@@ -24,6 +26,10 @@ const SwapPanel: React.FC = () => {
                 if (mcContract) {
                     const mcBal = await mcContract.balanceOf(account);
                     setBalanceMC(ethers.formatEther(mcBal));
+                    
+                    // Pool Liquidity
+                    const poolMcBal = await mcContract.balanceOf(CONTRACT_ADDRESSES.PROTOCOL);
+                    setPoolMC(ethers.formatEther(poolMcBal));
                 } else {
                     setBalanceMC(MOCK_USER_STATS.balanceMC.toString());
                 }
@@ -31,6 +37,10 @@ const SwapPanel: React.FC = () => {
                 if (jbcContract) {
                     const jbcBal = await jbcContract.balanceOf(account);
                     setBalanceJBC(ethers.formatEther(jbcBal));
+
+                    // Pool Liquidity
+                    const poolJbcBal = await jbcContract.balanceOf(CONTRACT_ADDRESSES.PROTOCOL);
+                    setPoolJBC(ethers.formatEther(poolJbcBal));
                 } else {
                     setBalanceJBC(MOCK_USER_STATS.balanceJBC.toString());
                 }
@@ -177,6 +187,15 @@ const SwapPanel: React.FC = () => {
                 <div className={`flex justify-between ${!isSelling ? 'font-bold' : 'opacity-50'}`}>
                     <span>{t.swap.slipBuy}</span>
                     {!isSelling && <span>(Active)</span>}
+                </div>
+            </div>
+
+            {/* Pool Liquidity Info */}
+            <div className="bg-slate-50 p-3 rounded-lg text-xs text-slate-500 flex justify-between items-center border border-slate-200">
+                <span className="font-bold">{t.swap.poolLiquidity}:</span>
+                <div className="flex gap-3">
+                    <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-macoin-500"></div> {parseFloat(poolMC).toLocaleString()} MC</span>
+                    <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-yellow-500"></div> {parseFloat(poolJBC).toLocaleString()} JBC</span>
                 </div>
             </div>
 

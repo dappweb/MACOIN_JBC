@@ -30,6 +30,12 @@ const AdminPanel: React.FC = () => {
   const [lpWallet, setLpWallet] = useState('');
   const [buybackWallet, setBuybackWallet] = useState('');
 
+  // User Management
+  const [targetUser, setTargetUser] = useState('');
+  const [newReferrer, setNewReferrer] = useState('');
+  const [activeDirects, setActiveDirects] = useState('');
+  const [teamCount, setTeamCount] = useState('');
+
   const updateDistribution = async () => {
     if (!protocolContract) return;
     setLoading(true);
@@ -90,6 +96,34 @@ const AdminPanel: React.FC = () => {
       toast.error(t.admin.failed + (err.reason || err.message));
     } finally {
       setLoading(false);
+    }
+  };
+
+  const updateUserStats = async () => {
+    if (!protocolContract || !targetUser) return;
+    setLoading(true);
+    try {
+        const tx = await protocolContract.adminSetUserStats(targetUser, activeDirects, teamCount);
+        await tx.wait();
+        toast.success(t.admin.success);
+    } catch (err: any) {
+        toast.error(t.admin.failed + (err.reason || err.message));
+    } finally {
+        setLoading(false);
+    }
+  };
+
+  const updateReferrer = async () => {
+    if (!protocolContract || !targetUser || !newReferrer) return;
+    setLoading(true);
+    try {
+        const tx = await protocolContract.adminSetReferrer(targetUser, newReferrer);
+        await tx.wait();
+        toast.success(t.admin.success);
+    } catch (err: any) {
+        toast.error(t.admin.failed + (err.reason || err.message));
+    } finally {
+        setLoading(false);
     }
   };
 
@@ -193,6 +227,42 @@ const AdminPanel: React.FC = () => {
               <button onClick={updateWallets} disabled={loading} className="w-full py-2 bg-slate-900 text-white rounded-lg mt-2 hover:bg-slate-800">
                   {t.admin.updateWallets}
               </button>
+          </div>
+      </div>
+
+      {/* User Management */}
+      <div className="glass-panel p-6 rounded-2xl bg-white border border-slate-200">
+          <h3 className="text-xl font-bold mb-4 text-slate-800">{t.admin.userMgmt}</h3>
+          <div className="space-y-4">
+              <div>
+                  <label className="block text-sm text-slate-500 mb-1">{t.admin.userAddr}</label>
+                  <input type="text" value={targetUser} onChange={e => setTargetUser(e.target.value)} className="w-full p-2 border rounded text-sm font-mono" placeholder="0x..." />
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-t pt-4">
+                  <div>
+                      <label className="block text-sm text-slate-500 mb-1">{t.admin.newReferrer}</label>
+                      <div className="flex gap-2">
+                          <input type="text" value={newReferrer} onChange={e => setNewReferrer(e.target.value)} className="w-full p-2 border rounded text-sm font-mono" placeholder="0x..." />
+                          <button onClick={updateReferrer} disabled={loading} className="px-4 bg-slate-900 text-white rounded hover:bg-slate-800 text-sm whitespace-nowrap">
+                              {t.admin.updateReferrer}
+                          </button>
+                      </div>
+                  </div>
+                  <div className="space-y-2">
+                      <div className="flex gap-2 items-center">
+                          <label className="text-sm text-slate-500 w-24">{t.admin.activeDirects}</label>
+                          <input type="number" value={activeDirects} onChange={e => setActiveDirects(e.target.value)} className="w-full p-2 border rounded text-sm" />
+                      </div>
+                      <div className="flex gap-2 items-center">
+                          <label className="text-sm text-slate-500 w-24">{t.admin.teamCount}</label>
+                          <input type="number" value={teamCount} onChange={e => setTeamCount(e.target.value)} className="w-full p-2 border rounded text-sm" />
+                      </div>
+                      <button onClick={updateUserStats} disabled={loading} className="w-full py-2 bg-slate-900 text-white rounded hover:bg-slate-800 text-sm">
+                          {t.admin.updateUser}
+                      </button>
+                  </div>
+              </div>
           </div>
       </div>
     </div>

@@ -40,7 +40,7 @@ const AppContent: React.FC = () => {
         <div className="min-h-screen w-full bg-slate-50 flex flex-col items-center justify-center relative overflow-hidden">
             <div className="z-10 flex flex-col items-center">
                 <div className="w-16 h-16 bg-macoin-500 rounded-xl animate-spin mb-8 shadow-xl"></div>
-                <h1 className="text-2xl font-bold text-slate-900 tracking-widest animate-pulse">MACOIN <span className="text-macoin-600">RWA</span></h1>
+                <h1 className="text-2xl font-bold text-slate-900 tracking-widest animate-pulse">JBC <span className="text-macoin-600">RWA</span></h1>
                 <p className="text-slate-500 text-sm mt-2">Loading Protocol Data...</p>
             </div>
         </div>

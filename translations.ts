@@ -14,7 +14,7 @@ export const translations = {
       protocol: 'DeFi 4.0 协议',
       title: '金宝 RWA',
       subtitle: '真实黄金资产锚定',
-      desc: '基于 MACOIN Chain 自研公链。参与即有25%部分进行黄金对标，由紫金矿业提供5000万黄金托底。',
+      desc: '基于 JBC Chain 自研公链。参与即有25%部分进行黄金对标，由紫金矿业提供5000万黄金托底。',
       join: '立即参与',
       whitepaper: '查看白皮书',
       assets: '我的资产 (MC)',
@@ -83,7 +83,8 @@ export const translations = {
       netActive: '活跃',
       netRecent: '近期',
       netNone: '暂无直推成员',
-      netShare: '分享您的链接以扩大团队！'
+      netShare: '分享您的链接以扩大团队！',
+      netTotalAmount: '直推总业绩'
     },
     swap: {
       title: 'JBC 闪兑 (Swap)',
@@ -122,10 +123,17 @@ export const translations = {
       updateWallets: '更新钱包地址',
       required: '所有钱包地址均为必填项',
       success: '更新成功！',
-      failed: '更新失败：'
+      failed: '更新失败：',
+      userMgmt: '用户管理',
+      userAddr: '用户地址',
+      newReferrer: '新推荐人',
+      activeDirects: '有效直推数',
+      teamCount: '团队人数',
+      updateUser: '更新用户信息',
+      updateReferrer: '更新绑定关系'
     },
     footer: {
-      rights: '© 2024 MACOIN RWA Protocol. All rights reserved.',
+      rights: '© 2024 JBC RWA Protocol. All rights reserved.',
       audit: 'Code is law. JBC contract audited by SlowMist.'
     }
   },
@@ -142,7 +150,7 @@ export const translations = {
       protocol: 'DeFi 4.0 Protocol',
       title: 'Jinbao RWA',
       subtitle: 'Real Gold Asset Anchored',
-      desc: 'Built on MACOIN Chain. 25% of participation is benchmarked against gold, backed by 50 million gold reserves from Zijin Mining.',
+      desc: 'Built on JBC Chain. 25% of participation is benchmarked against gold, backed by 50 million gold reserves from Zijin Mining.',
       join: 'Join Now',
       whitepaper: 'Whitepaper',
       assets: 'My Assets (MC)',
@@ -205,12 +213,14 @@ export const translations = {
       networkSubtitle: 'Your directly referred members',
       networkLoading: 'Loading network...',
       netWallet: 'Wallet Address',
+      netTicket: 'Ticket Amount',
       netStatus: 'Status',
       netJoined: 'Joined',
       netActive: 'Active',
       netRecent: 'Recently',
       netNone: 'No direct referrals yet',
-      netShare: 'Share your link to grow your team!'
+      netShare: 'Share your link to grow your team!',
+      netTotalAmount: 'Total Direct Sales'
     },
     swap: {
       title: 'JBC Swap',
@@ -219,7 +229,8 @@ export const translations = {
       get: 'Receive (Est.)',
       slipSell: 'Sell Slippage 25% (25% Burn)',
       slipBuy: 'Buy Slippage 50% (50% Burn)',
-      confirm: 'Confirm Swap'
+      confirm: 'Confirm Swap',
+      poolLiquidity: 'Pool Liquidity'
     },
     admin: {
       title: 'Admin Control Panel',
@@ -248,10 +259,17 @@ export const translations = {
       updateWallets: 'Update Wallets',
       required: 'All wallet addresses required',
       success: 'Update Successful!',
-      failed: 'Error: '
+      failed: 'Error: ',
+      userMgmt: 'User Management',
+      userAddr: 'User Address',
+      newReferrer: 'New Referrer',
+      activeDirects: 'Active Directs',
+      teamCount: 'Team Count',
+      updateUser: 'Update User Stats',
+      updateReferrer: 'Update Referrer'
     },
     footer: {
-      rights: '© 2024 MACOIN RWA Protocol. All rights reserved.',
+      rights: '© 2024 JBC RWA Protocol. All rights reserved.',
       audit: 'Code is law. JBC contract audited by SlowMist.'
     }
   }

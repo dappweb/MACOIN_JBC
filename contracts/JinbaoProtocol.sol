@@ -130,6 +130,39 @@ contract JinbaoProtocol is Ownable, ReentrancyGuard {
         redemptionFeePercent = _fee;
     }
 
+    // --- Admin User Management ---
+
+    function adminSetUserStats(address user, uint256 _activeDirects, uint256 _teamCount) external onlyOwner {
+        userInfo[user].activeDirects = _activeDirects;
+        userInfo[user].teamCount = _teamCount;
+    }
+
+    function adminSetReferrer(address user, address newReferrer) external onlyOwner {
+        require(user != newReferrer, "Cannot bind self");
+        address oldReferrer = userInfo[user].referrer;
+        
+        // Update mapping
+        userInfo[user].referrer = newReferrer;
+        
+        // Update arrays
+        // 1. Remove from old referrer's list
+        if (oldReferrer != address(0)) {
+            address[] storage oldList = directReferrals[oldReferrer];
+            for (uint256 i = 0; i < oldList.length; i++) {
+                if (oldList[i] == user) {
+                    oldList[i] = oldList[oldList.length - 1];
+                    oldList.pop();
+                    break;
+                }
+            }
+        }
+        
+        // 2. Add to new referrer's list
+        if (newReferrer != address(0)) {
+            directReferrals[newReferrer].push(user);
+        }
+    }
+
     // --- Referral System ---
 
     function bindReferrer(address _referrer) external {

@@ -5,6 +5,7 @@ import MiningPanel from './components/MiningPanel';
 import TeamLevel from './components/TeamLevel';
 import WhitepaperModal from './components/WhitepaperModal';
 import SwapPanel from './components/SwapPanel';
+import AdminPanel from './components/AdminPanel';
 import { AppTab } from './types';
 import { MOCK_USER_STATS } from './constants';
 import { ArrowLeftRight } from 'lucide-react';
@@ -74,6 +75,8 @@ const AppContent: React.FC = () => {
         {currentTab === AppTab.TEAM && <TeamLevel />}
 
         {currentTab === AppTab.SWAP && <SwapPanel />}
+
+        {currentTab === AppTab.ADMIN && <AdminPanel />}
 
       </main>
 

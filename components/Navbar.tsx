@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { AppTab } from '../types';
-import { Diamond, Home, Pickaxe, Users, ArrowLeftRight } from 'lucide-react';
+import { Diamond, Home, Pickaxe, Users, ArrowLeftRight, Settings } from 'lucide-react';
 import { useLanguage } from '../LanguageContext';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
+import { useWeb3 } from '../Web3Context';
 
 interface NavbarProps {
   currentTab: AppTab;
@@ -13,6 +14,22 @@ interface NavbarProps {
 
 const Navbar: React.FC<NavbarProps> = ({ currentTab, setTab }) => {
   const { t } = useLanguage();
+  const { protocolContract, account } = useWeb3();
+  const [isOwner, setIsOwner] = useState(false);
+
+  useEffect(() => {
+    const checkOwner = async () => {
+      if (protocolContract && account) {
+        try {
+          const owner = await protocolContract.owner();
+          setIsOwner(owner.toLowerCase() === account.toLowerCase());
+        } catch (e) {
+          console.error("Failed to check owner", e);
+        }
+      }
+    };
+    checkOwner();
+  }, [protocolContract, account]);
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-200">
@@ -53,6 +70,14 @@ const Navbar: React.FC<NavbarProps> = ({ currentTab, setTab }) => {
             >
                 <ArrowLeftRight size={18} /> Swap
             </button>
+            {isOwner && (
+                <button 
+                    onClick={() => setTab(AppTab.ADMIN)} 
+                    className={`flex items-center gap-2 font-bold transition-colors ${currentTab === AppTab.ADMIN ? 'text-red-600' : 'text-slate-500 hover:text-red-600'}`}
+                >
+                    <Settings size={18} /> Admin
+                </button>
+            )}
           </div>
 
           {/* Wallet Connect */}
@@ -77,6 +102,11 @@ const Navbar: React.FC<NavbarProps> = ({ currentTab, setTab }) => {
             <button onClick={() => setTab(AppTab.TEAM)} className={`p-2 rounded-lg ${currentTab === AppTab.TEAM ? 'text-macoin-600 bg-macoin-50' : 'text-slate-400'}`}>
                 <Users size={24} />
             </button>
+             {isOwner && (
+                <button onClick={() => setTab(AppTab.ADMIN)} className={`p-2 rounded-lg ${currentTab === AppTab.ADMIN ? 'text-red-600 bg-red-50' : 'text-slate-400'}`}>
+                    <Settings size={24} />
+                </button>
+            )}
         </div>
       </div>
     </nav>

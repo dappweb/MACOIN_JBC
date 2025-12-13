@@ -42,7 +42,17 @@ contract JinbaoProtocol is Ownable, ReentrancyGuard {
 
     // Constants
     uint256 public constant SECONDS_IN_DAY = 86400;
-    uint256 public constant REDEMPTION_FEE_PERCENT = 1; // 1%
+    
+    // Admin Adjustable Parameters
+    uint256 public redemptionFeePercent = 1; // 1%
+    uint256 public directRewardPercent = 25; // 25%
+    uint256 public levelRewardPercent = 15; // 15%
+    uint256 public marketingPercent = 5; // 5%
+    uint256 public buybackPercent = 5; // 5%
+    uint256 public lpInjectionPercent = 25; // 25%
+    uint256 public treasuryPercent = 25; // 25%
+    uint256 public swapBuyTax = 50; // 50%
+    uint256 public swapSellTax = 25; // 25%
 
     // State
     mapping(address => UserInfo) public userInfo;
@@ -74,6 +84,46 @@ contract JinbaoProtocol is Ownable, ReentrancyGuard {
         buybackWallet = _buyback;
     }
 
+    // --- Admin Functions ---
+
+    function setWallets(
+        address _marketing,
+        address _treasury,
+        address _lpInjection,
+        address _buyback
+    ) external onlyOwner {
+        marketingWallet = _marketing;
+        treasuryWallet = _treasury;
+        lpInjectionWallet = _lpInjection;
+        buybackWallet = _buyback;
+    }
+
+    function setDistributionPercents(
+        uint256 _direct,
+        uint256 _level,
+        uint256 _marketing,
+        uint256 _buyback,
+        uint256 _lpInjection,
+        uint256 _treasury
+    ) external onlyOwner {
+        require(_direct + _level + _marketing + _buyback + _lpInjection + _treasury == 100, "Total must be 100");
+        directRewardPercent = _direct;
+        levelRewardPercent = _level;
+        marketingPercent = _marketing;
+        buybackPercent = _buyback;
+        lpInjectionPercent = _lpInjection;
+        treasuryPercent = _treasury;
+    }
+
+    function setSwapTaxes(uint256 _buyTax, uint256 _sellTax) external onlyOwner {
+        swapBuyTax = _buyTax;
+        swapSellTax = _sellTax;
+    }
+
+    function setRedemptionFee(uint256 _fee) external onlyOwner {
+        redemptionFeePercent = _fee;
+    }
+
     // --- Referral System ---
 
     function bindReferrer(address _referrer) external {
@@ -101,29 +151,29 @@ contract JinbaoProtocol is Ownable, ReentrancyGuard {
         mcToken.transferFrom(msg.sender, address(this), amount);
 
         // Distribute Funds
-        // 25% Direct Referral
+        // Direct Referral
         address referrer = userInfo[msg.sender].referrer;
         if (referrer != address(0)) {
-            mcToken.transfer(referrer, (amount * 25) / 100);
+            mcToken.transfer(referrer, (amount * directRewardPercent) / 100);
         } else {
             // If no referrer, send to marketing or burn? Sending to marketing for now
-            mcToken.transfer(marketingWallet, (amount * 25) / 100);
+            mcToken.transfer(marketingWallet, (amount * directRewardPercent) / 100);
         }
 
-        // 15% Level Reward (Placeholder: Send to marketing to simplify contract)
-        mcToken.transfer(marketingWallet, (amount * 15) / 100);
+        // Level Reward (Placeholder: Send to marketing to simplify contract)
+        mcToken.transfer(marketingWallet, (amount * levelRewardPercent) / 100);
 
-        // 5% Marketing
-        mcToken.transfer(marketingWallet, (amount * 5) / 100);
+        // Marketing
+        mcToken.transfer(marketingWallet, (amount * marketingPercent) / 100);
 
-        // 5% Buyback
-        mcToken.transfer(buybackWallet, (amount * 5) / 100);
+        // Buyback
+        mcToken.transfer(buybackWallet, (amount * buybackPercent) / 100);
 
-        // 25% Liquidity Injection
-        mcToken.transfer(lpInjectionWallet, (amount * 25) / 100);
+        // Liquidity Injection
+        mcToken.transfer(lpInjectionWallet, (amount * lpInjectionPercent) / 100);
 
-        // 25% Treasury
-        mcToken.transfer(treasuryWallet, (amount * 25) / 100);
+        // Treasury
+        mcToken.transfer(treasuryWallet, (amount * treasuryPercent) / 100);
 
         // Init Ticket
         userTicket[msg.sender] = Ticket({
@@ -229,7 +279,7 @@ contract JinbaoProtocol is Ownable, ReentrancyGuard {
 
     // --- Swap System ---
 
-    // Buy JBC with MC (50% Tax)
+    // Buy JBC with MC (Tax)
     function swapMCToJBC(uint256 mcAmount) external nonReentrant {
         require(mcAmount > 0, "Invalid amount");
         
@@ -238,7 +288,7 @@ contract JinbaoProtocol is Ownable, ReentrancyGuard {
         
         // 2. Calculate JBC out (1:1 price)
         uint256 jbcTotal = mcAmount; // 1 MC = 1 JBC
-        uint256 tax = (jbcTotal * 50) / 100; // 50% Tax
+        uint256 tax = (jbcTotal * swapBuyTax) / 100; // Dynamic Tax
         uint256 amountToUser = jbcTotal - tax;
         
         // 3. Check liquidity
@@ -253,15 +303,15 @@ contract JinbaoProtocol is Ownable, ReentrancyGuard {
         emit SwappedMCToJBC(msg.sender, mcAmount, amountToUser, tax);
     }
 
-    // Sell JBC for MC (25% Tax)
+    // Sell JBC for MC (Tax)
     function swapJBCToMC(uint256 jbcAmount) external nonReentrant {
         require(jbcAmount > 0, "Invalid amount");
         
         // 1. Transfer JBC from user to contract
         jbcToken.transferFrom(msg.sender, address(this), jbcAmount);
         
-        // 2. Calculate Tax (25% Tax)
-        uint256 tax = (jbcAmount * 25) / 100;
+        // 2. Calculate Tax (Dynamic Tax)
+        uint256 tax = (jbcAmount * swapSellTax) / 100;
         uint256 amountToSwap = jbcAmount - tax;
         
         // 3. Burn Tax
@@ -287,8 +337,8 @@ contract JinbaoProtocol is Ownable, ReentrancyGuard {
         require(ticket.liquidityProvided && !ticket.redeemed, "Cannot redeem");
         require(block.timestamp >= ticket.startTime + (ticket.cycleDays * 1 days), "Cycle not finished");
 
-        // 1% Fee
-        uint256 fee = (ticket.amount * REDEMPTION_FEE_PERCENT) / 100;
+        // Fee
+        uint256 fee = (ticket.amount * redemptionFeePercent) / 100;
         // In whitepaper: "Need to provide redemption fee 10 MC". 
         // We deduct from principal or ask for transfer. Whitepaper says "provide redemption fee".
         // Let's assume we take it from the principal return for simplicity, 

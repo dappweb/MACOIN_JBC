@@ -2,7 +2,8 @@ export enum AppTab {
   HOME = 'HOME',
   MINING = 'MINING',
   TEAM = 'TEAM',
-  SWAP = 'SWAP'
+  SWAP = 'SWAP',
+  ADMIN = 'ADMIN'
 }
 
 export interface MiningPlan {

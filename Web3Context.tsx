@@ -21,7 +21,12 @@ export const PROTOCOL_ABI = [
   "function swapJBCToMC(uint256 jbcAmount) external",
   "function userInfo(address) view returns (address referrer, uint256 activeDirects, uint256 teamCount, uint256 totalRevenue, uint256 currentCap, bool isActive)",
   "function userTicket(address) view returns (uint256 amount, uint256 requiredLiquidity, uint256 purchaseTime, bool liquidityProvided, uint256 liquidityAmount, uint256 startTime, uint256 cycleDays, bool redeemed)",
-  "function getDirectReferrals(address) view returns (address[])"
+  "function getDirectReferrals(address) view returns (address[])",
+  "function owner() view returns (address)",
+  "function setWallets(address, address, address, address) external",
+  "function setDistributionPercents(uint256, uint256, uint256, uint256, uint256, uint256) external",
+  "function setSwapTaxes(uint256, uint256) external",
+  "function setRedemptionFee(uint256) external"
 ];
 
 // Contract Addresses (Mock for now, replace with real deployment)

@@ -11,6 +11,7 @@ const MiningPanel: React.FC = () => {
   const [selectedTicket, setSelectedTicket] = useState<TicketTier>(TICKET_TIERS[0]);
   const [selectedPlan, setSelectedPlan] = useState<MiningPlan>(MINING_PLANS[0]);
   const [isApproved, setIsApproved] = useState(false);
+  const [isCheckingAllowance, setIsCheckingAllowance] = useState(false);
   const [isTicketBought, setIsTicketBought] = useState(false); // New state to track ticket purchase
   const [txPending, setTxPending] = useState(false);
   
@@ -28,6 +29,7 @@ const MiningPanel: React.FC = () => {
   useEffect(() => {
     const checkAllowance = async () => {
         if (mcContract && account && protocolContract) {
+            setIsCheckingAllowance(true);
             try {
                 const protocolAddr = await protocolContract.getAddress();
                 const allowance = await mcContract.allowance(account, protocolAddr);
@@ -43,6 +45,8 @@ const MiningPanel: React.FC = () => {
                 }
             } catch (err) {
                 console.error("Failed to check allowance", err);
+            } finally {
+                setIsCheckingAllowance(false);
             }
         }
     };
@@ -281,6 +285,13 @@ const MiningPanel: React.FC = () => {
                     {!isConnected ? (
                         <button disabled className="w-full py-3 bg-slate-200 text-slate-400 font-bold rounded-lg cursor-not-allowed">
                             Wallet Not Connected
+                        </button>
+                    ) : isCheckingAllowance ? (
+                        <button 
+                            disabled
+                            className="w-full py-3 bg-slate-100 text-slate-400 font-bold rounded-lg cursor-wait animate-pulse"
+                        >
+                            Checking Authorization...
                         </button>
                     ) : !isApproved ? (
                         <button 

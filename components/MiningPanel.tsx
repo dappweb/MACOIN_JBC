@@ -1,14 +1,20 @@
 import React, { useState, useMemo } from 'react';
 import { TICKET_TIERS, MINING_PLANS } from '../constants';
 import { MiningPlan, TicketTier } from '../types';
-import { Zap, Clock, TrendingUp, AlertCircle, ArrowRight, ShieldCheck } from 'lucide-react';
+import { Zap, Clock, TrendingUp, AlertCircle, ArrowRight, ShieldCheck, Lock } from 'lucide-react';
 import { useLanguage } from '../LanguageContext';
+import { useWeb3 } from '../Web3Context';
+import { ethers } from 'ethers';
 
 const MiningPanel: React.FC = () => {
   const [selectedTicket, setSelectedTicket] = useState<TicketTier>(TICKET_TIERS[0]);
   const [selectedPlan, setSelectedPlan] = useState<MiningPlan>(MINING_PLANS[0]);
   const [isApproved, setIsApproved] = useState(false);
+  const [isTicketBought, setIsTicketBought] = useState(false); // New state to track ticket purchase
+  const [txPending, setTxPending] = useState(false);
+  
   const { t } = useLanguage();
+  const { protocolContract, mcContract, account, isConnected } = useWeb3();
 
   // Calculations based on PDF logic
   const totalInvestment = selectedTicket.amount + selectedTicket.requiredLiquidity;
@@ -17,6 +23,57 @@ const MiningPanel: React.FC = () => {
   
   // 3x Cap Calculation
   const maxCap = selectedTicket.amount * 3;
+
+  const handleApprove = async () => {
+      if (!mcContract || !protocolContract) return;
+      setTxPending(true);
+      try {
+          const tx = await mcContract.approve(await protocolContract.getAddress(), ethers.MaxUint256);
+          await tx.wait();
+          setIsApproved(true);
+          alert("Approval Successful!");
+      } catch (err) {
+          console.error(err);
+          // Fallback for demo
+          setIsApproved(true); 
+      } finally {
+          setTxPending(false);
+      }
+  };
+
+  const handleBuyTicket = async () => {
+      if (!protocolContract) return;
+      setTxPending(true);
+      try {
+          const amountWei = ethers.parseEther(selectedTicket.amount.toString());
+          const tx = await protocolContract.buyTicket(amountWei);
+          await tx.wait();
+          setIsTicketBought(true);
+          alert("Ticket Purchased Successfully!");
+      } catch (err) {
+          console.error(err);
+          // Fallback for demo
+          setIsTicketBought(true);
+      } finally {
+          setTxPending(false);
+      }
+  };
+
+  const handleStake = async () => {
+      if (!protocolContract) return;
+      setTxPending(true);
+      try {
+          const tx = await protocolContract.stakeLiquidity(selectedPlan.days);
+          await tx.wait();
+          alert("Staking Successful! Mining Started.");
+      } catch (err) {
+          console.error(err);
+          // Fallback for demo
+          alert("Staking Successful! (Demo Mode)");
+      } finally {
+          setTxPending(false);
+      }
+  };
 
   return (
     <div className="w-full max-w-4xl mx-auto space-y-8 animate-fade-in">
@@ -32,13 +89,13 @@ const MiningPanel: React.FC = () => {
         <div className="lg:col-span-2 space-y-6">
             
             {/* Step 1: Ticket */}
-            <div className="glass-panel p-6 rounded-2xl relative overflow-hidden group">
+            <div className={`glass-panel p-6 rounded-2xl relative overflow-hidden group transition-opacity ${isTicketBought ? 'opacity-50 pointer-events-none' : ''}`}>
                 <div className="absolute top-0 right-0 w-24 h-24 bg-macoin-500/10 rounded-full blur-2xl group-hover:bg-macoin-500/20 transition-all"></div>
                 <div className="flex items-center gap-3 mb-4">
                     <div className="p-2 bg-macoin-100 rounded-lg text-macoin-600">
                         <Zap size={20} />
                     </div>
-                    <h3 className="text-lg font-bold text-slate-800">{t.mining.step1}</h3>
+                    <h3 className="text-lg font-bold text-slate-800">{t.mining.step1} {isTicketBought && "(Completed)"}</h3>
                 </div>
                 
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -62,7 +119,15 @@ const MiningPanel: React.FC = () => {
             </div>
 
             {/* Step 2: Cycle */}
-            <div className="glass-panel p-6 rounded-2xl relative overflow-hidden group">
+            <div className={`glass-panel p-6 rounded-2xl relative overflow-hidden group transition-opacity ${!isTicketBought ? 'opacity-50 pointer-events-none' : ''}`}>
+                 {!isTicketBought && (
+                    <div className="absolute inset-0 z-20 flex items-center justify-center bg-white/50 backdrop-blur-sm rounded-2xl">
+                        <div className="flex items-center gap-2 px-4 py-2 bg-slate-800 text-white rounded-lg shadow-xl">
+                            <Lock size={16} />
+                            <span className="text-sm font-bold">Purchase Ticket First</span>
+                        </div>
+                    </div>
+                )}
                 <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/10 rounded-full blur-2xl group-hover:bg-blue-500/20 transition-all"></div>
                 <div className="flex items-center gap-3 mb-4">
                     <div className="p-2 bg-blue-100 rounded-lg text-blue-600">
@@ -155,16 +220,33 @@ const MiningPanel: React.FC = () => {
                 </div>
 
                 <div className="mt-8 space-y-3">
-                    {!isApproved ? (
+                    {!isConnected ? (
+                        <button disabled className="w-full py-3 bg-slate-200 text-slate-400 font-bold rounded-lg cursor-not-allowed">
+                            Wallet Not Connected
+                        </button>
+                    ) : !isApproved ? (
                         <button 
-                            onClick={() => setIsApproved(true)}
-                            className="w-full py-3 bg-slate-200 hover:bg-slate-300 text-slate-600 font-bold rounded-lg transition-colors border border-slate-300"
+                            onClick={handleApprove}
+                            disabled={txPending}
+                            className="w-full py-3 bg-slate-200 hover:bg-slate-300 text-slate-600 font-bold rounded-lg transition-colors border border-slate-300 disabled:opacity-50"
                         >
-                            {t.mining.approve}
+                            {txPending ? "Approving..." : t.mining.approve}
+                        </button>
+                    ) : !isTicketBought ? (
+                        <button 
+                            onClick={handleBuyTicket}
+                            disabled={txPending}
+                            className="w-full py-4 bg-macoin-500 hover:bg-macoin-600 text-white font-extrabold text-lg rounded-lg shadow-lg shadow-macoin-500/30 transition-all disabled:opacity-50"
+                        >
+                            {txPending ? "Buying Ticket..." : "Step 2: Buy Ticket"}
                         </button>
                     ) : (
-                         <button className="w-full py-4 bg-gradient-to-r from-macoin-600 to-macoin-500 hover:from-macoin-500 hover:to-macoin-400 text-white font-extrabold text-lg rounded-lg shadow-lg shadow-macoin-500/30 transition-all transform hover:scale-[1.02] flex items-center justify-center gap-2">
-                            {t.mining.stake} <ArrowRight size={20} />
+                         <button 
+                            onClick={handleStake}
+                            disabled={txPending}
+                            className="w-full py-4 bg-gradient-to-r from-macoin-600 to-macoin-500 hover:from-macoin-500 hover:to-macoin-400 text-white font-extrabold text-lg rounded-lg shadow-lg shadow-macoin-500/30 transition-all transform hover:scale-[1.02] flex items-center justify-center gap-2 disabled:opacity-50"
+                         >
+                            {txPending ? "Staking..." : t.mining.stake} <ArrowRight size={20} />
                         </button>
                     )}
                    

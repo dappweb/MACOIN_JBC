@@ -1,11 +1,15 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { UserStats } from '../types';
 import { Wallet, TrendingUp, Users, Coins, ArrowUpRight } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useLanguage } from '../LanguageContext';
+import { useWeb3 } from '../Web3Context';
+import { ethers } from 'ethers';
 
 interface StatsPanelProps {
   stats: UserStats;
+  onJoinClick: () => void;
+  onWhitepaperClick: () => void;
 }
 
 const data = [
@@ -18,8 +22,30 @@ const data = [
   { name: '30', uv: 10500 },
 ];
 
-const StatsPanel: React.FC<StatsPanelProps> = ({ stats }) => {
+const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClick, onWhitepaperClick }) => {
   const { t } = useLanguage();
+  const { mcContract, protocolContract, account, isConnected } = useWeb3();
+  const [displayStats, setDisplayStats] = useState<UserStats>(initialStats);
+
+  useEffect(() => {
+    const fetchData = async () => {
+        if (isConnected && account && mcContract && protocolContract) {
+            try {
+                // Fetch MC Balance
+                // const mcBal = await mcContract.balanceOf(account);
+                
+                // Fetch Protocol Info
+                // const userInfo = await protocolContract.userInfo(account);
+                
+                // For demo/mock environment, we just use the props but you can override here
+                // setDisplayStats(prev => ({ ...prev, balanceMC: parseFloat(ethers.formatEther(mcBal)) }));
+            } catch (err) {
+                console.error("Error fetching stats", err);
+            }
+        }
+    };
+    fetchData();
+  }, [isConnected, account, mcContract, protocolContract]);
 
   return (
     <div className="max-w-7xl mx-auto space-y-8 animate-fade-in">
@@ -42,10 +68,16 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats }) => {
                 {t.stats.desc}
             </p>
             <div className="flex gap-4">
-                <button className="px-6 py-3 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-lg shadow-xl transition-all transform hover:-translate-y-1">
+                <button 
+                    onClick={onJoinClick}
+                    className="px-6 py-3 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-lg shadow-xl transition-all transform hover:-translate-y-1"
+                >
                     {t.stats.join}
                 </button>
-                <button className="px-6 py-3 bg-white/20 hover:bg-white/30 text-slate-900 border border-white/40 font-bold rounded-lg backdrop-blur-md transition-all">
+                <button 
+                    onClick={onWhitepaperClick}
+                    className="px-6 py-3 bg-white/20 hover:bg-white/30 text-slate-900 border border-white/40 font-bold rounded-lg backdrop-blur-md transition-all"
+                >
                     {t.stats.whitepaper}
                 </button>
             </div>
@@ -71,7 +103,7 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats }) => {
                 <span className="text-slate-500 text-sm">{t.stats.assets}</span>
                 <Wallet className="text-macoin-600" size={20} />
             </div>
-            <div className="text-3xl font-bold text-slate-900 mb-1">{stats.balanceMC.toLocaleString()}</div>
+            <div className="text-3xl font-bold text-slate-900 mb-1">{displayStats.balanceMC.toLocaleString()}</div>
             <div className="text-xs text-macoin-600 flex items-center gap-1">
                 <ArrowUpRight size={12} /> +2.4% {t.stats.today}
             </div>
@@ -83,9 +115,9 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats }) => {
                 <span className="text-slate-500 text-sm">{t.stats.holding}</span>
                 <Coins className="text-yellow-500" size={20} />
             </div>
-            <div className="text-3xl font-bold text-slate-900 mb-1">{stats.balanceJBC.toLocaleString()}</div>
+            <div className="text-3xl font-bold text-slate-900 mb-1">{displayStats.balanceJBC.toLocaleString()}</div>
             <div className="text-xs text-yellow-600 flex items-center gap-1">
-                ≈ ${(stats.balanceJBC * 1.2).toFixed(2)} USD
+                ≈ ${(displayStats.balanceJBC * 1.2).toFixed(2)} USD
             </div>
         </div>
 
@@ -95,7 +127,7 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats }) => {
                 <span className="text-slate-500 text-sm">{t.stats.revenue}</span>
                 <TrendingUp className="text-blue-500" size={20} />
             </div>
-            <div className="text-3xl font-bold text-slate-900 mb-1">{stats.totalRevenue.toLocaleString()}</div>
+            <div className="text-3xl font-bold text-slate-900 mb-1">{displayStats.totalRevenue.toLocaleString()}</div>
             <div className="text-xs text-slate-400">{t.stats.settlement}</div>
         </div>
 
@@ -106,10 +138,10 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats }) => {
                 <Users className="text-purple-500" size={20} />
             </div>
             <div className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 mb-1">
-                {stats.currentLevel}
+                {displayStats.currentLevel}
             </div>
             <div className="text-xs text-slate-400">
-                {t.stats.teamCount}: {stats.teamCount}
+                {t.stats.teamCount}: {displayStats.teamCount}
             </div>
         </div>
       </div>

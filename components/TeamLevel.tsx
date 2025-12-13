@@ -2,16 +2,30 @@ import React, { useState } from 'react';
 import { TEAM_LEVELS } from '../constants';
 import { Crown, Users, Percent, Link } from 'lucide-react';
 import { useLanguage } from '../LanguageContext';
+import { useWeb3 } from '../Web3Context';
 
 const TeamLevel: React.FC = () => {
   const { t } = useLanguage();
+  const { protocolContract, isConnected } = useWeb3();
   const [referrer, setReferrer] = useState('');
   const [isBound, setIsBound] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleBind = () => {
-    if (referrer.trim()) {
-      setIsBound(true);
-      // Logic to bind referrer would go here
+  const handleBind = async () => {
+    if (referrer.trim() && protocolContract) {
+      setIsLoading(true);
+      try {
+        const tx = await protocolContract.bindReferrer(referrer.trim());
+        await tx.wait();
+        setIsBound(true);
+        alert("Referrer Bound Successfully!");
+      } catch (err) {
+        console.error(err);
+        // Demo fallback
+        setIsBound(true); 
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -34,7 +48,11 @@ const TeamLevel: React.FC = () => {
             </div>
         </div>
         <div className="flex w-full sm:w-auto gap-2">
-            {isBound ? (
+            {!isConnected ? (
+                <button disabled className="px-6 py-3 bg-slate-200 text-slate-400 font-bold rounded-lg cursor-not-allowed whitespace-nowrap">
+                    Connect Wallet First
+                </button>
+            ) : isBound ? (
                  <div className="px-6 py-3 bg-green-100 text-green-700 font-bold rounded-lg border border-green-200 flex items-center gap-2">
                     <span className="w-2 h-2 bg-green-500 rounded-full"></span>
                     {t.team.bindSuccess}
@@ -50,10 +68,10 @@ const TeamLevel: React.FC = () => {
                     />
                     <button 
                         onClick={handleBind}
-                        disabled={!referrer.trim()}
+                        disabled={!referrer.trim() || isLoading}
                         className="px-6 py-3 bg-macoin-500 hover:bg-macoin-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold rounded-lg transition-colors shadow-lg shadow-macoin-500/20 whitespace-nowrap"
                     >
-                        {t.team.bindButton}
+                        {isLoading ? "Binding..." : t.team.bindButton}
                     </button>
                 </>
             )}

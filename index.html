@@ -6,6 +6,7 @@
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>MACOIN | RWA Jinbao</title>
+    <!-- Try to use unpkg as fallback or primary if cdn.tailwindcss is blocked -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
       tailwind.config = {
@@ -17,7 +18,7 @@
                 100: '#ccfbf1',
                 300: '#5eead4',
                 400: '#2dd4bf',
-                500: '#02c66f', // Adjusted to match image (vivid green)
+                500: '#02c66f', 
                 600: '#059669',
                 700: '#047857',
                 800: '#065f46',
@@ -37,6 +38,7 @@
       body {
         background-color: #f8fafc; /* Slate 50 */
         color: #0f172a; /* Slate 900 */
+        font-family: 'Inter', sans-serif; /* Fallback font */
       }
       .glass-panel {
         background: rgba(255, 255, 255, 0.9);
@@ -45,13 +47,10 @@
         border: 1px solid rgba(226, 232, 240, 1); /* Slate 200 */
         box-shadow: 0 4px 20px -5px rgba(0, 0, 0, 0.05);
       }
-      .neon-text {
-        color: #166534; /* Darker green for text on white */
-        text-shadow: none;
-      }
-      .neon-text-dark {
-        /* For dark backgrounds elements that remain */
-         text-shadow: 0 0 10px rgba(74, 222, 128, 0.5);
+      /* Ensure grid works even if Tailwind fails partially */
+      .grid-cols-3 {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
       }
     </style>
   </head>

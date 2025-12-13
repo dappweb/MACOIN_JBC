@@ -20,8 +20,8 @@ export const PROTOCOL_ABI = [
 
 // Contract Addresses (Mock for now, replace with real deployment)
 export const CONTRACT_ADDRESSES = {
-  MC_TOKEN: "0xMockMCTokenAddress", 
-  PROTOCOL: "0xMockProtocolAddress" 
+  MC_TOKEN: "0xF38EaC9cDB449F52DEFf11707c97Fe7e7b005eBE", 
+  PROTOCOL: "0x490B6c6Cb9FEC80fD17FBd2D71f095aE01f67Ec0" 
 };
 
 interface Web3ContextType {

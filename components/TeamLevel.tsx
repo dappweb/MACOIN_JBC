@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { TEAM_LEVELS } from '../constants';
 import { Crown, Users, Percent, Link } from 'lucide-react';
 import { useLanguage } from '../LanguageContext';
@@ -6,10 +6,55 @@ import { useWeb3 } from '../Web3Context';
 
 const TeamLevel: React.FC = () => {
   const { t } = useLanguage();
-  const { protocolContract, isConnected } = useWeb3();
+  const { protocolContract, account, isConnected } = useWeb3();
   const [referrer, setReferrer] = useState('');
   const [isBound, setIsBound] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [userLevelInfo, setUserLevelInfo] = useState({
+      activeDirects: 0,
+      teamCount: 0,
+      currentLevel: 'V0'
+  });
+
+  useEffect(() => {
+    const fetchTeamInfo = async () => {
+        if (isConnected && account && protocolContract) {
+            try {
+                const userInfo = await protocolContract.userInfo(account);
+                // userInfo: (referrer, activeDirects, teamCount, totalRevenue, currentCap, isActive)
+                
+                // Check if referrer is bound (not address(0))
+                const currentReferrer = userInfo[0];
+                if (currentReferrer && currentReferrer !== '0x0000000000000000000000000000000000000000') {
+                    setIsBound(true);
+                }
+
+                // Calc Level
+                const activeDirects = Number(userInfo[1]);
+                let level = "V0";
+                if (activeDirects >= 100000) level = "V9";
+                else if (activeDirects >= 30000) level = "V8";
+                else if (activeDirects >= 10000) level = "V7";
+                else if (activeDirects >= 3000) level = "V6";
+                else if (activeDirects >= 1000) level = "V5";
+                else if (activeDirects >= 300) level = "V4";
+                else if (activeDirects >= 100) level = "V3";
+                else if (activeDirects >= 30) level = "V2";
+                else if (activeDirects >= 10) level = "V1";
+
+                setUserLevelInfo({
+                    activeDirects: activeDirects,
+                    teamCount: Number(userInfo[2]),
+                    currentLevel: level
+                });
+
+            } catch (err) {
+                console.error("Failed to fetch team info", err);
+            }
+        }
+    };
+    fetchTeamInfo();
+  }, [isConnected, account, protocolContract]);
 
   const handleBind = async () => {
     if (referrer.trim() && protocolContract) {
@@ -79,6 +124,19 @@ const TeamLevel: React.FC = () => {
       </div>
 
       <div className="glass-panel rounded-2xl overflow-hidden border border-slate-200 bg-white">
+        <div className="p-6 border-b border-slate-100 flex flex-wrap gap-4 justify-between items-center bg-slate-50">
+            <div>
+                <h3 className="text-xl font-bold text-slate-800">{t.team.current}: <span className="text-macoin-600">{userLevelInfo.currentLevel}</span></h3>
+                <p className="text-sm text-slate-500">
+                    {t.team.colCount}: {userLevelInfo.activeDirects} | {t.team.colReward}: {TEAM_LEVELS.find(l => l.level === userLevelInfo.currentLevel)?.reward || '0%'}
+                </p>
+            </div>
+            <div className="px-4 py-2 bg-white rounded-lg border border-slate-200 shadow-sm">
+                <span className="text-sm text-slate-500">{t.team.teamCount}:</span>
+                <span className="ml-2 font-bold text-slate-900">{userLevelInfo.teamCount}</span>
+            </div>
+        </div>
+
         <div className="overflow-x-auto">
             <table className="w-full text-left">
                 <thead>

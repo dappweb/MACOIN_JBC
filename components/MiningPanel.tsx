@@ -75,6 +75,37 @@ const MiningPanel: React.FC = () => {
       }
   };
 
+  const handleClaim = async () => {
+      if (!protocolContract) return;
+      setTxPending(true);
+      try {
+          const tx = await protocolContract.claimRewards();
+          await tx.wait();
+          alert("Rewards Claimed Successfully!");
+      } catch (err) {
+          console.error(err);
+          alert("Claim Failed. (Maybe no rewards yet?)");
+      } finally {
+          setTxPending(false);
+      }
+  };
+
+  const handleRedeem = async () => {
+      if (!protocolContract) return;
+      setTxPending(true);
+      try {
+          const tx = await protocolContract.redeem();
+          await tx.wait();
+          alert("Redemption Successful!");
+          setIsTicketBought(false); // Reset UI state
+      } catch (err) {
+          console.error(err);
+          alert("Redemption Failed. (Maybe cycle not ended?)");
+      } finally {
+          setTxPending(false);
+      }
+  };
+
   return (
     <div className="w-full max-w-4xl mx-auto space-y-8 animate-fade-in">
       
@@ -254,6 +285,26 @@ const MiningPanel: React.FC = () => {
                         {t.mining.agreement}
                     </p>
                 </div>
+                
+                {/* Active Mining Controls */}
+                {isTicketBought && (
+                    <div className="mt-4 pt-4 border-t border-slate-100 flex gap-2">
+                         <button 
+                            onClick={handleClaim}
+                            disabled={txPending}
+                            className="flex-1 py-2 bg-yellow-100 text-yellow-700 font-bold rounded-lg hover:bg-yellow-200 transition-colors disabled:opacity-50"
+                         >
+                            Claim Rewards
+                         </button>
+                         <button 
+                            onClick={handleRedeem}
+                            disabled={txPending}
+                            className="flex-1 py-2 bg-red-100 text-red-700 font-bold rounded-lg hover:bg-red-200 transition-colors disabled:opacity-50"
+                         >
+                            Redeem
+                         </button>
+                    </div>
+                )}
 
             </div>
         </div>

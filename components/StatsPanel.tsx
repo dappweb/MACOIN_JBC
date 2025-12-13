@@ -32,19 +32,48 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
         if (isConnected && account && mcContract && protocolContract) {
             try {
                 // Fetch MC Balance
-                // const mcBal = await mcContract.balanceOf(account);
+                const mcBal = await mcContract.balanceOf(account);
+                
+                // Fetch JBC Balance (Assume JBC contract is available via context or passed prop, if not mock it or add to context)
+                // For now, let's assume protocol contract has JBC address or we fetch it similarly if we had JBC contract in context.
+                // Since we only have mcContract in context easily accessible (or we can add jbcContract), let's use what we have.
+                // Note: Web3Context needs to be updated to expose jbcContract if we want real JBC balance.
                 
                 // Fetch Protocol Info
-                // const userInfo = await protocolContract.userInfo(account);
+                const userInfo = await protocolContract.userInfo(account);
+                // userInfo returns: (referrer, activeDirects, teamCount, totalRevenue, currentCap, isActive)
                 
-                // For demo/mock environment, we just use the props but you can override here
-                // setDisplayStats(prev => ({ ...prev, balanceMC: parseFloat(ethers.formatEther(mcBal)) }));
+                // Calculate Level based on activeDirects (simplified V1-V9 logic)
+                // This logic should match the contract/whitepaper. 
+                // Contract stores activeDirects. We can map it roughly.
+                let level = "V0";
+                const activeDirects = Number(userInfo[1]);
+                if (activeDirects >= 100000) level = "V9";
+                else if (activeDirects >= 30000) level = "V8";
+                else if (activeDirects >= 10000) level = "V7";
+                else if (activeDirects >= 3000) level = "V6";
+                else if (activeDirects >= 1000) level = "V5";
+                else if (activeDirects >= 300) level = "V4";
+                else if (activeDirects >= 100) level = "V3";
+                else if (activeDirects >= 30) level = "V2";
+                else if (activeDirects >= 10) level = "V1";
+
+                setDisplayStats(prev => ({ 
+                    ...prev, 
+                    balanceMC: parseFloat(ethers.formatEther(mcBal)),
+                    // balanceJBC: ... (Need JBC Contract),
+                    totalRevenue: parseFloat(ethers.formatEther(userInfo[3])),
+                    teamCount: Number(userInfo[2]),
+                    currentLevel: level
+                }));
             } catch (err) {
                 console.error("Error fetching stats", err);
             }
         }
     };
+    const timer = setInterval(fetchData, 5000); // Refresh every 5s
     fetchData();
+    return () => clearInterval(timer);
   }, [isConnected, account, mcContract, protocolContract]);
 
   return (

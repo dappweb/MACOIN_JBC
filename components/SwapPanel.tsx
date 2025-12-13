@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useLanguage } from '../LanguageContext';
-import { useWeb3 } from '../Web3Context';
+import { useWeb3, CONTRACT_ADDRESSES } from '../Web3Context';
 import { ArrowLeftRight, RotateCw } from 'lucide-react';
 import { ethers } from 'ethers';
 import { MOCK_USER_STATS } from '../constants';
 
 const SwapPanel: React.FC = () => {
   const { t } = useLanguage();
-  const { mcContract, account, isConnected } = useWeb3();
+  const { mcContract, jbcContract, protocolContract, account, isConnected } = useWeb3();
   
   const [payAmount, setPayAmount] = useState('');
   const [getAmount, setGetAmount] = useState('');
@@ -18,31 +18,72 @@ const SwapPanel: React.FC = () => {
 
   useEffect(() => {
     const fetchBalances = async () => {
-        if (isConnected && account && mcContract) {
+        if (isConnected && account) {
             try {
-                // Mock fetching for now or real if contract deployed
-                // const mcBal = await mcContract.balanceOf(account);
-                // setBalanceMC(ethers.formatEther(mcBal));
-                // JBC balance logic similar
-                
-                // For Demo, stick to MOCK or static if contract fails
-                setBalanceMC(MOCK_USER_STATS.balanceMC.toString());
-                setBalanceJBC(MOCK_USER_STATS.balanceJBC.toString());
+                if (mcContract) {
+                    const mcBal = await mcContract.balanceOf(account);
+                    setBalanceMC(ethers.formatEther(mcBal));
+                } else {
+                    setBalanceMC(MOCK_USER_STATS.balanceMC.toString());
+                }
+
+                if (jbcContract) {
+                    const jbcBal = await jbcContract.balanceOf(account);
+                    setBalanceJBC(ethers.formatEther(jbcBal));
+                } else {
+                    setBalanceJBC(MOCK_USER_STATS.balanceJBC.toString());
+                }
             } catch (err) {
                 console.error("Failed to fetch balances", err);
+                // Fallback
+                setBalanceMC(MOCK_USER_STATS.balanceMC.toString());
+                setBalanceJBC(MOCK_USER_STATS.balanceJBC.toString());
             }
         }
     };
     fetchBalances();
-  }, [isConnected, account, mcContract]);
+  }, [isConnected, account, mcContract, jbcContract]);
 
   const handleSwap = async () => {
+      if (!protocolContract || !payAmount) return;
       setIsLoading(true);
-      // Simulate network delay
-      setTimeout(() => {
+      try {
+          const amount = ethers.parseEther(payAmount);
+          let tx;
+
+          if (isSelling) {
+              // Sell JBC: Approve JBC -> SwapJBCToMC
+              if (jbcContract) {
+                  const allowance = await jbcContract.allowance(account, CONTRACT_ADDRESSES.PROTOCOL);
+                  if (allowance < amount) {
+                      const approveTx = await jbcContract.approve(CONTRACT_ADDRESSES.PROTOCOL, amount);
+                      await approveTx.wait();
+                  }
+              }
+              tx = await protocolContract.swapJBCToMC(amount);
+          } else {
+              // Buy JBC: Approve MC -> SwapMCToJBC
+              if (mcContract) {
+                  const allowance = await mcContract.allowance(account, CONTRACT_ADDRESSES.PROTOCOL);
+                  if (allowance < amount) {
+                      const approveTx = await mcContract.approve(CONTRACT_ADDRESSES.PROTOCOL, amount);
+                      await approveTx.wait();
+                  }
+              }
+              tx = await protocolContract.swapMCToJBC(amount);
+          }
+          
+          await tx.wait();
+          alert("Swap Successful!");
+          setPayAmount('');
+          setGetAmount('');
+          // Refresh balances (optional, or rely on useEffect dependency if logic added)
+      } catch (err: any) {
+          console.error(err);
+          alert("Swap Failed: " + (err.reason || err.message));
+      } finally {
           setIsLoading(false);
-          alert("Swap Feature requires DEX Router deployment. \nThis is a UI Demo.");
-      }, 1500);
+      }
   };
 
   const handleInput = (val: string) => {

@@ -17,6 +17,8 @@ export const PROTOCOL_ABI = [
   "function stakeLiquidity(uint256 cycleDays) external",
   "function claimRewards() external",
   "function redeem() external",
+  "function swapMCToJBC(uint256 mcAmount) external",
+  "function swapJBCToMC(uint256 jbcAmount) external",
   "function userInfo(address) view returns (address referrer, uint256 activeDirects, uint256 teamCount, uint256 totalRevenue, uint256 currentCap, bool isActive)",
   "function userTicket(address) view returns (uint256 amount, uint256 requiredLiquidity, uint256 purchaseTime, bool liquidityProvided, uint256 liquidityAmount, uint256 startTime, uint256 cycleDays, bool redeemed)"
 ];
@@ -24,6 +26,7 @@ export const PROTOCOL_ABI = [
 // Contract Addresses (Mock for now, replace with real deployment)
 export const CONTRACT_ADDRESSES = {
   MC_TOKEN: "0xF38EaC9cDB449F52DEFf11707c97Fe7e7b005eBE", 
+  JBC_TOKEN: "0x0000000000000000000000000000000000000000", // Replace with real JBC Address
   PROTOCOL: "0x490B6c6Cb9FEC80fD17FBd2D71f095aE01f67Ec0" 
 };
 
@@ -34,6 +37,7 @@ interface Web3ContextType {
   connectWallet: () => void;
   isConnected: boolean;
   mcContract: ethers.Contract | null;
+  jbcContract: ethers.Contract | null;
   protocolContract: ethers.Contract | null;
 }
 
@@ -47,23 +51,29 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const { openConnectModal } = useConnectModal();
 
   const [mcContract, setMcContract] = useState<ethers.Contract | null>(null);
+  const [jbcContract, setJbcContract] = useState<ethers.Contract | null>(null);
   const [protocolContract, setProtocolContract] = useState<ethers.Contract | null>(null);
 
   useEffect(() => {
     if (signer) {
         // Init Contracts with Signer (Write access)
         const _mc = new ethers.Contract(CONTRACT_ADDRESSES.MC_TOKEN, MC_ABI, signer);
+        const _jbc = new ethers.Contract(CONTRACT_ADDRESSES.JBC_TOKEN, MC_ABI, signer);
         const _protocol = new ethers.Contract(CONTRACT_ADDRESSES.PROTOCOL, PROTOCOL_ABI, signer);
         setMcContract(_mc);
+        setJbcContract(_jbc);
         setProtocolContract(_protocol);
     } else if (provider) {
         // Init Contracts with Provider (Read only)
         const _mc = new ethers.Contract(CONTRACT_ADDRESSES.MC_TOKEN, MC_ABI, provider);
+        const _jbc = new ethers.Contract(CONTRACT_ADDRESSES.JBC_TOKEN, MC_ABI, provider);
         const _protocol = new ethers.Contract(CONTRACT_ADDRESSES.PROTOCOL, PROTOCOL_ABI, provider);
         setMcContract(_mc);
+        setJbcContract(_jbc);
         setProtocolContract(_protocol);
     } else {
         setMcContract(null);
+        setJbcContract(null);
         setProtocolContract(null);
     }
   }, [signer, provider]);
@@ -82,6 +92,7 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
       connectWallet,
       isConnected,
       mcContract,
+      jbcContract,
       protocolContract
     }}>
       {children}

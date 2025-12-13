@@ -54,6 +54,8 @@ contract JinbaoProtocol is Ownable, ReentrancyGuard {
     event LiquidityStaked(address indexed user, uint256 amount, uint256 cycleDays);
     event RewardClaimed(address indexed user, uint256 mcAmount, uint256 jbcAmount);
     event Redeemed(address indexed user, uint256 principal, uint256 fee);
+    event SwappedMCToJBC(address indexed user, uint256 mcAmount, uint256 jbcAmount, uint256 tax);
+    event SwappedJBCToMC(address indexed user, uint256 jbcAmount, uint256 mcAmount, uint256 tax);
 
     constructor(
         address _mcToken, 
@@ -216,6 +218,59 @@ contract JinbaoProtocol is Ownable, ReentrancyGuard {
         jbcToken.transfer(msg.sender, jbcAmount);
 
         emit RewardClaimed(msg.sender, mcPart, jbcAmount);
+    }
+
+    // --- Swap System ---
+
+    // Buy JBC with MC (50% Tax)
+    function swapMCToJBC(uint256 mcAmount) external nonReentrant {
+        require(mcAmount > 0, "Invalid amount");
+        
+        // 1. Transfer MC from user to contract
+        mcToken.transferFrom(msg.sender, address(this), mcAmount);
+        
+        // 2. Calculate JBC out (1:1 price)
+        uint256 jbcTotal = mcAmount; // 1 MC = 1 JBC
+        uint256 tax = (jbcTotal * 50) / 100; // 50% Tax
+        uint256 amountToUser = jbcTotal - tax;
+        
+        // 3. Check liquidity
+        require(jbcToken.balanceOf(address(this)) >= jbcTotal, "Insufficient JBC liquidity");
+        
+        // 4. Burn Tax (Burn from contract balance)
+        jbcToken.burn(tax);
+        
+        // 5. Transfer remaining JBC to user
+        jbcToken.transfer(msg.sender, amountToUser);
+        
+        emit SwappedMCToJBC(msg.sender, mcAmount, amountToUser, tax);
+    }
+
+    // Sell JBC for MC (25% Tax)
+    function swapJBCToMC(uint256 jbcAmount) external nonReentrant {
+        require(jbcAmount > 0, "Invalid amount");
+        
+        // 1. Transfer JBC from user to contract
+        jbcToken.transferFrom(msg.sender, address(this), jbcAmount);
+        
+        // 2. Calculate Tax (25% Tax)
+        uint256 tax = (jbcAmount * 25) / 100;
+        uint256 amountToSwap = jbcAmount - tax;
+        
+        // 3. Burn Tax
+        // Since we already transferred JBC to contract, we burn from contract
+        jbcToken.burn(tax);
+        
+        // 4. Calculate MC out (1:1 price)
+        uint256 mcAmount = amountToSwap; // 1 JBC = 1 MC
+        
+        // 5. Check liquidity
+        require(mcToken.balanceOf(address(this)) >= mcAmount, "Insufficient MC liquidity");
+        
+        // 6. Transfer MC to user
+        mcToken.transfer(msg.sender, mcAmount);
+        
+        emit SwappedJBCToMC(msg.sender, jbcAmount, mcAmount, tax);
     }
 
     // --- Redemption ---

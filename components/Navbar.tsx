@@ -4,6 +4,7 @@ import { Diamond, Home, Pickaxe, Users, ArrowLeftRight, Settings, PlusCircle } f
 import { useLanguage } from '../LanguageContext';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { useWeb3 } from '../Web3Context';
+import { useChainId, useSwitchChain } from 'wagmi';
 
 interface NavbarProps {
   currentTab: AppTab;
@@ -14,8 +15,12 @@ interface NavbarProps {
 
 const Navbar: React.FC<NavbarProps> = ({ currentTab, setTab }) => {
   const { t } = useLanguage();
-  const { protocolContract, account } = useWeb3();
+  const { protocolContract, account, isConnected } = useWeb3();
   const [isOwner, setIsOwner] = useState(false);
+  
+  const chainId = useChainId();
+  const { switchChain } = useSwitchChain();
+  const MC_CHAIN_ID = 88813;
 
   useEffect(() => {
     const checkOwner = async () => {
@@ -30,6 +35,29 @@ const Navbar: React.FC<NavbarProps> = ({ currentTab, setTab }) => {
     };
     checkOwner();
   }, [protocolContract, account]);
+
+  // Automatic Chain Switching/Adding
+  useEffect(() => {
+      const ensureMcChain = async () => {
+          if (isConnected && chainId !== MC_CHAIN_ID) {
+              console.log("Incorrect chain detected. Attempting to switch to MC Chain...");
+              // Try standard switch first if available in wallet (via Wagmi)
+              if (switchChain) {
+                  try {
+                      switchChain({ chainId: MC_CHAIN_ID });
+                      return; 
+                  } catch (error) {
+                      console.log("Switch chain via wagmi failed, trying wallet_addEthereumChain...", error);
+                  }
+              }
+
+              // Fallback to manual add/switch
+              await addMcChain();
+          }
+      };
+
+      ensureMcChain();
+  }, [isConnected, chainId, switchChain]);
 
   const addMcChain = async () => {
     if (typeof window.ethereum !== 'undefined') {
@@ -52,7 +80,8 @@ const Navbar: React.FC<NavbarProps> = ({ currentTab, setTab }) => {
             console.error("Failed to add network", error);
         }
     } else {
-        alert("Please install a wallet extension like MetaMask.");
+        // Silent fail or minimal log, don't alert automatically to annoy user
+        console.warn("Wallet extension not found for auto-add network.");
     }
   };
 
@@ -106,17 +135,9 @@ const Navbar: React.FC<NavbarProps> = ({ currentTab, setTab }) => {
               )}
             </div>
 
-            {/* Wallet Connect & Add Network */}
+            {/* Wallet Connect */}
             <div className="flex items-center gap-4">
-               {/* Add Network Button - Visible on desktop/tablet */}
-               <button 
-                  onClick={addMcChain}
-                  className="hidden sm:flex items-center gap-2 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-sm font-bold transition-colors"
-                  title="Add MACOIN Chain to Wallet"
-              >
-                  <PlusCircle size={16} /> <span className="hidden lg:inline">Add MC Chain</span>
-              </button>
-
+               {/* Button removed as requested for auto-logic */}
               <ConnectButton showBalance={false} chainStatus="icon" accountStatus="address" />
             </div>
           </div>

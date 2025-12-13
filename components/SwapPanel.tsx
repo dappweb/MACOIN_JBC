@@ -56,7 +56,7 @@ const SwapPanel: React.FC = () => {
               if (jbcContract) {
                   const allowance = await jbcContract.allowance(account, CONTRACT_ADDRESSES.PROTOCOL);
                   if (allowance < amount) {
-                      const approveTx = await jbcContract.approve(CONTRACT_ADDRESSES.PROTOCOL, amount);
+                      const approveTx = await jbcContract.approve(CONTRACT_ADDRESSES.PROTOCOL, ethers.MaxUint256);
                       await approveTx.wait();
                   }
               }
@@ -66,7 +66,7 @@ const SwapPanel: React.FC = () => {
               if (mcContract) {
                   const allowance = await mcContract.allowance(account, CONTRACT_ADDRESSES.PROTOCOL);
                   if (allowance < amount) {
-                      const approveTx = await mcContract.approve(CONTRACT_ADDRESSES.PROTOCOL, amount);
+                      const approveTx = await mcContract.approve(CONTRACT_ADDRESSES.PROTOCOL, ethers.MaxUint256);
                       await approveTx.wait();
                   }
               }

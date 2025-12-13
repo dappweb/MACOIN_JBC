@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { TICKET_TIERS, MINING_PLANS } from '../constants';
 import { MiningPlan, TicketTier } from '../types';
 import { Zap, Clock, TrendingUp, AlertCircle, ArrowRight, ShieldCheck, Lock } from 'lucide-react';
@@ -23,6 +23,30 @@ const MiningPanel: React.FC = () => {
   
   // 3x Cap Calculation
   const maxCap = selectedTicket.amount * 3;
+
+  useEffect(() => {
+    const checkAllowance = async () => {
+        if (mcContract && account && protocolContract) {
+            try {
+                const protocolAddr = await protocolContract.getAddress();
+                const allowance = await mcContract.allowance(account, protocolAddr);
+                // Check if allowance covers the total investment required
+                // Using a slightly lower threshold to catch "already approved infinite"
+                // or just check against the needed amount
+                const requiredWei = ethers.parseEther(totalInvestment.toString());
+                
+                if (allowance >= requiredWei) {
+                    setIsApproved(true);
+                } else {
+                    setIsApproved(false);
+                }
+            } catch (err) {
+                console.error("Failed to check allowance", err);
+            }
+        }
+    };
+    checkAllowance();
+  }, [mcContract, account, protocolContract, totalInvestment]);
 
   const handleApprove = async () => {
       if (!mcContract || !protocolContract) return;

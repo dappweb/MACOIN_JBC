@@ -3,12 +3,11 @@ import { useLanguage } from '../LanguageContext';
 import { useWeb3, CONTRACT_ADDRESSES } from '../Web3Context';
 import { ArrowLeftRight, RotateCw } from 'lucide-react';
 import { ethers } from 'ethers';
-import { MOCK_USER_STATS } from '../constants';
 import toast from 'react-hot-toast';
 
 const SwapPanel: React.FC = () => {
   const { t } = useLanguage();
-  const { mcContract, jbcContract, protocolContract, account, isConnected } = useWeb3();
+  const { mcContract, jbcContract, protocolContract, account, isConnected, provider } = useWeb3();
   
   const [payAmount, setPayAmount] = useState('');
   const [getAmount, setGetAmount] = useState('');
@@ -21,18 +20,12 @@ const SwapPanel: React.FC = () => {
 
   useEffect(() => {
     const fetchBalances = async () => {
-        if (isConnected && account) {
+        if (isConnected && account && provider) {
             try {
-                if (mcContract) {
-                    const mcBal = await mcContract.balanceOf(account);
-                    setBalanceMC(ethers.formatEther(mcBal));
-                    
-                    // Pool Liquidity
-                    const poolMcBal = await mcContract.balanceOf(CONTRACT_ADDRESSES.PROTOCOL);
-                    setPoolMC(ethers.formatEther(poolMcBal));
-                } else {
-                    setBalanceMC(MOCK_USER_STATS.balanceMC.toString());
-                }
+                // Fetch Native MC Balance
+                const nativeBal = await provider.getBalance(account);
+                // We display Native MC as the user's wallet balance
+                setBalanceMC(ethers.formatEther(nativeBal));
 
                 if (jbcContract) {
                     const jbcBal = await jbcContract.balanceOf(account);
@@ -41,19 +34,21 @@ const SwapPanel: React.FC = () => {
                     // Pool Liquidity
                     const poolJbcBal = await jbcContract.balanceOf(CONTRACT_ADDRESSES.PROTOCOL);
                     setPoolJBC(ethers.formatEther(poolJbcBal));
-                } else {
-                    setBalanceJBC(MOCK_USER_STATS.balanceJBC.toString());
                 }
+
+                if (mcContract) {
+                     // Pool Liquidity (MC is ERC20 in contract)
+                    const poolMcBal = await mcContract.balanceOf(CONTRACT_ADDRESSES.PROTOCOL);
+                    setPoolMC(ethers.formatEther(poolMcBal));
+                }
+
             } catch (err) {
                 console.error("Failed to fetch balances", err);
-                // Fallback
-                setBalanceMC(MOCK_USER_STATS.balanceMC.toString());
-                setBalanceJBC(MOCK_USER_STATS.balanceJBC.toString());
             }
         }
     };
     fetchBalances();
-  }, [isConnected, account, mcContract, jbcContract]);
+  }, [isConnected, account, mcContract, jbcContract, provider]);
 
   const handleSwap = async () => {
       if (!protocolContract || !payAmount) return;
@@ -103,17 +98,48 @@ const SwapPanel: React.FC = () => {
           setGetAmount('');
           return;
       }
-      // Mock calculation with price 1:1 and tax
+      
       const amount = parseFloat(val);
-      let received = 0;
-      if (isSelling) {
-          // Sell JBC: 25% Tax
-          received = amount * 0.75;
-      } else {
-          // Buy JBC: 50% Tax
-          received = amount * 0.50;
+      if (isNaN(amount) || amount <= 0) {
+          setGetAmount('');
+          return;
       }
-      setGetAmount(received.toFixed(2));
+
+      const rMc = parseFloat(poolMC);
+      const rJbc = parseFloat(poolJBC);
+
+      let received = 0;
+
+      // AMM Formula: dy = (y * dx) / (x + dx)
+      // x = ReserveIn, y = ReserveOut, dx = AmountIn
+      
+      if (isSelling) {
+          // Sell JBC (Input JBC) -> Get MC
+          // 1. Tax 25% on Input
+          const tax = amount * 0.25;
+          const amountToSwap = amount - tax;
+          
+          // 2. AMM Swap (Input JBC, Output MC)
+          // ReserveIn = JBC Pool, ReserveOut = MC Pool
+          if (rJbc > 0 && rMc > 0) {
+              // Note: rJbc is current pool.
+              received = (amountToSwap * rMc) / (rJbc + amountToSwap);
+          }
+      } else {
+          // Buy JBC (Input MC) -> Get JBC
+          // 1. AMM Swap (Input MC, Output JBC)
+          // ReserveIn = MC Pool, ReserveOut = JBC Pool
+          let outPreTax = 0;
+          if (rMc > 0 && rJbc > 0) {
+              outPreTax = (amount * rJbc) / (rMc + amount);
+          }
+          
+          // 2. Tax 50% on Output
+          const tax = outPreTax * 0.50;
+          received = outPreTax - tax;
+      }
+      
+      setGetAmount(received.toFixed(4));
   };
 
   const toggleDirection = () => {

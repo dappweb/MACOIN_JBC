@@ -330,6 +330,29 @@ contract JinbaoProtocol is Ownable, ReentrancyGuard {
         emit RewardClaimed(msg.sender, mcPart, jbcAmount);
     }
 
+    function getJBCPrice() public view returns (uint256) {
+        uint256 mcBal = mcToken.balanceOf(address(this));
+        uint256 jbcBal = jbcToken.balanceOf(address(this));
+        if (jbcBal == 0) return 0;
+        return (mcBal * 1e18) / jbcBal; // Price in MC (1e18 scale)
+    }
+
+    // AMM Helper
+    function getAmountOut(uint256 amountIn, uint256 reserveIn, uint256 reserveOut) public pure returns (uint256) {
+        require(amountIn > 0, "Insufficient input amount");
+        require(reserveIn > 0 && reserveOut > 0, "Insufficient liquidity");
+        // x * y = k
+        // (x + dx) * (y - dy) = xy
+        // y - dy = xy / (x + dx)
+        // dy = y - xy / (x + dx)
+        // dy = (yx + ydx - xy) / (x + dx)
+        // dy = ydx / (x + dx)
+        
+        uint256 numerator = amountIn * reserveOut;
+        uint256 denominator = reserveIn + amountIn;
+        return numerator / denominator;
+    }
+
     // --- Swap System ---
 
     // Buy JBC with MC (Tax)
@@ -338,19 +361,24 @@ contract JinbaoProtocol is Ownable, ReentrancyGuard {
         
         // 1. Transfer MC from user to contract
         mcToken.transferFrom(msg.sender, address(this), mcAmount);
+
+        uint256 mcReserve = mcToken.balanceOf(address(this)) - mcAmount;
+        uint256 jbcReserve = jbcToken.balanceOf(address(this));
         
-        // 2. Calculate JBC out (1:1 price)
-        uint256 jbcTotal = mcAmount; // 1 MC = 1 JBC
-        uint256 tax = (jbcTotal * swapBuyTax) / 100; // Dynamic Tax
-        uint256 amountToUser = jbcTotal - tax;
+        // 2. Calculate JBC Output (Pre-tax)
+        uint256 jbcOutput = getAmountOut(mcAmount, mcReserve, jbcReserve);
         
-        // 3. Check liquidity
-        require(jbcToken.balanceOf(address(this)) >= jbcTotal, "Insufficient JBC liquidity");
+        // 3. Apply Tax
+        uint256 tax = (jbcOutput * swapBuyTax) / 100; // Dynamic Tax
+        uint256 amountToUser = jbcOutput - tax;
         
-        // 4. Burn Tax (Burn from contract balance)
+        // 4. Check liquidity
+        require(jbcToken.balanceOf(address(this)) >= jbcOutput, "Insufficient JBC liquidity");
+        
+        // 5. Burn Tax (Burn from contract balance)
         jbcToken.burn(tax);
         
-        // 5. Transfer remaining JBC to user
+        // 6. Transfer remaining JBC to user
         jbcToken.transfer(msg.sender, amountToUser);
         
         emit SwappedMCToJBC(msg.sender, mcAmount, amountToUser, tax);
@@ -362,25 +390,49 @@ contract JinbaoProtocol is Ownable, ReentrancyGuard {
         
         // 1. Transfer JBC from user to contract
         jbcToken.transferFrom(msg.sender, address(this), jbcAmount);
+
+        // Note: jbcAmount includes the tax part which will be burnt.
+        // We burn tax FIRST, so it doesn't contribute to liquidity for the swap?
+        // Or we treat it as contributing?
+        // Let's assume the user sells `jbcAmount`.
+        // `tax` is burnt. `amountToSwap` is swapped.
+        // The burnt amount leaves the pool forever. 
+        // The swapped amount stays in the pool (temporarily) and MC leaves.
         
-        // 2. Calculate Tax (Dynamic Tax)
+        // If we want "Price Trend", burning reduces JBC supply, which should INCREASE price (make JBC scarcer).
+        // Swapping (selling) increases JBC in pool, which DECREASES price.
+        
         uint256 tax = (jbcAmount * swapSellTax) / 100;
         uint256 amountToSwap = jbcAmount - tax;
         
-        // 3. Burn Tax
-        // Since we already transferred JBC to contract, we burn from contract
+        // Burn Tax
         jbcToken.burn(tax);
         
-        // 4. Calculate MC out (1:1 price)
-        uint256 mcAmount = amountToSwap; // 1 JBC = 1 MC
+        // Now calculate Swap
+        // ReserveIn is JBC balance *before* the swap but *after* the transfer?
+        // We transferred `jbcAmount` in. We burnt `tax`.
+        // So current balance = OldBalance + jbcAmount - tax.
+        // The amount actually "swapping" against MC is `amountToSwap`.
+        // So ReserveIn should be `OldBalance`?
+        // Let's say OldBalance = 1000.
+        // User sends 100. Tax 25.
+        // Balance = 1075.
+        // We want to swap 75.
+        // ReserveIn = 1000.
+        // ReserveOut = MC Balance.
         
-        // 5. Check liquidity
-        require(mcToken.balanceOf(address(this)) >= mcAmount, "Insufficient MC liquidity");
+        uint256 jbcReserve = jbcToken.balanceOf(address(this)) - amountToSwap; 
+        uint256 mcReserve = mcToken.balanceOf(address(this));
         
-        // 6. Transfer MC to user
-        mcToken.transfer(msg.sender, mcAmount);
+        uint256 mcOutput = getAmountOut(amountToSwap, jbcReserve, mcReserve);
         
-        emit SwappedJBCToMC(msg.sender, jbcAmount, mcAmount, tax);
+        // Check liquidity
+        require(mcToken.balanceOf(address(this)) >= mcOutput, "Insufficient MC liquidity");
+        
+        // Transfer MC to user
+        mcToken.transfer(msg.sender, mcOutput);
+        
+        emit SwappedJBCToMC(msg.sender, jbcAmount, mcOutput, tax);
     }
 
     // --- Redemption ---

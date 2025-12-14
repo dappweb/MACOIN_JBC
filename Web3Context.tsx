@@ -29,7 +29,9 @@ export const PROTOCOL_ABI = [
   "function setSwapTaxes(uint256, uint256) external",
   "function setRedemptionFee(uint256) external",
   "function adminSetUserStats(address, uint256, uint256) external",
-  "function adminSetReferrer(address, address) external"
+  "function adminSetReferrer(address, address) external",
+  "function getJBCPrice() view returns (uint256)",
+  "function getAmountOut(uint256, uint256, uint256) pure returns (uint256)"
 ];
 
 // Contract Addresses (Mock for now, replace with real deployment)

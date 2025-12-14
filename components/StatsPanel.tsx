@@ -27,6 +27,7 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
   const { t } = useLanguage();
   const { mcContract, protocolContract, account, isConnected } = useWeb3();
   const [displayStats, setDisplayStats] = useState<UserStats>(initialStats);
+  const [jbcPrice, setJbcPrice] = useState<string>('1.0');
   
   // Bind Referrer State
   const [referrer, setReferrer] = useState('');
@@ -40,6 +41,14 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
                 // Fetch MC Balance
                 const mcBal = await mcContract.balanceOf(account);
                 
+                // Fetch JBC Price from Contract (Spot Price)
+                try {
+                    const priceWei = await protocolContract.getJBCPrice();
+                    setJbcPrice(ethers.formatEther(priceWei));
+                } catch (e) {
+                    console.log("Price fetch failed (maybe old contract)", e);
+                }
+
                 // Fetch Protocol Info
                 const userInfo = await protocolContract.userInfo(account);
                 // userInfo returns: (referrer, activeDirects, teamCount, totalRevenue, currentCap, isActive)
@@ -210,7 +219,7 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
             </div>
             <div className="text-3xl font-bold text-slate-900 mb-1">{displayStats.balanceJBC.toLocaleString()}</div>
             <div className="text-xs text-yellow-600 flex items-center gap-1">
-                ≈ ${(displayStats.balanceJBC * 1.2).toFixed(2)} USD
+                ≈ {(displayStats.balanceJBC * parseFloat(jbcPrice)).toFixed(2)} MC (Price: {parseFloat(jbcPrice).toFixed(4)})
             </div>
         </div>
 

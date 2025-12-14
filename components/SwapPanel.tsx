@@ -20,12 +20,17 @@ const SwapPanel: React.FC = () => {
 
   useEffect(() => {
     const fetchBalances = async () => {
-        if (isConnected && account && provider) {
+        if (isConnected && account) {
             try {
-                // Fetch Native MC Balance
-                const nativeBal = await provider.getBalance(account);
-                // We display Native MC as the user's wallet balance
-                setBalanceMC(ethers.formatEther(nativeBal));
+                if (mcContract) {
+                    // Fetch ERC20 MC Balance (Contract uses ERC20)
+                    const mcBal = await mcContract.balanceOf(account);
+                    setBalanceMC(ethers.formatEther(mcBal));
+
+                    // Pool Liquidity (MC is ERC20 in contract)
+                    const poolMcBal = await mcContract.balanceOf(CONTRACT_ADDRESSES.PROTOCOL);
+                    setPoolMC(ethers.formatEther(poolMcBal));
+                }
 
                 if (jbcContract) {
                     const jbcBal = await jbcContract.balanceOf(account);
@@ -36,10 +41,10 @@ const SwapPanel: React.FC = () => {
                     setPoolJBC(ethers.formatEther(poolJbcBal));
                 }
 
-                if (mcContract) {
-                     // Pool Liquidity (MC is ERC20 in contract)
-                    const poolMcBal = await mcContract.balanceOf(CONTRACT_ADDRESSES.PROTOCOL);
-                    setPoolMC(ethers.formatEther(poolMcBal));
+                // Optional: Log native balance for debugging
+                if (provider) {
+                    const native = await provider.getBalance(account);
+                    console.log("Native Balance:", ethers.formatEther(native));
                 }
 
             } catch (err) {

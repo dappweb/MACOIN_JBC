@@ -14,6 +14,14 @@ export default defineConfig(({ mode }) => {
         'process.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY),
         'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY)
       },
+      // Fix for crypto.getRandomValues is not a function in older node versions
+      optimizeDeps: {
+        esbuildOptions: {
+            define: {
+                global: 'globalThis'
+            }
+        }
+      },
       resolve: {
         alias: {
           '@': path.resolve(__dirname, '.'),

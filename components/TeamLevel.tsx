@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { TEAM_LEVELS } from '../constants';
-import { Crown, Users, Percent, UserCheck } from 'lucide-react';
+import { Crown, Users, Percent, UserCheck, Copy, Share2 } from 'lucide-react';
 import { useLanguage } from '../LanguageContext';
 import { useWeb3 } from '../Web3Context';
 import { ethers } from 'ethers';
+import toast from 'react-hot-toast';
 
 interface DirectReferral {
     user: string;
@@ -24,6 +25,16 @@ const TeamLevel: React.FC = () => {
 
   // Calculate total ticket amount from direct referrals
   const totalTicketAmount = directReferrals.reduce((acc, curr) => acc + curr.ticketAmount, 0n);
+
+  const copyReferralLink = () => {
+      if (account) {
+          const url = `${window.location.origin}?ref=${account}`;
+          navigator.clipboard.writeText(url);
+          toast.success("Referral Link Copied!");
+      } else {
+          toast.error("Connect Wallet First");
+      }
+  };
 
   useEffect(() => {
     const fetchTeamInfo = async () => {
@@ -165,7 +176,14 @@ const TeamLevel: React.FC = () => {
                 </div>
                 <div>
                     <h3 className="text-xl font-bold text-slate-900">{t.team.networkTitle}</h3>
-                    <p className="text-sm text-slate-500">{t.team.networkSubtitle}</p>
+                    <div className="flex items-center gap-2 text-sm text-slate-500">
+                        {t.team.networkSubtitle}
+                        {account && (
+                            <button onClick={copyReferralLink} className="text-macoin-600 hover:text-macoin-700 font-bold flex items-center gap-1 ml-2">
+                                <Copy size={12} /> Link
+                            </button>
+                        )}
+                    </div>
                 </div>
             </div>
             
@@ -216,7 +234,13 @@ const TeamLevel: React.FC = () => {
             <div className="text-center py-12 bg-slate-50 rounded-xl border border-dashed border-slate-200">
                 <Users className="mx-auto text-slate-300 mb-2" size={32} />
                 <p className="text-slate-500 font-medium">{t.team.netNone}</p>
-                <p className="text-slate-400 text-sm">{t.team.netShare}</p>
+                <button 
+                    onClick={copyReferralLink}
+                    className="mt-3 flex items-center gap-2 mx-auto px-4 py-2 bg-macoin-100 text-macoin-700 rounded-lg hover:bg-macoin-200 transition-colors font-bold text-sm"
+                >
+                    <Share2 size={16} />
+                    {t.team.netShare}
+                </button>
             </div>
         )}
       </div>

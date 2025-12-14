@@ -87,6 +87,50 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   }, [signer, provider]);
 
+  useEffect(() => {
+    // Check for referral code in URL
+    const searchParams = new URLSearchParams(window.location.search);
+    const ref = searchParams.get('ref');
+    if (ref && ethers.isAddress(ref)) {
+      localStorage.setItem('pendingReferrer', ref);
+      console.log('Referrer stored:', ref);
+    }
+  }, []);
+
+  // Auto-bind referrer when connected
+  useEffect(() => {
+    const bindReferrer = async () => {
+        const pendingRef = localStorage.getItem('pendingReferrer');
+        if (isConnected && address && protocolContract && pendingRef) { // Changed 'account' to 'address'
+            // Validate
+            if (pendingRef.toLowerCase() === address.toLowerCase()) return; // Self-ref
+
+            try {
+                // Check if already bound
+                const userInfo = await protocolContract.userInfo(address);
+                const currentReferrer = userInfo[0]; // referrer is first return val
+
+                if (currentReferrer === ethers.ZeroAddress) {
+                    console.log("Binding referrer:", pendingRef);
+                    // Call bind
+                    const tx = await protocolContract.bindReferrer(pendingRef);
+                    await tx.wait();
+                    console.log("Bind successful");
+                    // Clear pending
+                    localStorage.removeItem('pendingReferrer');
+                    // Optional: Show toast or reload
+                } else {
+                    // Already bound
+                    localStorage.removeItem('pendingReferrer');
+                }
+            } catch (err) {
+                console.error("Auto-bind failed", err);
+            }
+        }
+    };
+    bindReferrer();
+  }, [isConnected, address, protocolContract]); // Changed dependency from 'account' to 'address'
+
   const connectWallet = () => {
     if (openConnectModal) {
         openConnectModal();

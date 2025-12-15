@@ -39,6 +39,7 @@ const Navbar: React.FC<NavbarProps> = ({ currentTab, setTab }) => {
       if (protocolContract && account) {
         try {
           const owner = await protocolContract.owner();
+          console.log("Contract Owner (ADMIN_ADDRESS):", owner); // Helper for D1 setup
           setIsOwner(owner.toLowerCase() === account.toLowerCase());
         } catch (e) {
           console.error("Failed to check owner", e);

@@ -12,7 +12,8 @@ const MiningPanel: React.FC = () => {
   const [selectedPlan, setSelectedPlan] = useState<MiningPlan>(MINING_PLANS[0]);
   const [isApproved, setIsApproved] = useState(false);
   const [isCheckingAllowance, setIsCheckingAllowance] = useState(false);
-  const [isTicketBought, setIsTicketBought] = useState(false); // New state to track ticket purchase
+  const [isTicketBought, setIsTicketBought] = useState(false); 
+  const [isLiquidityProvided, setIsLiquidityProvided] = useState(false); // Track if liquidity is already staked
   const [txPending, setTxPending] = useState(false);
   
   const { t } = useLanguage();
@@ -25,6 +26,41 @@ const MiningPanel: React.FC = () => {
   
   // 3x Cap Calculation
   const maxCap = selectedTicket.amount * 3;
+
+  // Check for existing ticket
+  useEffect(() => {
+    const checkTicket = async () => {
+        if (protocolContract && account) {
+            try {
+                const ticket = await protocolContract.userTicket(account);
+                // ticket struct: amount, requiredLiquidity, purchaseTime, liquidityProvided, liquidityAmount, ...
+                // Ethers v6 returns a Result object which can be accessed by index or name if ABI has names
+                // Based on ABI: [amount, requiredLiquidity, purchaseTime, liquidityProvided, ...]
+                
+                const amount = Number(ethers.formatEther(ticket.amount));
+                const isRedeemed = ticket.redeemed;
+                const isProvided = ticket.liquidityProvided;
+
+                if (amount > 0 && !isRedeemed) {
+                    setIsTicketBought(true);
+                    setIsLiquidityProvided(isProvided);
+                    
+                    // Match tier
+                    const tier = TICKET_TIERS.find(t => t.amount === amount);
+                    if (tier) {
+                        setSelectedTicket(tier);
+                    }
+                } else {
+                    setIsTicketBought(false);
+                    setIsLiquidityProvided(false);
+                }
+            } catch (err) {
+                console.error("Failed to fetch ticket:", err);
+            }
+        }
+    };
+    checkTicket();
+  }, [protocolContract, account]);
 
   useEffect(() => {
     const checkAllowance = async () => {
@@ -96,11 +132,14 @@ const MiningPanel: React.FC = () => {
       try {
           const tx = await protocolContract.stakeLiquidity(selectedPlan.days);
           await tx.wait();
+          setIsLiquidityProvided(true);
           alert("Staking Successful! Mining Started.");
       } catch (err) {
           console.error(err);
           // Fallback for demo
           alert("Staking Successful! (Demo Mode)");
+          // In demo mode we might want to simulate success too if desired, 
+          // but better to keep it consistent with real state check
       } finally {
           setTxPending(false);
       }
@@ -309,13 +348,20 @@ const MiningPanel: React.FC = () => {
                         >
                             {txPending ? "Buying Ticket..." : "Step 2: Buy Ticket"}
                         </button>
-                    ) : (
+                    ) : !isLiquidityProvided ? (
                          <button 
                             onClick={handleStake}
                             disabled={txPending}
                             className="w-full py-4 bg-gradient-to-r from-macoin-600 to-macoin-500 hover:from-macoin-500 hover:to-macoin-400 text-white font-extrabold text-lg rounded-lg shadow-lg shadow-macoin-500/30 transition-all transform hover:scale-[1.02] flex items-center justify-center gap-2 disabled:opacity-50"
                          >
                             {txPending ? "Staking..." : t.mining.stake} <ArrowRight size={20} />
+                        </button>
+                    ) : (
+                        <button 
+                            disabled
+                            className="w-full py-4 bg-green-500 text-white font-extrabold text-lg rounded-lg shadow-lg flex items-center justify-center gap-2 cursor-default"
+                        >
+                            Mining Active <ShieldCheck size={20} />
                         </button>
                     )}
                    

@@ -8,7 +8,7 @@ import { API_BASE_URL } from '../constants';
 
 const AdminPanel: React.FC = () => {
   const { t } = useLanguage();
-  const { protocolContract } = useWeb3();
+  const { protocolContract, isConnected, account, provider } = useWeb3();
   const [loading, setLoading] = useState(false);
 
   // Distribution Percents

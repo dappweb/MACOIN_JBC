@@ -154,56 +154,56 @@ const SwapPanel: React.FC = () => {
   };
 
   return (
-    <div className="max-w-md mx-auto mt-10 glass-panel p-8 rounded-3xl relative animate-fade-in">
+    <div className="max-w-md mx-auto mt-4 md:mt-10 glass-panel p-5 sm:p-6 md:p-8 rounded-2xl md:rounded-3xl relative animate-fade-in">
         <div className="absolute inset-0 bg-macoin-500/5 blur-3xl rounded-full"></div>
-        <h2 className="text-2xl font-bold mb-6 text-center relative z-10 text-slate-900">{t.swap.title}</h2>
-        
-        <div className="space-y-4 relative z-10">
+        <h2 className="text-xl md:text-2xl font-bold mb-4 md:mb-6 text-center relative z-10 text-slate-900">{t.swap.title}</h2>
+
+        <div className="space-y-3 md:space-y-4 relative z-10">
             {/* Pay Input */}
-            <div className="bg-slate-100 p-4 rounded-xl border border-slate-200 transition-all focus-within:ring-2 focus-within:ring-macoin-500/50">
-                <div className="flex justify-between text-sm text-slate-500 mb-2">
+            <div className="bg-slate-100 p-3 md:p-4 rounded-lg md:rounded-xl border border-slate-200 transition-all focus-within:ring-2 focus-within:ring-macoin-500/50">
+                <div className="flex justify-between text-xs md:text-sm text-slate-500 mb-2">
                     <span>{t.swap.pay}</span>
-                    <span>{t.swap.balance}: {isSelling ? balanceJBC : balanceMC} {isSelling ? 'JBC' : 'MC'}</span>
+                    <span className="truncate ml-2">{t.swap.balance}: {isSelling ? balanceJBC : balanceMC} {isSelling ? 'JBC' : 'MC'}</span>
                 </div>
-                <div className="flex items-center justify-between">
-                    <input 
-                        type="number" 
+                <div className="flex items-center justify-between gap-2">
+                    <input
+                        type="number"
                         value={payAmount}
                         onChange={(e) => handleInput(e.target.value)}
-                        placeholder="0.0" 
-                        className="bg-transparent text-2xl font-bold focus:outline-none w-full text-slate-900" 
+                        placeholder="0.0"
+                        className="bg-transparent text-xl md:text-2xl font-bold focus:outline-none w-full text-slate-900"
                     />
-                    <span className={`px-3 py-1 rounded-lg font-bold border border-slate-200 shadow-sm text-slate-700 ${isSelling ? 'bg-yellow-100 text-yellow-700' : 'bg-white'}`}>
+                    <span className={`px-2 md:px-3 py-1 rounded-lg font-bold border border-slate-200 shadow-sm text-slate-700 text-sm md:text-base whitespace-nowrap ${isSelling ? 'bg-yellow-100 text-yellow-700' : 'bg-white'}`}>
                         {isSelling ? 'JBC' : 'MC'}
                     </span>
                 </div>
             </div>
 
             {/* Switch Button */}
-            <div className="flex justify-center -my-2 relative z-20">
-                <button 
+            <div className="flex justify-center -my-1.5 md:-my-2 relative z-20">
+                <button
                     onClick={toggleDirection}
-                    className="bg-white border border-macoin-500 p-2 rounded-full text-macoin-600 hover:rotate-180 transition-transform duration-500 shadow-sm hover:shadow-md"
+                    className="bg-white border border-macoin-500 p-1.5 md:p-2 rounded-full text-macoin-600 hover:rotate-180 transition-transform duration-500 shadow-sm hover:shadow-md"
                 >
-                    <ArrowLeftRight size={20} />
+                    <ArrowLeftRight size={18} className="md:w-5 md:h-5" />
                 </button>
             </div>
 
             {/* Receive Input */}
-            <div className="bg-slate-100 p-4 rounded-xl border border-slate-200">
-                    <div className="flex justify-between text-sm text-slate-500 mb-2">
+            <div className="bg-slate-100 p-3 md:p-4 rounded-lg md:rounded-xl border border-slate-200">
+                    <div className="flex justify-between text-xs md:text-sm text-slate-500 mb-2">
                     <span>{t.swap.get}</span>
-                    <span>{t.swap.balance}: {!isSelling ? balanceJBC : balanceMC} {!isSelling ? 'JBC' : 'MC'}</span>
+                    <span className="truncate ml-2">{t.swap.balance}: {!isSelling ? balanceJBC : balanceMC} {!isSelling ? 'JBC' : 'MC'}</span>
                 </div>
-                <div className="flex items-center justify-between">
-                    <input 
-                        type="text" 
+                <div className="flex items-center justify-between gap-2">
+                    <input
+                        type="text"
                         value={getAmount}
-                        disabled 
-                        placeholder="0.0" 
-                        className="bg-transparent text-2xl font-bold focus:outline-none w-full text-slate-400" 
+                        disabled
+                        placeholder="0.0"
+                        className="bg-transparent text-xl md:text-2xl font-bold focus:outline-none w-full text-slate-400"
                     />
-                    <span className={`px-3 py-1 rounded-lg font-bold border border-slate-200 shadow-sm text-slate-700 ${!isSelling ? 'bg-yellow-100 text-yellow-700' : 'bg-white'}`}>
+                    <span className={`px-2 md:px-3 py-1 rounded-lg font-bold border border-slate-200 shadow-sm text-slate-700 text-sm md:text-base whitespace-nowrap ${!isSelling ? 'bg-yellow-100 text-yellow-700' : 'bg-white'}`}>
                         {!isSelling ? 'JBC' : 'MC'}
                     </span>
                 </div>

@@ -52,6 +52,57 @@
         display: grid;
         grid-template-columns: repeat(3, minmax(0, 1fr));
       }
+
+      /* Mobile-specific optimizations */
+      @media (max-width: 640px) {
+        /* Prevent horizontal scroll */
+        body {
+          overflow-x: hidden;
+        }
+
+        /* Ensure touch targets are at least 44x44px */
+        button, a, input[type="button"], input[type="submit"] {
+          min-height: 44px;
+          min-width: 44px;
+        }
+
+        /* Better text readability on mobile */
+        body {
+          -webkit-font-smoothing: antialiased;
+          -moz-osx-font-smoothing: grayscale;
+        }
+      }
+
+      /* Safe area for mobile devices (notch support) */
+      @supports (padding: max(0px)) {
+        body {
+          padding-left: max(12px, env(safe-area-inset-left));
+          padding-right: max(12px, env(safe-area-inset-right));
+        }
+      }
+
+      /* Smooth scrolling */
+      html {
+        scroll-behavior: smooth;
+      }
+
+      /* Custom scrollbar for desktop */
+      @media (min-width: 768px) {
+        ::-webkit-scrollbar {
+          width: 8px;
+          height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+          background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+          background: #cbd5e1;
+          border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+          background: #94a3b8;
+        }
+      }
     </style>
   </head>
   <body>

@@ -128,76 +128,76 @@ const AdminPanel: React.FC = () => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-8 animate-fade-in pb-20">
-      <div className="text-center space-y-2">
-        <h2 className="text-3xl font-bold text-slate-900 flex items-center justify-center gap-2">
-            <Settings className="text-red-600" /> {t.admin.title}
+    <div className="max-w-4xl mx-auto space-y-6 md:space-y-8 animate-fade-in pb-20">
+      <div className="text-center space-y-1 md:space-y-2">
+        <h2 className="text-2xl md:text-3xl font-bold text-slate-900 flex items-center justify-center gap-2">
+            <Settings className="text-red-600" size={24} className="md:w-7 md:h-7" /> {t.admin.title}
         </h2>
-        <p className="text-slate-500">{t.admin.subtitle}</p>
+        <p className="text-sm md:text-base text-slate-500">{t.admin.subtitle}</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
           {/* Distribution Settings */}
-          <div className="glass-panel p-6 rounded-2xl bg-white border border-slate-200">
-              <h3 className="text-xl font-bold mb-4 text-slate-800">{t.admin.distSettings}</h3>
-              <div className="space-y-3">
-                  <div className="flex justify-between items-center">
-                      <label>{t.admin.direct}</label>
-                      <input type="number" value={direct} onChange={e => setDirect(e.target.value)} className="w-20 p-2 border rounded" />
+          <div className="glass-panel p-4 md:p-6 rounded-xl md:rounded-2xl bg-white border border-slate-200">
+              <h3 className="text-lg md:text-xl font-bold mb-3 md:mb-4 text-slate-800">{t.admin.distSettings}</h3>
+              <div className="space-y-2 md:space-y-3">
+                  <div className="flex justify-between items-center gap-2">
+                      <label className="text-sm md:text-base">{t.admin.direct}</label>
+                      <input type="number" value={direct} onChange={e => setDirect(e.target.value)} className="w-16 md:w-20 p-1.5 md:p-2 border rounded text-sm md:text-base" />
                   </div>
-                  <div className="flex justify-between items-center">
-                      <label>{t.admin.level}</label>
-                      <input type="number" value={level} onChange={e => setLevel(e.target.value)} className="w-20 p-2 border rounded" />
+                  <div className="flex justify-between items-center gap-2">
+                      <label className="text-sm md:text-base">{t.admin.level}</label>
+                      <input type="number" value={level} onChange={e => setLevel(e.target.value)} className="w-16 md:w-20 p-1.5 md:p-2 border rounded text-sm md:text-base" />
                   </div>
-                  <div className="flex justify-between items-center">
-                      <label>{t.admin.marketing}</label>
-                      <input type="number" value={marketing} onChange={e => setMarketing(e.target.value)} className="w-20 p-2 border rounded" />
+                  <div className="flex justify-between items-center gap-2">
+                      <label className="text-sm md:text-base">{t.admin.marketing}</label>
+                      <input type="number" value={marketing} onChange={e => setMarketing(e.target.value)} className="w-16 md:w-20 p-1.5 md:p-2 border rounded text-sm md:text-base" />
                   </div>
-                  <div className="flex justify-between items-center">
-                      <label>{t.admin.buyback}</label>
-                      <input type="number" value={buyback} onChange={e => setBuyback(e.target.value)} className="w-20 p-2 border rounded" />
+                  <div className="flex justify-between items-center gap-2">
+                      <label className="text-sm md:text-base">{t.admin.buyback}</label>
+                      <input type="number" value={buyback} onChange={e => setBuyback(e.target.value)} className="w-16 md:w-20 p-1.5 md:p-2 border rounded text-sm md:text-base" />
                   </div>
-                  <div className="flex justify-between items-center">
-                      <label>{t.admin.lp}</label>
-                      <input type="number" value={lp} onChange={e => setLp(e.target.value)} className="w-20 p-2 border rounded" />
+                  <div className="flex justify-between items-center gap-2">
+                      <label className="text-sm md:text-base">{t.admin.lp}</label>
+                      <input type="number" value={lp} onChange={e => setLp(e.target.value)} className="w-16 md:w-20 p-1.5 md:p-2 border rounded text-sm md:text-base" />
                   </div>
-                  <div className="flex justify-between items-center">
-                      <label>{t.admin.treasury}</label>
-                      <input type="number" value={treasury} onChange={e => setTreasury(e.target.value)} className="w-20 p-2 border rounded" />
+                  <div className="flex justify-between items-center gap-2">
+                      <label className="text-sm md:text-base">{t.admin.treasury}</label>
+                      <input type="number" value={treasury} onChange={e => setTreasury(e.target.value)} className="w-16 md:w-20 p-1.5 md:p-2 border rounded text-sm md:text-base" />
                   </div>
-                  <div className="pt-2 border-t text-sm text-slate-500">
+                  <div className="pt-2 border-t text-xs md:text-sm text-slate-500">
                       {t.admin.total}: {Number(direct)+Number(level)+Number(marketing)+Number(buyback)+Number(lp)+Number(treasury)}% (Must be 100)
                   </div>
-                  <button onClick={updateDistribution} disabled={loading} className="w-full py-2 bg-slate-900 text-white rounded-lg mt-2 hover:bg-slate-800">
+                  <button onClick={updateDistribution} disabled={loading} className="w-full py-2 md:py-2.5 bg-slate-900 text-white rounded-lg mt-2 hover:bg-slate-800 disabled:opacity-50 text-sm md:text-base">
                       {t.admin.updateDist}
                   </button>
               </div>
           </div>
 
           {/* Swap Taxes */}
-          <div className="glass-panel p-6 rounded-2xl bg-white border border-slate-200">
-              <h3 className="text-xl font-bold mb-4 text-slate-800">{t.admin.swapTaxes}</h3>
-              <div className="space-y-3">
-                  <div className="flex justify-between items-center">
-                      <label>{t.admin.buyTax}</label>
-                      <input type="number" value={buyTax} onChange={e => setBuyTax(e.target.value)} className="w-20 p-2 border rounded" />
+          <div className="glass-panel p-4 md:p-6 rounded-xl md:rounded-2xl bg-white border border-slate-200">
+              <h3 className="text-lg md:text-xl font-bold mb-3 md:mb-4 text-slate-800">{t.admin.swapTaxes}</h3>
+              <div className="space-y-2 md:space-y-3">
+                  <div className="flex justify-between items-center gap-2">
+                      <label className="text-sm md:text-base">{t.admin.buyTax}</label>
+                      <input type="number" value={buyTax} onChange={e => setBuyTax(e.target.value)} className="w-16 md:w-20 p-1.5 md:p-2 border rounded text-sm md:text-base" />
                   </div>
-                  <div className="flex justify-between items-center">
-                      <label>{t.admin.sellTax}</label>
-                      <input type="number" value={sellTax} onChange={e => setSellTax(e.target.value)} className="w-20 p-2 border rounded" />
+                  <div className="flex justify-between items-center gap-2">
+                      <label className="text-sm md:text-base">{t.admin.sellTax}</label>
+                      <input type="number" value={sellTax} onChange={e => setSellTax(e.target.value)} className="w-16 md:w-20 p-1.5 md:p-2 border rounded text-sm md:text-base" />
                   </div>
-                  <button onClick={updateSwapTaxes} disabled={loading} className="w-full py-2 bg-slate-900 text-white rounded-lg mt-2 hover:bg-slate-800">
+                  <button onClick={updateSwapTaxes} disabled={loading} className="w-full py-2 md:py-2.5 bg-slate-900 text-white rounded-lg mt-2 hover:bg-slate-800 disabled:opacity-50 text-sm md:text-base">
                       {t.admin.updateTaxes}
                   </button>
               </div>
 
-              <h3 className="text-xl font-bold mt-8 mb-4 text-slate-800">{t.admin.redeemFee}</h3>
-              <div className="space-y-3">
-                  <div className="flex justify-between items-center">
-                      <label>{t.admin.fee}</label>
-                      <input type="number" value={redeemFee} onChange={e => setRedeemFee(e.target.value)} className="w-20 p-2 border rounded" />
+              <h3 className="text-lg md:text-xl font-bold mt-6 md:mt-8 mb-3 md:mb-4 text-slate-800">{t.admin.redeemFee}</h3>
+              <div className="space-y-2 md:space-y-3">
+                  <div className="flex justify-between items-center gap-2">
+                      <label className="text-sm md:text-base">{t.admin.fee}</label>
+                      <input type="number" value={redeemFee} onChange={e => setRedeemFee(e.target.value)} className="w-16 md:w-20 p-1.5 md:p-2 border rounded text-sm md:text-base" />
                   </div>
-                  <button onClick={updateRedeemFee} disabled={loading} className="w-full py-2 bg-slate-900 text-white rounded-lg mt-2 hover:bg-slate-800">
+                  <button onClick={updateRedeemFee} disabled={loading} className="w-full py-2 md:py-2.5 bg-slate-900 text-white rounded-lg mt-2 hover:bg-slate-800 disabled:opacity-50 text-sm md:text-base">
                       {t.admin.updateFee}
                   </button>
               </div>
@@ -205,60 +205,60 @@ const AdminPanel: React.FC = () => {
       </div>
 
       {/* Wallet Addresses */}
-      <div className="glass-panel p-6 rounded-2xl bg-white border border-slate-200">
-          <h3 className="text-xl font-bold mb-4 text-slate-800">{t.admin.wallets}</h3>
-          <div className="space-y-4">
+      <div className="glass-panel p-4 md:p-6 rounded-xl md:rounded-2xl bg-white border border-slate-200">
+          <h3 className="text-lg md:text-xl font-bold mb-3 md:mb-4 text-slate-800">{t.admin.wallets}</h3>
+          <div className="space-y-3 md:space-y-4">
               <div>
-                  <label className="block text-sm text-slate-500 mb-1">{t.admin.marketingWallet}</label>
-                  <input type="text" value={marketingWallet} onChange={e => setMarketingWallet(e.target.value)} className="w-full p-2 border rounded text-sm font-mono" placeholder="0x..." />
+                  <label className="block text-xs md:text-sm text-slate-500 mb-1">{t.admin.marketingWallet}</label>
+                  <input type="text" value={marketingWallet} onChange={e => setMarketingWallet(e.target.value)} className="w-full p-2 md:p-2.5 border rounded text-xs md:text-sm font-mono" placeholder="0x..." />
               </div>
               <div>
-                  <label className="block text-sm text-slate-500 mb-1">{t.admin.treasuryWallet}</label>
-                  <input type="text" value={treasuryWallet} onChange={e => setTreasuryWallet(e.target.value)} className="w-full p-2 border rounded text-sm font-mono" placeholder="0x..." />
+                  <label className="block text-xs md:text-sm text-slate-500 mb-1">{t.admin.treasuryWallet}</label>
+                  <input type="text" value={treasuryWallet} onChange={e => setTreasuryWallet(e.target.value)} className="w-full p-2 md:p-2.5 border rounded text-xs md:text-sm font-mono" placeholder="0x..." />
               </div>
               <div>
-                  <label className="block text-sm text-slate-500 mb-1">{t.admin.lpWallet}</label>
-                  <input type="text" value={lpWallet} onChange={e => setLpWallet(e.target.value)} className="w-full p-2 border rounded text-sm font-mono" placeholder="0x..." />
+                  <label className="block text-xs md:text-sm text-slate-500 mb-1">{t.admin.lpWallet}</label>
+                  <input type="text" value={lpWallet} onChange={e => setLpWallet(e.target.value)} className="w-full p-2 md:p-2.5 border rounded text-xs md:text-sm font-mono" placeholder="0x..." />
               </div>
               <div>
-                  <label className="block text-sm text-slate-500 mb-1">{t.admin.buybackWallet}</label>
-                  <input type="text" value={buybackWallet} onChange={e => setBuybackWallet(e.target.value)} className="w-full p-2 border rounded text-sm font-mono" placeholder="0x..." />
+                  <label className="block text-xs md:text-sm text-slate-500 mb-1">{t.admin.buybackWallet}</label>
+                  <input type="text" value={buybackWallet} onChange={e => setBuybackWallet(e.target.value)} className="w-full p-2 md:p-2.5 border rounded text-xs md:text-sm font-mono" placeholder="0x..." />
               </div>
-              <button onClick={updateWallets} disabled={loading} className="w-full py-2 bg-slate-900 text-white rounded-lg mt-2 hover:bg-slate-800">
+              <button onClick={updateWallets} disabled={loading} className="w-full py-2 md:py-2.5 bg-slate-900 text-white rounded-lg mt-2 hover:bg-slate-800 disabled:opacity-50 text-sm md:text-base">
                   {t.admin.updateWallets}
               </button>
           </div>
       </div>
 
       {/* User Management */}
-      <div className="glass-panel p-6 rounded-2xl bg-white border border-slate-200">
-          <h3 className="text-xl font-bold mb-4 text-slate-800">{t.admin.userMgmt}</h3>
-          <div className="space-y-4">
+      <div className="glass-panel p-4 md:p-6 rounded-xl md:rounded-2xl bg-white border border-slate-200">
+          <h3 className="text-lg md:text-xl font-bold mb-3 md:mb-4 text-slate-800">{t.admin.userMgmt}</h3>
+          <div className="space-y-3 md:space-y-4">
               <div>
-                  <label className="block text-sm text-slate-500 mb-1">{t.admin.userAddr}</label>
-                  <input type="text" value={targetUser} onChange={e => setTargetUser(e.target.value)} className="w-full p-2 border rounded text-sm font-mono" placeholder="0x..." />
+                  <label className="block text-xs md:text-sm text-slate-500 mb-1">{t.admin.userAddr}</label>
+                  <input type="text" value={targetUser} onChange={e => setTargetUser(e.target.value)} className="w-full p-2 md:p-2.5 border rounded text-xs md:text-sm font-mono" placeholder="0x..." />
               </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-t pt-4">
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-4 border-t pt-3 md:pt-4">
                   <div>
-                      <label className="block text-sm text-slate-500 mb-1">{t.admin.newReferrer}</label>
-                      <div className="flex gap-2">
-                          <input type="text" value={newReferrer} onChange={e => setNewReferrer(e.target.value)} className="w-full p-2 border rounded text-sm font-mono" placeholder="0x..." />
-                          <button onClick={updateReferrer} disabled={loading} className="px-4 bg-slate-900 text-white rounded hover:bg-slate-800 text-sm whitespace-nowrap">
+                      <label className="block text-xs md:text-sm text-slate-500 mb-1">{t.admin.newReferrer}</label>
+                      <div className="flex flex-col sm:flex-row gap-2">
+                          <input type="text" value={newReferrer} onChange={e => setNewReferrer(e.target.value)} className="w-full p-2 md:p-2.5 border rounded text-xs md:text-sm font-mono" placeholder="0x..." />
+                          <button onClick={updateReferrer} disabled={loading} className="px-3 md:px-4 py-2 md:py-2.5 bg-slate-900 text-white rounded hover:bg-slate-800 disabled:opacity-50 text-xs md:text-sm whitespace-nowrap">
                               {t.admin.updateReferrer}
                           </button>
                       </div>
                   </div>
                   <div className="space-y-2">
                       <div className="flex gap-2 items-center">
-                          <label className="text-sm text-slate-500 w-24">{t.admin.activeDirects}</label>
-                          <input type="number" value={activeDirects} onChange={e => setActiveDirects(e.target.value)} className="w-full p-2 border rounded text-sm" />
+                          <label className="text-xs md:text-sm text-slate-500 w-20 md:w-24">{t.admin.activeDirects}</label>
+                          <input type="number" value={activeDirects} onChange={e => setActiveDirects(e.target.value)} className="w-full p-2 md:p-2.5 border rounded text-xs md:text-sm" />
                       </div>
                       <div className="flex gap-2 items-center">
-                          <label className="text-sm text-slate-500 w-24">{t.admin.teamCount}</label>
-                          <input type="number" value={teamCount} onChange={e => setTeamCount(e.target.value)} className="w-full p-2 border rounded text-sm" />
+                          <label className="text-xs md:text-sm text-slate-500 w-20 md:w-24">{t.admin.teamCount}</label>
+                          <input type="number" value={teamCount} onChange={e => setTeamCount(e.target.value)} className="w-full p-2 md:p-2.5 border rounded text-xs md:text-sm" />
                       </div>
-                      <button onClick={updateUserStats} disabled={loading} className="w-full py-2 bg-slate-900 text-white rounded hover:bg-slate-800 text-sm">
+                      <button onClick={updateUserStats} disabled={loading} className="w-full py-2 md:py-2.5 bg-slate-900 text-white rounded hover:bg-slate-800 disabled:opacity-50 text-xs md:text-sm">
                           {t.admin.updateUser}
                       </button>
                   </div>

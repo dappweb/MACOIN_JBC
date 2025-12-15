@@ -88,15 +88,15 @@ const Navbar: React.FC<NavbarProps> = ({ currentTab, setTab }) => {
   return (
     <>
       <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-20">
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16 md:h-20">
             
             {/* Logo */}
-            <div className="flex items-center gap-2 cursor-pointer" onClick={() => setTab(AppTab.HOME)}>
-              <div className="bg-gradient-to-tr from-macoin-600 to-macoin-400 p-2 rounded-xl shadow-lg shadow-macoin-500/20">
-                  <Diamond size={24} className="text-white" />
+            <div className="flex items-center gap-1.5 md:gap-2 cursor-pointer" onClick={() => setTab(AppTab.HOME)}>
+              <div className="bg-gradient-to-tr from-macoin-600 to-macoin-400 p-1.5 md:p-2 rounded-lg md:rounded-xl shadow-lg shadow-macoin-500/20">
+                  <Diamond size={20} className="text-white md:w-6 md:h-6" />
               </div>
-              <span className="text-2xl font-black text-slate-900 tracking-tight">JBC <span className="text-macoin-600">RWA</span></span>
+              <span className="text-lg md:text-2xl font-black text-slate-900 tracking-tight">JBC <span className="text-macoin-600">RWA</span></span>
             </div>
 
             {/* Desktop Nav */}
@@ -136,17 +136,19 @@ const Navbar: React.FC<NavbarProps> = ({ currentTab, setTab }) => {
             </div>
 
             {/* Wallet Connect */}
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 md:gap-4">
                <button
                   onClick={() => setLanguage(language === 'zh' ? 'en' : 'zh')}
-                  className="p-2 rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors flex items-center gap-2"
+                  className="p-1.5 md:p-2 rounded-lg md:rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors flex items-center gap-1 md:gap-2"
                   title="Switch Language"
                >
-                  <Globe size={20} />
-                  <span className="text-sm font-bold">{language === 'zh' ? 'EN' : '中文'}</span>
+                  <Globe size={18} className="md:w-5 md:h-5" />
+                  <span className="text-xs md:text-sm font-bold hidden sm:inline">{language === 'zh' ? 'EN' : '中文'}</span>
                </button>
                {/* Button removed as requested for auto-logic */}
-              <ConnectButton showBalance={false} chainStatus="icon" accountStatus="address" />
+              <div className="scale-90 md:scale-100 origin-right">
+                <ConnectButton showBalance={false} chainStatus="icon" accountStatus={{smallScreen: 'avatar', largeScreen: 'address'}} />
+              </div>
             </div>
           </div>
         </div>

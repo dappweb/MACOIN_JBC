@@ -90,40 +90,42 @@ const TeamLevel: React.FC = () => {
   }, [isConnected, account, protocolContract]);
 
   return (
-    <div className="max-w-5xl mx-auto space-y-8 animate-fade-in">
-       <div className="text-center space-y-2">
-        <h2 className="text-3xl font-bold text-slate-900">{t.team.title}</h2>
-        <p className="text-slate-500">{t.team.subtitle}</p>
+    <div className="max-w-5xl mx-auto space-y-6 md:space-y-8 animate-fade-in">
+       <div className="text-center space-y-1 md:space-y-2">
+        <h2 className="text-2xl md:text-3xl font-bold text-slate-900">{t.team.title}</h2>
+        <p className="text-sm md:text-base text-slate-500">{t.team.subtitle}</p>
       </div>
 
-      <div className="glass-panel rounded-2xl overflow-hidden border border-slate-200 bg-white">
-        <div className="p-6 border-b border-slate-100 flex flex-wrap gap-4 justify-between items-center bg-slate-50">
+      <div className="glass-panel rounded-xl md:rounded-2xl overflow-hidden border border-slate-200 bg-white">
+        <div className="p-4 md:p-6 border-b border-slate-100 flex flex-col sm:flex-row flex-wrap gap-3 md:gap-4 justify-between items-start sm:items-center bg-slate-50">
             <div>
-                <h3 className="text-xl font-bold text-slate-800">{t.team.current}: <span className="text-macoin-600">{userLevelInfo.currentLevel}</span></h3>
-                <p className="text-sm text-slate-500">
+                <h3 className="text-lg md:text-xl font-bold text-slate-800">{t.team.current}: <span className="text-macoin-600">{userLevelInfo.currentLevel}</span></h3>
+                <p className="text-xs md:text-sm text-slate-500">
                     {t.team.colCount}: {userLevelInfo.activeDirects} | {t.team.colReward}: {TEAM_LEVELS.find(l => l.level === userLevelInfo.currentLevel)?.reward || '0%'}
                 </p>
             </div>
-            <div className="px-4 py-2 bg-white rounded-lg border border-slate-200 shadow-sm">
-                <span className="text-sm text-slate-500">{t.team.teamCount}:</span>
+            <div className="px-3 md:px-4 py-1.5 md:py-2 bg-white rounded-lg border border-slate-200 shadow-sm">
+                <span className="text-xs md:text-sm text-slate-500">{t.team.teamCount}:</span>
                 <span className="ml-2 font-bold text-slate-900">{userLevelInfo.teamCount}</span>
             </div>
         </div>
 
-        <div className="overflow-x-auto">
-            <table className="w-full text-left">
+        <div className="overflow-x-auto -mx-4 sm:mx-0">
+            <table className="w-full text-left min-w-[500px] sm:min-w-0">
                 <thead>
                     <tr className="bg-slate-50 border-b border-slate-200">
-                        <th className="p-4 text-slate-500 font-medium font-mono uppercase text-sm">{t.team.colLevel}</th>
-                        <th className="p-4 text-slate-500 font-medium font-mono uppercase text-sm flex items-center gap-2">
-                            <Users size={16} /> {t.team.colCount}
-                        </th>
-                        <th className="p-4 text-slate-500 font-medium font-mono uppercase text-sm">
-                            <div className="flex items-center gap-2">
-                                <Percent size={16} /> {t.team.colReward}
+                        <th className="p-3 md:p-4 text-slate-500 font-medium font-mono uppercase text-xs md:text-sm">{t.team.colLevel}</th>
+                        <th className="p-3 md:p-4 text-slate-500 font-medium font-mono uppercase text-xs md:text-sm">
+                            <div className="flex items-center gap-1 md:gap-2">
+                                <Users size={14} className="md:w-4 md:h-4" /> <span className="hidden sm:inline">{t.team.colCount}</span>
                             </div>
                         </th>
-                        <th className="p-4 text-slate-500 font-medium font-mono uppercase text-sm text-right">{t.team.colStatus}</th>
+                        <th className="p-3 md:p-4 text-slate-500 font-medium font-mono uppercase text-xs md:text-sm">
+                            <div className="flex items-center gap-1 md:gap-2">
+                                <Percent size={14} className="md:w-4 md:h-4" /> <span className="hidden sm:inline">{t.team.colReward}</span>
+                            </div>
+                        </th>
+                        <th className="p-3 md:p-4 text-slate-500 font-medium font-mono uppercase text-xs md:text-sm text-right">{t.team.colStatus}</th>
                     </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -168,8 +170,8 @@ const TeamLevel: React.FC = () => {
       </div>
 
       {/* Direct Referrals Network Section */}
-      <div className="glass-panel p-6 rounded-2xl bg-white">
-        <div className="flex items-center justify-between mb-6">
+      <div className="glass-panel p-4 md:p-6 rounded-xl md:rounded-2xl bg-white">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4 md:mb-6">
             <div className="flex items-center gap-3">
                 <div className="p-3 bg-purple-100 text-purple-600 rounded-full">
                     <UserCheck size={24} />
@@ -245,17 +247,17 @@ const TeamLevel: React.FC = () => {
         )}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="glass-panel p-6 rounded-2xl bg-white">
-                <h3 className="text-lg font-bold text-slate-900 mb-2">{t.team.directReward}</h3>
-                <div className="text-4xl font-bold text-macoin-600 mb-2">25%</div>
-                <p className="text-slate-500 text-sm">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+            <div className="glass-panel p-4 md:p-6 rounded-xl md:rounded-2xl bg-white">
+                <h3 className="text-base md:text-lg font-bold text-slate-900 mb-2">{t.team.directReward}</h3>
+                <div className="text-3xl md:text-4xl font-bold text-macoin-600 mb-2">25%</div>
+                <p className="text-slate-500 text-xs md:text-sm">
                     {t.team.directDesc}
                 </p>
             </div>
-            <div className="glass-panel p-6 rounded-2xl bg-white">
-                <h3 className="text-lg font-bold text-slate-900 mb-2">{t.team.levelReward}</h3>
-                <ul className="space-y-2 text-sm text-slate-500">
+            <div className="glass-panel p-4 md:p-6 rounded-xl md:rounded-2xl bg-white">
+                <h3 className="text-base md:text-lg font-bold text-slate-900 mb-2">{t.team.levelReward}</h3>
+                <ul className="space-y-2 text-xs md:text-sm text-slate-500">
                     <li className="flex justify-between border-b border-slate-100 pb-1">
                         <span>{t.team.l1}</span>
                         <span className="text-slate-800">{t.team.r1}</span>

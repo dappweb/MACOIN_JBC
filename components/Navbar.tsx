@@ -19,7 +19,9 @@ const LANGUAGES = [
     { code: 'en', label: 'English' },
     { code: 'ja', label: '日本語' },
     { code: 'ko', label: '한국어' },
-    { code: 'ar', label: 'العربية' }
+    { code: 'ar', label: 'العربية' },
+    { code: 'ru', label: 'Русский' },
+    { code: 'es', label: 'Español' }
 ];
 
 const Navbar: React.FC<NavbarProps> = ({ currentTab, setTab }) => {

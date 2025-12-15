@@ -1,0 +1,13 @@
+name = "macoin-jbc-api"
+main = "index.js"
+compatibility_date = "2024-01-01"
+
+# D1 Database Configuration
+[[d1_databases]]
+binding = "DB" # Must match env.DB in code
+database_name = "macoin-jbc-db"
+database_id = "YOUR_DATABASE_ID_HERE" # Run 'wrangler d1 create macoin-jbc-db' to get this
+
+[vars]
+# Your Admin Wallet Address (Must match the one used in frontend)
+ADMIN_ADDRESS = "0xYourAdminWalletAddressHere"

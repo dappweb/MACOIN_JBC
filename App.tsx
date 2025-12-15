@@ -6,6 +6,7 @@ import TeamLevel from './components/TeamLevel';
 import WhitepaperModal from './components/WhitepaperModal';
 import SwapPanel from './components/SwapPanel';
 import AdminPanel from './components/AdminPanel';
+import NoticeBar from './components/NoticeBar';
 import { AppTab } from './types';
 import { MOCK_USER_STATS } from './constants';
 import { ArrowLeftRight } from 'lucide-react';
@@ -54,7 +55,9 @@ const AppContent: React.FC = () => {
         setTab={setCurrentTab} 
       />
       
-      <WhitepaperModal 
+      <NoticeBar />
+
+      <WhitepaperModal  
         isOpen={showWhitepaper} 
         onClose={() => setShowWhitepaper(false)} 
       />

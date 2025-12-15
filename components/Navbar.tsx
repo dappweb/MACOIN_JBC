@@ -108,7 +108,9 @@ const Navbar: React.FC<NavbarProps> = ({ currentTab, setTab }) => {
               <div className="bg-gradient-to-tr from-macoin-600 to-macoin-400 p-2 rounded-xl shadow-lg shadow-macoin-500/20">
                   <Diamond size={24} className="text-white" />
               </div>
-              <span className="text-2xl font-black text-slate-900 tracking-tight">JBC <span className="text-macoin-600">RWA</span></span>
+              <span className="text-xl md:text-2xl font-black text-slate-900 tracking-tight">
+                  JBC <span className="hidden sm:inline text-macoin-600">RWA</span>
+              </span>
             </div>
 
             {/* Desktop Nav */}
@@ -148,18 +150,18 @@ const Navbar: React.FC<NavbarProps> = ({ currentTab, setTab }) => {
             </div>
 
             {/* Wallet Connect */}
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 md:gap-4">
                <div className="relative">
                    <button
                       onClick={() => setIsLangOpen(!isLangOpen)}
-                      className="p-2 rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors flex items-center gap-2"
+                      className="p-2 rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors flex items-center gap-1 md:gap-2"
                       title="Switch Language"
                    >
                       <Globe size={20} />
-                      <span className="text-sm font-bold hidden sm:inline">
+                      <span className="text-sm font-bold hidden lg:inline">
                           {LANGUAGES.find(l => l.code === language)?.label || 'Language'}
                       </span>
-                      <ChevronDown size={16} />
+                      <ChevronDown size={14} />
                    </button>
                    
                    {isLangOpen && (

@@ -244,25 +244,25 @@ const MiningPanel: React.FC = () => {
                     </h3>
 
                     <div className="space-y-4">
-                        <div className="flex justify-between items-center py-2 border-b border-slate-100">
+                        <div className="flex flex-wrap justify-between items-center py-2 border-b border-slate-100 gap-2">
                             <span className="text-slate-500">{t.mining.ticketInv}</span>
                             <span className="font-mono text-slate-900">{selectedTicket.amount} MC</span>
                         </div>
-                        <div className="flex justify-between items-center py-2 border-b border-slate-100">
+                        <div className="flex flex-wrap justify-between items-center py-2 border-b border-slate-100 gap-2">
                             <span className="text-slate-500">{t.mining.liqInv}</span>
                             <span className="font-mono text-slate-900">{selectedTicket.requiredLiquidity} MC</span>
                         </div>
-                        <div className="flex justify-between items-center py-2 border-b border-slate-100">
+                        <div className="flex flex-wrap justify-between items-center py-2 border-b border-slate-100 gap-2">
                             <span className="text-slate-500">{t.mining.totalLock}</span>
                             <span className="font-mono text-macoin-600 font-bold">{totalInvestment} MC</span>
                         </div>
                         
                          <div className="py-4 space-y-2 bg-slate-50 -mx-2 px-2 rounded-lg">
-                            <div className="flex justify-between items-center">
+                            <div className="flex flex-wrap justify-between items-center gap-2">
                                 <span className="text-slate-500">{t.mining.dailyRev} ({selectedPlan.dailyRate}%)</span>
                                 <span className="font-mono text-macoin-600 font-bold">~{dailyROI.toFixed(1)} MC</span>
                             </div>
-                             <div className="flex justify-between items-center">
+                             <div className="flex flex-wrap justify-between items-center gap-2">
                                 <span className="text-slate-500">{t.mining.totalRev} ({selectedPlan.days} {t.mining.days})</span>
                                 <span className="font-mono text-macoin-600 font-bold">~{totalROI.toFixed(1)} MC</span>
                             </div>

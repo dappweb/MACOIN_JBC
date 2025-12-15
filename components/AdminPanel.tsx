@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useWeb3 } from '../Web3Context';
 import { Settings, Save, AlertTriangle } from 'lucide-react';
 import { useLanguage } from '../LanguageContext';
+import { ethers } from 'ethers';
 import toast from 'react-hot-toast';
+import { API_BASE_URL } from '../constants';
 
 const AdminPanel: React.FC = () => {
   const { t } = useLanguage();
@@ -35,6 +37,10 @@ const AdminPanel: React.FC = () => {
   const [newReferrer, setNewReferrer] = useState('');
   const [activeDirects, setActiveDirects] = useState('');
   const [teamCount, setTeamCount] = useState('');
+
+  // Announcement Management
+  const [announceLang, setAnnounceLang] = useState('en');
+  const [announceContent, setAnnounceContent] = useState('');
 
   const updateDistribution = async () => {
     if (!protocolContract) return;
@@ -122,6 +128,48 @@ const AdminPanel: React.FC = () => {
         toast.success(t.admin.success);
     } catch (err: any) {
         toast.error(t.admin.failed + (err.reason || err.message));
+    } finally {
+        setLoading(false);
+    }
+  };
+
+  const updateAnnouncement = async () => {
+    if (!announceContent) return;
+    setLoading(true);
+    try {
+        // Sign the message to prove admin ownership
+        // In real scenario, we should sign a structured message (EIP-712) or specific payload
+        // For this demo, we sign the content directly
+        if (!isConnected || !account || !provider) {
+             toast.error("Connect wallet first");
+             setLoading(false);
+             return;
+        }
+
+        const signer = await provider.getSigner();
+        const signature = await signer.signMessage(`Update Announcement: ${announceContent}`);
+
+        // Post to Worker
+        const res = await fetch(`${API_BASE_URL}/announcement`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                language: announceLang,
+                content: announceContent,
+                signature,
+                adminAddress: account,
+                timestamp: Date.now()
+            })
+        });
+
+        if (res.ok) {
+            toast.success("Announcement updated on D1!");
+        } else {
+            const errText = await res.text();
+            throw new Error(errText);
+        }
+    } catch (err: any) {
+        toast.error("Update failed: " + err.message);
     } finally {
         setLoading(false);
     }
@@ -263,6 +311,42 @@ const AdminPanel: React.FC = () => {
                       </button>
                   </div>
               </div>
+          </div>
+      </div>
+
+      {/* Announcement Management */}
+      <div className="glass-panel p-6 rounded-2xl bg-white border border-slate-200">
+          <h3 className="text-xl font-bold mb-4 text-slate-800">Announcement Management</h3>
+          <div className="space-y-4">
+              <div>
+                  <label className="block text-sm text-slate-500 mb-1">Language Code</label>
+                  <select 
+                    value={announceLang} 
+                    onChange={e => setAnnounceLang(e.target.value)}
+                    className="w-full p-2 border rounded text-sm"
+                  >
+                      <option value="en">English (en)</option>
+                      <option value="zh">Chinese (zh)</option>
+                      <option value="zh-TW">Traditional Chinese (zh-TW)</option>
+                      <option value="ja">Japanese (ja)</option>
+                      <option value="ko">Korean (ko)</option>
+                      <option value="ar">Arabic (ar)</option>
+                      <option value="ru">Russian (ru)</option>
+                      <option value="es">Spanish (es)</option>
+                  </select>
+              </div>
+              <div>
+                  <label className="block text-sm text-slate-500 mb-1">Content</label>
+                  <textarea 
+                    value={announceContent} 
+                    onChange={e => setAnnounceContent(e.target.value)} 
+                    className="w-full p-2 border rounded text-sm h-24"
+                    placeholder="Enter announcement text..."
+                  />
+              </div>
+              <button onClick={updateAnnouncement} disabled={loading} className="w-full py-2 bg-slate-900 text-white rounded-lg hover:bg-slate-800">
+                  Update Announcement
+              </button>
           </div>
       </div>
     </div>

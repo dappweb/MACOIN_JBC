@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { AppTab } from '../types';
-import { Diamond, Home, Pickaxe, Users, ArrowLeftRight, Settings, PlusCircle, Globe } from 'lucide-react';
+import { Diamond, Home, Pickaxe, Users, ArrowLeftRight, Settings, PlusCircle, Globe, ChevronDown } from 'lucide-react';
 import { useLanguage } from '../LanguageContext';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { useWeb3 } from '../Web3Context';
@@ -13,10 +13,20 @@ interface NavbarProps {
   connectWallet: () => void;
 }
 
+const LANGUAGES = [
+    { code: 'zh', label: '简体中文' },
+    { code: 'zh-TW', label: '繁體中文' },
+    { code: 'en', label: 'English' },
+    { code: 'ja', label: '日本語' },
+    { code: 'ko', label: '한국어' },
+    { code: 'ar', label: 'العربية' }
+];
+
 const Navbar: React.FC<NavbarProps> = ({ currentTab, setTab }) => {
   const { t, language, setLanguage } = useLanguage();
   const { protocolContract, account, isConnected } = useWeb3();
   const [isOwner, setIsOwner] = useState(false);
+  const [isLangOpen, setIsLangOpen] = useState(false);
   
   const chainId = useChainId();
   const { switchChain } = useSwitchChain();
@@ -137,14 +147,36 @@ const Navbar: React.FC<NavbarProps> = ({ currentTab, setTab }) => {
 
             {/* Wallet Connect */}
             <div className="flex items-center gap-4">
-               <button
-                  onClick={() => setLanguage(language === 'zh' ? 'en' : 'zh')}
-                  className="p-2 rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors flex items-center gap-2"
-                  title="Switch Language"
-               >
-                  <Globe size={20} />
-                  <span className="text-sm font-bold">{language === 'zh' ? 'EN' : '中文'}</span>
-               </button>
+               <div className="relative">
+                   <button
+                      onClick={() => setIsLangOpen(!isLangOpen)}
+                      className="p-2 rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors flex items-center gap-2"
+                      title="Switch Language"
+                   >
+                      <Globe size={20} />
+                      <span className="text-sm font-bold hidden sm:inline">
+                          {LANGUAGES.find(l => l.code === language)?.label || 'Language'}
+                      </span>
+                      <ChevronDown size={16} />
+                   </button>
+                   
+                   {isLangOpen && (
+                       <div className="absolute top-full right-0 mt-2 w-32 bg-white rounded-xl shadow-xl border border-slate-100 overflow-hidden py-1 z-50">
+                           {LANGUAGES.map((lang) => (
+                               <button
+                                   key={lang.code}
+                                   onClick={() => {
+                                       setLanguage(lang.code as any);
+                                       setIsLangOpen(false);
+                                   }}
+                                   className={`w-full px-4 py-2 text-left text-sm font-medium hover:bg-slate-50 transition-colors ${language === lang.code ? 'text-macoin-600 bg-macoin-50' : 'text-slate-600'}`}
+                               >
+                                   {lang.label}
+                               </button>
+                           ))}
+                       </div>
+                   )}
+               </div>
                {/* Button removed as requested for auto-logic */}
               <ConnectButton showBalance={false} chainStatus="icon" accountStatus="address" />
             </div>

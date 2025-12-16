@@ -25,7 +25,7 @@ const data = [
 
 const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClick, onWhitepaperClick }) => {
   const { t } = useLanguage();
-  const { mcContract, protocolContract, account, isConnected } = useWeb3();
+  const { mcContract, jbcContract, protocolContract, account, isConnected } = useWeb3();
   const [displayStats, setDisplayStats] = useState<UserStats>(initialStats);
   const [jbcPrice, setJbcPrice] = useState<string>('1.0');
   
@@ -36,11 +36,14 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
 
   useEffect(() => {
     const fetchData = async () => {
-        if (isConnected && account && mcContract && protocolContract) {
+        if (isConnected && account && mcContract && jbcContract && protocolContract) {
             try {
                 // Fetch MC Balance
                 const mcBal = await mcContract.balanceOf(account);
-                
+
+                // Fetch JBC Balance
+                const jbcBal = await jbcContract.balanceOf(account);
+
                 // Fetch JBC Price from Contract (Spot Price)
                 try {
                     const priceWei = await protocolContract.getJBCPrice();
@@ -52,7 +55,7 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
                 // Fetch Protocol Info
                 const userInfo = await protocolContract.userInfo(account);
                 // userInfo returns: (referrer, activeDirects, teamCount, totalRevenue, currentCap, isActive)
-                
+
                 // Check referrer binding
                 const currentReferrer = userInfo[0];
                 if (currentReferrer && currentReferrer !== '0x0000000000000000000000000000000000000000') {
@@ -72,10 +75,10 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
                 else if (activeDirects >= 30) level = "V2";
                 else if (activeDirects >= 10) level = "V1";
 
-                setDisplayStats(prev => ({ 
-                    ...prev, 
+                setDisplayStats(prev => ({
+                    ...prev,
                     balanceMC: parseFloat(ethers.formatEther(mcBal)),
-                    // balanceJBC: ... (Need JBC Contract),
+                    balanceJBC: parseFloat(ethers.formatEther(jbcBal)),
                     totalRevenue: parseFloat(ethers.formatEther(userInfo[3])),
                     teamCount: Number(userInfo[2]),
                     currentLevel: level
@@ -88,7 +91,7 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
     const timer = setInterval(fetchData, 5000); // Refresh every 5s
     fetchData();
     return () => clearInterval(timer);
-  }, [isConnected, account, mcContract, protocolContract]);
+  }, [isConnected, account, mcContract, jbcContract, protocolContract]);
 
   const handleBind = async () => {
     if (referrer.trim() && protocolContract) {

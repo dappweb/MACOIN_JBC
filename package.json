@@ -6,7 +6,18 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "compile": "npx hardhat compile",
+    "test": "npx hardhat test",
+    "deploy": "npx hardhat run scripts/deploy.cjs --network mc",
+    "deploy:mc": "npx hardhat run scripts/deploy.cjs --network mc",
+    "deploy:sepolia": "npx hardhat run scripts/deploy.cjs --network sepolia",
+    "deploy:bsc": "npx hardhat run scripts/deploy.cjs --network bscTestnet",
+    "deploy:local": "npx hardhat run scripts/deploy.cjs --network hardhat",
+    "check": "npx hardhat run scripts/check-network.js --network mc",
+    "check:mc": "npx hardhat run scripts/check-network.js --network mc",
+    "check:sepolia": "npx hardhat run scripts/check-network.js --network sepolia",
+    "check:bsc": "npx hardhat run scripts/check-network.js --network bscTestnet"
   },
   "dependencies": {
     "@rainbow-me/rainbowkit": "^2.2.10",

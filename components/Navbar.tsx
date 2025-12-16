@@ -36,28 +36,29 @@ const Navbar: React.FC<NavbarProps> = ({ currentTab, setTab }) => {
     checkOwner();
   }, [protocolContract, account]);
 
-  // Automatic Chain Switching/Adding
-  useEffect(() => {
-      const ensureMcChain = async () => {
-          if (isConnected && chainId !== MC_CHAIN_ID) {
-              console.log("Incorrect chain detected. Attempting to switch to MC Chain...");
-              // Try standard switch first if available in wallet (via Wagmi)
-              if (switchChain) {
-                  try {
-                      switchChain({ chainId: MC_CHAIN_ID });
-                      return; 
-                  } catch (error) {
-                      console.log("Switch chain via wagmi failed, trying wallet_addEthereumChain...", error);
-                  }
-              }
+  // Automatic Chain Switching/Adding - DISABLED to allow multi-network support
+  // Users can manually switch networks using their wallet or the ConnectButton
+  // useEffect(() => {
+  //     const ensureMcChain = async () => {
+  //         if (isConnected && chainId !== MC_CHAIN_ID) {
+  //             console.log("Incorrect chain detected. Attempting to switch to MC Chain...");
+  //             // Try standard switch first if available in wallet (via Wagmi)
+  //             if (switchChain) {
+  //                 try {
+  //                     switchChain({ chainId: MC_CHAIN_ID });
+  //                     return;
+  //                 } catch (error) {
+  //                     console.log("Switch chain via wagmi failed, trying wallet_addEthereumChain...", error);
+  //                 }
+  //             }
 
-              // Fallback to manual add/switch
-              await addMcChain();
-          }
-      };
+  //             // Fallback to manual add/switch
+  //             await addMcChain();
+  //         }
+  //     };
 
-      ensureMcChain();
-  }, [isConnected, chainId, switchChain]);
+  //     ensureMcChain();
+  // }, [isConnected, chainId, switchChain]);
 
   const addMcChain = async () => {
     if (typeof window.ethereum !== 'undefined') {

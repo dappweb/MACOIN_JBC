@@ -73,7 +73,7 @@ export const translations = {
       r2: '拿 10 层每单 1%',
       l3: '推 3 有效账户',
       r3: '拿 15 层每单 1%',
-      networkTitle: '直推网络',
+      networkTitle: '社区直推网络',
       networkSubtitle: '您的直推成员',
       networkLoading: '正在加载网络...',
       netWallet: '钱包地址',

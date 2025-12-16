@@ -13,6 +13,7 @@ const MiningPanel: React.FC = () => {
   const [isApproved, setIsApproved] = useState(false);
   const [isCheckingAllowance, setIsCheckingAllowance] = useState(false);
   const [isTicketBought, setIsTicketBought] = useState(false); // New state to track ticket purchase
+  const [hasActiveTicket, setHasActiveTicket] = useState(false); // Track if user has active ticket
   const [txPending, setTxPending] = useState(false);
 
   const { t } = useLanguage();
@@ -25,6 +26,28 @@ const MiningPanel: React.FC = () => {
 
   // 3x Cap Calculation
   const maxCap = selectedTicket.amount * 3;
+
+  // Check if user has active ticket
+  useEffect(() => {
+    const checkTicketStatus = async () => {
+        if (protocolContract && account) {
+            try {
+                const ticket = await protocolContract.userTicket(account);
+                // Check if user has an active ticket (liquidityProvided and not redeemed)
+                if (ticket.liquidityProvided && !ticket.redeemed) {
+                    setHasActiveTicket(true);
+                    setIsTicketBought(true);
+                } else {
+                    setHasActiveTicket(false);
+                    setIsTicketBought(false);
+                }
+            } catch (err) {
+                console.error("Failed to check ticket status", err);
+            }
+        }
+    };
+    checkTicketStatus();
+  }, [protocolContract, account]);
 
   useEffect(() => {
     const checkAllowance = async () => {
@@ -79,12 +102,22 @@ const MiningPanel: React.FC = () => {
           const tx = await protocolContract.buyTicket(amountWei);
           await tx.wait();
           setIsTicketBought(true);
+          setHasActiveTicket(false);
           toast.success("Ticket Purchased Successfully!");
       } catch (err: any) {
           console.error(err);
-          toast.error("Purchase Failed: " + (err.reason || err.message));
-          // Fallback for demo
-          setIsTicketBought(true);
+          // Check if error is about active ticket
+          const errorMsg = err.reason || err.message || '';
+          if (errorMsg.includes('Active ticket exists')) {
+              toast.error("You have an active ticket. Please redeem it first before buying a new one.", {
+                  duration: 5000,
+              });
+              // Set states to show the active ticket UI
+              setHasActiveTicket(true);
+              setIsTicketBought(true);
+          } else {
+              toast.error("Purchase Failed: " + errorMsg);
+          }
       } finally {
           setTxPending(false);
       }
@@ -127,11 +160,13 @@ const MiningPanel: React.FC = () => {
       try {
           const tx = await protocolContract.redeem();
           await tx.wait();
-          alert("Redemption Successful!");
+          toast.success("Redemption Successful! You can now buy a new ticket.");
           setIsTicketBought(false); // Reset UI state
-      } catch (err) {
+          setHasActiveTicket(false);
+      } catch (err: any) {
           console.error(err);
-          alert("Redemption Failed. (Maybe cycle not ended?)");
+          const errorMsg = err.reason || err.message || '';
+          toast.error("Redemption Failed: " + errorMsg);
       } finally {
           setTxPending(false);
       }
@@ -144,6 +179,19 @@ const MiningPanel: React.FC = () => {
         <h2 className="text-2xl md:text-3xl font-bold text-slate-900">{t.mining.title}</h2>
         <p className="text-sm md:text-base text-slate-500">{t.mining.subtitle}</p>
       </div>
+
+      {/* Active Ticket Warning */}
+      {hasActiveTicket && (
+        <div className="bg-blue-50 border-2 border-blue-300 rounded-xl p-4 flex items-start gap-3 animate-fade-in">
+          <AlertCircle className="text-blue-600 shrink-0 mt-0.5" size={20} />
+          <div className="flex-1">
+            <p className="font-bold text-blue-900 mb-1">You Have an Active Ticket</p>
+            <p className="text-sm text-blue-800">
+              You already have an active mining ticket. To purchase a new ticket, you must first complete your current mining cycle and redeem your ticket using the "Redeem" button below.
+            </p>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6 lg:gap-8">
 

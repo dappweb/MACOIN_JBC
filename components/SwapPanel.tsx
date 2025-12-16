@@ -17,6 +17,7 @@ const SwapPanel: React.FC = () => {
   const [poolMC, setPoolMC] = useState<string>('0.0');
   const [poolJBC, setPoolJBC] = useState<string>('0.0');
   const [isLoading, setIsLoading] = useState(false);
+  const [isRotated, setIsRotated] = useState(false);
 
   useEffect(() => {
     const fetchBalances = async () => {
@@ -149,6 +150,7 @@ const SwapPanel: React.FC = () => {
 
   const toggleDirection = () => {
       setIsSelling(!isSelling);
+      setIsRotated(!isRotated);
       setPayAmount('');
       setGetAmount('');
   };
@@ -183,7 +185,7 @@ const SwapPanel: React.FC = () => {
             <div className="flex justify-center -my-1.5 md:-my-2 relative z-20">
                 <button
                     onClick={toggleDirection}
-                    className="bg-white border border-macoin-500 p-1.5 md:p-2 rounded-full text-macoin-600 hover:rotate-180 transition-transform duration-500 shadow-sm hover:shadow-md"
+                    className={`bg-white border border-macoin-500 p-1.5 md:p-2 rounded-full text-macoin-600 transition-transform duration-500 shadow-sm hover:shadow-md ${isRotated ? 'rotate-180' : ''}`}
                 >
                     <ArrowLeftRight size={18} className="md:w-5 md:h-5" />
                 </button>

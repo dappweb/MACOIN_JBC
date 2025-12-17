@@ -19,42 +19,41 @@ const SwapPanel: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isRotated, setIsRotated] = useState(false);
 
-  useEffect(() => {
-    const fetchBalances = async () => {
-        if (isConnected && account) {
-            try {
-                if (mcContract) {
-                    // Fetch ERC20 MC Balance (Contract uses ERC20)
-                    const mcBal = await mcContract.balanceOf(account);
-                    setBalanceMC(ethers.formatEther(mcBal));
+  // 提取余额获取逻辑为独立函数，方便在交易后刷新
+  const fetchBalances = async () => {
+    if (isConnected && account) {
+        try {
+            if (mcContract) {
+                // Fetch ERC20 MC Balance (Contract uses ERC20)
+                const mcBal = await mcContract.balanceOf(account);
+                setBalanceMC(ethers.formatEther(mcBal));
 
-                    // Pool Liquidity (MC is ERC20 in contract)
-                    const poolMcBal = await mcContract.balanceOf(CONTRACT_ADDRESSES.PROTOCOL);
-
-                    setPoolMC(ethers.formatEther(poolMcBal));
-                }
-
-                if (jbcContract) {
-                    const jbcBal = await jbcContract.balanceOf(account);
-                    setBalanceJBC(ethers.formatEther(jbcBal));
-
-                    // Pool Liquidity
-                    const poolJbcBal = await jbcContract.balanceOf(CONTRACT_ADDRESSES.PROTOCOL);
-
-                    setPoolJBC(ethers.formatEther(poolJbcBal));
-                }
-
-                // Optional: Log native balance for debugging
-                if (provider) {
-                    const native = await provider.getBalance(account);
-                    console.log("Native Balance:", ethers.formatEther(native));
-                }
-
-            } catch (err) {
-                console.error("Failed to fetch balances", err);
+                // Pool Liquidity (MC is ERC20 in contract)
+                const poolMcBal = await mcContract.balanceOf(CONTRACT_ADDRESSES.PROTOCOL);
+                setPoolMC(ethers.formatEther(poolMcBal));
             }
+
+            if (jbcContract) {
+                const jbcBal = await jbcContract.balanceOf(account);
+                setBalanceJBC(ethers.formatEther(jbcBal));
+
+                // Pool Liquidity
+                const poolJbcBal = await jbcContract.balanceOf(CONTRACT_ADDRESSES.PROTOCOL);
+                setPoolJBC(ethers.formatEther(poolJbcBal));
+            }
+
+            // Optional: Log native balance for debugging
+            if (provider) {
+                const native = await provider.getBalance(account);
+            }
+
+        } catch (err) {
+            console.error("Failed to fetch balances", err);
         }
-    };
+    }
+  };
+
+  useEffect(() => {
     fetchBalances();
   }, [isConnected, account, mcContract, jbcContract, provider]);
 
@@ -100,9 +99,9 @@ const SwapPanel: React.FC = () => {
           toast.success("Swap Successful!");
           setPayAmount('');
           setGetAmount('');
-          // Refresh balances (optional, or rely on useEffect dependency if logic added)
+          // 刷新余额和池子数据
+          await fetchBalances();
       } catch (err: any) {
-          console.error(err);
           toast.error("Swap Failed: " + (err.reason || err.message));
       } finally {
           setIsLoading(false);

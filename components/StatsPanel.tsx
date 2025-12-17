@@ -60,6 +60,13 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
                 const currentReferrer = userInfo[0];
                 if (currentReferrer && currentReferrer !== '0x0000000000000000000000000000000000000000') {
                     setIsBound(true);
+                } else {
+                    // 未绑定上级，检查 URL 中是否有 ref 参数
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const refParam = urlParams.get('ref');
+                    if (refParam && !referrer) {
+                        setReferrer(refParam);
+                    }
                 }
 
                 // Calculate Level based on activeDirects (simplified V1-V9 logic)
@@ -97,13 +104,27 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
     if (referrer.trim() && protocolContract) {
       setIsBinding(true);
       try {
-        const tx = await protocolContract.bindReferrer(referrer.trim());
+        // 提取 ref= 之后的地址
+        let address = referrer.trim();
+        const refMatch = address.match(/ref=([^&\s]+)/i);
+        if (refMatch) {
+          address = refMatch[1];
+        }
+
+        // 验证地址格式
+        if (!/^0x[a-fA-F0-9]{40}$/.test(address)) {
+          toast.error('请输入正确的钱包地址');
+          setIsBinding(false);
+          return;
+        }
+
+        const tx = await protocolContract.bindReferrer(address);
         await tx.wait();
         setIsBound(true);
         toast.success("Referrer Bound Successfully!");
       } catch (err: any) {
         console.error(err);
-        toast.error("Failed to bind: " + (err.reason || err.message));
+        toast.error('绑定失败: ' + (err.reason || err.message));
       } finally {
         setIsBinding(false);
       }
@@ -209,9 +230,9 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
                 <Wallet className="text-macoin-600" size={18} />
             </div>
             <div className="text-2xl md:text-3xl font-bold text-slate-900 mb-1">{displayStats.balanceMC.toLocaleString()}</div>
-            <div className="text-xs text-macoin-600 flex items-center gap-1">
+            {/* <div className="text-xs text-macoin-600 flex items-center gap-1">
                 <ArrowUpRight size={12} /> +2.4% {t.stats.today}
-            </div>
+            </div> */}
         </div>
 
         {/* Stat 2 */}

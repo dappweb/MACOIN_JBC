@@ -35,18 +35,18 @@ export const PROTOCOL_ABI = [
 ];
 
 // Contract Addresses (Mock for now, replace with real deployment)
-// export const CONTRACT_ADDRESSES = {
-//   MC_TOKEN: "0xB2B8777BcBc7A8DEf49F022773d392a8787cf9EF",
-//   JBC_TOKEN: "0xA743cB357a9f59D349efB7985072779a094658dD", // Replace with real JBC Address
-//   PROTOCOL: "0x941E18CB27BA8326a1F962D4C1B94360D5A3e29f"
-// };
-
-// todo // sp
 export const CONTRACT_ADDRESSES = {
-  MC_TOKEN: "0x33A6FE1Ae840c4dd2dfaC4d5aDFc8AD2a1d87eA5",
-  JBC_TOKEN: "0xB2B8777BcBc7A8DEf49F022773d392a8787cf9EF", // Replace with real JBC Address
-  PROTOCOL: "0xA743cB357a9f59D349efB7985072779a094658dD"
+  MC_TOKEN: "0xB2B8777BcBc7A8DEf49F022773d392a8787cf9EF",
+  JBC_TOKEN: "0xA743cB357a9f59D349efB7985072779a094658dD", // Replace with real JBC Address
+  PROTOCOL: "0x941E18CB27BA8326a1F962D4C1B94360D5A3e29f"
 };
+
+// Contract Addresses - Update these with your deployed contract addresses
+// export const CONTRACT_ADDRESSES = {
+//   MC_TOKEN: "0x33A6FE1Ae840c4dd2dfaC4d5aDFc8AD2a1d87eA5",    // MC Token (ERC20) - 用于购买 JBC
+//   JBC_TOKEN: "0xB2B8777BcBc7A8DEf49F022773d392a8787cf9EF",   // JBC Token (ERC20) - 项目主代币
+//   PROTOCOL: "0xA743cB357a9f59D349efB7985072779a094658dD"    // Protocol Contract - 主协议合约（包含兑换池）
+// };
 
 interface Web3ContextType {
   provider: ethers.Provider | null;

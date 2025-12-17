@@ -29,10 +29,35 @@ const TeamLevel: React.FC = () => {
   const copyReferralLink = () => {
       if (account) {
           const url = `${window.location.origin}?ref=${account}`;
-          navigator.clipboard.writeText(url);
-          toast.success("Referral Link Copied!");
+          
+          // Try modern clipboard API first
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+              navigator.clipboard.writeText(url)
+                  .then(() => toast.success("Referral Link Copied!"))
+                  .catch(() => fallbackCopy(url));
+          } else {
+              // Fallback for older browsers or non-HTTPS
+              fallbackCopy(url);
+          }
       } else {
           toast.error("Connect Wallet First");
+      }
+  };
+
+  const fallbackCopy = (text: string) => {
+      try {
+          const textArea = document.createElement("textarea");
+          textArea.value = text;
+          textArea.style.position = "fixed";
+          textArea.style.left = "-999999px";
+          document.body.appendChild(textArea);
+          textArea.select();
+          document.execCommand('copy');
+          document.body.removeChild(textArea);
+          toast.success("Referral Link Copied!");
+      } catch (err) {
+          console.error('Failed to copy:', err);
+          toast.error("Failed to copy link");
       }
   };
 
@@ -110,7 +135,7 @@ const TeamLevel: React.FC = () => {
             </div>
         </div>
 
-        <div className="overflow-x-auto -mx-4 sm:mx-0">
+        <div className="overflow-x-auto px-4 -mx-4 sm:mx-0">
             <table className="w-full text-left min-w-[500px] sm:min-w-0">
                 <thead>
                     <tr className="bg-slate-50 border-b border-slate-200">
@@ -205,9 +230,9 @@ const TeamLevel: React.FC = () => {
                     <thead>
                         <tr className="bg-slate-50 border-b border-slate-100">
                             <th className="p-4 text-slate-500 text-sm font-semibold">{t.team.netWallet}</th>
-                            <th className="p-4 text-slate-500 text-sm font-semibold">{t.team.netTicket}</th>
-                            <th className="p-4 text-slate-500 text-sm font-semibold">{t.team.netStatus}</th>
-                            <th className="p-4 text-slate-500 text-sm font-semibold text-right">{t.team.netJoined}</th>
+                            <th className="p-4 text-slate-500 text-sm font-semibold whitespace-nowrap">{t.team.netTicket}</th>
+                            <th className="p-4 text-slate-500 text-sm font-semibold whitespace-nowrap">{t.team.netStatus}</th>
+                            <th className="p-4 text-slate-500 text-sm font-semibold text-right whitespace-nowrap">{t.team.netJoined}</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
@@ -216,15 +241,15 @@ const TeamLevel: React.FC = () => {
                                 <td className="p-4 text-slate-700 font-mono text-sm">
                                     {item.user.substring(0, 6)}...{item.user.substring(38)}
                                 </td>
-                                <td className="p-4 text-slate-700 font-bold text-sm">
+                                <td className="p-4 text-slate-700 font-bold text-sm whitespace-nowrap">
                                     {ethers.formatEther(item.ticketAmount)} MC
                                 </td>
                                 <td className="p-4">
-                                    <span className={`px-2 py-1 text-xs font-bold rounded-full ${item.ticketAmount > 0n ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-500'}`}>
+                                    <span className={`px-2 py-1 text-xs font-bold rounded-full whitespace-nowrap ${item.ticketAmount > 0n ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-500'}`}>
                                         {item.ticketAmount > 0n ? t.team.netActive : 'Inactive'}
                                     </span>
                                 </td>
-                                <td className="p-4 text-right text-slate-400 text-sm">
+                                <td className="p-4 text-right text-slate-400 text-sm whitespace-nowrap">
                                     {item.joinTime > 0n ? new Date(Number(item.joinTime) * 1000).toLocaleDateString() : '-'}
                                 </td>
                             </tr>

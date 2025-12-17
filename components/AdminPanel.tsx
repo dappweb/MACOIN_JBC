@@ -42,6 +42,10 @@ const AdminPanel: React.FC = () => {
   const [announceLang, setAnnounceLang] = useState('en');
   const [announceContent, setAnnounceContent] = useState('');
 
+  // Liquidity Management
+  const [mcLiquidityAmount, setMcLiquidityAmount] = useState('');
+  const [jbcLiquidityAmount, setJbcLiquidityAmount] = useState('');
+
   const updateDistribution = async () => {
     if (!protocolContract) return;
     setLoading(true);
@@ -170,6 +174,54 @@ const AdminPanel: React.FC = () => {
         }
     } catch (err: any) {
         toast.error("Update failed: " + err.message);
+    } finally {
+        setLoading(false);
+    }
+  };
+
+  const addLiquidity = async (tokenType: 'MC' | 'JBC') => {
+    if (!isConnected || !provider) {
+        toast.error("Connect wallet first");
+        return;
+    }
+    
+    setLoading(true);
+    try {
+        const { mcContract, jbcContract, CONTRACT_ADDRESSES } = await import('../Web3Context');
+        const signer = await provider.getSigner();
+        
+        if (tokenType === 'MC' && mcLiquidityAmount) {
+            const amount = ethers.parseEther(mcLiquidityAmount);
+            const mcTokenContract = mcContract;
+            
+            if (!mcTokenContract) {
+                toast.error("MC contract not found");
+                return;
+            }
+            
+            // Transfer MC to protocol contract
+            const tx = await mcTokenContract.connect(signer).transfer(CONTRACT_ADDRESSES.PROTOCOL, amount);
+            await tx.wait();
+            toast.success(`Added ${mcLiquidityAmount} MC to pool!`);
+            setMcLiquidityAmount('');
+        } else if (tokenType === 'JBC' && jbcLiquidityAmount) {
+            const amount = ethers.parseEther(jbcLiquidityAmount);
+            const jbcTokenContract = jbcContract;
+            
+            if (!jbcTokenContract) {
+                toast.error("JBC contract not found");
+                return;
+            }
+            
+            // Transfer JBC to protocol contract
+            const tx = await jbcTokenContract.connect(signer).transfer(CONTRACT_ADDRESSES.PROTOCOL, amount);
+            await tx.wait();
+            toast.success(`Added ${jbcLiquidityAmount} JBC to pool!`);
+            setJbcLiquidityAmount('');
+        }
+    } catch (err: any) {
+        console.error(err);
+        toast.error("Failed: " + (err.reason || err.message));
     } finally {
         setLoading(false);
     }
@@ -310,6 +362,53 @@ const AdminPanel: React.FC = () => {
                           {t.admin.updateUser}
                       </button>
                   </div>
+              </div>
+          </div>
+      </div>
+
+      {/* Liquidity Management */}
+      <div className="glass-panel p-4 md:p-6 rounded-xl md:rounded-2xl bg-white border border-red-200">
+          <div className="flex items-center gap-2 mb-3 md:mb-4">
+              <AlertTriangle className="text-red-600" size={20} />
+              <h3 className="text-lg md:text-xl font-bold text-slate-800">Add Pool Liquidity (Admin Only)</h3>
+          </div>
+          <p className="text-xs md:text-sm text-slate-500 mb-4">Transfer tokens from your wallet to the protocol contract to add liquidity for swaps.</p>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-3">
+                  <label className="block text-sm font-medium text-slate-700">Add MC Liquidity</label>
+                  <input 
+                      type="number" 
+                      value={mcLiquidityAmount} 
+                      onChange={e => setMcLiquidityAmount(e.target.value)} 
+                      className="w-full p-2 md:p-2.5 border rounded text-sm"
+                      placeholder="Amount in MC"
+                  />
+                  <button 
+                      onClick={() => addLiquidity('MC')} 
+                      disabled={loading || !mcLiquidityAmount}
+                      className="w-full py-2 md:py-2.5 bg-macoin-500 text-white rounded-lg hover:bg-macoin-600 disabled:opacity-50 text-sm md:text-base"
+                  >
+                      Add MC to Pool
+                  </button>
+              </div>
+              
+              <div className="space-y-3">
+                  <label className="block text-sm font-medium text-slate-700">Add JBC Liquidity</label>
+                  <input 
+                      type="number" 
+                      value={jbcLiquidityAmount} 
+                      onChange={e => setJbcLiquidityAmount(e.target.value)} 
+                      className="w-full p-2 md:p-2.5 border rounded text-sm"
+                      placeholder="Amount in JBC"
+                  />
+                  <button 
+                      onClick={() => addLiquidity('JBC')} 
+                      disabled={loading || !jbcLiquidityAmount}
+                      className="w-full py-2 md:py-2.5 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 disabled:opacity-50 text-sm md:text-base"
+                  >
+                      Add JBC to Pool
+                  </button>
               </div>
           </div>
       </div>

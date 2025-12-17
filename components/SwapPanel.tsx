@@ -30,6 +30,7 @@ const SwapPanel: React.FC = () => {
 
                     // Pool Liquidity (MC is ERC20 in contract)
                     const poolMcBal = await mcContract.balanceOf(CONTRACT_ADDRESSES.PROTOCOL);
+
                     setPoolMC(ethers.formatEther(poolMcBal));
                 }
 
@@ -39,6 +40,7 @@ const SwapPanel: React.FC = () => {
 
                     // Pool Liquidity
                     const poolJbcBal = await jbcContract.balanceOf(CONTRACT_ADDRESSES.PROTOCOL);
+
                     setPoolJBC(ethers.formatEther(poolJbcBal));
                 }
 
@@ -55,6 +57,15 @@ const SwapPanel: React.FC = () => {
     };
     fetchBalances();
   }, [isConnected, account, mcContract, jbcContract, provider]);
+
+  // Debounce effect for calculating estimate
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      calculateEstimate(payAmount);
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, [payAmount, isSelling, poolMC, poolJBC]);
 
   const handleSwap = async () => {
       if (!protocolContract || !payAmount) return;
@@ -98,8 +109,7 @@ const SwapPanel: React.FC = () => {
       }
   };
 
-  const handleInput = (val: string) => {
-      setPayAmount(val);
+  const calculateEstimate = (val: string) => {
       if (!val) {
           setGetAmount('');
           return;
@@ -146,6 +156,21 @@ const SwapPanel: React.FC = () => {
       }
       
       setGetAmount(received.toFixed(4));
+  };
+
+  const handleInput = (val: string) => {
+      // Get current balance based on selling or buying
+      const currentBalance = parseFloat(isSelling ? balanceJBC : balanceMC);
+      const inputAmount = parseFloat(val);
+      
+      // Check if input exceeds balance
+      if (!isNaN(inputAmount) && inputAmount > currentBalance) {
+          toast.error(`Insufficient balance. Max: ${currentBalance.toFixed(4)} ${isSelling ? 'JBC' : 'MC'}`);
+          setPayAmount(currentBalance.toString());
+          return;
+      }
+      
+      setPayAmount(val);
   };
 
   const toggleDirection = () => {

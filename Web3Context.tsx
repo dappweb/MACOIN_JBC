@@ -31,7 +31,14 @@ export const PROTOCOL_ABI = [
   "function adminSetUserStats(address, uint256, uint256) external",
   "function adminSetReferrer(address, address) external",
   "function getJBCPrice() view returns (uint256)",
-  "function getAmountOut(uint256, uint256, uint256) pure returns (uint256)"
+  "function getAmountOut(uint256, uint256, uint256) pure returns (uint256)",
+  "event BoundReferrer(address indexed user, address indexed referrer)",
+  "event TicketPurchased(address indexed user, uint256 amount)",
+  "event LiquidityStaked(address indexed user, uint256 amount, uint256 cycleDays)",
+  "event RewardClaimed(address indexed user, uint256 mcAmount, uint256 jbcAmount)",
+  "event Redeemed(address indexed user, uint256 principal, uint256 fee)",
+  "event SwappedMCToJBC(address indexed user, uint256 mcAmount, uint256 jbcAmount, uint256 tax)",
+  "event SwappedJBCToMC(address indexed user, uint256 jbcAmount, uint256 mcAmount, uint256 tax)"
 ];
 
 // Contract Addresses (Mock for now, replace with real deployment)

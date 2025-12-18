@@ -6,6 +6,7 @@ import TeamLevel from './components/TeamLevel';
 import WhitepaperModal from './components/WhitepaperModal';
 import SwapPanel from './components/SwapPanel';
 import AdminPanel from './components/AdminPanel';
+import TransactionHistory from './components/TransactionHistory';
 import { AppTab } from './types';
 import { MOCK_USER_STATS } from './constants';
 import { ArrowLeftRight } from 'lucide-react';
@@ -75,6 +76,8 @@ const AppContent: React.FC = () => {
         {currentTab === AppTab.TEAM && <TeamLevel />}
 
         {currentTab === AppTab.SWAP && <SwapPanel />}
+
+        {currentTab === AppTab.HISTORY && <TransactionHistory />}
 
         {currentTab === AppTab.ADMIN && <AdminPanel />}
 

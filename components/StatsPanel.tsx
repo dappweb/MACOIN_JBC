@@ -13,19 +13,11 @@ interface StatsPanelProps {
   onWhitepaperClick: () => void
 }
 
-const data = [
-  { name: "1", uv: 4000 },
-  { name: "5", uv: 3000 },
-  { name: "10", uv: 5000 },
-  { name: "15", uv: 7580 },
-  { name: "20", uv: 6890 },
-  { name: "25", uv: 9390 },
-  { name: "30", uv: 10500 },
-]
+// This will be replaced with real price history data from blockchain
 
 const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClick, onWhitepaperClick }) => {
   const { t } = useLanguage()
-  const { mcContract, jbcContract, protocolContract, account, isConnected } = useWeb3()
+  const { mcContract, jbcContract, protocolContract, account, isConnected, provider } = useWeb3()
   const [displayStats, setDisplayStats] = useState<UserStats>(initialStats)
   const [jbcPrice, setJbcPrice] = useState<string>("1.0")
 
@@ -33,6 +25,126 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
   const [referrer, setReferrer] = useState("")
   const [isBound, setIsBound] = useState(false)
   const [isBinding, setIsBinding] = useState(false)
+
+  // Price History State
+  const [priceHistory, setPriceHistory] = useState<Array<{ name: string; uv: number }>>([])
+  const [loadingPriceHistory, setLoadingPriceHistory] = useState(true)
+
+  // Fetch Price History from Swap Events
+  useEffect(() => {
+    const fetchPriceHistory = async () => {
+      if (!protocolContract || !provider) {
+        setLoadingPriceHistory(false)
+        return
+      }
+
+      try {
+        setLoadingPriceHistory(true)
+        const currentBlock = await provider.getBlockNumber()
+        const fromBlock = Math.max(0, currentBlock - 100000) // Last ~100k blocks
+
+        // Query both swap events
+        const [mcToJbcEvents, jbcToMcEvents] = await Promise.all([
+          protocolContract.queryFilter(protocolContract.filters.SwappedMCToJBC(), fromBlock),
+          protocolContract.queryFilter(protocolContract.filters.SwappedJBCToMC(), fromBlock),
+        ])
+
+        // Combine and parse swap events to calculate prices
+        interface PricePoint {
+          timestamp: number
+          price: number
+        }
+
+        const pricePoints: PricePoint[] = []
+
+        // Parse MC->JBC swaps: price = mcAmount / jbcAmount
+        for (const event of mcToJbcEvents) {
+          try {
+            const block = await provider.getBlock(event.blockNumber)
+            if (event.args && block) {
+              const mcAmount = parseFloat(ethers.formatEther(event.args[1]))
+              const jbcAmount = parseFloat(ethers.formatEther(event.args[2]))
+              if (jbcAmount > 0) {
+                const price = mcAmount / jbcAmount
+                pricePoints.push({
+                  timestamp: block.timestamp,
+                  price: price,
+                })
+              }
+            }
+          } catch (err) {
+            console.error("Error parsing MC->JBC event:", err)
+          }
+        }
+
+        // Parse JBC->MC swaps: price = mcAmount / jbcAmount
+        for (const event of jbcToMcEvents) {
+          try {
+            const block = await provider.getBlock(event.blockNumber)
+            if (event.args && block) {
+              const jbcAmount = parseFloat(ethers.formatEther(event.args[1]))
+              const mcAmount = parseFloat(ethers.formatEther(event.args[2]))
+              if (jbcAmount > 0) {
+                const price = mcAmount / jbcAmount
+                pricePoints.push({
+                  timestamp: block.timestamp,
+                  price: price,
+                })
+              }
+            }
+          } catch (err) {
+            console.error("Error parsing JBC->MC event:", err)
+          }
+        }
+
+        // Sort by timestamp
+        pricePoints.sort((a, b) => a.timestamp - b.timestamp)
+
+        if (pricePoints.length === 0) {
+          // No swap data yet, use default initial price
+          setPriceHistory([{ name: "Now", uv: 1.0 }])
+          setLoadingPriceHistory(false)
+          return
+        }
+
+        // Aggregate prices into time buckets for chart display
+        // Group by days for better visualization
+        const dailyPrices = new Map<string, number[]>()
+
+        for (const point of pricePoints) {
+          const date = new Date(point.timestamp * 1000)
+          const dateKey = `${date.getMonth() + 1}/${date.getDate()}`
+
+          if (!dailyPrices.has(dateKey)) {
+            dailyPrices.set(dateKey, [])
+          }
+          dailyPrices.get(dateKey)!.push(point.price)
+        }
+
+        // Calculate average price for each day
+        const chartData = Array.from(dailyPrices.entries()).map(([date, prices]) => {
+          const avgPrice = prices.reduce((sum, p) => sum + p, 0) / prices.length
+          return {
+            name: date,
+            uv: avgPrice,
+          }
+        })
+
+        // Limit to last 30 data points for chart readability
+        const limitedData = chartData.slice(-30)
+
+        setPriceHistory(limitedData.length > 0 ? limitedData : [{ name: "Now", uv: 1.0 }])
+      } catch (error) {
+        console.error("Failed to fetch price history:", error)
+        // Fallback to default
+        setPriceHistory([{ name: "Now", uv: 1.0 }])
+      } finally {
+        setLoadingPriceHistory(false)
+      }
+    }
+
+    fetchPriceHistory()
+  }, [protocolContract, provider])
 
   useEffect(() => {
     const fetchData = async () => {
@@ -288,39 +400,48 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
         <h3 className="text-base md:text-lg font-bold mb-4 md:mb-6 text-slate-900 border-l-4 border-macoin-500 pl-3">
           {t.stats.chartTitle}
         </h3>
-        <div className="h-[200px] sm:h-[250px] md:h-[300px] w-full">
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={data}>
-              <defs>
-                <linearGradient id="colorUv" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#00dc82" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="#00dc82" stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
-              <XAxis dataKey="name" stroke="#94a3b8" />
-              <YAxis stroke="#94a3b8" />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: "#fff",
-                  borderColor: "#e2e8f0",
-                  color: "#0f172a",
-                  borderRadius: "8px",
-                  boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
-                }}
-                itemStyle={{ color: "#16a34a" }}
-              />
-              <Area
-                type="monotone"
-                dataKey="uv"
-                stroke="#00dc82"
-                strokeWidth={3}
-                fillOpacity={1}
-                fill="url(#colorUv)"
-              />
-            </AreaChart>
-          </ResponsiveContainer>
-        </div>
+        {loadingPriceHistory ? (
+          <div className="h-[200px] sm:h-[250px] md:h-[300px] w-full flex items-center justify-center">
+            <div className="text-center">
+              <div className="w-8 h-8 border-4 border-macoin-500 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+              <p className="text-sm text-slate-500">Loading price history...</p>
+            </div>
+          </div>
+        ) : (
+          <div className="h-[200px] sm:h-[250px] md:h-[300px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={priceHistory}>
+                <defs>
+                  <linearGradient id="colorUv" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#00dc82" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#00dc82" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
+                <XAxis dataKey="name" stroke="#94a3b8" />
+                <YAxis stroke="#94a3b8" />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: "#fff",
+                    borderColor: "#e2e8f0",
+                    color: "#0f172a",
+                    borderRadius: "8px",
+                    boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+                  }}
+                  itemStyle={{ color: "#16a34a" }}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="uv"
+                  stroke="#00dc82"
+                  strokeWidth={3}
+                  fillOpacity={1}
+                  fill="url(#colorUv)"
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        )}
       </div>
     </div>
   )

@@ -3,6 +3,7 @@ export enum AppTab {
   MINING = 'MINING',
   TEAM = 'TEAM',
   SWAP = 'SWAP',
+  HISTORY = 'HISTORY',
   ADMIN = 'ADMIN'
 }
 

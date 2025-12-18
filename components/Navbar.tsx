@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react"
 import { AppTab } from "../types"
-import { Diamond, Home, Pickaxe, Users, ArrowLeftRight, Settings, PlusCircle, Globe } from "lucide-react"
+import { Diamond, Home, Pickaxe, Users, ArrowLeftRight, Settings, PlusCircle, Globe, FileText } from "lucide-react"
 import { useLanguage } from "../LanguageContext"
 import { ConnectButton } from "@rainbow-me/rainbowkit"
 import { useWeb3 } from "../Web3Context"
@@ -139,6 +139,14 @@ const Navbar: React.FC<NavbarProps> = ({ currentTab, setTab }) => {
               >
                 <ArrowLeftRight size={18} /> Swap
               </button>
+              <button
+                onClick={() => setTab(AppTab.HISTORY)}
+                className={`flex items-center gap-2 font-bold transition-colors ${
+                  currentTab === AppTab.HISTORY ? "text-macoin-600" : "text-slate-500 hover:text-slate-900"
+                }`}
+              >
+                <FileText size={18} /> {t.nav.history}
+              </button>
               {isOwner && (
                 <button
                   onClick={() => setTab(AppTab.ADMIN)}
@@ -205,6 +213,15 @@ const Navbar: React.FC<NavbarProps> = ({ currentTab, setTab }) => {
           >
             <ArrowLeftRight size={20} />
             <span className="text-[10px] font-medium">Swap</span>
+          </button>
+          <button
+            onClick={() => setTab(AppTab.HISTORY)}
+            className={`p-2 rounded-lg flex flex-col items-center gap-1 ${
+              currentTab === AppTab.HISTORY ? "text-macoin-600 bg-macoin-50" : "text-slate-400"
+            }`}
+          >
+            <FileText size={20} />
+            <span className="text-[10px] font-medium">{t.nav.history}</span>
           </button>
           <button
             onClick={() => setTab(AppTab.TEAM)}

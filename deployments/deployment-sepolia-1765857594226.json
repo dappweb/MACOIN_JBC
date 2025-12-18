@@ -1,0 +1,19 @@
+{
+  "network": "sepolia",
+  "networkName": "Ethereum Sepolia",
+  "chainId": 11155111,
+  "explorer": "https://sepolia.etherscan.io",
+  "deployer": "0x4C10831CBcF9884ba72051b5287b6c87E4F74A48",
+  "timestamp": "2025-12-16T03:59:54.226Z",
+  "contracts": {
+    "MockMC": "0x33A6FE1Ae840c4dd2dfaC4d5aDFc8AD2a1d87eA5",
+    "JBC": "0xB2B8777BcBc7A8DEf49F022773d392a8787cf9EF",
+    "JinbaoProtocol": "0xA743cB357a9f59D349efB7985072779a094658dD"
+  },
+  "wallets": {
+    "marketing": "0x4C10831CBcF9884ba72051b5287b6c87E4F74A48",
+    "treasury": "0x4C10831CBcF9884ba72051b5287b6c87E4F74A48",
+    "lpInjection": "0x4C10831CBcF9884ba72051b5287b6c87E4F74A48",
+    "buyback": "0x4C10831CBcF9884ba72051b5287b6c87E4F74A48"
+  }
+}

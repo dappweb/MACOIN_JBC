@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useWeb3 } from '../Web3Context';
-import { Settings, Save, AlertTriangle } from 'lucide-react';
+import { Settings, Save, AlertTriangle, Megaphone } from 'lucide-react';
 import { useLanguage } from '../LanguageContext';
 import { ethers } from 'ethers';
 import toast from 'react-hot-toast';
@@ -8,7 +8,7 @@ import { API_BASE_URL } from '../constants';
 
 const AdminPanel: React.FC = () => {
   const { t } = useLanguage();
-  const { protocolContract, isConnected, account, provider } = useWeb3();
+  const { protocolContract, isConnected, account, provider, mcContract, jbcContract } = useWeb3();
   const [loading, setLoading] = useState(false);
 
   // Distribution Percents
@@ -39,12 +39,58 @@ const AdminPanel: React.FC = () => {
   const [teamCount, setTeamCount] = useState('');
 
   // Announcement Management
-  const [announceLang, setAnnounceLang] = useState('en');
-  const [announceContent, setAnnounceContent] = useState('');
+  const [announceZh, setAnnounceZh] = useState('');
+  const [announceEn, setAnnounceEn] = useState('');
+
+  // Load current announcements
+  useEffect(() => {
+    const storedAnnouncements = localStorage.getItem('announcements');
+    if (storedAnnouncements) {
+      try {
+        const announcements = JSON.parse(storedAnnouncements);
+        setAnnounceZh(announcements.zh || '');
+        setAnnounceEn(announcements.en || '');
+      } catch (err) {
+        console.error('Failed to load announcements', err);
+      }
+    }
+  }, []);
 
   // Liquidity Management
   const [mcLiquidityAmount, setMcLiquidityAmount] = useState('');
   const [jbcLiquidityAmount, setJbcLiquidityAmount] = useState('');
+
+  const publishAnnouncement = () => {
+    try {
+      const announcements = {
+        zh: announceZh,
+        en: announceEn
+      };
+      localStorage.setItem('announcements', JSON.stringify(announcements));
+      toast.success(t.admin.announcementSuccess);
+
+      // 触发 NoticeBar 更新（通过 storage 事件）
+      window.dispatchEvent(new Event('storage'));
+    } catch (err) {
+      console.error('Failed to publish announcement', err);
+      toast.error('Failed to publish announcement');
+    }
+  };
+
+  const clearAnnouncement = () => {
+    try {
+      localStorage.removeItem('announcements');
+      setAnnounceZh('');
+      setAnnounceEn('');
+      toast.success(t.admin.announcementCleared);
+
+      // 触发 NoticeBar 更新
+      window.dispatchEvent(new Event('storage'));
+    } catch (err) {
+      console.error('Failed to clear announcement', err);
+      toast.error('Failed to clear announcement');
+    }
+  };
 
   const updateDistribution = async () => {
     if (!protocolContract) return;
@@ -137,84 +183,40 @@ const AdminPanel: React.FC = () => {
     }
   };
 
-  const updateAnnouncement = async () => {
-    if (!announceContent) return;
-    setLoading(true);
-    try {
-        // Sign the message to prove admin ownership
-        // In real scenario, we should sign a structured message (EIP-712) or specific payload
-        // For this demo, we sign the content directly
-        if (!isConnected || !account || !provider) {
-             toast.error("Connect wallet first");
-             setLoading(false);
-             return;
-        }
-
-        const signer = await provider.getSigner();
-        const signature = await signer.signMessage(`Update Announcement: ${announceContent}`);
-
-        // Post to Worker
-        const res = await fetch(`${API_BASE_URL}/announcement`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                language: announceLang,
-                content: announceContent,
-                signature,
-                adminAddress: account,
-                timestamp: Date.now()
-            })
-        });
-
-        if (res.ok) {
-            toast.success("Announcement updated on D1!");
-        } else {
-            const errText = await res.text();
-            throw new Error(errText);
-        }
-    } catch (err: any) {
-        toast.error("Update failed: " + err.message);
-    } finally {
-        setLoading(false);
-    }
-  };
-
   const addLiquidity = async (tokenType: 'MC' | 'JBC') => {
     if (!isConnected || !provider) {
         toast.error("Connect wallet first");
         return;
     }
-    
+
     setLoading(true);
     try {
-        const { mcContract, jbcContract, CONTRACT_ADDRESSES } = await import('../Web3Context');
+        const { CONTRACT_ADDRESSES } = await import('../Web3Context');
         const signer = await provider.getSigner();
-        
+
         if (tokenType === 'MC' && mcLiquidityAmount) {
             const amount = ethers.parseEther(mcLiquidityAmount);
-            const mcTokenContract = mcContract;
-            
-            if (!mcTokenContract) {
+
+            if (!mcContract) {
                 toast.error("MC contract not found");
                 return;
             }
-            
+
             // Transfer MC to protocol contract
-            const tx = await mcTokenContract.connect(signer).transfer(CONTRACT_ADDRESSES.PROTOCOL, amount);
+            const tx = await mcContract.connect(signer).transfer(CONTRACT_ADDRESSES.PROTOCOL, amount);
             await tx.wait();
             toast.success(`Added ${mcLiquidityAmount} MC to pool!`);
             setMcLiquidityAmount('');
         } else if (tokenType === 'JBC' && jbcLiquidityAmount) {
             const amount = ethers.parseEther(jbcLiquidityAmount);
-            const jbcTokenContract = jbcContract;
-            
-            if (!jbcTokenContract) {
+
+            if (!jbcContract) {
                 toast.error("JBC contract not found");
                 return;
             }
-            
+
             // Transfer JBC to protocol contract
-            const tx = await jbcTokenContract.connect(signer).transfer(CONTRACT_ADDRESSES.PROTOCOL, amount);
+            const tx = await jbcContract.connect(signer).transfer(CONTRACT_ADDRESSES.PROTOCOL, amount);
             await tx.wait();
             toast.success(`Added ${jbcLiquidityAmount} JBC to pool!`);
             setJbcLiquidityAmount('');
@@ -231,9 +233,62 @@ const AdminPanel: React.FC = () => {
     <div className="max-w-4xl mx-auto space-y-6 md:space-y-8 animate-fade-in pb-20">
       <div className="text-center space-y-1 md:space-y-2">
         <h2 className="text-2xl md:text-3xl font-bold text-slate-900 flex items-center justify-center gap-2">
-            <Settings className="text-red-600" size={24} className="md:w-7 md:h-7" /> {t.admin.title}
+            <Settings className="text-red-600 md:w-7 md:h-7" size={24} /> {t.admin.title}
         </h2>
         <p className="text-sm md:text-base text-slate-500">{t.admin.subtitle}</p>
+      </div>
+
+      {/* Announcement Management - 最优先显示 */}
+      <div className="glass-panel p-6 md:p-8 rounded-xl md:rounded-2xl bg-gradient-to-br from-yellow-50 to-orange-50 border-2 border-yellow-300">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="p-2 bg-yellow-100 rounded-lg">
+            <Megaphone className="text-yellow-600" size={24} />
+          </div>
+          <div>
+            <h3 className="text-xl md:text-2xl font-bold text-slate-900">{t.admin.announcement}</h3>
+            <p className="text-sm text-slate-600">{t.admin.announcementDesc}</p>
+          </div>
+        </div>
+
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-bold text-slate-700 mb-2">{t.admin.announcementZh}</label>
+            <textarea
+              value={announceZh}
+              onChange={(e) => setAnnounceZh(e.target.value)}
+              placeholder={t.admin.announcementPlaceholder}
+              rows={3}
+              className="w-full px-4 py-3 border-2 border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 text-sm resize-none"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-bold text-slate-700 mb-2">{t.admin.announcementEn}</label>
+            <textarea
+              value={announceEn}
+              onChange={(e) => setAnnounceEn(e.target.value)}
+              placeholder={t.admin.announcementPlaceholder}
+              rows={3}
+              className="w-full px-4 py-3 border-2 border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 text-sm resize-none"
+            />
+          </div>
+
+          <div className="flex gap-3">
+            <button
+              onClick={publishAnnouncement}
+              disabled={!announceZh && !announceEn}
+              className="flex-1 py-3 bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white font-bold rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
+            >
+              {t.admin.publishAnnouncement}
+            </button>
+            <button
+              onClick={clearAnnouncement}
+              className="px-6 py-3 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold rounded-lg transition-colors"
+            >
+              {t.admin.clearAnnouncement}
+            </button>
+          </div>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
@@ -410,42 +465,6 @@ const AdminPanel: React.FC = () => {
                       Add JBC to Pool
                   </button>
               </div>
-          </div>
-      </div>
-
-      {/* Announcement Management */}
-      <div className="glass-panel p-6 rounded-2xl bg-white border border-slate-200">
-          <h3 className="text-xl font-bold mb-4 text-slate-800">Announcement Management</h3>
-          <div className="space-y-4">
-              <div>
-                  <label className="block text-sm text-slate-500 mb-1">Language Code</label>
-                  <select 
-                    value={announceLang} 
-                    onChange={e => setAnnounceLang(e.target.value)}
-                    className="w-full p-2 border rounded text-sm"
-                  >
-                      <option value="en">English (en)</option>
-                      <option value="zh">Chinese (zh)</option>
-                      <option value="zh-TW">Traditional Chinese (zh-TW)</option>
-                      <option value="ja">Japanese (ja)</option>
-                      <option value="ko">Korean (ko)</option>
-                      <option value="ar">Arabic (ar)</option>
-                      <option value="ru">Russian (ru)</option>
-                      <option value="es">Spanish (es)</option>
-                  </select>
-              </div>
-              <div>
-                  <label className="block text-sm text-slate-500 mb-1">Content</label>
-                  <textarea 
-                    value={announceContent} 
-                    onChange={e => setAnnounceContent(e.target.value)} 
-                    className="w-full p-2 border rounded text-sm h-24"
-                    placeholder="Enter announcement text..."
-                  />
-              </div>
-              <button onClick={updateAnnouncement} disabled={loading} className="w-full py-2 bg-slate-900 text-white rounded-lg hover:bg-slate-800">
-                  Update Announcement
-              </button>
           </div>
       </div>
     </div>

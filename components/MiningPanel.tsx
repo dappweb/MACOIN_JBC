@@ -14,12 +14,14 @@ const MiningPanel: React.FC = () => {
   const [isCheckingAllowance, setIsCheckingAllowance] = useState(false);
   const [isTicketBought, setIsTicketBought] = useState(false); // New state to track ticket purchase
   const [hasActiveTicket, setHasActiveTicket] = useState(false); // Track if user has active ticket
-const [canStakeLiquidity, setCanStakeLiquidity] = useState(false);
-const [isTicketExpired, setIsTicketExpired] = useState(false);
+  const [canStakeLiquidity, setCanStakeLiquidity] = useState(false);
+  const [isTicketExpired, setIsTicketExpired] = useState(false);
   const [txPending, setTxPending] = useState(false);
+  const [inputReferrerAddress, setInputReferrerAddress] = useState('');
+  const [isBindingReferrer, setIsBindingReferrer] = useState(false);
 
   const { t } = useLanguage();
-  const { protocolContract, mcContract, account, isConnected } = useWeb3();
+  const { protocolContract, mcContract, account, isConnected, hasReferrer, isOwner, referrerAddress, checkReferrerStatus } = useWeb3();
 
   // Calculations based on PDF logic
   const totalInvestment = selectedTicket.amount + selectedTicket.requiredLiquidity;
@@ -267,6 +269,42 @@ const [isTicketExpired, setIsTicketExpired] = useState(false);
       }
   };
 
+  const handleBindReferrer = async () => {
+      if (!protocolContract || !inputReferrerAddress) return;
+
+      // 验证地址格式
+      if (!ethers.isAddress(inputReferrerAddress)) {
+          toast.error('Invalid address format!');
+          return;
+      }
+
+      // 检查是否绑定自己
+      if (inputReferrerAddress.toLowerCase() === account?.toLowerCase()) {
+          toast.error('Cannot bind yourself as referrer!');
+          return;
+      }
+
+      setIsBindingReferrer(true);
+      try {
+          const tx = await protocolContract.bindReferrer(inputReferrerAddress);
+          await tx.wait();
+          toast.success(t.team.bindSuccess);
+          setInputReferrerAddress('');
+          // 重新检查推荐人状态
+          await checkReferrerStatus();
+      } catch (err: any) {
+          console.error(err);
+          const errorMsg = err.reason || err.message || '';
+          if (errorMsg.includes('Already bound')) {
+              toast.error('You have already bound a referrer!');
+          } else {
+              toast.error(`${t.referrer.bindError}: ${errorMsg}`);
+          }
+      } finally {
+          setIsBindingReferrer(false);
+      }
+  };
+
   return (
     <div className="w-full max-w-4xl mx-auto space-y-6 md:space-y-8 animate-fade-in">
 
@@ -274,6 +312,111 @@ const [isTicketExpired, setIsTicketExpired] = useState(false);
         <h2 className="text-2xl md:text-3xl font-bold text-slate-900">{t.mining.title}</h2>
         <p className="text-sm md:text-base text-slate-500">{t.mining.subtitle}</p>
       </div>
+
+      {/* 推荐人绑定提示 - 非管理员且未绑定推荐人时显示 */}
+      {isConnected && !hasReferrer && !isOwner && (
+        <div className="bg-amber-50 border-2 border-amber-400 rounded-xl p-6 animate-fade-in">
+          <div className="flex items-start gap-3 mb-4">
+            <AlertCircle className="text-amber-600 shrink-0 mt-0.5" size={24} />
+            <div className="flex-1">
+              <p className="font-bold text-amber-900 text-lg mb-2">⚠️ {t.referrer.required}</p>
+              <p className="text-sm text-amber-800 mb-4">
+                {t.referrer.requiredDesc}
+              </p>
+
+              <div className="bg-white rounded-lg p-4 border border-amber-200">
+                <input
+                  type="text"
+                  value={inputReferrerAddress}
+                  onChange={(e) => setInputReferrerAddress(e.target.value)}
+                  placeholder={t.referrer.enterAddress}
+                  className="w-full px-4 py-3 border border-slate-300 rounded-lg mb-3 focus:outline-none focus:ring-2 focus:ring-amber-500 text-sm"
+                />
+                <button
+                  onClick={handleBindReferrer}
+                  disabled={isBindingReferrer || !inputReferrerAddress}
+                  className="w-full py-3 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isBindingReferrer ? t.referrer.binding : t.referrer.bind}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 已绑定推荐人提示 - 显示推荐人地址 */}
+      {isConnected && hasReferrer && !isOwner && referrerAddress && (
+        <div className="bg-green-50 border-2 border-green-300 rounded-xl p-4 flex items-start gap-3 animate-fade-in">
+          <ShieldCheck className="text-green-600 shrink-0 mt-0.5" size={20} />
+          <div className="flex-1">
+            <p className="font-bold text-green-900 mb-1">✅ {t.referrer.bound}</p>
+            <p className="text-sm text-green-800">
+              {t.referrer.yourReferrer}: <span className="font-mono font-bold">{referrerAddress}</span>
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* 管理员提示 */}
+      {isConnected && isOwner && (
+        <div className="bg-purple-50 border-2 border-purple-300 rounded-xl p-4 flex items-start gap-3 animate-fade-in">
+          <ShieldCheck className="text-purple-600 shrink-0 mt-0.5" size={20} />
+          <div className="flex-1">
+            <p className="font-bold text-purple-900">👑 {t.referrer.adminExempt}</p>
+          </div>
+        </div>
+      )}
+
+      {/* 快速购买门票按钮区域 - 显眼位置 */}
+      {isConnected && (hasReferrer || isOwner) && !isTicketBought && (
+        <div className="glass-panel p-6 md:p-8 rounded-2xl border-2 border-macoin-500 shadow-xl shadow-macoin-500/20 animate-fade-in">
+          <div className="text-center mb-6">
+            <h3 className="text-2xl md:text-3xl font-bold text-slate-900 mb-2">🎫 {t.mining.buyTicket}</h3>
+            <p className="text-slate-600">{t.mining.step1}</p>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 md:gap-4 mb-6">
+            {TICKET_TIERS.map((tier) => (
+              <button
+                key={tier.amount}
+                onClick={() => setSelectedTicket(tier)}
+                className={`relative py-4 md:py-6 rounded-xl border-2 transition-all duration-300 flex flex-col items-center justify-center gap-1 ${
+                  selectedTicket.amount === tier.amount
+                    ? 'bg-macoin-500 text-white border-macoin-600 shadow-lg shadow-macoin-500/30 transform scale-105 z-10'
+                    : 'bg-white border-slate-200 text-slate-700 hover:border-macoin-400 hover:bg-macoin-50'
+                }`}
+              >
+                <span className="text-2xl md:text-3xl font-bold">{tier.amount}</span>
+                <span className="text-sm font-semibold">MC</span>
+                <span className={`text-xs ${selectedTicket.amount === tier.amount ? 'text-white/90' : 'text-slate-500'}`}>
+                  +{tier.requiredLiquidity} {t.mining.liquidity}
+                </span>
+              </button>
+            ))}
+          </div>
+
+          <div className="space-y-3">
+            {!isApproved ? (
+              <button
+                onClick={handleApprove}
+                disabled={txPending}
+                className="w-full py-4 bg-slate-600 hover:bg-slate-700 text-white font-bold text-lg rounded-xl transition-colors shadow-lg disabled:opacity-50"
+              >
+                {txPending ? t.mining.approving : `${t.mining.approve}`}
+              </button>
+            ) : (
+              <button
+                onClick={handleBuyTicket}
+                disabled={txPending || isTicketExpired}
+                className="w-full py-4 md:py-5 bg-gradient-to-r from-macoin-600 to-macoin-500 hover:from-macoin-500 hover:to-macoin-400 text-white font-extrabold text-xl rounded-xl shadow-xl shadow-macoin-500/30 transition-all transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {txPending ? t.mining.buying : `🎫 ${t.mining.buyTicket} - ${selectedTicket.amount} MC`}
+              </button>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Ticket Status Warnings */}
       {isTicketExpired && (
@@ -314,11 +457,11 @@ const [isTicketExpired, setIsTicketExpired] = useState(false);
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6 lg:gap-8">
 
-        {/* Left Col: Controls */}
-        <div className="lg:col-span-2 space-y-4 md:space-y-6">
+            {/* Left Col: Controls */}
+            <div className="lg:col-span-2 space-y-4 md:space-y-6">
 
             {/* Step 1: Ticket */}
-            <div className={`glass-panel p-4 md:p-6 rounded-xl md:rounded-2xl relative overflow-hidden group transition-opacity ${isTicketBought ? 'opacity-50 pointer-events-none' : ''}`}>
+            <div className={`glass-panel p-4 md:p-6 rounded-xl md:rounded-2xl relative overflow-hidden group transition-opacity ${isTicketBought || (!hasReferrer && !isOwner) ? 'opacity-50 pointer-events-none' : ''}`}>
                 <div className="absolute top-0 right-0 w-24 h-24 bg-macoin-500/10 rounded-full blur-2xl group-hover:bg-macoin-500/20 transition-all"></div>
                 <div className="flex items-center gap-2 md:gap-3 mb-3 md:mb-4">
                     <div className="p-1.5 md:p-2 bg-macoin-100 rounded-lg text-macoin-600">
@@ -348,7 +491,7 @@ const [isTicketExpired, setIsTicketExpired] = useState(false);
             </div>
 
             {/* Step 2: Cycle */}
-            <div className={`glass-panel p-4 md:p-6 rounded-xl md:rounded-2xl relative overflow-hidden group transition-opacity ${(!isTicketBought || isTicketExpired || hasActiveTicket) ? 'opacity-50 pointer-events-none' : ''}`}>
+            <div className={`glass-panel p-4 md:p-6 rounded-xl md:rounded-2xl relative overflow-hidden group transition-opacity ${(!isTicketBought || isTicketExpired || hasActiveTicket || (!hasReferrer && !isOwner)) ? 'opacity-50 pointer-events-none' : ''}`}>
                  {!isTicketBought && (
                     <div className="absolute inset-0 z-20 flex items-center justify-center bg-white/50 backdrop-blur-sm rounded-xl md:rounded-2xl">
                         <div className="flex items-center gap-2 px-3 py-2 md:px-4 md:py-2 bg-slate-800 text-white rounded-lg shadow-xl">
@@ -396,7 +539,7 @@ const [isTicketExpired, setIsTicketExpired] = useState(false);
 
              {/* Warnings */}
              <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 md:p-4 flex items-start gap-2 md:gap-3">
-                <AlertCircle className="text-orange-500 shrink-0 mt-0.5" size={16} className="md:w-4.5 md:h-4.5" />
+                <AlertCircle className="text-orange-500 shrink-0 mt-0.5 md:w-4.5 md:h-4.5" size={16} />
                 <div className="text-xs md:text-sm text-orange-800/80">
                     <p className="font-bold mb-1 text-orange-900">{t.mining.notice}</p>
                     <ul className="list-disc pl-3 md:pl-4 space-y-0.5 md:space-y-1">
@@ -415,7 +558,7 @@ const [isTicketExpired, setIsTicketExpired] = useState(false);
 
                 <div>
                     <h3 className="text-lg md:text-xl font-bold mb-4 md:mb-6 flex items-center gap-2 text-slate-900">
-                        <ShieldCheck className="text-macoin-600" size={20} className="md:w-6 md:h-6" />
+                        <ShieldCheck className="text-macoin-600 md:w-6 md:h-6" size={20} />
                         {t.mining.estRevenue}
                     </h3>
 
@@ -461,6 +604,10 @@ const [isTicketExpired, setIsTicketExpired] = useState(false);
                     {!isConnected ? (
                         <button disabled className="w-full py-3 bg-slate-200 text-slate-400 font-bold rounded-lg cursor-not-allowed">
                             {t.mining.walletNotConnected}
+                        </button>
+                    ) : !hasReferrer && !isOwner ? (
+                        <button disabled className="w-full py-3 bg-amber-200 text-amber-700 font-bold rounded-lg cursor-not-allowed">
+                            ⚠️ {t.referrer.noReferrer}
                         </button>
                     ) : isCheckingAllowance ? (
                         <button

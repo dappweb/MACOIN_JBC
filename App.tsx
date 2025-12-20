@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react"
 import Navbar from "./components/Navbar"
+import NoticeBar from "./components/NoticeBar"
 import StatsPanel from "./components/StatsPanel"
 import MiningPanel from "./components/MiningPanel"
 import TeamLevel from "./components/TeamLevel"
@@ -56,6 +57,7 @@ const AppContent: React.FC = () => {
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 selection:bg-macoin-200 selection:text-black font-sans pb-20 md:pb-8">
       <Navbar currentTab={currentTab} setTab={setCurrentTab} />
+      <NoticeBar />
 
       <WhitepaperModal isOpen={showWhitepaper} onClose={() => setShowWhitepaper(false)} />
 

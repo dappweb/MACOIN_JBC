@@ -64,6 +64,10 @@ interface Web3ContextType {
   mcContract: ethers.Contract | null;
   jbcContract: ethers.Contract | null;
   protocolContract: ethers.Contract | null;
+  hasReferrer: boolean;
+  isOwner: boolean;
+  referrerAddress: string | null;
+  checkReferrerStatus: () => Promise<void>;
 }
 
 const Web3Context = createContext<Web3ContextType | undefined>(undefined);
@@ -78,6 +82,9 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [mcContract, setMcContract] = useState<ethers.Contract | null>(null);
   const [jbcContract, setJbcContract] = useState<ethers.Contract | null>(null);
   const [protocolContract, setProtocolContract] = useState<ethers.Contract | null>(null);
+  const [hasReferrer, setHasReferrer] = useState(false);
+  const [isOwner, setIsOwner] = useState(false);
+  const [referrerAddress, setReferrerAddress] = useState<string | null>(null);
 
   useEffect(() => {
     if (signer) {
@@ -103,6 +110,42 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   }, [signer, provider]);
 
+  // 检查推荐人状态
+  const checkReferrerStatus = async () => {
+    if (!protocolContract || !address) {
+      setHasReferrer(false);
+      setIsOwner(false);
+      setReferrerAddress(null);
+      return;
+    }
+
+    try {
+      // 检查是否是管理员
+      const owner = await protocolContract.owner();
+      const ownerStatus = owner.toLowerCase() === address.toLowerCase();
+      setIsOwner(ownerStatus);
+
+      // 如果是管理员，不需要推荐人
+      if (ownerStatus) {
+        setHasReferrer(true);
+        setReferrerAddress(null);
+        return;
+      }
+
+      // 检查是否有推荐人
+      const userInfo = await protocolContract.userInfo(address);
+      const referrer = userInfo[0]; // referrer is first return value
+      const hasRef = referrer !== ethers.ZeroAddress;
+      setHasReferrer(hasRef);
+      setReferrerAddress(hasRef ? referrer : null);
+    } catch (err) {
+      console.error('Failed to check referrer status', err);
+      setHasReferrer(false);
+      setIsOwner(false);
+      setReferrerAddress(null);
+    }
+  };
+
   useEffect(() => {
     // Check for referral code in URL
     const searchParams = new URLSearchParams(window.location.search);
@@ -112,6 +155,11 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
       console.log('Referrer stored:', ref);
     }
   }, []);
+
+  // 检查推荐人状态
+  useEffect(() => {
+    checkReferrerStatus();
+  }, [protocolContract, address]);
 
   // Auto-bind referrer when connected
   useEffect(() => {
@@ -134,6 +182,8 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
                     console.log("Bind successful");
                     // Clear pending
                     localStorage.removeItem('pendingReferrer');
+                    // 重新检查推荐人状态
+                    await checkReferrerStatus();
                     // Optional: Show toast or reload
                 } else {
                     // Already bound
@@ -162,7 +212,11 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
       isConnected,
       mcContract,
       jbcContract,
-      protocolContract
+      protocolContract,
+      hasReferrer,
+      isOwner,
+      referrerAddress,
+      checkReferrerStatus
     }}>
       {children}
     </Web3Context.Provider>

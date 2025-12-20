@@ -28,6 +28,18 @@ export const translations = {
       today: '今日',
       estValue: '预估价值'
     },
+    referrer: {
+      required: '需要绑定推荐人',
+      requiredDesc: '在使用系统前，您需要先绑定推荐人地址。请输入推荐人钱包地址：',
+      enterAddress: '输入推荐人地址',
+      bind: '绑定推荐人',
+      binding: '绑定中...',
+      bindError: '绑定失败',
+      noReferrer: '您还未绑定推荐人，无法使用此功能',
+      adminExempt: '管理员无需绑定推荐人',
+      bound: '已绑定推荐人',
+      yourReferrer: '您的推荐人'
+    },
     mining: {
       title: '黄金 RWA 矿池',
       subtitle: '选择门票与流动性周期，开启 DeFi 4.0 双币高收益挖矿',
@@ -135,11 +147,20 @@ export const translations = {
       slipSell: '卖出滑点 25% (25% 销毁)',
       slipBuy: '买入滑点 50% (50% 销毁)',
       confirm: '确认兑换',
-      poolLiquidity: '池子总量'
+      poolLiquidity: '  LP总量'
     },
     admin: {
       title: '管理员控制面板',
       subtitle: '仅合约拥有者可访问',
+      announcement: '系统公告管理',
+      announcementDesc: '发布全局系统公告（所有用户可见）',
+      announcementZh: '中文公告',
+      announcementEn: '英文公告',
+      announcementPlaceholder: '输入公告内容...',
+      publishAnnouncement: '发布公告',
+      clearAnnouncement: '清空公告',
+      announcementSuccess: '公告发布成功！',
+      announcementCleared: '公告已清空',
       distSettings: '分配设置 (%)',
       direct: '直推奖励',
       level: '层级奖励',
@@ -232,6 +253,18 @@ export const translations = {
       settlement: 'Dual Token Settlement',
       today: 'Today',
       estValue: 'Est. Value'
+    },
+    referrer: {
+      required: 'Referrer Required',
+      requiredDesc: 'Before using the system, you need to bind a referrer address. Please enter the referrer wallet address:',
+      enterAddress: 'Enter referrer address',
+      bind: 'Bind Referrer',
+      binding: 'Binding...',
+      bindError: 'Bind Failed',
+      noReferrer: 'You have not bound a referrer yet and cannot use this feature',
+      adminExempt: 'Admin does not need to bind a referrer',
+      bound: 'Referrer Bound',
+      yourReferrer: 'Your Referrer'
     },
     mining: {
       title: 'Gold RWA Pool',
@@ -345,6 +378,15 @@ export const translations = {
     admin: {
       title: 'Admin Control Panel',
       subtitle: 'Only accessible by contract owner',
+      announcement: 'System Announcement',
+      announcementDesc: 'Publish global system announcement (visible to all users)',
+      announcementZh: 'Chinese Announcement',
+      announcementEn: 'English Announcement',
+      announcementPlaceholder: 'Enter announcement content...',
+      publishAnnouncement: 'Publish Announcement',
+      clearAnnouncement: 'Clear Announcement',
+      announcementSuccess: 'Announcement published successfully!',
+      announcementCleared: 'Announcement cleared',
       distSettings: 'Distribution (%)',
       direct: 'Direct Reward',
       level: 'Level Reward',

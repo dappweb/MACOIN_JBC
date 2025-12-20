@@ -7,7 +7,7 @@ import toast from 'react-hot-toast';
 
 const SwapPanel: React.FC = () => {
   const { t } = useLanguage();
-  const { mcContract, jbcContract, protocolContract, account, isConnected, provider } = useWeb3();
+  const { mcContract, jbcContract, protocolContract, account, isConnected, provider, hasReferrer, isOwner } = useWeb3();
   
   const [payAmount, setPayAmount] = useState('');
   const [getAmount, setGetAmount] = useState('');
@@ -184,6 +184,18 @@ const SwapPanel: React.FC = () => {
         <div className="absolute inset-0 bg-macoin-500/5 blur-3xl rounded-full"></div>
         <h2 className="text-xl md:text-2xl font-bold mb-4 md:mb-6 text-center relative z-10 text-slate-900">{t.swap.title}</h2>
 
+        {/* 推荐人提示 - 非管理员且未绑定推荐人时显示 */}
+        {isConnected && !hasReferrer && !isOwner && (
+          <div className="bg-amber-50 border-2 border-amber-400 rounded-xl p-4 mb-4 relative z-10">
+            <p className="text-amber-900 text-sm font-bold text-center">
+              ⚠️ {t.referrer.noReferrer}
+            </p>
+            <p className="text-amber-700 text-xs text-center mt-1">
+              Please go to Mining panel to bind a referrer first
+            </p>
+          </div>
+        )}
+
         <div className="space-y-3 md:space-y-4 relative z-10">
             {/* Pay Input */}
             <div className="bg-slate-100 p-3 md:p-4 rounded-lg md:rounded-xl border border-slate-200 transition-all focus-within:ring-2 focus-within:ring-macoin-500/50">
@@ -260,6 +272,10 @@ const SwapPanel: React.FC = () => {
             {!isConnected ? (
                  <button disabled className="w-full py-4 bg-slate-200 text-slate-400 font-bold text-lg rounded-xl cursor-not-allowed">
                     Connect Wallet
+                </button>
+            ) : !hasReferrer && !isOwner ? (
+                <button disabled className="w-full py-4 bg-amber-200 text-amber-700 font-bold text-lg rounded-xl cursor-not-allowed">
+                    ⚠️ {t.referrer.noReferrer}
                 </button>
             ) : (
                 <button 

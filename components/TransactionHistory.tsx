@@ -25,6 +25,8 @@ const TransactionHistory: React.FC = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [isOwner, setIsOwner] = useState(false);
   const [viewMode, setViewMode] = useState<'self' | 'all'>('self');
+  const [selectedTx, setSelectedTx] = useState<Transaction | null>(null);
+  const [copied, setCopied] = useState(false);
 
   const eventTypeMap = {
     'TicketPurchased': 'ticket_purchased',
@@ -170,6 +172,82 @@ const TransactionHistory: React.FC = () => {
 
   const formatDate = (timestamp: number) => {
     return new Date(timestamp * 1000).toLocaleString();
+  };
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const getAmountDisplay = (tx: Transaction, isCompact = false) => {
+    if (tx.type === 'reward_claimed') {
+      return (
+        <>
+          <p className={`text-sm ${isCompact ? 'text-right' : 'text-gray-400'}`}>
+            {!isCompact && `${t.history.mcReward}: `}
+            <span className="font-semibold text-neon-400">{parseFloat(tx.amount).toFixed(2)} MC</span>
+          </p>
+          <p className={`text-sm ${isCompact ? 'text-right' : 'text-gray-400'}`}>
+            {!isCompact && `${t.history.jbcReward}: `}
+            <span className="font-semibold text-amber-400">{parseFloat(tx.amount2 || '0').toFixed(2)} JBC</span>
+          </p>
+        </>
+      );
+    } else if (tx.type === 'liquidity_staked') {
+      return (
+        <>
+          <p className={`text-sm ${isCompact ? 'text-right' : 'text-gray-400'}`}>
+            {!isCompact && `${t.history.amount}: `}
+            <span className="font-semibold text-neon-400">{parseFloat(tx.amount).toFixed(2)} MC</span>
+          </p>
+          {tx.amount3 && parseFloat(tx.amount3) > 0 && (
+            <p className={`text-sm ${isCompact ? 'text-right' : 'text-gray-400'}`}>
+               {!isCompact && `${t.history.jbcQuantity || "JBC Quantity"}: `}
+               <span className="font-semibold text-amber-400">{parseFloat(tx.amount3).toFixed(2)} JBC</span>
+            </p>
+          )}
+          {!isCompact && (
+            <p className="text-sm text-gray-400">
+              {t.history.cycle}: <span className="font-semibold text-amber-400">{tx.amount2} {t.mining.days}</span>
+            </p>
+          )}
+        </>
+      );
+    } else if (tx.type === 'swap_mc_to_jbc') {
+      return (
+        <>
+          <p className={`text-sm ${isCompact ? 'text-right' : 'text-gray-400'}`}>
+            {!isCompact && `${t.history.paid}: `}
+            <span className="font-semibold text-red-400">-{parseFloat(tx.amount).toFixed(2)} MC</span>
+          </p>
+          <p className={`text-sm ${isCompact ? 'text-right' : 'text-gray-400'}`}>
+            {!isCompact && `${t.history.received}: `}
+            <span className="font-semibold text-neon-400">+{parseFloat(tx.amount2 || '0').toFixed(2)} JBC</span>
+          </p>
+        </>
+      );
+    } else if (tx.type === 'swap_jbc_to_mc') {
+      return (
+        <>
+          <p className={`text-sm ${isCompact ? 'text-right' : 'text-gray-400'}`}>
+            {!isCompact && `${t.history.paid}: `}
+            <span className="font-semibold text-red-400">-{parseFloat(tx.amount).toFixed(2)} JBC</span>
+          </p>
+          <p className={`text-sm ${isCompact ? 'text-right' : 'text-gray-400'}`}>
+            {!isCompact && `${t.history.received}: `}
+            <span className="font-semibold text-neon-400">+{parseFloat(tx.amount2 || '0').toFixed(2)} MC</span>
+          </p>
+        </>
+      );
+    } else {
+      return (
+        <p className={`text-sm ${isCompact ? 'text-right' : 'text-gray-400'}`}>
+          {!isCompact && `${t.history.amount}: `}
+          <span className="font-semibold text-neon-400">{parseFloat(tx.amount).toFixed(2)} MC</span>
+        </p>
+      );
+    }
   };
 
   const filteredTransactions = filterType === 'all'

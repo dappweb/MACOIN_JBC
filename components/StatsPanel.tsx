@@ -410,7 +410,14 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
         {/* Stat 1 */}
         <div className="glass-panel p-4 md:p-6 rounded-xl md:rounded-2xl hover:border-neon-500/40 transition-colors bg-gray-900/50 border border-gray-800 backdrop-blur-sm">
           <div className="flex items-center justify-between mb-3 md:mb-4">
-            <span className="text-gray-400 text-xs md:text-sm">{t.stats.assets}</span>
+            <span className="text-gray-400 text-xs md:text-sm">
+              {t.stats.assets}
+              {mcUsdtPrice > 0 && (
+                <span className="ml-2 text-neon-400 font-bold">
+                  ${mcUsdtPrice.toFixed(4)}
+                </span>
+              )}
+            </span>
             <Wallet className="text-neon-400" size={18} />
           </div>
           <div className="text-2xl md:text-3xl font-bold text-white mb-1">

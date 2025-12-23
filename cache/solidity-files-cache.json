@@ -268,8 +268,8 @@
       ]
     },
     "D:\\jbc-dapp\\MACOIN_JBC\\contracts\\JinbaoProtocol.sol": {
-      "lastModificationDate": 1766474771541,
-      "contentHash": "86a04c847889dbfecac5d6c18afc5383",
+      "lastModificationDate": 1766491405427,
+      "contentHash": "b272973db6834dc8a9cfe1d8d400dd86",
       "sourceName": "contracts/JinbaoProtocol.sol",
       "solcConfig": {
         "version": "0.8.20",

@@ -11,6 +11,7 @@ interface RewardRecord {
   jbcAmount: string;
   rewardType: number;
   ticketId: string;
+  source?: string;
   blockNumber: number;
   timestamp: number;
   status: 'confirmed' | 'pending';
@@ -56,14 +57,14 @@ const EarningsDetail: React.FC = () => {
       const fromBlock = Math.max(0, currentBlock - 100000);
 
       const targetUser = isOwner && viewMode === 'all' ? null : account;
-      const events = await protocolContract.queryFilter(
-        protocolContract.filters.RewardClaimed(targetUser),
-        fromBlock,
-      );
+      const [rewardEvents, referralEvents] = await Promise.all([
+        protocolContract.queryFilter(protocolContract.filters.RewardClaimed(targetUser), fromBlock),
+        protocolContract.queryFilter(protocolContract.filters.ReferralRewardPaid(targetUser), fromBlock),
+      ]);
 
       const rows: RewardRecord[] = [];
 
-      for (const event of events) {
+      for (const event of rewardEvents) {
         try {
           const block = await provider.getBlock(event.blockNumber);
           const mcAmount = event.args ? ethers.formatEther(event.args[1]) : '0';
@@ -84,6 +85,30 @@ const EarningsDetail: React.FC = () => {
           });
         } catch (err) {
           console.error('Error parsing reward event:', err, event);
+        }
+      }
+
+      for (const event of referralEvents) {
+        try {
+          const block = await provider.getBlock(event.blockNumber);
+          const mcAmount = event.args ? ethers.formatEther(event.args[2]) : '0';
+          const rewardType = event.args ? Number(event.args[3]) : 0;
+          const ticketId = event.args ? event.args[4].toString() : '';
+
+          rows.push({
+            hash: event.transactionHash,
+            user: event.args ? event.args[0] : '',
+            source: event.args ? event.args[1] : '',
+            mcAmount,
+            jbcAmount: '0',
+            rewardType,
+            ticketId,
+            blockNumber: event.blockNumber,
+            timestamp: block ? block.timestamp : 0,
+            status: 'confirmed',
+          });
+        } catch (err) {
+          console.error('Error parsing referral reward event:', err, event);
         }
       }
 
@@ -121,6 +146,8 @@ const EarningsDetail: React.FC = () => {
   const getRewardTypeLabel = (value: number) => {
     if (value === 0) return ui.staticReward || 'Static Reward';
     if (value === 1) return ui.dynamicReward || 'Dynamic Reward';
+    if (value === 2) return ui.directReward || 'Direct Reward';
+    if (value === 3) return ui.levelReward || 'Level Reward';
     return ui.unknownType || 'Unknown';
   };
 
@@ -239,6 +266,12 @@ const EarningsDetail: React.FC = () => {
                         {ui.jbcAmount || 'JBC Reward'}:{' '}
                         <span className="font-semibold text-emerald-600">{parseFloat(row.jbcAmount).toFixed(4)} JBC</span>
                       </p>
+                      {row.source && (
+                        <p className="text-sm text-gray-600">
+                          {ui.rewardFrom || 'From'}:{' '}
+                          <span className="font-mono text-slate-700">{row.source.slice(0, 6)}...{row.source.slice(-4)}</span>
+                        </p>
+                      )}
                       <p className="text-sm text-gray-600">
                         {ui.rewardType || 'Reward Type'}:{' '}
                         <span className="font-semibold text-slate-700">{getRewardTypeLabel(row.rewardType)}</span>

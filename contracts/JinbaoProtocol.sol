@@ -34,7 +34,7 @@ contract JinbaoProtocol is Ownable, ReentrancyGuard {
         bool liquidityProvided;
         uint256 liquidityAmount;
         uint256 startTime;
-        uint256 cycleDays; // 7, 15, 30
+        uint256 cycleDays; // 3, 5, 7 (minutes for testing)
         bool redeemed;
     }
 
@@ -49,6 +49,7 @@ contract JinbaoProtocol is Ownable, ReentrancyGuard {
 
     // Constants
     uint256 public constant SECONDS_IN_DAY = 86400;
+    uint256 public constant SECONDS_IN_MINUTE = 60;
     
     // Admin Adjustable Parameters
     uint256 public redemptionFeePercent = 1; // 1%
@@ -62,6 +63,8 @@ contract JinbaoProtocol is Ownable, ReentrancyGuard {
     uint256 public swapSellTax = 25; // 25%
     uint8 public constant REWARD_STATIC = 0;
     uint8 public constant REWARD_DYNAMIC = 1;
+    uint8 public constant REWARD_DIRECT = 2;
+    uint8 public constant REWARD_LEVEL = 3;
 
     // State
     mapping(address => UserInfo) public userInfo;
@@ -74,6 +77,7 @@ contract JinbaoProtocol is Ownable, ReentrancyGuard {
     event TicketPurchased(address indexed user, uint256 amount, uint256 ticketId);
     event LiquidityStaked(address indexed user, uint256 amount, uint256 cycleDays);
     event RewardClaimed(address indexed user, uint256 mcAmount, uint256 jbcAmount, uint8 rewardType, uint256 ticketId);
+    event ReferralRewardPaid(address indexed user, address indexed from, uint256 mcAmount, uint8 rewardType, uint256 ticketId);
     event Redeemed(address indexed user, uint256 principal, uint256 fee);
     event SwappedMCToJBC(address indexed user, uint256 mcAmount, uint256 jbcAmount, uint256 tax);
     event SwappedJBCToMC(address indexed user, uint256 jbcAmount, uint256 mcAmount, uint256 tax);
@@ -218,31 +222,6 @@ contract JinbaoProtocol is Ownable, ReentrancyGuard {
         // Transfer MC from user
         mcToken.transferFrom(msg.sender, address(this), amount);
 
-        // Distribute Funds
-        // Direct Referral
-        address referrer = userInfo[msg.sender].referrer;
-        if (referrer != address(0)) {
-            mcToken.transfer(referrer, (amount * directRewardPercent) / 100);
-        } else {
-            // If no referrer, send to marketing or burn? Sending to marketing for now
-            mcToken.transfer(marketingWallet, (amount * directRewardPercent) / 100);
-        }
-
-        // Level Reward (Placeholder: Send to marketing to simplify contract)
-        mcToken.transfer(marketingWallet, (amount * levelRewardPercent) / 100);
-
-        // Marketing
-        mcToken.transfer(marketingWallet, (amount * marketingPercent) / 100);
-
-        // Buyback
-        mcToken.transfer(buybackWallet, (amount * buybackPercent) / 100);
-
-        // Liquidity Injection
-        mcToken.transfer(lpInjectionWallet, (amount * lpInjectionPercent) / 100);
-
-        // Treasury
-        mcToken.transfer(treasuryWallet, (amount * treasuryPercent) / 100);
-
         // Init Ticket
         nextTicketId += 1;
         userTicket[msg.sender] = Ticket({
@@ -261,6 +240,35 @@ contract JinbaoProtocol is Ownable, ReentrancyGuard {
         userInfo[msg.sender].currentCap = amount * 3;
         userInfo[msg.sender].totalRevenue = 0; // Reset revenue for new cycle
 
+        // Distribute Funds
+        // Direct Referral
+        address referrer = userInfo[msg.sender].referrer;
+        if (referrer != address(0)) {
+            uint256 directReward = (amount * directRewardPercent) / 100;
+            mcToken.transfer(referrer, directReward);
+            emit ReferralRewardPaid(referrer, msg.sender, directReward, REWARD_DIRECT, nextTicketId);
+        } else {
+            // If no referrer, send to marketing or burn? Sending to marketing for now
+            mcToken.transfer(marketingWallet, (amount * directRewardPercent) / 100);
+        }
+
+        // Level Reward (Placeholder: Send to marketing to simplify contract)
+        uint256 levelReward = (amount * levelRewardPercent) / 100;
+        mcToken.transfer(marketingWallet, levelReward);
+        emit ReferralRewardPaid(marketingWallet, msg.sender, levelReward, REWARD_LEVEL, nextTicketId);
+
+        // Marketing
+        mcToken.transfer(marketingWallet, (amount * marketingPercent) / 100);
+
+        // Buyback
+        mcToken.transfer(buybackWallet, (amount * buybackPercent) / 100);
+
+        // Liquidity Injection
+        mcToken.transfer(lpInjectionWallet, (amount * lpInjectionPercent) / 100);
+
+        // Treasury
+        mcToken.transfer(treasuryWallet, (amount * treasuryPercent) / 100);
+
         emit TicketPurchased(msg.sender, amount, nextTicketId);
     }
 
@@ -270,7 +278,7 @@ contract JinbaoProtocol is Ownable, ReentrancyGuard {
         Ticket storage ticket = userTicket[msg.sender];
         require(ticket.amount > 0 && !ticket.liquidityProvided, "No valid ticket");
         require(block.timestamp <= ticket.purchaseTime + 72 hours, "Ticket expired");
-        require(cycleDays == 7 || cycleDays == 15 || cycleDays == 30, "Invalid cycle");
+        require(cycleDays == 3 || cycleDays == 5 || cycleDays == 7, "Invalid cycle");
 
         uint256 reqAmount = ticket.requiredLiquidity;
         mcToken.transferFrom(msg.sender, address(this), reqAmount);
@@ -299,23 +307,23 @@ contract JinbaoProtocol is Ownable, ReentrancyGuard {
         require(ticket.liquidityProvided && !ticket.redeemed, "Not active");
 
         // Calculate Rate
-        uint256 dailyRate = 0;
-        if (ticket.cycleDays == 7) dailyRate = 20; // 2.0% (div 1000)
-        else if (ticket.cycleDays == 15) dailyRate = 25; // 2.5%
-        else if (ticket.cycleDays == 30) dailyRate = 30; // 3.0%
+        uint256 ratePerMinute = 0;
+        if (ticket.cycleDays == 3) ratePerMinute = 20; // 2.0% (div 1000)
+        else if (ticket.cycleDays == 5) ratePerMinute = 25; // 2.5%
+        else if (ticket.cycleDays == 7) ratePerMinute = 30; // 3.0%
 
         // Calculate time passed (Simplified: assume claiming all at once or daily tracking)
         // For demo: Calculate pending since start or last claim
         // This is a simplified placeholder logic
-        uint256 daysPassed = (block.timestamp - ticket.startTime) / SECONDS_IN_DAY;
-        require(daysPassed > 0, "No rewards yet");
+        uint256 minutesPassed = (block.timestamp - ticket.startTime) / SECONDS_IN_MINUTE;
+        require(minutesPassed > 0, "No rewards yet");
 
         // Limit to cycle days
-        if (daysPassed > ticket.cycleDays) {
-            daysPassed = ticket.cycleDays;
+        if (minutesPassed > ticket.cycleDays) {
+            minutesPassed = ticket.cycleDays;
         }
 
-        uint256 rewardAmount = (ticket.amount * dailyRate * daysPassed) / 1000;
+        uint256 rewardAmount = (ticket.amount * ratePerMinute * minutesPassed) / 1000;
         
         // Cap Check
         if (userInfo[msg.sender].totalRevenue + rewardAmount > userInfo[msg.sender].currentCap) {
@@ -457,7 +465,7 @@ contract JinbaoProtocol is Ownable, ReentrancyGuard {
     function redeem() external nonReentrant {
         Ticket storage ticket = userTicket[msg.sender];
         require(ticket.liquidityProvided && !ticket.redeemed, "Cannot redeem");
-        require(block.timestamp >= ticket.startTime + (ticket.cycleDays * 1 days), "Cycle not finished");
+        require(block.timestamp >= ticket.startTime + (ticket.cycleDays * 1 minutes), "Cycle not finished");
 
         // Fee
         uint256 fee = (ticket.amount * redemptionFeePercent) / 100;

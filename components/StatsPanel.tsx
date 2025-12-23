@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react"
+﻿import React, { useEffect, useState } from "react"
 import { UserStats } from "../types"
 import { Wallet, TrendingUp, Users, Coins, ArrowUpRight, Link } from "lucide-react"
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"
@@ -20,8 +20,7 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
   const { mcContract, jbcContract, protocolContract, account, isConnected, provider } = useWeb3()
   const [displayStats, setDisplayStats] = useState<UserStats>(initialStats)
   const [jbcPrice, setJbcPrice] = useState<string>("1.0")
-  const jbcPriceNum = parseFloat(jbcPrice)
-  const totalRevenueJbc = jbcPriceNum > 0 ? displayStats.totalRevenue / jbcPriceNum : 0
+  const [rewardTotals, setRewardTotals] = useState({ mc: 0, jbc: 0 })
 
   // Bind Referrer State
   const [referrer, setReferrer] = useState("")
@@ -175,7 +174,7 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
           if (currentReferrer && currentReferrer !== "0x0000000000000000000000000000000000000000") {
             setIsBound(true)
           } else {
-            // 未绑定上级，检查 URL 中是否有 ref 参数
+            // 鏈粦瀹氫笂绾э紝妫€鏌?URL 涓槸鍚︽湁 ref 鍙傛暟
             const urlParams = new URLSearchParams(window.location.search)
             const refParam = urlParams.get("ref")
             if (refParam && !referrer) {
@@ -196,11 +195,45 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
           else if (activeDirects >= 30) level = "V2"
           else if (activeDirects >= 10) level = "V1"
 
+          let referralRevenue = 0
+          let rewardMc = 0
+          let rewardJbc = 0
+          try {
+            if (provider) {
+              const currentBlock = await provider.getBlockNumber()
+              const fromBlock = Math.max(0, currentBlock - 100000)
+              const [referralEvents, rewardEvents] = await Promise.all([
+                protocolContract.queryFilter(protocolContract.filters.ReferralRewardPaid(account), fromBlock),
+                protocolContract.queryFilter(protocolContract.filters.RewardClaimed(account), fromBlock),
+              ])
+              for (const event of referralEvents) {
+                if (event.args) {
+                  referralRevenue += parseFloat(ethers.formatEther(event.args[2]))
+                }
+              }
+              for (const event of rewardEvents) {
+                if (event.args) {
+                  rewardMc += parseFloat(ethers.formatEther(event.args[1]))
+                  rewardJbc += parseFloat(ethers.formatEther(event.args[2]))
+                }
+              }
+            }
+          } catch (err) {
+            console.error("Failed to fetch referral rewards", err)
+          }
+
+          const baseRevenue = parseFloat(ethers.formatEther(userInfo[3]))
+          const combinedRevenue = baseRevenue + referralRevenue
+          setRewardTotals({
+            mc: rewardMc + referralRevenue,
+            jbc: rewardJbc,
+          })
+
           setDisplayStats((prev) => ({
             ...prev,
             balanceMC: parseFloat(ethers.formatEther(mcBal)),
             balanceJBC: parseFloat(ethers.formatEther(jbcBal)),
-            totalRevenue: parseFloat(ethers.formatEther(userInfo[3])),
+            totalRevenue: combinedRevenue,
             teamCount: Number(userInfo[2]),
             currentLevel: level,
           }))
@@ -218,16 +251,16 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
     if (referrer.trim() && protocolContract) {
       setIsBinding(true)
       try {
-        // 提取 ref= 之后的地址
+        // 鎻愬彇 ref= 涔嬪悗鐨勫湴鍧€
         let address = referrer.trim()
         const refMatch = address.match(/ref=([^&\s]+)/i)
         if (refMatch) {
           address = refMatch[1]
         }
 
-        // 验证地址格式
+        // 楠岃瘉鍦板潃鏍煎紡
         if (!/^0x[a-fA-F0-9]{40}$/.test(address)) {
-          toast.error("请输入正确的钱包地址")
+          toast.error("璇疯緭鍏ユ纭殑閽卞寘鍦板潃")
           setIsBinding(false)
           return
         }
@@ -238,7 +271,7 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
         toast.success("Referrer Bound Successfully!")
       } catch (err: any) {
         console.error(err)
-        toast.error("绑定失败: " + (err.reason || err.message))
+        toast.error("缁戝畾澶辫触: " + (err.reason || err.message))
       } finally {
         setIsBinding(false)
       }
@@ -365,7 +398,7 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
             {displayStats.balanceJBC.toLocaleString()}
           </div>
           <div className="text-xs text-macoin-600 flex items-center gap-1">
-            ≈ {(displayStats.balanceJBC * parseFloat(jbcPrice)).toFixed(2)} MC (Price: {parseFloat(jbcPrice).toFixed(4)}
+            鈮?{(displayStats.balanceJBC * parseFloat(jbcPrice)).toFixed(2)} MC (Price: {parseFloat(jbcPrice).toFixed(4)}
             )
           </div>
         </div>
@@ -377,10 +410,10 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
             <TrendingUp className="text-blue-500" size={18} />
           </div>
           <div className="text-2xl md:text-3xl font-bold text-slate-900 mb-1">
-            {displayStats.totalRevenue.toLocaleString()}
+            {rewardTotals.mc.toLocaleString()}
           </div>
           <div className="text-xs text-slate-500">
-            MC: {displayStats.totalRevenue.toLocaleString()} · JBC: {totalRevenueJbc.toLocaleString()}
+            MC: {rewardTotals.mc.toLocaleString()} · JBC: {rewardTotals.jbc.toLocaleString()}
           </div>
           <div className="text-xs text-slate-400">{t.stats.settlement}</div>
         </div>
@@ -453,3 +486,8 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
 }
 
 export default StatsPanel
+
+
+
+
+

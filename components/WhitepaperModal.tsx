@@ -26,7 +26,7 @@ const WhitepaperModal: React.FC<WhitepaperModalProps> = ({ isOpen, onClose }) =>
         <div className="flex items-center justify-between p-6 border-b border-slate-100 bg-white z-10">
           <div>
             <h2 className="text-2xl font-bold text-slate-900">
-                {isChinese ? '聚宝协议白皮书' : 'Jinbao Protocol Whitepaper'}
+                {isChinese ? '金宝协议白皮书' : 'Jinbao Protocol Whitepaper'}
             </h2>
             <p className="text-sm text-slate-500">
                 {isChinese ? 'DeFi 4.0 • 双币持续上涨新纪元' : 'DeFi 4.0 • Dual-Token Architecture'}

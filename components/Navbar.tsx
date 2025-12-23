@@ -91,17 +91,16 @@ const Navbar: React.FC<NavbarProps> = ({ currentTab, setTab }) => {
 
   return (
     <>
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-200">
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-black/90 backdrop-blur-md border-b border-emerald-500/20 shadow-lg shadow-emerald-500/10">
         <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16 md:h-20">
             {/* Logo */}
             <div className="flex items-center gap-1.5 md:gap-2 cursor-pointer" onClick={() => setTab(AppTab.HOME)}>
-              <div className="bg-gradient-to-tr overflow-hidden from-macoin-600 p-0 to-macoin-400 rounded-lg md:rounded-xl shadow-lg shadow-macoin-500/20">
-                {/* <Diamond size={20} className="text-white md:w-6 md:h-6" /> */}
+              <div className="bg-gradient-to-tr overflow-hidden from-emerald-500 to-emerald-400 rounded-lg md:rounded-xl shadow-lg shadow-emerald-500/30 p-0">
                 <img src={iconImg} alt="" className=" w-10 md:h-10" />
               </div>
-              <span className="text-lg md:text-2xl font-black text-slate-900 tracking-tight">
-                JBC <span className="text-macoin-600">RWA</span>
+              <span className="text-lg md:text-2xl font-black text-white tracking-tight">
+                JBC <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-emerald-500">RWA</span>
               </span>
             </div>
 
@@ -110,7 +109,7 @@ const Navbar: React.FC<NavbarProps> = ({ currentTab, setTab }) => {
               <button
                 onClick={() => setTab(AppTab.HOME)}
                 className={`flex items-center gap-2 font-bold transition-colors ${
-                  currentTab === AppTab.HOME ? "text-macoin-600" : "text-slate-500 hover:text-slate-900"
+                  currentTab === AppTab.HOME ? "text-emerald-400" : "text-gray-400 hover:text-white"
                 }`}
               >
                 <Home size={18} /> {t.nav.home}
@@ -118,7 +117,7 @@ const Navbar: React.FC<NavbarProps> = ({ currentTab, setTab }) => {
               <button
                 onClick={() => setTab(AppTab.MINING)}
                 className={`flex items-center gap-2 font-bold transition-colors ${
-                  currentTab === AppTab.MINING ? "text-macoin-600" : "text-slate-500 hover:text-slate-900"
+                  currentTab === AppTab.MINING ? "text-emerald-400" : "text-gray-400 hover:text-white"
                 }`}
               >
                 <Pickaxe size={18} /> {t.nav.mining}
@@ -126,7 +125,7 @@ const Navbar: React.FC<NavbarProps> = ({ currentTab, setTab }) => {
               <button
                 onClick={() => setTab(AppTab.TEAM)}
                 className={`flex items-center gap-2 font-bold transition-colors ${
-                  currentTab === AppTab.TEAM ? "text-macoin-600" : "text-slate-500 hover:text-slate-900"
+                  currentTab === AppTab.TEAM ? "text-emerald-400" : "text-gray-400 hover:text-white"
                 }`}
               >
                 <Users size={18} /> {t.nav.team}
@@ -134,7 +133,7 @@ const Navbar: React.FC<NavbarProps> = ({ currentTab, setTab }) => {
               <button
                 onClick={() => setTab(AppTab.SWAP)}
                 className={`flex items-center gap-2 font-bold transition-colors ${
-                  currentTab === AppTab.SWAP ? "text-macoin-600" : "text-slate-500 hover:text-slate-900"
+                  currentTab === AppTab.SWAP ? "text-emerald-400" : "text-gray-400 hover:text-white"
                 }`}
               >
                 <ArrowLeftRight size={18} /> Swap
@@ -142,7 +141,7 @@ const Navbar: React.FC<NavbarProps> = ({ currentTab, setTab }) => {
               <button
                 onClick={() => setTab(AppTab.HISTORY)}
                 className={`flex items-center gap-2 font-bold transition-colors ${
-                  currentTab === AppTab.HISTORY ? "text-macoin-600" : "text-slate-500 hover:text-slate-900"
+                  currentTab === AppTab.HISTORY ? "text-emerald-400" : "text-gray-400 hover:text-white"
                 }`}
               >
                 <FileText size={18} /> {t.nav.history}
@@ -150,7 +149,7 @@ const Navbar: React.FC<NavbarProps> = ({ currentTab, setTab }) => {
               <button
                 onClick={() => setTab(AppTab.EARNINGS)}
                 className={`flex items-center gap-2 font-bold transition-colors ${
-                  currentTab === AppTab.EARNINGS ? "text-macoin-600" : "text-slate-500 hover:text-slate-900"
+                  currentTab === AppTab.EARNINGS ? "text-emerald-400" : "text-gray-400 hover:text-white"
                 }`}
               >
                 <Gift size={18} /> {t.nav.earnings || "Earnings"}
@@ -159,7 +158,7 @@ const Navbar: React.FC<NavbarProps> = ({ currentTab, setTab }) => {
                 <button
                   onClick={() => setTab(AppTab.ADMIN)}
                   className={`flex items-center gap-2 font-bold transition-colors ${
-                    currentTab === AppTab.ADMIN ? "text-red-600" : "text-slate-500 hover:text-red-600"
+                    currentTab === AppTab.ADMIN ? "text-red-400" : "text-gray-400 hover:text-red-400"
                   }`}
                 >
                   <Settings size={18} /> Admin
@@ -171,7 +170,7 @@ const Navbar: React.FC<NavbarProps> = ({ currentTab, setTab }) => {
             <div className="flex items-center gap-2 md:gap-4">
               <button
                 onClick={() => setLanguage(language === "zh" ? "en" : "zh")}
-                className="p-1.5 md:p-2 rounded-lg md:rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors flex items-center gap-1 md:gap-2"
+                className="p-1.5 md:p-2 rounded-lg md:rounded-xl bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-emerald-400 transition-colors flex items-center gap-1 md:gap-2 border border-gray-700"
                 title="Switch Language"
               >
                 <Globe size={18} className="md:w-5 md:h-5" />
@@ -193,12 +192,12 @@ const Navbar: React.FC<NavbarProps> = ({ currentTab, setTab }) => {
       </nav>
 
       {/* Mobile Nav (Simple Bottom Bar) - Moved out of nav to ensure fixed positioning works correctly */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 pb-safe z-50 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
+      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-black/95 border-t border-emerald-500/20 pb-safe z-50 shadow-[0_-4px_20px_rgba(16,185,129,0.1)] backdrop-blur-md">
         <div className="flex justify-around items-center h-16">
           <button
             onClick={() => setTab(AppTab.HOME)}
             className={`p-2 rounded-lg flex flex-col items-center gap-1 ${
-              currentTab === AppTab.HOME ? "text-macoin-600 bg-macoin-50" : "text-slate-400"
+              currentTab === AppTab.HOME ? "text-emerald-400 bg-emerald-500/10" : "text-gray-500"
             }`}
           >
             <Home size={20} />
@@ -207,7 +206,7 @@ const Navbar: React.FC<NavbarProps> = ({ currentTab, setTab }) => {
           <button
             onClick={() => setTab(AppTab.MINING)}
             className={`p-2 rounded-lg flex flex-col items-center gap-1 ${
-              currentTab === AppTab.MINING ? "text-macoin-600 bg-macoin-50" : "text-slate-400"
+              currentTab === AppTab.MINING ? "text-emerald-400 bg-emerald-500/10" : "text-gray-500"
             }`}
           >
             <Pickaxe size={20} />
@@ -216,7 +215,7 @@ const Navbar: React.FC<NavbarProps> = ({ currentTab, setTab }) => {
           <button
             onClick={() => setTab(AppTab.SWAP)}
             className={`p-2 rounded-lg flex flex-col items-center gap-1 ${
-              currentTab === AppTab.SWAP ? "text-macoin-600 bg-macoin-50" : "text-slate-400"
+              currentTab === AppTab.SWAP ? "text-emerald-400 bg-emerald-500/10" : "text-gray-500"
             }`}
           >
             <ArrowLeftRight size={20} />
@@ -225,7 +224,7 @@ const Navbar: React.FC<NavbarProps> = ({ currentTab, setTab }) => {
           <button
             onClick={() => setTab(AppTab.HISTORY)}
             className={`p-2 rounded-lg flex flex-col items-center gap-1 ${
-              currentTab === AppTab.HISTORY ? "text-macoin-600 bg-macoin-50" : "text-slate-400"
+              currentTab === AppTab.HISTORY ? "text-emerald-400 bg-emerald-500/10" : "text-gray-500"
             }`}
           >
             <FileText size={20} />
@@ -234,7 +233,7 @@ const Navbar: React.FC<NavbarProps> = ({ currentTab, setTab }) => {
           <button
             onClick={() => setTab(AppTab.EARNINGS)}
             className={`p-2 rounded-lg flex flex-col items-center gap-1 ${
-              currentTab === AppTab.EARNINGS ? "text-macoin-600 bg-macoin-50" : "text-slate-400"
+              currentTab === AppTab.EARNINGS ? "text-emerald-400 bg-emerald-500/10" : "text-gray-500"
             }`}
           >
             <Gift size={20} />
@@ -243,7 +242,7 @@ const Navbar: React.FC<NavbarProps> = ({ currentTab, setTab }) => {
           <button
             onClick={() => setTab(AppTab.TEAM)}
             className={`p-2 rounded-lg flex flex-col items-center gap-1 ${
-              currentTab === AppTab.TEAM ? "text-macoin-600 bg-macoin-50" : "text-slate-400"
+              currentTab === AppTab.TEAM ? "text-emerald-400 bg-emerald-500/10" : "text-gray-500"
             }`}
           >
             <Users size={20} />
@@ -253,7 +252,7 @@ const Navbar: React.FC<NavbarProps> = ({ currentTab, setTab }) => {
             <button
               onClick={() => setTab(AppTab.ADMIN)}
               className={`p-2 rounded-lg flex flex-col items-center gap-1 ${
-                currentTab === AppTab.ADMIN ? "text-red-600 bg-red-50" : "text-slate-400"
+                currentTab === AppTab.ADMIN ? "text-red-400 bg-red-500/10" : "text-gray-500"
               }`}
             >
               <Settings size={20} />

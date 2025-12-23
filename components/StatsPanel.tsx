@@ -247,62 +247,88 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
 
   return (
     <div className="max-w-7xl mx-auto space-y-8 animate-fade-in">
-      {/* Hero Section - Gold Theme */}
-      <div className="relative rounded-2xl md:rounded-3xl overflow-hidden min-h-[250px] md:min-h-[300px] flex items-center bg-gradient-to-br from-macoin-300 via-macoin-400 to-macoin-600 border border-macoin-500/50 shadow-2xl">
-        {/* Texture Overlay */}
-        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10 mix-blend-overlay"></div>
-        <div className="absolute inset-0 bg-gradient-to-r from-macoin-500/20 via-transparent to-transparent"></div>
+      {/* Hero Section - Cyberpunk Theme */}
+      <div className="relative rounded-2xl md:rounded-3xl overflow-hidden min-h-[400px] md:min-h-[500px] flex items-center bg-gradient-to-br from-black via-gray-900 to-emerald-900 border border-emerald-400/40 shadow-2xl shadow-emerald-400/30">
+        {/* Animated Grid Background */}
+        <div className="absolute inset-0 opacity-20">
+          <div className="absolute inset-0" style={{
+            backgroundImage: `
+              linear-gradient(rgba(16, 185, 129, 0.1) 1px, transparent 1px),
+              linear-gradient(90deg, rgba(16, 185, 129, 0.1) 1px, transparent 1px)
+            `,
+            backgroundSize: '50px 50px'
+          }}></div>
+        </div>
+        
+        {/* World Map Overlay */}
+        <div className="absolute inset-0 opacity-10">
+          <svg viewBox="0 0 1000 500" className="w-full h-full">
+            <path d="M150,100 L200,120 L250,110 L300,130 L350,115 L400,125 L450,120 L500,135 L550,125 L600,140 L650,130 L700,145 L750,135 L800,150" 
+                  stroke="rgba(16, 185, 129, 0.3)" strokeWidth="2" fill="none"/>
+            <circle cx="200" cy="120" r="3" fill="rgba(16, 185, 129, 0.5)"/>
+            <circle cx="400" cy="125" r="3" fill="rgba(16, 185, 129, 0.5)"/>
+            <circle cx="600" cy="140" r="3" fill="rgba(16, 185, 129, 0.5)"/>
+          </svg>
+        </div>
 
-        <div className="relative z-10 p-5 sm:p-6 md:p-12 max-w-2xl w-full">
-          <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-black/10 text-slate-900 text-[10px] md:text-xs font-bold uppercase tracking-wider mb-3 md:mb-4 border border-black/5 backdrop-blur-sm">
+        {/* Glowing Circles */}
+        <div className="absolute top-10 right-20 w-64 h-64 bg-emerald-400/30 rounded-full blur-[100px] animate-pulse"></div>
+        <div className="absolute bottom-10 left-20 w-48 h-48 bg-amber-500/10 rounded-full blur-[80px] animate-pulse" style={{animationDelay: '1s'}}></div>
+
+        <div className="relative z-10 p-5 sm:p-6 md:p-12 max-w-3xl w-full">
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-400/15 text-emerald-300 text-[10px] md:text-xs font-bold uppercase tracking-wider mb-4 md:mb-6 border border-emerald-400/40 backdrop-blur-sm">
+            <span className="w-2 h-2 bg-emerald-300 rounded-full animate-pulse"></span>
             {t.stats.protocol}
           </div>
-          <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-6xl font-extrabold text-slate-900 mb-3 md:mb-4 leading-tight drop-shadow-sm">
-            {t.stats.title} <br />
-            <span className="text-white drop-shadow-md text-xl sm:text-2xl md:text-3xl lg:text-5xl">
-              {t.stats.subtitle}
-            </span>
+          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-7xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-emerald-300 via-emerald-200 to-emerald-400 mb-4 md:mb-6 leading-tight drop-shadow-[0_0_30px_rgba(52,211,153,0.6)]">
+            {t.stats.title}
           </h1>
-          <p className="text-slate-900/80 text-sm sm:text-base md:text-lg mb-5 md:mb-8 max-w-lg font-medium">
+          <p className="text-lg sm:text-xl md:text-2xl text-gray-300 mb-3 md:mb-4 font-light">
+            {t.stats.subtitle}
+          </p>
+          <p className="text-gray-400 text-sm sm:text-base md:text-lg mb-6 md:mb-10 max-w-2xl font-light leading-relaxed">
             {t.stats.desc}
           </p>
-          <div className="flex flex-col sm:flex-row gap-3 md:gap-4">
+          <div className="flex flex-col sm:flex-row gap-4 md:gap-5">
             <button
               onClick={onJoinClick}
-              className="px-5 py-2.5 md:px-6 md:py-3 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-lg shadow-xl transition-all transform hover:-translate-y-1 text-sm md:text-base"
+              className="px-6 py-3 md:px-8 md:py-4 bg-gradient-to-r from-emerald-400 to-emerald-500 hover:from-emerald-300 hover:to-emerald-400 text-black font-bold rounded-lg shadow-lg shadow-emerald-400/60 transition-all transform hover:-translate-y-1 hover:shadow-emerald-400/80 text-sm md:text-base border border-emerald-300"
             >
               {t.stats.join}
             </button>
             <button
               onClick={onWhitepaperClick}
-              className="px-5 py-2.5 md:px-6 md:py-3 bg-white/20 hover:bg-white/30 text-slate-900 border border-white/40 font-bold rounded-lg backdrop-blur-md transition-all text-sm md:text-base"
+              className="px-6 py-3 md:px-8 md:py-4 bg-transparent hover:bg-emerald-400/15 text-emerald-300 border-2 border-emerald-400/60 hover:border-emerald-300 font-bold rounded-lg backdrop-blur-md transition-all text-sm md:text-base"
             >
               {t.stats.whitepaper}
             </button>
           </div>
         </div>
 
-        {/* Floating Gold Element */}
-        <div className="hidden lg:block absolute right-20 top-1/2 -translate-y-1/2">
-          <div className="relative w-64 h-64">
-            <div className="absolute inset-0 bg-macoin-200 rounded-full blur-[80px] opacity-40"></div>
-            {/* Gold bars or Coin Image Placeholder */}
-            <div className="relative z-10 w-48 h-48 bg-gradient-to-br from-macoin-100 to-macoin-600 rounded-2xl rotate-12 shadow-[0_20px_50px_rgba(180,83,9,0.5)] border-t border-l border-white/50 flex items-center justify-center">
-              <div className="text-6xl font-bold text-macoin-900 opacity-20">JBC</div>
+        {/* Decorative Ring Element */}
+        <div className="hidden lg:block absolute right-10 top-1/2 -translate-y-1/2">
+          <div className="relative w-80 h-80">
+            {/* Outer Ring */}
+            <div className="absolute inset-0 rounded-full border-4 border-amber-500/20 animate-spin" style={{animationDuration: '20s'}}></div>
+            <div className="absolute inset-8 rounded-full border-2 border-emerald-400/40 animate-spin" style={{animationDuration: '15s', animationDirection: 'reverse'}}></div>
+            <div className="absolute inset-16 rounded-full border border-amber-400/20 animate-spin" style={{animationDuration: '10s'}}></div>
+            {/* Center Glow */}
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="w-32 h-32 bg-gradient-to-br from-emerald-300/30 to-amber-500/20 rounded-full blur-2xl"></div>
             </div>
           </div>
         </div>
       </div>
 
       {/* Bind Referrer Section (Moved from TeamLevel) */}
-      <div className="glass-panel p-4 sm:p-5 md:p-6 rounded-xl md:rounded-2xl bg-white border-l-4 border-macoin-500 flex flex-col items-start sm:items-center gap-4 shadow-sm">
+      <div className="glass-panel p-4 sm:p-5 md:p-6 rounded-xl md:rounded-2xl bg-gray-900/50 border border-emerald-400/40 flex flex-col items-start sm:items-center gap-4 shadow-lg shadow-emerald-400/15">
         <div className="flex items-center gap-3 md:gap-4 w-full sm:w-auto">
-          <div className="bg-macoin-100 p-2 md:p-3 rounded-full text-macoin-600">
+          <div className="bg-emerald-400/25 p-2 md:p-3 rounded-full text-emerald-300 border border-emerald-400/40">
             <Link size={20} className="md:w-6 md:h-6" />
           </div>
           <div>
-            <h3 className="font-bold text-sm md:text-base text-slate-900">{t.team.bindTitle}</h3>
-            <p className="text-xs md:text-sm text-slate-500">{t.team.bindDesc}</p>
+            <h3 className="font-bold text-sm md:text-base text-white">{t.team.bindTitle}</h3>
+            <p className="text-xs md:text-sm text-gray-400">{t.team.bindDesc}</p>
           </div>
         </div>
         <div className="flex flex-col sm:flex-row w-full sm:w-auto gap-2">
@@ -325,12 +351,12 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
                 value={referrer}
                 onChange={(e) => setReferrer(e.target.value)}
                 placeholder={t.team.bindPlaceholder}
-                className="w-full sm:w-48 md:w-64 px-3 py-2.5 md:px-4 md:py-3 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-macoin-500 text-slate-900 text-sm md:text-base"
+                className="w-full sm:w-48 md:w-64 px-3 py-2.5 md:px-4 md:py-3 bg-black/50 border border-emerald-400/40 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-400 text-white placeholder-gray-500 text-sm md:text-base"
               />
               <button
                 onClick={handleBind}
                 disabled={!referrer.trim() || isBinding}
-                className="px-4 py-2.5 md:px-6 md:py-3 bg-macoin-500 hover:bg-macoin-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold rounded-lg transition-colors shadow-lg shadow-macoin-500/20 whitespace-nowrap text-sm md:text-base"
+                className="px-4 py-2.5 md:px-6 md:py-3 bg-gradient-to-r from-emerald-400 to-emerald-500 hover:from-emerald-300 hover:to-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed text-black font-bold rounded-lg transition-colors shadow-lg shadow-emerald-400/40 whitespace-nowrap text-sm md:text-base"
               >
                 {isBinding ? "Binding..." : t.team.bindButton}
               </button>
@@ -342,12 +368,12 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
       {/* Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
         {/* Stat 1 */}
-        <div className="glass-panel p-4 md:p-6 rounded-xl md:rounded-2xl hover:border-macoin-500/40 transition-colors bg-white">
+        <div className="glass-panel p-4 md:p-6 rounded-xl md:rounded-2xl hover:border-emerald-400/60 transition-all bg-gray-900/50 border border-gray-800 hover:shadow-lg hover:shadow-emerald-400/30">
           <div className="flex items-center justify-between mb-3 md:mb-4">
-            <span className="text-slate-500 text-xs md:text-sm">{t.stats.assets}</span>
-            <Wallet className="text-macoin-600" size={18} />
+            <span className="text-gray-400 text-xs md:text-sm">{t.stats.assets}</span>
+            <Wallet className="text-emerald-300" size={18} />
           </div>
-          <div className="text-2xl md:text-3xl font-bold text-slate-900 mb-1">
+          <div className="text-2xl md:text-3xl font-bold text-white mb-1">
             {displayStats.balanceMC.toLocaleString()}
           </div>
           {/* <div className="text-xs text-macoin-600 flex items-center gap-1">
@@ -356,53 +382,53 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
         </div>
 
         {/* Stat 2 */}
-        <div className="glass-panel p-4 md:p-6 rounded-xl md:rounded-2xl hover:border-macoin-500/40 transition-colors bg-white">
+        <div className="glass-panel p-4 md:p-6 rounded-xl md:rounded-2xl hover:border-emerald-400/60 transition-all bg-gray-900/50 border border-gray-800 hover:shadow-lg hover:shadow-emerald-400/30">
           <div className="flex items-center justify-between mb-3 md:mb-4">
-            <span className="text-slate-500 text-xs md:text-sm">{t.stats.holding}</span>
-            <Coins className="text-macoin-500" size={18} />
+            <span className="text-gray-400 text-xs md:text-sm">{t.stats.holding}</span>
+            <Coins className="text-amber-400" size={18} />
           </div>
-          <div className="text-2xl md:text-3xl font-bold text-slate-900 mb-1">
+          <div className="text-2xl md:text-3xl font-bold text-white mb-1">
             {displayStats.balanceJBC.toLocaleString()}
           </div>
-          <div className="text-xs text-macoin-600 flex items-center gap-1">
+          <div className="text-xs text-emerald-300 flex items-center gap-1">
             ≈ {(displayStats.balanceJBC * parseFloat(jbcPrice)).toFixed(2)} MC (Price: {parseFloat(jbcPrice).toFixed(4)}
             )
           </div>
         </div>
 
         {/* Stat 3 */}
-        <div className="glass-panel p-4 md:p-6 rounded-xl md:rounded-2xl hover:border-macoin-500/40 transition-colors bg-white">
+        <div className="glass-panel p-4 md:p-6 rounded-xl md:rounded-2xl hover:border-emerald-400/60 transition-all bg-gray-900/50 border border-gray-800 hover:shadow-lg hover:shadow-emerald-400/30">
           <div className="flex items-center justify-between mb-3 md:mb-4">
-            <span className="text-slate-500 text-xs md:text-sm">{t.stats.revenue}</span>
-            <TrendingUp className="text-blue-500" size={18} />
+            <span className="text-gray-400 text-xs md:text-sm">{t.stats.revenue}</span>
+            <TrendingUp className="text-emerald-300" size={18} />
           </div>
-          <div className="text-2xl md:text-3xl font-bold text-slate-900 mb-1">
+          <div className="text-2xl md:text-3xl font-bold text-white mb-1">
             {displayStats.totalRevenue.toLocaleString()}
           </div>
-          <div className="text-xs text-slate-500">
+          <div className="text-xs text-gray-400">
             MC: {displayStats.totalRevenue.toLocaleString()} · JBC: {totalRevenueJbc.toLocaleString()}
           </div>
-          <div className="text-xs text-slate-400">{t.stats.settlement}</div>
+          <div className="text-xs text-gray-500">{t.stats.settlement}</div>
         </div>
 
         {/* Stat 4 */}
-        <div className="glass-panel p-4 md:p-6 rounded-xl md:rounded-2xl hover:border-macoin-500/40 transition-colors bg-gradient-to-br from-slate-50 to-white">
+        <div className="glass-panel p-4 md:p-6 rounded-xl md:rounded-2xl hover:border-emerald-400/60 transition-all bg-gradient-to-br from-gray-900/50 to-gray-800/50 border border-gray-800 hover:shadow-lg hover:shadow-emerald-400/30">
           <div className="flex items-center justify-between mb-3 md:mb-4">
-            <span className="text-slate-500 text-xs md:text-sm">{t.stats.level}</span>
-            <Users className="text-purple-500" size={18} />
+            <span className="text-gray-400 text-xs md:text-sm">{t.stats.level}</span>
+            <Users className="text-amber-400" size={18} />
           </div>
-          <div className="text-2xl md:text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 mb-1">
+          <div className="text-2xl md:text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-emerald-300 to-amber-400 mb-1">
             {displayStats.currentLevel}
           </div>
-          <div className="text-xs text-slate-400">
+          <div className="text-xs text-gray-400">
             {t.stats.teamCount}: {displayStats.teamCount}
           </div>
         </div>
       </div>
 
       {/* Chart Section */}
-      <div className="glass-panel p-4 md:p-6 rounded-xl md:rounded-2xl bg-white">
-        <h3 className="text-base md:text-lg font-bold mb-4 md:mb-6 text-slate-900 border-l-4 border-macoin-500 pl-3">
+      <div className="glass-panel p-4 md:p-6 rounded-xl md:rounded-2xl bg-gray-900/50 border border-gray-800">
+        <h3 className="text-base md:text-lg font-bold mb-4 md:mb-6 text-white border-l-4 border-emerald-400 pl-3">
           {t.stats.chartTitle}
         </h3>
         {loadingPriceHistory ? (

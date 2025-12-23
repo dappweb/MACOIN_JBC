@@ -46,8 +46,12 @@ const MiningPanel: React.FC = () => {
   const { protocolContract, mcContract, account, isConnected, hasReferrer, isOwner, referrerAddress, checkReferrerStatus, provider } = useWeb3();
 
   // Calculations based on PDF logic
+  // Update: Calculate ROI based on Liquidity Amount (Ticket Amount * 1.5) instead of Ticket Amount
   const totalInvestment = selectedTicket.amount + selectedTicket.requiredLiquidity;
-  const dailyROI = (selectedTicket.amount * selectedPlan.dailyRate) / 100;
+  const liquidityAmount = selectedTicket.requiredLiquidity; // This is typically Ticket Amount * 1.5
+  
+  // Daily ROI = Liquidity Amount * Daily Rate
+  const dailyROI = (Number(liquidityAmount) * selectedPlan.dailyRate) / 100;
   const totalROI = dailyROI * selectedPlan.days;
 
   // 3x Cap Calculation

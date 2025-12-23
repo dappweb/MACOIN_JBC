@@ -15,14 +15,12 @@ const NoticeBar: React.FC = () => {
     zh: [
       "🎉 金宝协议正式上线！DeFi 4.0 创新双币模型，开启财富新篇章。",
       "⚠️ 请注意：购买门票后需在72小时内提供流动性，否则门票将失效。",
-      "📢 邀请好友加入可享丰厚极差奖励，最高可达 45%！",
-      "📜 关于近期系统升级与维护的详细说明：为了提供更优质的服务，我们将于近期进行系统升级。本次升级将优化交易引擎，提升撮合效率，并引入全新的安全风控机制。预计维护时间持续4小时，期间交易功能将暂停，充提币服务可能会延迟到账。请各位用户提前做好资金安排，避免在维护期间进行操作。升级完成后，我们将向所有受影响的用户发放空投补偿，感谢大家的支持与理解！如有任何疑问，请联系社区客服。"
+      "📢 邀请好友加入可享丰厚极差奖励，最高可达 45%！"
     ],
     en: [
       "🎉 Jinbao Protocol is live! DeFi 4.0 Dual-Token Model.",
       "⚠️ Notice: Liquidity must be provided within 72 hours after ticket purchase.",
-      "📢 Invite friends to earn up to 45% differential rewards!",
-      "📜 System Upgrade Notice: To provide better service, we will be conducting a system upgrade shortly. This upgrade will optimize the matching engine and introduce new security mechanisms. Maintenance is expected to last 4 hours, during which trading and deposits/withdrawals will be suspended. Please plan your funds accordingly. Airdrop compensation will be distributed after the upgrade. Thank you for your support!"
+      "📢 Invite friends to earn up to 45% differential rewards!"
     ]
   };
 

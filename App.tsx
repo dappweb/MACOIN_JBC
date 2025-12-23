@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from "react"
+import React, { useState, useEffect } from "react"
 import Navbar from "./components/Navbar"
 import NoticeBar from "./components/NoticeBar"
 import StatsPanel from "./components/StatsPanel"
@@ -58,11 +58,11 @@ const AppContent: React.FC = () => {
   return (
     <div className="min-h-screen bg-black text-white selection:bg-neon-500 selection:text-black font-sans pb-20 md:pb-8">
       <Navbar currentTab={currentTab} setTab={setCurrentTab} />
-      <NoticeBar />
 
       <WhitepaperModal isOpen={showWhitepaper} onClose={() => setShowWhitepaper(false)} />
 
       <main className="pt-20 px-3 sm:px-4 md:pt-24 md:px-6 lg:px-8 mb-16 md:mb-0">
+        <NoticeBar />
         {/* Render Tab Content */}
         {currentTab === AppTab.HOME && (
           <StatsPanel

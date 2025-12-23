@@ -140,14 +140,6 @@ const MiningPanel: React.FC = () => {
   const handleBuyTicket = async () => {
       if (!protocolContract || !mcContract) return;
       
-      // 妫€鏌ユ槸鍚︽湁杩囨湡绁ㄦ嵁
-      if (isTicketExpired) {
-          toast.error(t.mining.expiredTicketWarning, {
-              duration: 5000,
-          });
-          return;
-      }
-      
       setTxPending(true);
       try {
           // 妫€鏌?MC 浣欓
@@ -411,7 +403,7 @@ const MiningPanel: React.FC = () => {
             ) : (
               <button
                 onClick={handleBuyTicket}
-                disabled={txPending || isTicketExpired}
+                disabled={txPending}
                 className="w-full py-4 md:py-5 bg-gradient-to-r from-neon-500 to-neon-600 hover:from-neon-400 hover:to-neon-500 text-black font-extrabold text-xl rounded-xl shadow-xl shadow-neon-500/40 transition-all transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {txPending ? t.mining.buying : `${t.mining.buyTicket} - ${selectedTicket.amount} MC`}
@@ -599,10 +591,11 @@ const MiningPanel: React.FC = () => {
                         </button>
                     ) : isTicketExpired ? (
                         <button
-                            disabled
-                            className="w-full py-4 bg-red-900/30 text-red-300 font-bold text-lg rounded-lg cursor-not-allowed border-2 border-red-500/50"
+                            onClick={handleScrollToBuy}
+                            disabled={txPending}
+                            className="w-full py-3 text-red-400 font-semibold rounded-lg border border-red-500/30 hover:bg-red-500/10 transition-colors disabled:opacity-50"
                         >
-                            {t.mining.ticketExpiredCannotBuy}
+                            {txPending ? t.mining.buying : t.mining.buyTicket}
                         </button>
                     ) : !isTicketBought ? (
                         <button

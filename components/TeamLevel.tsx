@@ -200,13 +200,8 @@ const TeamLevel: React.FC = () => {
                 </div>
                 <div>
                     <h3 className="text-xl font-bold text-white">{t.team.networkTitle}</h3>
-                    <div className="flex items-center gap-2 text-sm text-gray-400">
+                    <div className="text-sm text-gray-400 mt-1">
                         {t.team.networkSubtitle}
-                        {account && (
-                            <button onClick={copyReferralLink} className="text-neon-400 hover:text-neon-300 font-bold flex items-center gap-1 ml-2">
-                                <Copy size={12} /> Link
-                            </button>
-                        )}
                     </div>
                 </div>
             </div>

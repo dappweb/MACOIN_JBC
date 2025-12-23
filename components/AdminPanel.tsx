@@ -64,6 +64,12 @@ const AdminPanel: React.FC = () => {
     }
   }, []);
 
+  // Liquidity Management
+  const [mcLiquidityAmount, setMcLiquidityAmount] = useState('');
+  const [jbcLiquidityAmount, setJbcLiquidityAmount] = useState('');
+  const [mcLiquidityRemoveAmount, setMcLiquidityRemoveAmount] = useState('');
+  const [jbcLiquidityRemoveAmount, setJbcLiquidityRemoveAmount] = useState('');
+
   const publishAnnouncement = () => {
     try {
       if (!announceZh && !announceEn) return;

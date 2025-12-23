@@ -126,14 +126,14 @@ const NoticeBar: React.FC = () => {
               </div>
           </div>
           <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setIsVisible(false);
-              }}
-              className="absolute top-3 right-4 text-amber-400 hover:text-amber-200 transition-colors"
-          >
-              <X size={18} />
-          </button>
+          onClick={(e) => {
+            e.stopPropagation();
+            setIsVisible(false);
+          }}
+          className="absolute top-1/2 -translate-y-1/2 right-4 text-amber-400 hover:text-amber-200 transition-colors z-10"
+      >
+          <X size={18} />
+      </button>
       </div>
 
       {/* Announcement Modal */}

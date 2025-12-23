@@ -20,7 +20,7 @@ export const PROTOCOL_ABI = [
   "function swapMCToJBC(uint256 mcAmount) external",
   "function swapJBCToMC(uint256 jbcAmount) external",
   "function userInfo(address) view returns (address referrer, uint256 activeDirects, uint256 teamCount, uint256 totalRevenue, uint256 currentCap, bool isActive)",
-  "function userTicket(address) view returns (uint256 amount, uint256 requiredLiquidity, uint256 purchaseTime, bool liquidityProvided, uint256 liquidityAmount, uint256 startTime, uint256 cycleDays, bool redeemed)",
+  "function userTicket(address) view returns (uint256 ticketId, uint256 amount, uint256 requiredLiquidity, uint256 purchaseTime, bool liquidityProvided, uint256 liquidityAmount, uint256 startTime, uint256 cycleDays, bool redeemed)",
   "function getDirectReferrals(address) view returns (address[])",
   "function getDirectReferralsData(address) view returns (tuple(address user, uint256 ticketAmount, uint256 joinTime)[])",
   "function owner() view returns (address)",
@@ -38,6 +38,7 @@ export const PROTOCOL_ABI = [
   "event TicketPurchased(address indexed user, uint256 amount, uint256 ticketId)",
   "event LiquidityStaked(address indexed user, uint256 amount, uint256 cycleDays)",
   "event RewardClaimed(address indexed user, uint256 mcAmount, uint256 jbcAmount, uint8 rewardType, uint256 ticketId)",
+  "event ReferralRewardPaid(address indexed user, address indexed from, uint256 mcAmount, uint8 rewardType, uint256 ticketId)",
   "event Redeemed(address indexed user, uint256 principal, uint256 fee)",
   "event SwappedMCToJBC(address indexed user, uint256 mcAmount, uint256 jbcAmount, uint256 tax)",
   "event SwappedJBCToMC(address indexed user, uint256 jbcAmount, uint256 mcAmount, uint256 tax)"
@@ -45,9 +46,9 @@ export const PROTOCOL_ABI = [
 
 // Contract Addresses (Mock for now, replace with real deployment)
 export const CONTRACT_ADDRESSES = {
-  MC_TOKEN: "0xd2F1fe86Ce4eA5F6bDAC819E0bAeAD3F7219F992",
-  JBC_TOKEN: "0x9bb2Ed209CA2a0D32B047F69F0626F747928e721", // Replace with real JBC Address
-  PROTOCOL: "0x2080e836871462FdDD8631ad3bB33d941BDC5A4F"
+  MC_TOKEN: "0x26e3215C86E82735238219367894AFF589076Ea4",
+  JBC_TOKEN: "0x89958d15c01b84c997Ca5C70b3197B738cdc706e", // Replace with real JBC Address
+  PROTOCOL: "0xB4E8aA3f6e28D470668b038167cf9362f1c600c9"
 };
 
 // Contract Addresses - Update these with your deployed contract addresses

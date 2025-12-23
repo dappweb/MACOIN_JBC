@@ -27,6 +27,7 @@ contract JinbaoProtocol is Ownable, ReentrancyGuard {
     }
 
     struct Ticket {
+        uint256 ticketId;
         uint256 amount; // MC Amount
         uint256 requiredLiquidity; // MC Amount
         uint256 purchaseTime;
@@ -59,17 +60,20 @@ contract JinbaoProtocol is Ownable, ReentrancyGuard {
     uint256 public treasuryPercent = 25; // 25%
     uint256 public swapBuyTax = 50; // 50%
     uint256 public swapSellTax = 25; // 25%
+    uint8 public constant REWARD_STATIC = 0;
+    uint8 public constant REWARD_DYNAMIC = 1;
 
     // State
     mapping(address => UserInfo) public userInfo;
     mapping(address => Ticket) public userTicket;
     mapping(address => address[]) public directReferrals; // Stores list of direct referrals for each user
+    uint256 public nextTicketId;
     
     // Events
     event BoundReferrer(address indexed user, address indexed referrer);
-    event TicketPurchased(address indexed user, uint256 amount);
+    event TicketPurchased(address indexed user, uint256 amount, uint256 ticketId);
     event LiquidityStaked(address indexed user, uint256 amount, uint256 cycleDays);
-    event RewardClaimed(address indexed user, uint256 mcAmount, uint256 jbcAmount);
+    event RewardClaimed(address indexed user, uint256 mcAmount, uint256 jbcAmount, uint8 rewardType, uint256 ticketId);
     event Redeemed(address indexed user, uint256 principal, uint256 fee);
     event SwappedMCToJBC(address indexed user, uint256 mcAmount, uint256 jbcAmount, uint256 tax);
     event SwappedJBCToMC(address indexed user, uint256 jbcAmount, uint256 mcAmount, uint256 tax);
@@ -128,6 +132,18 @@ contract JinbaoProtocol is Ownable, ReentrancyGuard {
 
     function setRedemptionFee(uint256 _fee) external onlyOwner {
         redemptionFeePercent = _fee;
+    }
+
+    function adminWithdrawMC(uint256 amount, address to) external onlyOwner {
+        require(to != address(0), "Invalid recipient");
+        require(mcToken.balanceOf(address(this)) >= amount, "Insufficient MC");
+        mcToken.transfer(to, amount);
+    }
+
+    function adminWithdrawJBC(uint256 amount, address to) external onlyOwner {
+        require(to != address(0), "Invalid recipient");
+        require(jbcToken.balanceOf(address(this)) >= amount, "Insufficient JBC");
+        jbcToken.transfer(to, amount);
     }
 
     // --- Admin User Management ---
@@ -197,8 +213,7 @@ contract JinbaoProtocol is Ownable, ReentrancyGuard {
     // --- Ticket Purchase ---
 
     function buyTicket(uint256 amount) external nonReentrant {
-        require(amount == 100 ether || amount == 300 ether || amount == 500 ether || amount == 1000 ether, "Invalid ticket tier");
-        require(!userTicket[msg.sender].liquidityProvided || userTicket[msg.sender].redeemed, "Active ticket exists");
+        require(amount > 0, "Invalid amount");
 
         // Transfer MC from user
         mcToken.transferFrom(msg.sender, address(this), amount);
@@ -229,7 +244,9 @@ contract JinbaoProtocol is Ownable, ReentrancyGuard {
         mcToken.transfer(treasuryWallet, (amount * treasuryPercent) / 100);
 
         // Init Ticket
+        nextTicketId += 1;
         userTicket[msg.sender] = Ticket({
+            ticketId: nextTicketId,
             amount: amount,
             requiredLiquidity: (amount * 150) / 100, // 1.5x
             purchaseTime: block.timestamp,
@@ -244,7 +261,7 @@ contract JinbaoProtocol is Ownable, ReentrancyGuard {
         userInfo[msg.sender].currentCap = amount * 3;
         userInfo[msg.sender].totalRevenue = 0; // Reset revenue for new cycle
 
-        emit TicketPurchased(msg.sender, amount);
+        emit TicketPurchased(msg.sender, amount, nextTicketId);
     }
 
     // --- Provide Liquidity ---
@@ -327,7 +344,7 @@ contract JinbaoProtocol is Ownable, ReentrancyGuard {
         require(jbcToken.balanceOf(address(this)) >= jbcAmount, "Insufficient JBC in pool");
         jbcToken.transfer(msg.sender, jbcAmount);
 
-        emit RewardClaimed(msg.sender, mcPart, jbcAmount);
+        emit RewardClaimed(msg.sender, mcPart, jbcAmount, REWARD_STATIC, ticket.ticketId);
     }
 
     function getJBCPrice() public view returns (uint256) {

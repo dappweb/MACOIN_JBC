@@ -1,9 +1,10 @@
-export enum AppTab {
+﻿export enum AppTab {
   HOME = 'HOME',
   MINING = 'MINING',
   TEAM = 'TEAM',
   SWAP = 'SWAP',
   HISTORY = 'HISTORY',
+  EARNINGS = 'EARNINGS',
   ADMIN = 'ADMIN'
 }
 

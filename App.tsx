@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react"
+﻿import React, { useState, useEffect } from "react"
 import Navbar from "./components/Navbar"
 import NoticeBar from "./components/NoticeBar"
 import StatsPanel from "./components/StatsPanel"
@@ -8,6 +8,7 @@ import WhitepaperModal from "./components/WhitepaperModal"
 import SwapPanel from "./components/SwapPanel"
 import AdminPanel from "./components/AdminPanel"
 import TransactionHistory from "./components/TransactionHistory"
+import EarningsDetail from "./components/EarningsDetail"
 import { AppTab } from "./types"
 import { MOCK_USER_STATS } from "./constants"
 import { ArrowLeftRight } from "lucide-react"
@@ -65,7 +66,15 @@ const AppContent: React.FC = () => {
         {/* Render Tab Content */}
         {currentTab === AppTab.HOME && (
           <StatsPanel
-            stats={MOCK_USER_STATS}
+            stats={{
+              ...MOCK_USER_STATS,
+              balanceMC: 0,
+              balanceJBC: 0,
+              totalRevenue: 0,
+              teamCount: 0,
+              activeInvestment: 0,
+              pendingRewards: 0,
+            }}
             onJoinClick={() => setCurrentTab(AppTab.MINING)}
             onWhitepaperClick={() => setShowWhitepaper(true)}
           />
@@ -78,6 +87,8 @@ const AppContent: React.FC = () => {
         {currentTab === AppTab.SWAP && <SwapPanel />}
 
         {currentTab === AppTab.HISTORY && <TransactionHistory />}
+
+        {currentTab === AppTab.EARNINGS && <EarningsDetail />}
 
         {currentTab === AppTab.ADMIN && <AdminPanel />}
       </main>
@@ -115,3 +126,7 @@ const App: React.FC = () => {
 }
 
 export default App
+
+
+
+

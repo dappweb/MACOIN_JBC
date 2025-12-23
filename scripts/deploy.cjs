@@ -13,7 +13,7 @@ const NETWORK_CONFIGS = {
   sepolia: {
     name: "Ethereum Sepolia",
     chainId: 11155111,
-    explorer: "https://sepolia.etherscan.io",
+    explorer: "https://sepolia.infura.io/v3/1a10a13df2cc454ead9480743d1c09e1",
     currency: "SepoliaETH"
   },
   bscTestnet: {
@@ -33,6 +33,16 @@ const NETWORK_CONFIGS = {
 async function main() {
   const networkName = hre.network.name;
   const networkConfig = NETWORK_CONFIGS[networkName] || { name: networkName, chainId: "Unknown" };
+  const deployOverrides = networkName === "sepolia" ? {
+    gasLimit: 4_500_000,
+    maxFeePerGas: hre.ethers.parseUnits("30", "gwei"),
+    maxPriorityFeePerGas: hre.ethers.parseUnits("2", "gwei")
+  } : {};
+  const txOverrides = networkName === "sepolia" ? {
+    gasLimit: 100000,
+    maxFeePerGas: hre.ethers.parseUnits("30", "gwei"),
+    maxPriorityFeePerGas: hre.ethers.parseUnits("2", "gwei")
+  } : {};
 
   console.log("🚀 Starting Deployment");
   console.log("=".repeat(70));
@@ -60,7 +70,11 @@ async function main() {
   // In production, you would use the address of the existing token
   console.log("Deploying MockMC...");
   const MockMC = await hre.ethers.getContractFactory("MockMC");
-  const mc = await MockMC.deploy();
+  const mc = await MockMC.deploy(deployOverrides);
+  const mcDeployTx = mc.deploymentTransaction();
+  if (mcDeployTx) {
+    console.log("MockMC tx hash:", mcDeployTx.hash);
+  }
   await mc.waitForDeployment();
   const mcAddress = await mc.getAddress();
   console.log("MockMC deployed to:", mcAddress);
@@ -68,7 +82,11 @@ async function main() {
   // 2. Deploy JBC Token
   console.log("Deploying JBC...");
   const JBC = await hre.ethers.getContractFactory("JBC");
-  const jbc = await JBC.deploy(deployer.address);
+  const jbc = await JBC.deploy(deployer.address, deployOverrides);
+  const jbcDeployTx = jbc.deploymentTransaction();
+  if (jbcDeployTx) {
+    console.log("JBC tx hash:", jbcDeployTx.hash);
+  }
   await jbc.waitForDeployment();
   const jbcAddress = await jbc.getAddress();
   console.log("JBC deployed to:", jbcAddress);
@@ -88,15 +106,20 @@ async function main() {
     marketingWallet,
     treasuryWallet,
     lpInjectionWallet,
-    buybackWallet
+    buybackWallet,
+    deployOverrides
   );
+  const protocolDeployTx = protocol.deploymentTransaction();
+  if (protocolDeployTx) {
+    console.log("JinbaoProtocol tx hash:", protocolDeployTx.hash);
+  }
   await protocol.waitForDeployment();
   const protocolAddress = await protocol.getAddress();
   console.log("JinbaoProtocol deployed to:", protocolAddress);
 
   // 4. Setup Permissions & Initial Funding
   console.log("Setting up permissions...");
-  
+
   // Set Protocol address in JBC (to exempt from tax)
   await jbc.setProtocol(protocolAddress);
   console.log("JBC: Protocol address set.");
@@ -105,16 +128,10 @@ async function main() {
   // Mint/Transfer initial supply to protocol
   // JBC: 100M minted to deployer. Let's send 1M to protocol.
   const fundAmount = hre.ethers.parseEther("1000000");
-  
-  // Add manual gas override for Sepolia
-  const txOptions = {
-    gasLimit: 100000,
-    // maxFeePerGas: ... (optional, let wallet handle or ethers estimate)
-  };
 
   try {
       console.log("Transferring JBC to Protocol...");
-      const tx1 = await jbc.transfer(protocolAddress, fundAmount);
+      const tx1 = await jbc.transfer(protocolAddress, fundAmount, txOverrides);
       await tx1.wait();
       console.log(`Transferred 1,000,000 JBC to Protocol`);
   } catch (error) {
@@ -123,7 +140,7 @@ async function main() {
 
   try {
       console.log("Transferring MC to Protocol...");
-      const tx2 = await mc.transfer(protocolAddress, fundAmount);
+      const tx2 = await mc.transfer(protocolAddress, fundAmount, txOverrides);
       await tx2.wait();
       console.log(`Transferred 1,000,000 MC to Protocol`);
   } catch (error) {

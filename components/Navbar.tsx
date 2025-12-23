@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from "react"
+﻿import React, { useEffect, useState } from "react"
 import { AppTab } from "../types"
-import { Diamond, Home, Pickaxe, Users, ArrowLeftRight, Settings, PlusCircle, Globe, FileText } from "lucide-react"
+import { Diamond, Home, Pickaxe, Users, ArrowLeftRight, Settings, PlusCircle, Globe, FileText, Gift } from "lucide-react"
 import { useLanguage } from "../LanguageContext"
 import { ConnectButton } from "@rainbow-me/rainbowkit"
 import { useWeb3 } from "../Web3Context"
@@ -147,6 +147,14 @@ const Navbar: React.FC<NavbarProps> = ({ currentTab, setTab }) => {
               >
                 <FileText size={18} /> {t.nav.history}
               </button>
+              <button
+                onClick={() => setTab(AppTab.EARNINGS)}
+                className={`flex items-center gap-2 font-bold transition-colors ${
+                  currentTab === AppTab.EARNINGS ? "text-macoin-600" : "text-slate-500 hover:text-slate-900"
+                }`}
+              >
+                <Gift size={18} /> {t.nav.earnings || "Earnings"}
+              </button>
               {isOwner && (
                 <button
                   onClick={() => setTab(AppTab.ADMIN)}
@@ -168,7 +176,7 @@ const Navbar: React.FC<NavbarProps> = ({ currentTab, setTab }) => {
               >
                 <Globe size={18} className="md:w-5 md:h-5" />
                 <span className="text-xs md:text-sm font-bold hidden sm:inline">
-                  {language === "zh" ? "EN" : "中文"}
+                  {language === "zh" ? "EN" : "涓枃"}
                 </span>
               </button>
               {/* Button removed as requested for auto-logic */}
@@ -224,6 +232,15 @@ const Navbar: React.FC<NavbarProps> = ({ currentTab, setTab }) => {
             <span className="text-[10px] font-medium">{t.nav.history}</span>
           </button>
           <button
+            onClick={() => setTab(AppTab.EARNINGS)}
+            className={`p-2 rounded-lg flex flex-col items-center gap-1 ${
+              currentTab === AppTab.EARNINGS ? "text-macoin-600 bg-macoin-50" : "text-slate-400"
+            }`}
+          >
+            <Gift size={20} />
+            <span className="text-[10px] font-medium">{t.nav.earnings || "Earnings"}</span>
+          </button>
+          <button
             onClick={() => setTab(AppTab.TEAM)}
             className={`p-2 rounded-lg flex flex-col items-center gap-1 ${
               currentTab === AppTab.TEAM ? "text-macoin-600 bg-macoin-50" : "text-slate-400"
@@ -250,3 +267,4 @@ const Navbar: React.FC<NavbarProps> = ({ currentTab, setTab }) => {
 }
 
 export default Navbar
+

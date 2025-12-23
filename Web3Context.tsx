@@ -28,14 +28,16 @@ export const PROTOCOL_ABI = [
   "function setDistributionPercents(uint256, uint256, uint256, uint256, uint256, uint256) external",
   "function setSwapTaxes(uint256, uint256) external",
   "function setRedemptionFee(uint256) external",
+  "function adminWithdrawMC(uint256 amount, address to) external",
+  "function adminWithdrawJBC(uint256 amount, address to) external",
   "function adminSetUserStats(address, uint256, uint256) external",
   "function adminSetReferrer(address, address) external",
   "function getJBCPrice() view returns (uint256)",
   "function getAmountOut(uint256, uint256, uint256) pure returns (uint256)",
   "event BoundReferrer(address indexed user, address indexed referrer)",
-  "event TicketPurchased(address indexed user, uint256 amount)",
+  "event TicketPurchased(address indexed user, uint256 amount, uint256 ticketId)",
   "event LiquidityStaked(address indexed user, uint256 amount, uint256 cycleDays)",
-  "event RewardClaimed(address indexed user, uint256 mcAmount, uint256 jbcAmount)",
+  "event RewardClaimed(address indexed user, uint256 mcAmount, uint256 jbcAmount, uint8 rewardType, uint256 ticketId)",
   "event Redeemed(address indexed user, uint256 principal, uint256 fee)",
   "event SwappedMCToJBC(address indexed user, uint256 mcAmount, uint256 jbcAmount, uint256 tax)",
   "event SwappedJBCToMC(address indexed user, uint256 jbcAmount, uint256 mcAmount, uint256 tax)"
@@ -43,9 +45,9 @@ export const PROTOCOL_ABI = [
 
 // Contract Addresses (Mock for now, replace with real deployment)
 export const CONTRACT_ADDRESSES = {
-  MC_TOKEN: "0xB2B8777BcBc7A8DEf49F022773d392a8787cf9EF",
-  JBC_TOKEN: "0xA743cB357a9f59D349efB7985072779a094658dD", // Replace with real JBC Address
-  PROTOCOL: "0x941E18CB27BA8326a1F962D4C1B94360D5A3e29f"
+  MC_TOKEN: "0xd2F1fe86Ce4eA5F6bDAC819E0bAeAD3F7219F992",
+  JBC_TOKEN: "0x9bb2Ed209CA2a0D32B047F69F0626F747928e721", // Replace with real JBC Address
+  PROTOCOL: "0x2080e836871462FdDD8631ad3bB33d941BDC5A4F"
 };
 
 // Contract Addresses - Update these with your deployed contract addresses

@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+﻿import React, { useState, useMemo, useEffect } from 'react';
 import { TICKET_TIERS, MINING_PLANS } from '../constants';
 import { MiningPlan, TicketTier } from '../types';
 import { Zap, Clock, TrendingUp, AlertCircle, ArrowRight, ShieldCheck, Lock } from 'lucide-react';
@@ -7,15 +7,20 @@ import { useWeb3 } from '../Web3Context';
 import { ethers } from 'ethers';
 import toast from 'react-hot-toast';
 
+type TicketInfo = {
+  amount: bigint;
+  requiredLiquidity: bigint;
+  purchaseTime: number;
+  liquidityProvided: boolean;
+  redeemed: boolean;
+};
+
 const MiningPanel: React.FC = () => {
   const [selectedTicket, setSelectedTicket] = useState<TicketTier>(TICKET_TIERS[0]);
   const [selectedPlan, setSelectedPlan] = useState<MiningPlan>(MINING_PLANS[0]);
   const [isApproved, setIsApproved] = useState(false);
   const [isCheckingAllowance, setIsCheckingAllowance] = useState(false);
-  const [isTicketBought, setIsTicketBought] = useState(false); // New state to track ticket purchase
-  const [hasActiveTicket, setHasActiveTicket] = useState(false); // Track if user has active ticket
-  const [canStakeLiquidity, setCanStakeLiquidity] = useState(false);
-  const [isTicketExpired, setIsTicketExpired] = useState(false);
+  const [ticketInfo, setTicketInfo] = useState<TicketInfo | null>(null);
   const [txPending, setTxPending] = useState(false);
   const [inputReferrerAddress, setInputReferrerAddress] = useState('');
   const [isBindingReferrer, setIsBindingReferrer] = useState(false);
@@ -31,14 +36,34 @@ const MiningPanel: React.FC = () => {
   // 3x Cap Calculation
   const maxCap = selectedTicket.amount * 3;
 
-  // Check if user has active ticket
+  const now = Math.floor(Date.now() / 1000);
+  const hasTicket = !!ticketInfo && ticketInfo.amount > 0n;
+  const isRedeemed = !!ticketInfo && ticketInfo.redeemed;
+  const hasActiveTicket = !!ticketInfo && ticketInfo.liquidityProvided && !ticketInfo.redeemed;
+  const isTicketExpired =
+      hasTicket &&
+      ticketInfo &&
+      !ticketInfo.liquidityProvided &&
+      !isRedeemed &&
+      now > ticketInfo.purchaseTime + 72 * 3600;
+  const canStakeLiquidity =
+      hasTicket &&
+      ticketInfo &&
+      !ticketInfo.liquidityProvided &&
+      !isTicketExpired &&
+      !isRedeemed;
+  const isTicketBought = hasTicket && !isRedeemed;
+
   const checkTicketStatus = async () => {
-      if (!protocolContract || !account) return;
+      if (!protocolContract || !account) {
+          setTicketInfo(null);
+          return;
+      }
 
       try {
           const ticket = await protocolContract.userTicket(account);
 
-          console.log("ticket info:", {
+          console.log('ticket info:', {
               amount: ticket.amount.toString(),
               liquidityProvided: ticket.liquidityProvided,
               redeemed: ticket.redeemed,
@@ -46,39 +71,15 @@ const MiningPanel: React.FC = () => {
               requiredLiquidity: ticket.requiredLiquidity.toString(),
           });
 
-          const now = Math.floor(Date.now() / 1000);
-
-          // 1️⃣ 是否买过票（amount > 0）
-          const hasTicket = ticket.amount > 0n;
-
-          // 2️⃣ 是否已质押（liquidityProvided && !redeemed）
-          const isStaked = ticket.liquidityProvided && !ticket.redeemed;
-
-          // 3️⃣ 是否已赎回（redeemed == true）
-          const isRedeemed = ticket.redeemed;
-
-          // 4️⃣ 是否已过期（超过72小时且未质押且未赎回）
-          const isExpired =
-              hasTicket &&
-              !ticket.liquidityProvided &&
-              !isRedeemed &&
-              now > Number(ticket.purchaseTime) + 72 * 3600;
-
-          // 5️⃣ 是否可以质押（已买票 && 未质押 && 未过期 && 未赎回）
-          const canStake =
-              hasTicket &&
-              !ticket.liquidityProvided &&
-              !isExpired &&
-              !isRedeemed;
-
-          // ====== 更新 UI 状态 ======
-          setIsTicketBought(hasTicket && !isRedeemed);  // 有有效票据（未赎回）
-          setHasActiveTicket(isStaked);                  // 是否已经质押
-          setCanStakeLiquidity(canStake);                // 是否可以质押
-          setIsTicketExpired(isExpired);                 // 是否过期
-
+          setTicketInfo({
+              amount: ticket.amount,
+              requiredLiquidity: ticket.requiredLiquidity,
+              purchaseTime: Number(ticket.purchaseTime),
+              liquidityProvided: ticket.liquidityProvided,
+              redeemed: ticket.redeemed,
+          });
       } catch (err) {
-          console.error("Failed to check ticket status", err);
+          console.error('Failed to check ticket status', err);
       }
   };
 
@@ -131,10 +132,15 @@ const MiningPanel: React.FC = () => {
       }
   };
 
+  const handleScrollToBuy = () => {
+      if (typeof window === 'undefined') return;
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const handleBuyTicket = async () => {
       if (!protocolContract || !mcContract) return;
       
-      // 检查是否有过期票据
+      // 妫€鏌ユ槸鍚︽湁杩囨湡绁ㄦ嵁
       if (isTicketExpired) {
           toast.error(t.mining.expiredTicketWarning, {
               duration: 5000,
@@ -144,19 +150,19 @@ const MiningPanel: React.FC = () => {
       
       setTxPending(true);
       try {
-          // 检查 MC 余额
+          // 妫€鏌?MC 浣欓
           const amountWei = ethers.parseEther(selectedTicket.amount.toString());
           const mcBalance = await mcContract.balanceOf(account);
           
           if (mcBalance < amountWei) {
-              toast.error(`${t.mining.insufficientMC} ${t.mining.needsMC} ${selectedTicket.amount} MC，${t.mining.currentBalance}: ${ethers.formatEther(mcBalance)} MC`);
+              toast.error(`${t.mining.insufficientMC} ${t.mining.needsMC} ${selectedTicket.amount} MC锛?{t.mining.currentBalance}: ${ethers.formatEther(mcBalance)} MC`);
               return;
           }
 
           const tx = await protocolContract.buyTicket(amountWei);
           await tx.wait();
           toast.success(t.mining.ticketBuySuccess);
-          // 刷新票据状态
+          // 鍒锋柊绁ㄦ嵁鐘舵€?
           await checkTicketStatus();
       } catch (err: any) {
           console.error(err);
@@ -165,8 +171,6 @@ const MiningPanel: React.FC = () => {
               toast.error(t.mining.activeTicketExists, {
                   duration: 5000,
               });
-              setHasActiveTicket(true);
-              setIsTicketBought(true);
           } else if (errorMsg.includes('Invalid ticket tier')) {
               toast.error(t.mining.invalidTicketTier);
           } else {
@@ -181,16 +185,16 @@ const MiningPanel: React.FC = () => {
       if (!protocolContract || !mcContract) return;
       setTxPending(true);
       try {
-          // 1. 检查 MC 余额
+          // 1. 妫€鏌?MC 浣欓
           const requiredAmount = ethers.parseEther(selectedTicket.requiredLiquidity.toString());
           const mcBalance = await mcContract.balanceOf(account);
           
           if (mcBalance < requiredAmount) {
-              toast.error(`${t.mining.insufficientMC} ${t.mining.needsMC} ${selectedTicket.requiredLiquidity} MC，${t.mining.currentBalance}: ${ethers.formatEther(mcBalance)} MC`);
+              toast.error(`${t.mining.insufficientMC} ${t.mining.needsMC} ${selectedTicket.requiredLiquidity} MC锛?{t.mining.currentBalance}: ${ethers.formatEther(mcBalance)} MC`);
               return;
           }
 
-          // 2. 检查授权
+          // 2. 妫€鏌ユ巿鏉?
           const protocolAddr = await protocolContract.getAddress();
           const allowance = await mcContract.allowance(account, protocolAddr);
           
@@ -202,12 +206,12 @@ const MiningPanel: React.FC = () => {
               return;
           }
 
-          // 3. 执行质押
+          // 3. 鎵ц璐ㄦ娂
           const tx = await protocolContract.stakeLiquidity(selectedPlan.days);
           await tx.wait();
 
           toast.success(t.mining.stakeSuccess);
-          // 刷新票据状态
+          // 鍒锋柊绁ㄦ嵁鐘舵€?
           await checkTicketStatus();
       } catch (err: any) {
           console.error(t.mining.stakeFailed, err);
@@ -254,8 +258,7 @@ const MiningPanel: React.FC = () => {
           const tx = await protocolContract.redeem();
           await tx.wait();
           toast.success(t.mining.redeemSuccess);
-          setIsTicketBought(false); // Reset UI state
-          setHasActiveTicket(false);
+          await checkTicketStatus();
       } catch (err: any) {
           console.error(err);
           const errorMsg = err.reason || err.message || '';
@@ -272,13 +275,13 @@ const MiningPanel: React.FC = () => {
   const handleBindReferrer = async () => {
       if (!protocolContract || !inputReferrerAddress) return;
 
-      // 验证地址格式
+      // 楠岃瘉鍦板潃鏍煎紡
       if (!ethers.isAddress(inputReferrerAddress)) {
           toast.error('Invalid address format!');
           return;
       }
 
-      // 检查是否绑定自己
+      // 妫€鏌ユ槸鍚︾粦瀹氳嚜宸?
       if (inputReferrerAddress.toLowerCase() === account?.toLowerCase()) {
           toast.error('Cannot bind yourself as referrer!');
           return;
@@ -290,7 +293,7 @@ const MiningPanel: React.FC = () => {
           await tx.wait();
           toast.success(t.team.bindSuccess);
           setInputReferrerAddress('');
-          // 重新检查推荐人状态
+          // 閲嶆柊妫€鏌ユ帹鑽愪汉鐘舵€?
           await checkReferrerStatus();
       } catch (err: any) {
           console.error(err);
@@ -313,13 +316,13 @@ const MiningPanel: React.FC = () => {
         <p className="text-sm md:text-base text-slate-500">{t.mining.subtitle}</p>
       </div>
 
-      {/* 推荐人绑定提示 - 非管理员且未绑定推荐人时显示 */}
+      {/* 鎺ㄨ崘浜虹粦瀹氭彁绀?- 闈炵鐞嗗憳涓旀湭缁戝畾鎺ㄨ崘浜烘椂鏄剧ず */}
       {isConnected && !hasReferrer && !isOwner && (
         <div className="bg-amber-50 border-2 border-amber-400 rounded-xl p-6 animate-fade-in">
           <div className="flex items-start gap-3 mb-4">
             <AlertCircle className="text-amber-600 shrink-0 mt-0.5" size={24} />
             <div className="flex-1">
-              <p className="font-bold text-amber-900 text-lg mb-2">⚠️ {t.referrer.required}</p>
+              <p className="font-bold text-amber-900 text-lg mb-2">{t.referrer.required}</p>
               <p className="text-sm text-amber-800 mb-4">
                 {t.referrer.requiredDesc}
               </p>
@@ -345,12 +348,12 @@ const MiningPanel: React.FC = () => {
         </div>
       )}
 
-      {/* 已绑定推荐人提示 - 显示推荐人地址 */}
+      {/* 宸茬粦瀹氭帹鑽愪汉鎻愮ず - 鏄剧ず鎺ㄨ崘浜哄湴鍧€ */}
       {isConnected && hasReferrer && !isOwner && referrerAddress && (
         <div className="bg-green-50 border-2 border-green-300 rounded-xl p-4 flex items-start gap-3 animate-fade-in">
           <ShieldCheck className="text-green-600 shrink-0 mt-0.5" size={20} />
           <div className="flex-1">
-            <p className="font-bold text-green-900 mb-1">✅ {t.referrer.bound}</p>
+            <p className="font-bold text-green-900 mb-1">{t.referrer.bound}</p>
             <p className="text-sm text-green-800">
               {t.referrer.yourReferrer}: <span className="font-mono font-bold">{referrerAddress}</span>
             </p>
@@ -358,21 +361,21 @@ const MiningPanel: React.FC = () => {
         </div>
       )}
 
-      {/* 管理员提示 */}
+      {/* 绠＄悊鍛樻彁绀?*/}
       {isConnected && isOwner && (
         <div className="bg-purple-50 border-2 border-purple-300 rounded-xl p-4 flex items-start gap-3 animate-fade-in">
           <ShieldCheck className="text-purple-600 shrink-0 mt-0.5" size={20} />
           <div className="flex-1">
-            <p className="font-bold text-purple-900">👑 {t.referrer.adminExempt}</p>
+            <p className="font-bold text-purple-900">{t.referrer.adminExempt}</p>
           </div>
         </div>
       )}
 
-      {/* 快速购买门票按钮区域 - 显眼位置 */}
-      {isConnected && (hasReferrer || isOwner) && !isTicketBought && (
+      {/* 蹇€熻喘涔伴棬绁ㄦ寜閽尯鍩?- 鏄剧溂浣嶇疆 */}
+      {isConnected && (hasReferrer || isOwner) && (
         <div className="glass-panel p-6 md:p-8 rounded-2xl border-2 border-macoin-500 shadow-xl shadow-macoin-500/20 animate-fade-in">
           <div className="text-center mb-6">
-            <h3 className="text-2xl md:text-3xl font-bold text-slate-900 mb-2">🎫 {t.mining.buyTicket}</h3>
+            <h3 className="text-2xl md:text-3xl font-bold text-slate-900 mb-2">{t.mining.buyTicket}</h3>
             <p className="text-slate-600">{t.mining.step1}</p>
           </div>
 
@@ -411,7 +414,7 @@ const MiningPanel: React.FC = () => {
                 disabled={txPending || isTicketExpired}
                 className="w-full py-4 md:py-5 bg-gradient-to-r from-macoin-600 to-macoin-500 hover:from-macoin-500 hover:to-macoin-400 text-white font-extrabold text-xl rounded-xl shadow-xl shadow-macoin-500/30 transition-all transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {txPending ? t.mining.buying : `🎫 ${t.mining.buyTicket} - ${selectedTicket.amount} MC`}
+                {txPending ? t.mining.buying : `${t.mining.buyTicket} - ${selectedTicket.amount} MC`}
               </button>
             )}
           </div>
@@ -423,7 +426,7 @@ const MiningPanel: React.FC = () => {
         <div className="bg-red-50 border-2 border-red-300 rounded-xl p-4 flex items-start gap-3 animate-fade-in">
           <AlertCircle className="text-red-600 shrink-0 mt-0.5" size={20} />
           <div className="flex-1">
-            <p className="font-bold text-red-900 mb-1">⏰ {t.mining.ticketExpired}</p>
+            <p className="font-bold text-red-900 mb-1">{t.mining.ticketExpired}</p>
             <p className="text-sm text-red-800">
               {t.mining.ticketExpiredDesc}
             </p>
@@ -435,7 +438,7 @@ const MiningPanel: React.FC = () => {
         <div className="bg-blue-50 border-2 border-blue-300 rounded-xl p-4 flex items-start gap-3 animate-fade-in">
           <AlertCircle className="text-blue-600 shrink-0 mt-0.5" size={20} />
           <div className="flex-1">
-            <p className="font-bold text-blue-900 mb-1">✅ {t.mining.alreadyStaked}</p>
+            <p className="font-bold text-blue-900 mb-1">{t.mining.alreadyStaked}</p>
             <p className="text-sm text-blue-800">
               {t.mining.alreadyStakedDesc}
             </p>
@@ -447,7 +450,7 @@ const MiningPanel: React.FC = () => {
         <div className="bg-green-50 border-2 border-green-300 rounded-xl p-4 flex items-start gap-3 animate-fade-in">
           <AlertCircle className="text-green-600 shrink-0 mt-0.5" size={20} />
           <div className="flex-1">
-            <p className="font-bold text-green-900 mb-1">🎫 {t.mining.readyToStake}</p>
+            <p className="font-bold text-green-900 mb-1">{t.mining.readyToStake}</p>
             <p className="text-sm text-green-800">
               {t.mining.readyToStakeDesc}
             </p>
@@ -459,36 +462,6 @@ const MiningPanel: React.FC = () => {
 
             {/* Left Col: Controls */}
             <div className="lg:col-span-2 space-y-4 md:space-y-6">
-
-            {/* Step 1: Ticket */}
-            <div className={`glass-panel p-4 md:p-6 rounded-xl md:rounded-2xl relative overflow-hidden group transition-opacity ${isTicketBought || (!hasReferrer && !isOwner) ? 'opacity-50 pointer-events-none' : ''}`}>
-                <div className="absolute top-0 right-0 w-24 h-24 bg-macoin-500/10 rounded-full blur-2xl group-hover:bg-macoin-500/20 transition-all"></div>
-                <div className="flex items-center gap-2 md:gap-3 mb-3 md:mb-4">
-                    <div className="p-1.5 md:p-2 bg-macoin-100 rounded-lg text-macoin-600">
-                        <Zap size={18} className="md:w-5 md:h-5" />
-                    </div>
-                    <h3 className="text-base md:text-lg font-bold text-slate-800">{t.mining.step1} {isTicketBought && `(${t.mining.completed})`}</h3>
-                </div>
-
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 md:gap-3">
-                    {TICKET_TIERS.map((tier) => (
-                        <button
-                            key={tier.amount}
-                            onClick={() => setSelectedTicket(tier)}
-                            className={`relative py-3 md:py-4 rounded-lg md:rounded-xl border transition-all duration-300 flex flex-col items-center justify-center gap-0.5 md:gap-1 ${
-                                selectedTicket.amount === tier.amount
-                                ? 'bg-macoin-500 text-white border-macoin-600 shadow-lg shadow-macoin-500/20 transform scale-105 z-10'
-                                : 'bg-white border-slate-200 text-slate-500 hover:border-macoin-300 hover:bg-slate-50'
-                            }`}
-                        >
-                            <span className="text-lg md:text-xl font-bold">{tier.amount} MC</span>
-                            <span className={`text-[9px] md:text-[10px] ${selectedTicket.amount === tier.amount ? 'text-white/90' : 'text-slate-400'}`}>
-                                +{tier.requiredLiquidity} {t.mining.liquidity}
-                            </span>
-                        </button>
-                    ))}
-                </div>
-            </div>
 
             {/* Step 2: Cycle */}
             <div className={`glass-panel p-4 md:p-6 rounded-xl md:rounded-2xl relative overflow-hidden group transition-opacity ${(!isTicketBought || isTicketExpired || hasActiveTicket || (!hasReferrer && !isOwner)) ? 'opacity-50 pointer-events-none' : ''}`}>
@@ -607,7 +580,7 @@ const MiningPanel: React.FC = () => {
                         </button>
                     ) : !hasReferrer && !isOwner ? (
                         <button disabled className="w-full py-3 bg-amber-200 text-amber-700 font-bold rounded-lg cursor-not-allowed">
-                            ⚠️ {t.referrer.noReferrer}
+                            {t.referrer.noReferrer}
                         </button>
                     ) : isCheckingAllowance ? (
                         <button
@@ -629,15 +602,15 @@ const MiningPanel: React.FC = () => {
                             disabled
                             className="w-full py-4 bg-red-100 text-red-700 font-bold text-lg rounded-lg cursor-not-allowed border-2 border-red-300"
                         >
-                            ⏰ {t.mining.ticketExpiredCannotBuy}
+                            {t.mining.ticketExpiredCannotBuy}
                         </button>
                     ) : !isTicketBought ? (
                         <button
-                            onClick={handleBuyTicket}
+                            onClick={handleScrollToBuy}
                             disabled={txPending}
-                            className="w-full py-4 bg-macoin-500 hover:bg-macoin-600 text-white font-extrabold text-lg rounded-lg shadow-lg shadow-macoin-500/30 transition-all disabled:opacity-50"
+                            className="w-full py-3 text-macoin-600 font-semibold rounded-lg border border-macoin-200 hover:bg-macoin-50 transition-colors disabled:opacity-50"
                         >
-                            {txPending ? t.mining.buying : `🎫 ${t.mining.buyTicket}`}
+                            {txPending ? t.mining.buying : `${t.mining.buyTicket} (Top)`}
                         </button>
                     ) : canStakeLiquidity ? (
                          <button
@@ -649,17 +622,18 @@ const MiningPanel: React.FC = () => {
                         </button>
                     ) : hasActiveTicket ? (
                         <button
-                            disabled
-                            className="w-full py-4 bg-blue-100 text-blue-700 font-bold text-lg rounded-lg cursor-not-allowed border-2 border-blue-300"
+                            onClick={handleScrollToBuy}
+                            disabled={txPending}
+                            className="w-full py-3 text-macoin-600 font-semibold rounded-lg border border-macoin-200 hover:bg-macoin-50 transition-colors disabled:opacity-50"
                         >
-                            ✅ {t.mining.alreadyStaked}
+                            {txPending ? t.mining.buying : `${t.mining.buyTicket} (Top)`}
                         </button>
                     ) : (
                         <button
                             disabled
                             className="w-full py-4 bg-slate-200 text-slate-500 font-bold text-lg rounded-lg cursor-not-allowed"
                         >
-                            ⚠️ {t.mining.unknownStatus}
+                            {t.mining.unknownStatus}
                         </button>
                     )}
 
@@ -697,3 +671,7 @@ const MiningPanel: React.FC = () => {
 };
 
 export default MiningPanel;
+
+
+
+

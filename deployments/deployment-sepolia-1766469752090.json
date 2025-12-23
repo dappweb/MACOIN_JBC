@@ -2,13 +2,13 @@
   "network": "sepolia",
   "networkName": "Ethereum Sepolia",
   "chainId": 11155111,
-  "explorer": "https://sepolia.infura.io/v3/1a10a13df2cc454ead9480743d1c09e1",
+  "explorer": "https://sepolia.etherscan.io",
   "deployer": "0x4C10831CBcF9884ba72051b5287b6c87E4F74A48",
-  "timestamp": "2025-12-23T08:41:02.524Z",
+  "timestamp": "2025-12-23T06:02:32.090Z",
   "contracts": {
-    "MockMC": "0xd2F1fe86Ce4eA5F6bDAC819E0bAeAD3F7219F992",
-    "JBC": "0x9bb2Ed209CA2a0D32B047F69F0626F747928e721",
-    "JinbaoProtocol": "0x2080e836871462FdDD8631ad3bB33d941BDC5A4F"
+    "MockMC": "0x348a77aA2A970543A128c617c3Cdc20f13bD441E",
+    "JBC": "0x61CD433C283F584532729D098Cf475aD8bC81591",
+    "JinbaoProtocol": "0x9457Bb8b0ea3C81307151EB10E323735c699f53b"
   },
   "wallets": {
     "marketing": "0x4C10831CBcF9884ba72051b5287b6c87E4F74A48",

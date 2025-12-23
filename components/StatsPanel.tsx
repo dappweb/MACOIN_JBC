@@ -20,6 +20,8 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
   const { mcContract, jbcContract, protocolContract, account, isConnected, provider } = useWeb3()
   const [displayStats, setDisplayStats] = useState<UserStats>(initialStats)
   const [jbcPrice, setJbcPrice] = useState<string>("1.0")
+  const jbcPriceNum = parseFloat(jbcPrice)
+  const totalRevenueJbc = jbcPriceNum > 0 ? displayStats.totalRevenue / jbcPriceNum : 0
 
   // Bind Referrer State
   const [referrer, setReferrer] = useState("")
@@ -376,6 +378,9 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
           </div>
           <div className="text-2xl md:text-3xl font-bold text-slate-900 mb-1">
             {displayStats.totalRevenue.toLocaleString()}
+          </div>
+          <div className="text-xs text-slate-500">
+            MC: {displayStats.totalRevenue.toLocaleString()} · JBC: {totalRevenueJbc.toLocaleString()}
           </div>
           <div className="text-xs text-slate-400">{t.stats.settlement}</div>
         </div>

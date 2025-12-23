@@ -59,6 +59,8 @@ const AdminPanel: React.FC = () => {
   // Liquidity Management
   const [mcLiquidityAmount, setMcLiquidityAmount] = useState('');
   const [jbcLiquidityAmount, setJbcLiquidityAmount] = useState('');
+  const [mcLiquidityRemoveAmount, setMcLiquidityRemoveAmount] = useState('');
+  const [jbcLiquidityRemoveAmount, setJbcLiquidityRemoveAmount] = useState('');
 
   const publishAnnouncement = () => {
     try {
@@ -224,6 +226,37 @@ const AdminPanel: React.FC = () => {
     } catch (err: any) {
         console.error(err);
         toast.error("Failed: " + (err.reason || err.message));
+    } finally {
+        setLoading(false);
+    }
+  };
+
+  const removeLiquidity = async (tokenType: 'MC' | 'JBC') => {
+    if (!protocolContract || !isConnected || !provider || !account) {
+        toast.error(t.admin.failed);
+        return;
+    }
+
+    setLoading(true);
+    try {
+        const signer = await provider.getSigner();
+
+        if (tokenType === 'MC' && mcLiquidityRemoveAmount) {
+            const amount = ethers.parseEther(mcLiquidityRemoveAmount);
+            const tx = await protocolContract.connect(signer).adminWithdrawMC(amount, account);
+            await tx.wait();
+            toast.success(t.admin.success);
+            setMcLiquidityRemoveAmount('');
+        } else if (tokenType === 'JBC' && jbcLiquidityRemoveAmount) {
+            const amount = ethers.parseEther(jbcLiquidityRemoveAmount);
+            const tx = await protocolContract.connect(signer).adminWithdrawJBC(amount, account);
+            await tx.wait();
+            toast.success(t.admin.success);
+            setJbcLiquidityRemoveAmount('');
+        }
+    } catch (err: any) {
+        console.error(err);
+        toast.error(t.admin.failed + (err.reason || err.message));
     } finally {
         setLoading(false);
     }
@@ -425,44 +458,74 @@ const AdminPanel: React.FC = () => {
       <div className="glass-panel p-4 md:p-6 rounded-xl md:rounded-2xl bg-white border border-red-200">
           <div className="flex items-center gap-2 mb-3 md:mb-4">
               <AlertTriangle className="text-red-600" size={20} />
-              <h3 className="text-lg md:text-xl font-bold text-slate-800">Add Pool Liquidity (Admin Only)</h3>
+              <h3 className="text-lg md:text-xl font-bold text-slate-800">{t.admin.liquidityMgmtTitle || 'Pool Liquidity (Admin Only)'}</h3>
           </div>
-          <p className="text-xs md:text-sm text-slate-500 mb-4">Transfer tokens from your wallet to the protocol contract to add liquidity for swaps.</p>
+          <p className="text-xs md:text-sm text-slate-500 mb-4">{t.admin.liquidityMgmtDesc || 'Transfer tokens to or from the protocol contract to add or remove swap liquidity.'}</p>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-3">
-                  <label className="block text-sm font-medium text-slate-700">Add MC Liquidity</label>
+                  <label className="block text-sm font-medium text-slate-700">{t.admin.addMcLiquidity || 'Add MC Liquidity'}</label>
                   <input 
                       type="number" 
                       value={mcLiquidityAmount} 
                       onChange={e => setMcLiquidityAmount(e.target.value)} 
                       className="w-full p-2 md:p-2.5 border rounded text-sm"
-                      placeholder="Amount in MC"
+                      placeholder={t.admin.amountInMc || 'Amount in MC'}
                   />
                   <button 
                       onClick={() => addLiquidity('MC')} 
                       disabled={loading || !mcLiquidityAmount}
                       className="w-full py-2 md:py-2.5 bg-macoin-500 text-white rounded-lg hover:bg-macoin-600 disabled:opacity-50 text-sm md:text-base"
                   >
-                      Add MC to Pool
+                      {t.admin.addMcToPool || 'Add MC to Pool'}
+                  </button>
+                  <label className="block text-sm font-medium text-slate-700">{t.admin.removeMcLiquidity || 'Remove MC Liquidity'}</label>
+                  <input 
+                      type="number" 
+                      value={mcLiquidityRemoveAmount} 
+                      onChange={e => setMcLiquidityRemoveAmount(e.target.value)} 
+                      className="w-full p-2 md:p-2.5 border rounded text-sm"
+                      placeholder={t.admin.amountInMc || 'Amount in MC'}
+                  />
+                  <button 
+                      onClick={() => removeLiquidity('MC')} 
+                      disabled={loading || !mcLiquidityRemoveAmount}
+                      className="w-full py-2 md:py-2.5 bg-red-500 text-white rounded-lg hover:bg-red-600 disabled:opacity-50 text-sm md:text-base"
+                  >
+                      {t.admin.removeMcFromPool || 'Remove MC from Pool'}
                   </button>
               </div>
               
               <div className="space-y-3">
-                  <label className="block text-sm font-medium text-slate-700">Add JBC Liquidity</label>
+                  <label className="block text-sm font-medium text-slate-700">{t.admin.addJbcLiquidity || 'Add JBC Liquidity'}</label>
                   <input 
                       type="number" 
                       value={jbcLiquidityAmount} 
                       onChange={e => setJbcLiquidityAmount(e.target.value)} 
                       className="w-full p-2 md:p-2.5 border rounded text-sm"
-                      placeholder="Amount in JBC"
+                      placeholder={t.admin.amountInJbc || 'Amount in JBC'}
                   />
                   <button 
                       onClick={() => addLiquidity('JBC')} 
                       disabled={loading || !jbcLiquidityAmount}
                       className="w-full py-2 md:py-2.5 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 disabled:opacity-50 text-sm md:text-base"
                   >
-                      Add JBC to Pool
+                      {t.admin.addJbcToPool || 'Add JBC to Pool'}
+                  </button>
+                  <label className="block text-sm font-medium text-slate-700">{t.admin.removeJbcLiquidity || 'Remove JBC Liquidity'}</label>
+                  <input 
+                      type="number" 
+                      value={jbcLiquidityRemoveAmount} 
+                      onChange={e => setJbcLiquidityRemoveAmount(e.target.value)} 
+                      className="w-full p-2 md:p-2.5 border rounded text-sm"
+                      placeholder={t.admin.amountInJbc || 'Amount in JBC'}
+                  />
+                  <button 
+                      onClick={() => removeLiquidity('JBC')} 
+                      disabled={loading || !jbcLiquidityRemoveAmount}
+                      className="w-full py-2 md:py-2.5 bg-red-500 text-white rounded-lg hover:bg-red-600 disabled:opacity-50 text-sm md:text-base"
+                  >
+                      {t.admin.removeJbcFromPool || 'Remove JBC from Pool'}
                   </button>
               </div>
           </div>

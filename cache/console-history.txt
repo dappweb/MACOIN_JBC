@@ -1,0 +1,4 @@
+exit
+await ethers.provider.getTransactionCount(d.address, "latest")
+await ethers.provider.getTransactionCount(d.address, "pending")
+const [d]=await ethers.getSigners();

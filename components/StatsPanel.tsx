@@ -248,7 +248,7 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
   return (
     <div className="max-w-7xl mx-auto space-y-8 animate-fade-in">
       {/* Hero Section - Cyberpunk Theme */}
-      <div className="relative rounded-2xl md:rounded-3xl overflow-hidden min-h-[400px] md:min-h-[500px] flex items-center bg-gradient-to-br from-black via-gray-900 to-emerald-900 border border-emerald-400/40 shadow-2xl shadow-emerald-400/30">
+      <div className="relative rounded-2xl md:rounded-3xl overflow-hidden min-h-[400px] md:min-h-[500px] flex items-center bg-gradient-to-br from-black via-gray-900 to-gray-800 border border-emerald-400/40 shadow-2xl shadow-neon-500/30">
         {/* Animated Grid Background */}
         <div className="absolute inset-0 opacity-20">
           <div className="absolute inset-0" style={{
@@ -272,15 +272,15 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
         </div>
 
         {/* Glowing Circles */}
-        <div className="absolute top-10 right-20 w-64 h-64 bg-emerald-400/30 rounded-full blur-[100px] animate-pulse"></div>
+        <div className="absolute top-10 right-20 w-64 h-64 bg-neon-500/30 rounded-full blur-[100px] animate-pulse"></div>
         <div className="absolute bottom-10 left-20 w-48 h-48 bg-amber-500/10 rounded-full blur-[80px] animate-pulse" style={{animationDelay: '1s'}}></div>
 
         <div className="relative z-10 p-5 sm:p-6 md:p-12 max-w-3xl w-full">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-400/15 text-emerald-300 text-[10px] md:text-xs font-bold uppercase tracking-wider mb-4 md:mb-6 border border-emerald-400/40 backdrop-blur-sm">
-            <span className="w-2 h-2 bg-emerald-300 rounded-full animate-pulse"></span>
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-neon-500/15 text-neon-400 text-[10px] md:text-xs font-bold uppercase tracking-wider mb-4 md:mb-6 border border-emerald-400/40 backdrop-blur-sm">
+            <span className="w-2 h-2 bg-neon-400 rounded-full animate-pulse"></span>
             {t.stats.protocol}
           </div>
-          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-7xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-emerald-300 via-emerald-200 to-emerald-400 mb-4 md:mb-6 leading-tight drop-shadow-[0_0_30px_rgba(52,211,153,0.6)]">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-7xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-neon-400 via-neon-300 to-neon-500 mb-4 md:mb-6 leading-tight drop-shadow-[0_0_30px_rgba(1,254,174,0.7)]">
             {t.stats.title}
           </h1>
           <p className="text-lg sm:text-xl md:text-2xl text-gray-300 mb-3 md:mb-4 font-light">
@@ -292,13 +292,13 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
           <div className="flex flex-col sm:flex-row gap-4 md:gap-5">
             <button
               onClick={onJoinClick}
-              className="px-6 py-3 md:px-8 md:py-4 bg-gradient-to-r from-emerald-400 to-emerald-500 hover:from-emerald-300 hover:to-emerald-400 text-black font-bold rounded-lg shadow-lg shadow-emerald-400/60 transition-all transform hover:-translate-y-1 hover:shadow-emerald-400/80 text-sm md:text-base border border-emerald-300"
+              className="px-6 py-3 md:px-8 md:py-4 bg-gradient-to-r from-neon-500 to-neon-600 hover:from-neon-400 hover:to-neon-500 text-black font-bold rounded-lg shadow-lg shadow-neon-500/60 transition-all transform hover:-translate-y-1 hover:shadow-neon-500/80 text-sm md:text-base border border-emerald-300"
             >
               {t.stats.join}
             </button>
             <button
               onClick={onWhitepaperClick}
-              className="px-6 py-3 md:px-8 md:py-4 bg-transparent hover:bg-emerald-400/15 text-emerald-300 border-2 border-emerald-400/60 hover:border-emerald-300 font-bold rounded-lg backdrop-blur-md transition-all text-sm md:text-base"
+              className="px-6 py-3 md:px-8 md:py-4 bg-transparent hover:bg-neon-500/15 text-neon-400 border-2 border-emerald-400/60 hover:border-emerald-300 font-bold rounded-lg backdrop-blur-md transition-all text-sm md:text-base"
             >
               {t.stats.whitepaper}
             </button>
@@ -314,16 +314,16 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
             <div className="absolute inset-16 rounded-full border border-amber-400/20 animate-spin" style={{animationDuration: '10s'}}></div>
             {/* Center Glow */}
             <div className="absolute inset-0 flex items-center justify-center">
-              <div className="w-32 h-32 bg-gradient-to-br from-emerald-300/30 to-amber-500/20 rounded-full blur-2xl"></div>
+              <div className="w-32 h-32 bg-gradient-to-br from-neon-400/30 to-amber-500/20 rounded-full blur-2xl"></div>
             </div>
           </div>
         </div>
       </div>
 
       {/* Bind Referrer Section (Moved from TeamLevel) */}
-      <div className="glass-panel p-4 sm:p-5 md:p-6 rounded-xl md:rounded-2xl bg-gray-900/50 border border-emerald-400/40 flex flex-col items-start sm:items-center gap-4 shadow-lg shadow-emerald-400/15">
+      <div className="glass-panel p-4 sm:p-5 md:p-6 rounded-xl md:rounded-2xl bg-gray-900/50 border border-emerald-400/40 flex flex-col items-start sm:items-center gap-4 shadow-lg shadow-neon-500/15">
         <div className="flex items-center gap-3 md:gap-4 w-full sm:w-auto">
-          <div className="bg-emerald-400/25 p-2 md:p-3 rounded-full text-emerald-300 border border-emerald-400/40">
+          <div className="bg-neon-500/25 p-2 md:p-3 rounded-full text-neon-400 border border-emerald-400/40">
             <Link size={20} className="md:w-6 md:h-6" />
           </div>
           <div>
@@ -335,7 +335,7 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
           {!isConnected ? (
             <button
               disabled
-              className="px-4 py-2.5 md:px-6 md:py-3 bg-slate-200 text-slate-400 font-bold rounded-lg cursor-not-allowed whitespace-nowrap text-sm md:text-base w-full sm:w-auto"
+              className="px-4 py-2.5 md:px-6 md:py-3 bg-gray-800 text-gray-500 font-bold rounded-lg cursor-not-allowed whitespace-nowrap text-sm md:text-base w-full sm:w-auto border border-gray-700"
             >
               Connect Wallet First
             </button>
@@ -356,7 +356,7 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
               <button
                 onClick={handleBind}
                 disabled={!referrer.trim() || isBinding}
-                className="px-4 py-2.5 md:px-6 md:py-3 bg-gradient-to-r from-emerald-400 to-emerald-500 hover:from-emerald-300 hover:to-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed text-black font-bold rounded-lg transition-colors shadow-lg shadow-emerald-400/40 whitespace-nowrap text-sm md:text-base"
+                className="px-4 py-2.5 md:px-6 md:py-3 bg-gradient-to-r from-neon-500 to-neon-600 hover:from-neon-400 hover:to-neon-500 disabled:opacity-50 disabled:cursor-not-allowed text-black font-bold rounded-lg transition-colors shadow-lg shadow-neon-500/40 whitespace-nowrap text-sm md:text-base"
               >
                 {isBinding ? "Binding..." : t.team.bindButton}
               </button>
@@ -368,10 +368,10 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
       {/* Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
         {/* Stat 1 */}
-        <div className="glass-panel p-4 md:p-6 rounded-xl md:rounded-2xl hover:border-emerald-400/60 transition-all bg-gray-900/50 border border-gray-800 hover:shadow-lg hover:shadow-emerald-400/30">
+        <div className="glass-panel p-4 md:p-6 rounded-xl md:rounded-2xl hover:border-emerald-400/60 transition-all bg-gray-900/50 border border-gray-800 hover:shadow-lg hover:shadow-neon-500/30">
           <div className="flex items-center justify-between mb-3 md:mb-4">
             <span className="text-gray-400 text-xs md:text-sm">{t.stats.assets}</span>
-            <Wallet className="text-emerald-300" size={18} />
+            <Wallet className="text-neon-400" size={18} />
           </div>
           <div className="text-2xl md:text-3xl font-bold text-white mb-1">
             {displayStats.balanceMC.toLocaleString()}
@@ -382,7 +382,7 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
         </div>
 
         {/* Stat 2 */}
-        <div className="glass-panel p-4 md:p-6 rounded-xl md:rounded-2xl hover:border-emerald-400/60 transition-all bg-gray-900/50 border border-gray-800 hover:shadow-lg hover:shadow-emerald-400/30">
+        <div className="glass-panel p-4 md:p-6 rounded-xl md:rounded-2xl hover:border-emerald-400/60 transition-all bg-gray-900/50 border border-gray-800 hover:shadow-lg hover:shadow-neon-500/30">
           <div className="flex items-center justify-between mb-3 md:mb-4">
             <span className="text-gray-400 text-xs md:text-sm">{t.stats.holding}</span>
             <Coins className="text-amber-400" size={18} />
@@ -390,17 +390,17 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
           <div className="text-2xl md:text-3xl font-bold text-white mb-1">
             {displayStats.balanceJBC.toLocaleString()}
           </div>
-          <div className="text-xs text-emerald-300 flex items-center gap-1">
+          <div className="text-xs text-neon-400 flex items-center gap-1">
             ≈ {(displayStats.balanceJBC * parseFloat(jbcPrice)).toFixed(2)} MC (Price: {parseFloat(jbcPrice).toFixed(4)}
             )
           </div>
         </div>
 
         {/* Stat 3 */}
-        <div className="glass-panel p-4 md:p-6 rounded-xl md:rounded-2xl hover:border-emerald-400/60 transition-all bg-gray-900/50 border border-gray-800 hover:shadow-lg hover:shadow-emerald-400/30">
+        <div className="glass-panel p-4 md:p-6 rounded-xl md:rounded-2xl hover:border-emerald-400/60 transition-all bg-gray-900/50 border border-gray-800 hover:shadow-lg hover:shadow-neon-500/30">
           <div className="flex items-center justify-between mb-3 md:mb-4">
             <span className="text-gray-400 text-xs md:text-sm">{t.stats.revenue}</span>
-            <TrendingUp className="text-emerald-300" size={18} />
+            <TrendingUp className="text-neon-400" size={18} />
           </div>
           <div className="text-2xl md:text-3xl font-bold text-white mb-1">
             {displayStats.totalRevenue.toLocaleString()}
@@ -412,12 +412,12 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
         </div>
 
         {/* Stat 4 */}
-        <div className="glass-panel p-4 md:p-6 rounded-xl md:rounded-2xl hover:border-emerald-400/60 transition-all bg-gradient-to-br from-gray-900/50 to-gray-800/50 border border-gray-800 hover:shadow-lg hover:shadow-emerald-400/30">
+        <div className="glass-panel p-4 md:p-6 rounded-xl md:rounded-2xl hover:border-emerald-400/60 transition-all bg-gradient-to-br from-gray-900/50 to-gray-800/50 border border-gray-800 hover:shadow-lg hover:shadow-neon-500/30">
           <div className="flex items-center justify-between mb-3 md:mb-4">
             <span className="text-gray-400 text-xs md:text-sm">{t.stats.level}</span>
             <Users className="text-amber-400" size={18} />
           </div>
-          <div className="text-2xl md:text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-emerald-300 to-amber-400 mb-1">
+          <div className="text-2xl md:text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-neon-400 to-amber-400 mb-1">
             {displayStats.currentLevel}
           </div>
           <div className="text-xs text-gray-400">
@@ -434,8 +434,8 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
         {loadingPriceHistory ? (
           <div className="h-[200px] sm:h-[250px] md:h-[300px] w-full flex items-center justify-center">
             <div className="text-center">
-              <div className="w-8 h-8 border-4 border-macoin-500 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
-              <p className="text-sm text-slate-500">Loading price history...</p>
+              <div className="w-8 h-8 border-4 border-neon-500 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+              <p className="text-sm text-gray-400">Loading price history...</p>
             </div>
           </div>
         ) : (

@@ -49,7 +49,7 @@ const NoticeBar: React.FC = () => {
   if (!isVisible || !announcement) return null;
 
   return (
-    <div className="bg-yellow-50 border-b border-yellow-100 text-yellow-800 px-4 py-3 relative animate-fade-in">
+    <div className="bg-amber-50/10 border-b border-amber-500/30 text-amber-300 px-4 py-3 relative animate-fade-in backdrop-blur-sm">
         <div className="max-w-7xl mx-auto flex items-start gap-3 pr-8">
             <Megaphone className="w-5 h-5 flex-shrink-0 mt-0.5" />
             <p className="text-sm font-medium leading-relaxed">
@@ -58,7 +58,7 @@ const NoticeBar: React.FC = () => {
         </div>
         <button
             onClick={() => setIsVisible(false)}
-            className="absolute top-3 right-4 text-yellow-600 hover:text-yellow-900 transition-colors"
+            className="absolute top-3 right-4 text-amber-400 hover:text-amber-200 transition-colors"
         >
             <X size={18} />
         </button>

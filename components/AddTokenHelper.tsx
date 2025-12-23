@@ -61,9 +61,9 @@ const AddTokenHelper: React.FC<AddTokenHelperProps> = ({ className = '' }) => {
   };
 
   return (
-    <div className={`glass-panel p-4 md:p-6 rounded-xl md:rounded-2xl bg-white border border-slate-200 ${className}`}>
-      <h3 className="text-lg md:text-xl font-bold mb-3 md:mb-4 text-slate-800 flex items-center gap-2">
-        <PlusCircle className="text-macoin-600" size={20} />
+    <div className={`glass-panel p-4 md:p-6 rounded-xl md:rounded-2xl bg-gray-900/50 border border-gray-800 backdrop-blur-sm ${className}`}>
+      <h3 className="text-lg md:text-xl font-bold mb-3 md:mb-4 text-white flex items-center gap-2">
+        <PlusCircle className="text-neon-500" size={20} />
         添加代币到钱包
       </h3>
 
@@ -73,32 +73,32 @@ const AddTokenHelper: React.FC<AddTokenHelperProps> = ({ className = '' }) => {
 
       <div className="space-y-3">
         {/* MC Token */}
-        <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg border border-slate-200">
+        <div className="flex items-center justify-between p-3 bg-gray-800/50 rounded-lg border border-gray-700">
           <div>
-            <div className="font-bold text-slate-900">MC Token</div>
-            <div className="text-xs text-slate-500 font-mono">
+            <div className="font-bold text-white">MC Token</div>
+            <div className="text-xs text-gray-400 font-mono">
               {MC_TOKEN.address.slice(0, 6)}...{MC_TOKEN.address.slice(-4)}
             </div>
           </div>
           <button
             onClick={() => addTokenToWallet(MC_TOKEN)}
-            className="px-4 py-2 bg-macoin-500 hover:bg-macoin-600 text-white font-bold rounded-lg transition-colors shadow-md hover:shadow-lg text-sm"
+            className="px-4 py-2 bg-gradient-to-r from-neon-500 to-neon-600 hover:from-neon-400 hover:to-neon-500 text-black font-bold rounded-lg transition-colors shadow-md hover:shadow-lg text-sm"
           >
             添加 MC
           </button>
         </div>
 
         {/* JBC Token */}
-        <div className="flex items-center justify-between p-3 bg-slate-50 rounded-lg border border-slate-200">
+        <div className="flex items-center justify-between p-3 bg-gray-800/50 rounded-lg border border-gray-700">
           <div>
-            <div className="font-bold text-slate-900">JBC Token</div>
-            <div className="text-xs text-slate-500 font-mono">
+            <div className="font-bold text-white">JBC Token</div>
+            <div className="text-xs text-gray-400 font-mono">
               {JBC_TOKEN.address.slice(0, 6)}...{JBC_TOKEN.address.slice(-4)}
             </div>
           </div>
           <button
             onClick={() => addTokenToWallet(JBC_TOKEN)}
-            className="px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white font-bold rounded-lg transition-colors shadow-md hover:shadow-lg text-sm"
+            className="px-4 py-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black font-bold rounded-lg transition-colors shadow-md hover:shadow-lg text-sm"
           >
             添加 JBC
           </button>
@@ -119,15 +119,15 @@ const AddTokenHelper: React.FC<AddTokenHelperProps> = ({ className = '' }) => {
 
       {/* 合约地址卡片 */}
       <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
-        <div className="p-3 bg-gradient-to-br from-macoin-50 to-macoin-100 rounded-lg border border-macoin-200">
-          <div className="text-xs text-slate-500 mb-1">MC Token 合约</div>
-          <div className="text-xs font-mono text-slate-900 break-all">
+        <div className="p-3 bg-gradient-to-br from-neon-500/10 to-neon-600/10 rounded-lg border border-neon-500/30">
+          <div className="text-xs text-gray-400 mb-1">MC Token 合约</div>
+          <div className="text-xs font-mono text-white break-all">
             {MC_TOKEN.address}
           </div>
         </div>
-        <div className="p-3 bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-lg border border-yellow-200">
-          <div className="text-xs text-slate-500 mb-1">JBC Token 合约</div>
-          <div className="text-xs font-mono text-slate-900 break-all">
+        <div className="p-3 bg-gradient-to-br from-amber-500/10 to-amber-600/10 rounded-lg border border-amber-500/30">
+          <div className="text-xs text-gray-400 mb-1">JBC Token 合约</div>
+          <div className="text-xs font-mono text-white break-all">
             {JBC_TOKEN.address}
           </div>
         </div>

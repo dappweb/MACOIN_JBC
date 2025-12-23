@@ -103,9 +103,9 @@ const NoticeBar: React.FC = () => {
   return (
     <>
       <div className="bg-amber-50/10 border-b border-amber-500/30 text-amber-300 px-4 py-3 relative animate-fade-in backdrop-blur-sm mb-6 rounded-xl border border-amber-500/20 overflow-hidden">
-          <div className="max-w-7xl mx-auto flex items-start gap-3 pr-8">
+          <div className="max-w-7xl mx-auto flex items-start gap-3 pr-8 cursor-pointer" onClick={() => setSelectedNotice(announcements[currentIndex])}>
               <Megaphone className="w-5 h-5 flex-shrink-0 mt-0.5" />
-              <div className="flex-1 overflow-hidden relative h-6 cursor-pointer" onClick={() => setSelectedNotice(announcements[currentIndex])}>
+              <div className="flex-1 overflow-hidden relative h-6">
                   {announcements.map((text, index) => (
                       <p 
                           key={index}
@@ -125,53 +125,44 @@ const NoticeBar: React.FC = () => {
                   ))}
               </div>
           </div>
-          <button
-          onClick={(e) => {
-            e.stopPropagation();
-            setIsVisible(false);
-          }}
-          className="absolute top-1/2 -translate-y-1/2 right-4 text-amber-400 hover:text-amber-200 transition-colors z-10"
-      >
-          <X size={18} />
-      </button>
       </div>
 
       {/* Announcement Modal */}
       {selectedNotice && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
           <div 
-            className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" 
+            className="absolute inset-0 bg-black/80 backdrop-blur-sm transition-opacity" 
             onClick={() => setSelectedNotice(null)}
           />
           
-          <div className="relative w-full max-w-lg bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col animate-fade-in-up">
-            <div className="flex items-center justify-between p-6 border-b border-slate-100 bg-amber-50/50">
+          <div className="relative w-full max-w-lg bg-gray-900 border border-gray-800 rounded-2xl shadow-2xl shadow-neon-500/20 overflow-hidden flex flex-col animate-fade-in-up">
+            <div className="flex items-center justify-between p-6 border-b border-gray-800 bg-gradient-to-r from-neon-500/10 to-amber-500/10 z-10">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-amber-100 rounded-full text-amber-600">
+                <div className="p-2 bg-amber-500/20 rounded-full text-amber-400 border border-amber-500/30">
                   <Megaphone size={24} />
                 </div>
-                <h3 className="text-xl font-bold text-slate-900">
+                <h3 className="text-xl font-bold text-white">
                   {language === 'zh' ? '系统公告' : 'Announcement'}
                 </h3>
               </div>
               <button 
                 onClick={() => setSelectedNotice(null)}
-                className="p-2 hover:bg-slate-100 rounded-full text-slate-400 hover:text-slate-600 transition-colors"
+                className="p-2 hover:bg-gray-800 rounded-full text-gray-400 hover:text-white transition-colors"
               >
                 <X size={24} />
               </button>
             </div>
             
-            <div className="p-6 overflow-y-auto max-h-[60vh]">
-              <p className="text-slate-700 leading-relaxed text-lg whitespace-pre-wrap">
+            <div className="p-6 overflow-y-auto max-h-[60vh] bg-gray-900/50">
+              <p className="text-gray-300 leading-relaxed text-lg whitespace-pre-wrap">
                 {selectedNotice}
               </p>
             </div>
 
-            <div className="p-6 border-t border-slate-100 bg-slate-50 flex justify-end">
+            <div className="p-6 border-t border-gray-800 bg-gray-900 flex justify-end">
               <button 
                 onClick={() => setSelectedNotice(null)}
-                className="px-6 py-2 bg-slate-900 text-white font-bold rounded-lg hover:bg-slate-800 transition-colors"
+                className="px-6 py-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black font-bold rounded-lg transition-all shadow-lg shadow-amber-500/30"
               >
                 {language === 'zh' ? '关闭' : 'Close'}
               </button>

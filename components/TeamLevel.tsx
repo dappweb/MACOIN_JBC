@@ -129,28 +129,25 @@ const TeamLevel: React.FC = () => {
                     {t.team.colCount}: {userLevelInfo.activeDirects} | {t.team.colReward}: {TEAM_LEVELS.find(l => l.level === userLevelInfo.currentLevel)?.reward || '0%'}
                 </p>
             </div>
-            <div className="px-3 md:px-4 py-1.5 md:py-2 bg-gray-900 rounded-lg border border-gray-700 shadow-sm">
-                <span className="text-xs md:text-sm text-gray-400">{t.team.teamCount}:</span>
-                <span className="ml-2 font-bold text-white">{userLevelInfo.teamCount}</span>
-            </div>
+
         </div>
 
         <div className="overflow-x-auto px-4 -mx-4 sm:mx-0">
-            <table className="w-full text-left min-w-[500px] sm:min-w-0">
+            <table className="w-full text-left">
                 <thead>
                     <tr className="bg-gray-800/50 border-b border-gray-800">
-                        <th className="p-3 md:p-4 text-gray-400 font-medium font-mono uppercase text-xs md:text-sm">{t.team.colLevel}</th>
-                        <th className="p-3 md:p-4 text-gray-400 font-medium font-mono uppercase text-xs md:text-sm">
+                        <th className="p-2 md:p-4 text-gray-400 font-medium font-mono uppercase text-xs md:text-sm">{t.team.colLevel}</th>
+                        <th className="p-2 md:p-4 text-gray-400 font-medium font-mono uppercase text-xs md:text-sm">
                             <div className="flex items-center gap-1 md:gap-2">
                                 <Users size={14} className="md:w-4 md:h-4" /> <span className="hidden sm:inline">{t.team.colCount}</span>
                             </div>
                         </th>
-                        <th className="p-3 md:p-4 text-gray-400 font-medium font-mono uppercase text-xs md:text-sm">
+                        <th className="p-2 md:p-4 text-gray-400 font-medium font-mono uppercase text-xs md:text-sm">
                             <div className="flex items-center gap-1 md:gap-2">
                                 <Percent size={14} className="md:w-4 md:h-4" /> <span className="hidden sm:inline">{t.team.colReward}</span>
                             </div>
                         </th>
-                        <th className="p-3 md:p-4 text-gray-400 font-medium font-mono uppercase text-xs md:text-sm text-right">{t.team.colStatus}</th>
+                        <th className="p-2 md:p-4 text-gray-400 font-medium font-mono uppercase text-xs md:text-sm text-right">{t.team.colStatus}</th>
                     </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-800">
@@ -161,7 +158,7 @@ const TeamLevel: React.FC = () => {
                                 key={level.level} 
                                 className={`group hover:bg-gray-800/50 transition-colors ${isCurrent ? 'bg-neon-900/20' : ''}`}
                             >
-                                <td className="p-4">
+                                <td className="p-2 md:p-4">
                                     <div className={`flex items-center gap-2 font-bold ${isCurrent ? 'text-neon-400' : 'text-gray-300'}`}>
                                         <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
                                             index >= 6 ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' : 
@@ -171,15 +168,15 @@ const TeamLevel: React.FC = () => {
                                         </div>
                                     </div>
                                 </td>
-                                <td className="p-4 text-gray-400 font-mono">
+                                <td className="p-2 md:p-4 text-gray-400 font-mono">
                                     {level.countRequired.toLocaleString()}
                                 </td>
-                                <td className="p-4">
+                                <td className="p-2 md:p-4">
                                     <span className="inline-block px-3 py-1 rounded-full bg-amber-500/20 text-amber-400 font-bold border border-amber-500/30">
                                         {level.reward}%
                                     </span>
                                 </td>
-                                <td className="p-4 text-right">
+                                <td className="p-2 md:p-4 text-right">
                                     {isCurrent ? (
                                         <span className="text-neon-400 text-xs font-bold uppercase tracking-wider border border-neon-500 px-2 py-1 rounded bg-neon-900/20">{t.team.current}</span>
                                     ) : (
@@ -229,27 +226,27 @@ const TeamLevel: React.FC = () => {
                 <table className="w-full text-left border-collapse">
                     <thead>
                         <tr className="bg-gray-800/50 border-b border-gray-800">
-                            <th className="p-4 text-gray-400 text-sm font-semibold">{t.team.netWallet}</th>
-                            <th className="p-4 text-gray-400 text-sm font-semibold whitespace-nowrap">{t.team.netTicket}</th>
-                            <th className="p-4 text-gray-400 text-sm font-semibold whitespace-nowrap">{t.team.netStatus}</th>
-                            <th className="p-4 text-gray-400 text-sm font-semibold text-right whitespace-nowrap">{t.team.netJoined}</th>
+                            <th className="p-2 md:p-4 text-gray-400 text-sm font-semibold">{t.team.netWallet}</th>
+                            <th className="p-2 md:p-4 text-gray-400 text-sm font-semibold whitespace-nowrap">{t.team.netTicket}</th>
+                            <th className="p-2 md:p-4 text-gray-400 text-sm font-semibold whitespace-nowrap">{t.team.netStatus}</th>
+                            <th className="p-2 md:p-4 text-gray-400 text-sm font-semibold text-right whitespace-nowrap">{t.team.netJoined}</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-800">
                         {directReferrals.map((item, idx) => (
                             <tr key={idx} className="hover:bg-gray-800/50 transition-colors">
-                                <td className="p-4 text-gray-300 font-mono text-sm">
+                                <td className="p-2 md:p-4 text-gray-300 font-mono text-sm">
                                     {item.user.substring(0, 6)}...{item.user.substring(38)}
                                 </td>
-                                <td className="p-4 text-white font-bold text-sm whitespace-nowrap">
+                                <td className="p-2 md:p-4 text-white font-bold text-sm whitespace-nowrap">
                                     {ethers.formatEther(item.ticketAmount)} MC
                                 </td>
-                                <td className="p-4">
+                                <td className="p-2 md:p-4">
                                     <span className={`px-2 py-1 text-xs font-bold rounded-full whitespace-nowrap ${item.ticketAmount > 0n ? 'bg-neon-500/20 text-neon-400 border border-neon-500/30' : 'bg-gray-800 text-gray-500 border border-gray-700'}`}>
                                         {item.ticketAmount > 0n ? t.team.netActive : 'Inactive'}
                                     </span>
                                 </td>
-                                <td className="p-4 text-right text-gray-500 text-sm whitespace-nowrap">
+                                <td className="p-2 md:p-4 text-right text-gray-500 text-sm whitespace-nowrap">
                                     {item.joinTime > 0n ? new Date(Number(item.joinTime) * 1000).toLocaleDateString() : '-'}
                                 </td>
                             </tr>

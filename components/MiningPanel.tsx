@@ -1,4 +1,4 @@
-﻿import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { TICKET_TIERS, MINING_PLANS } from '../constants';
 import { MiningPlan, TicketTier } from '../types';
 import { Zap, Clock, TrendingUp, AlertCircle, ArrowRight, ShieldCheck, Lock } from 'lucide-react';
@@ -354,8 +354,8 @@ const MiningPanel: React.FC = () => {
           <ShieldCheck className="text-neon-400 shrink-0 mt-0.5" size={20} />
           <div className="flex-1">
             <p className="font-bold text-neon-300 mb-1">{t.referrer.bound}</p>
-            <p className="text-sm text-neon-200/80">
-              {t.referrer.yourReferrer}: <span className="font-mono font-bold">{referrerAddress}</span>
+            <p className="text-sm text-neon-200/80 break-all">
+              {t.referrer.yourReferrer}: <span className="font-mono font-bold">{referrerAddress?.slice(0, 6)}...{referrerAddress?.slice(-4)}</span>
             </p>
           </div>
         </div>

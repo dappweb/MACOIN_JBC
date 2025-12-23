@@ -102,7 +102,7 @@ const NoticeBar: React.FC = () => {
 
   return (
     <>
-      <div className="bg-amber-50/10 border-b border-amber-500/30 text-amber-300 px-4 py-3 relative animate-fade-in backdrop-blur-sm mb-6 rounded-xl border border-amber-500/20">
+      <div className="bg-amber-50/10 border-b border-amber-500/30 text-amber-300 px-4 py-3 relative animate-fade-in backdrop-blur-sm mb-6 rounded-xl border border-amber-500/20 overflow-hidden">
           <div className="max-w-7xl mx-auto flex items-start gap-3 pr-8">
               <Megaphone className="w-5 h-5 flex-shrink-0 mt-0.5" />
               <div className="flex-1 overflow-hidden relative h-6 cursor-pointer" onClick={() => setSelectedNotice(announcements[currentIndex])}>

@@ -424,6 +424,16 @@ const MiningPanel: React.FC = () => {
       }
   };
 
+  const handleScrollToStake = () => {
+      const element = document.getElementById('staking-section');
+      if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          // Optional: Add a highlight effect
+          element.classList.add('ring-2', 'ring-neon-500');
+          setTimeout(() => element.classList.remove('ring-2', 'ring-neon-500'), 2000);
+      }
+  };
+
   return (
     <div className="w-full max-w-4xl mx-auto space-y-6 md:space-y-8 animate-fade-in">
 
@@ -582,7 +592,7 @@ const MiningPanel: React.FC = () => {
             <div className="lg:col-span-2 space-y-4 md:space-y-6">
 
             {/* Step 2: Cycle */}
-            <div className={`glass-panel p-4 md:p-6 rounded-xl md:rounded-2xl relative overflow-hidden group transition-opacity bg-gray-900/50 border border-gray-800 ${(!isTicketBought || isTicketExpired || hasActiveTicket || (!hasReferrer && !isOwner)) ? 'opacity-50 pointer-events-none' : ''}`}>
+            <div id="staking-section" className={`glass-panel p-4 md:p-6 rounded-xl md:rounded-2xl relative overflow-hidden group transition-opacity bg-gray-900/50 border border-gray-800 ${(!isTicketBought || isTicketExpired || hasActiveTicket || (!hasReferrer && !isOwner)) ? 'opacity-50 pointer-events-none' : ''}`}>
                  {!isTicketBought && (
                     <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/70 backdrop-blur-sm rounded-xl md:rounded-2xl">
                         <div className="flex items-center gap-2 px-3 py-2 md:px-4 md:py-2 bg-gray-900 text-white rounded-lg shadow-xl border border-gray-700">
@@ -798,6 +808,22 @@ const MiningPanel: React.FC = () => {
                     {statusInfo?.label}
                 </div>
             </div>
+
+            {/* Quick Action for Pending Liquidity */}
+            {canStakeLiquidity && (
+                <div className="mb-4 bg-amber-900/10 border border-amber-500/20 rounded-lg p-3 flex items-center justify-between gap-3 animate-fade-in">
+                    <div className="flex items-center gap-2 text-amber-200/80 text-sm">
+                        <AlertCircle size={16} className="shrink-0" />
+                        <span>{t.mining.readyToStakeDesc}</span>
+                    </div>
+                    <button
+                        onClick={handleScrollToStake}
+                        className="whitespace-nowrap px-4 py-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black font-bold rounded-lg text-sm shadow-lg shadow-amber-500/20 transition-all flex items-center gap-1"
+                    >
+                        {t.mining.stake} <ArrowRight size={14} />
+                    </button>
+                </div>
+            )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
                 <div className="bg-gray-800/50 p-3 rounded-lg border border-gray-700">

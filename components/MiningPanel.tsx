@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { TICKET_TIERS, MINING_PLANS } from '../constants';
 import { MiningPlan, TicketTier } from '../types';
-import { Zap, Clock, TrendingUp, AlertCircle, ArrowRight, ShieldCheck, Lock, Package } from 'lucide-react';
+import { Zap, Clock, TrendingUp, AlertCircle, ArrowRight, ShieldCheck, Lock, Package, History, ChevronDown, ChevronUp } from 'lucide-react';
 import { useLanguage } from '../LanguageContext';
 import { useWeb3 } from '../Web3Context';
 import { ethers } from 'ethers';
@@ -17,6 +17,16 @@ type TicketInfo = {
   cycleDays: number;
 };
 
+type TicketHistoryItem = {
+    ticketId: string;
+    amount: string;
+    purchaseTime: number;
+    status: 'Pending' | 'Mining' | 'Redeemed' | 'Expired';
+    cycleDays?: number;
+    startTime?: number;
+    endTime?: number;
+};
+
 const MiningPanel: React.FC = () => {
   const [selectedTicket, setSelectedTicket] = useState<TicketTier>(TICKET_TIERS[0]);
   const [selectedPlan, setSelectedPlan] = useState<MiningPlan>(MINING_PLANS[0]);
@@ -26,9 +36,14 @@ const MiningPanel: React.FC = () => {
   const [txPending, setTxPending] = useState(false);
   const [inputReferrerAddress, setInputReferrerAddress] = useState('');
   const [isBindingReferrer, setIsBindingReferrer] = useState(false);
+  
+  // History State
+  const [ticketHistory, setTicketHistory] = useState<TicketHistoryItem[]>([]);
+  const [showHistory, setShowHistory] = useState(false);
+  const [loadingHistory, setLoadingHistory] = useState(false);
 
   const { t } = useLanguage();
-  const { protocolContract, mcContract, account, isConnected, hasReferrer, isOwner, referrerAddress, checkReferrerStatus } = useWeb3();
+  const { protocolContract, mcContract, account, isConnected, hasReferrer, isOwner, referrerAddress, checkReferrerStatus, provider } = useWeb3();
 
   // Calculations based on PDF logic
   const totalInvestment = selectedTicket.amount + selectedTicket.requiredLiquidity;
@@ -102,8 +117,98 @@ const MiningPanel: React.FC = () => {
       }
   };
 
+  const fetchHistory = async () => {
+    if (!protocolContract || !account || !provider) return;
+    setLoadingHistory(true);
+    try {
+        const currentBlock = await provider.getBlockNumber();
+        const fromBlock = Math.max(0, currentBlock - 1000000); 
+
+        // Fetch events
+        const [purchaseEvents, stakeEvents, redeemEvents] = await Promise.all([
+            protocolContract.queryFilter(protocolContract.filters.TicketPurchased(account), fromBlock),
+            protocolContract.queryFilter(protocolContract.filters.LiquidityStaked(account), fromBlock),
+            protocolContract.queryFilter(protocolContract.filters.Redeemed(account), fromBlock)
+        ]);
+
+        // Merge and sort
+        const allEvents = [
+            ...purchaseEvents.map(e => ({ type: 'purchase', event: e })),
+            ...stakeEvents.map(e => ({ type: 'stake', event: e })),
+            ...redeemEvents.map(e => ({ type: 'redeem', event: e }))
+        ].sort((a, b) => {
+            if (a.event.blockNumber !== b.event.blockNumber) {
+                return a.event.blockNumber - b.event.blockNumber;
+            }
+            return a.event.index - b.event.index;
+        });
+
+        const historyItems: TicketHistoryItem[] = [];
+        let currentItem: TicketHistoryItem | null = null;
+        
+        // Cache block timestamps
+        const blockTimestamps: Record<number, number> = {};
+        const getBlockTimestamp = async (blockNumber: number) => {
+            if (blockTimestamps[blockNumber]) return blockTimestamps[blockNumber];
+            const block = await provider.getBlock(blockNumber);
+            if (block) {
+                blockTimestamps[blockNumber] = block.timestamp;
+                return block.timestamp;
+            }
+            return 0;
+        };
+
+        for (const item of allEvents) {
+            const e = item.event;
+            const args = (e as any).args;
+            const timestamp = await getBlockTimestamp(e.blockNumber);
+
+            if (item.type === 'purchase') {
+                if (currentItem) {
+                    historyItems.push(currentItem);
+                }
+                currentItem = {
+                    ticketId: args[2].toString(),
+                    amount: ethers.formatEther(args[1]),
+                    purchaseTime: timestamp,
+                    status: 'Pending'
+                };
+            } else if (item.type === 'stake') {
+                if (currentItem && currentItem.status === 'Pending') {
+                    currentItem.status = 'Mining';
+                    currentItem.cycleDays = Number(args[2]);
+                    currentItem.startTime = timestamp;
+                    currentItem.endTime = timestamp + (currentItem.cycleDays || 0) * 60; // minutes
+                }
+            } else if (item.type === 'redeem') {
+                if (currentItem && currentItem.status === 'Mining') {
+                    currentItem.status = 'Redeemed';
+                }
+            }
+        }
+        
+        if (currentItem) {
+            historyItems.push(currentItem);
+        }
+
+        const now = Math.floor(Date.now() / 1000);
+        historyItems.forEach(item => {
+            if (item.status === 'Pending' && now > item.purchaseTime + 72 * 3600) {
+                item.status = 'Expired';
+            }
+        });
+
+        setTicketHistory(historyItems.reverse());
+    } catch (err) {
+        console.error("Failed to fetch history", err);
+    } finally {
+        setLoadingHistory(false);
+    }
+  };
+
   useEffect(() => {
-    checkTicketStatus()
+    checkTicketStatus();
+    fetchHistory();
   }, [protocolContract, account]);
 
   useEffect(() => {
@@ -735,6 +840,87 @@ const MiningPanel: React.FC = () => {
         </div>
 
       </div>
+
+      {/* History Section */}
+      {isConnected && (
+        <div className="glass-panel p-4 md:p-6 rounded-xl border border-gray-800 bg-gray-900/50 mt-8 animate-fade-in">
+            <button 
+                onClick={() => setShowHistory(!showHistory)}
+                className="w-full flex items-center justify-between text-white hover:text-neon-400 transition-colors"
+            >
+                <div className="flex items-center gap-2">
+                    <History className="text-neon-400" size={20} />
+                    <h3 className="text-lg font-bold">{t.mining.ticketHistory || "Ticket History"}</h3>
+                </div>
+                {showHistory ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+            </button>
+
+            {showHistory && (
+                <div className="mt-4 space-y-3 animate-fade-in">
+                    {loadingHistory ? (
+                        <div className="text-center py-8 text-gray-400 flex flex-col items-center gap-2">
+                             <div className="w-6 h-6 border-2 border-neon-500 border-t-transparent rounded-full animate-spin"></div>
+                             <span>Loading history...</span>
+                        </div>
+                    ) : ticketHistory.length === 0 ? (
+                        <div className="text-center py-8 text-gray-400 border-2 border-dashed border-gray-800 rounded-xl">
+                            No ticket history found
+                        </div>
+                    ) : (
+                        <div className="space-y-3">
+                            {ticketHistory.map((item, idx) => (
+                            <div key={idx} className="bg-gray-800/30 rounded-lg p-4 border border-gray-700/50 hover:border-neon-500/30 transition-colors">
+                                <div className="flex justify-between items-start mb-3">
+                                    <div className="flex items-center gap-3">
+                                        <div className="bg-gray-900/50 px-2 py-1 rounded text-xs font-mono text-gray-400 border border-gray-700">
+                                            #{item.ticketId}
+                                        </div>
+                                        <span className={`px-2 py-0.5 rounded text-xs font-bold border ${
+                                            item.status === 'Mining' ? 'bg-green-500/10 text-green-400 border-green-500/20' :
+                                            item.status === 'Redeemed' ? 'bg-gray-500/10 text-gray-400 border-gray-500/20' :
+                                            item.status === 'Expired' ? 'bg-red-500/10 text-red-400 border-red-500/20' :
+                                            'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                                        }`}>
+                                            {item.status === 'Mining' ? t.mining.mining : 
+                                             item.status === 'Redeemed' ? t.mining.redeemed :
+                                             item.status === 'Expired' ? t.mining.expired :
+                                             t.mining.pendingLiquidity}
+                                        </span>
+                                    </div>
+                                    <div className="text-right">
+                                        <div className="font-bold text-white text-lg">{item.amount} <span className="text-xs font-normal text-gray-400">MC</span></div>
+                                    </div>
+                                </div>
+                                
+                                <div className="grid grid-cols-2 gap-2 text-xs text-gray-400">
+                                    <div className="flex flex-col">
+                                        <span className="text-gray-500 mb-0.5">{t.mining.purchaseTime}</span>
+                                        <span className="font-mono text-gray-300">{formatDate(item.purchaseTime)}</span>
+                                    </div>
+                                    
+                                    {item.status === 'Mining' && item.endTime && (
+                                        <div className="flex flex-col text-right">
+                                            <span className="text-gray-500 mb-0.5">{t.mining.endTime}</span>
+                                            <span className="font-mono text-neon-400">{formatDate(item.endTime)}</span>
+                                        </div>
+                                    )}
+                                    
+                                    {item.status === 'Redeemed' && (
+                                         <div className="flex flex-col text-right">
+                                            <span className="text-gray-500 mb-0.5">{t.mining.status}</span>
+                                            <span className="font-mono text-gray-300">{t.mining.redeemed}</span>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        ))}
+                        </div>
+                    )}
+                </div>
+            )}
+        </div>
+      )}
+
     </div>
   );
 };

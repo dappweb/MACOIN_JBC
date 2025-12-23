@@ -64,6 +64,7 @@ export const translations = {
       approve: "第一步：授权合约 (Approve)",
       stake: "立即质押",
       agreement: "点击质押即代表您同意 DeFi 4.0 协议规则",
+      ticketHistory: "门票历史记录",
       ticketExpired: "票据已过期",
       ticketExpiredDesc: "您的票据已过期（超过72小时）。过期票据无法进行质押或购买新票操作。请联系管理员处理过期票据。",
       alreadyStaked: "已增加流动性",
@@ -343,6 +344,7 @@ export const translations = {
       approve: "Step 1: Approve",
       stake: "Stake Now",
       agreement: "Clicking stake means you agree to DeFi 4.0 Protocol Rules",
+      ticketHistory: "Ticket History",
       ticketExpired: "Ticket Expired",
       ticketExpiredDesc:
         "Your ticket has expired (over 72 hours). Expired tickets cannot be staked or used to purchase new tickets. Please contact admin to handle expired tickets.",

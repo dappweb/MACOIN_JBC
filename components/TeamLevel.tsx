@@ -193,34 +193,37 @@ const TeamLevel: React.FC = () => {
 
       {/* Direct Referrals Network Section */}
       <div className="glass-panel p-4 md:p-6 rounded-xl md:rounded-2xl bg-gray-900/50 border border-gray-800 backdrop-blur-sm">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4 md:mb-6">
+        <div className="flex flex-wrap items-center justify-between gap-4 mb-4 md:mb-6">
             <div className="flex items-center gap-3">
                 <div className="p-3 bg-purple-500/20 text-purple-400 rounded-full border border-purple-500/30">
                     <UserCheck size={24} />
                 </div>
                 <div>
                     <h3 className="text-xl font-bold text-white">{t.team.networkTitle}</h3>
-                    <div className="text-sm text-gray-400 mt-1">
-                        {t.team.networkSubtitle}
-                    </div>
                 </div>
             </div>
-            
-            <div className="flex items-center gap-4">
-                <div className="text-right">
-                    <p className="text-xs text-gray-400 uppercase font-bold tracking-wider">{t.team.netTotalAmount}</p>
-                    <p className="text-xl font-black text-purple-400 font-mono">
-                        {ethers.formatEther(totalTicketAmount)} <span className="text-sm font-bold text-purple-300">MC</span>
-                    </p>
-                </div>
-                <button
-                    onClick={copyReferralLink}
-                    className="p-2 bg-purple-500/20 text-purple-400 rounded-lg hover:bg-purple-500/30 transition-colors border border-purple-500/30"
-                    title="Copy Referral Link"
-                >
-                    <Copy size={20} />
-                </button>
+        
+            <div className="flex flex-col items-end gap-1 ml-auto sm:ml-0">
+                 <div className="text-right">
+                     <p className="text-xs text-gray-400 uppercase font-bold tracking-wider">{t.team.netTotalAmount}</p>
+                     <p className="text-xl font-black text-purple-400 font-mono">
+                         {ethers.formatEther(totalTicketAmount)} <span className="text-sm font-bold text-purple-300">MC</span>
+                     </p>
+                 </div>
+                 <button
+                     onClick={copyReferralLink}
+                     className="flex items-center gap-2 px-3 py-1.5 bg-purple-500/20 text-purple-400 rounded-lg hover:bg-purple-500/30 transition-colors border border-purple-500/30 text-xs font-bold"
+                     title="Copy Referral Link"
+                 >
+                     <Copy size={14} />
+                     <span>COPY LINK</span>
+                 </button>
             </div>
+        </div>
+
+        <div className="text-sm text-gray-400 mb-3 font-medium flex items-center gap-2">
+            <span className="w-1 h-4 bg-neon-500 rounded-full"></span>
+            {t.team.networkSubtitle}
         </div>
 
         {isLoadingDirects ? (

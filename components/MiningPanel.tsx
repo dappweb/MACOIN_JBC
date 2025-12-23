@@ -487,62 +487,7 @@ const MiningPanel: React.FC = () => {
         </div>
       )}
 
-      {/* Ticket Status Display - New Addition */}
-      {isConnected && ticketInfo && hasTicket && (
-        <div className={`glass-panel p-4 md:p-6 rounded-xl border-2 animate-fade-in backdrop-blur-sm bg-gray-900/50 ${statusInfo?.border}`}>
-            <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
-                <div className="flex items-center gap-2">
-                    <Package className="text-neon-400" size={24} />
-                    <h3 className="text-xl font-bold text-white">{t.mining.currentTicket}</h3>
-                </div>
-                <div className={`px-3 py-1 rounded-full text-sm font-bold border ${statusInfo?.bg} ${statusInfo?.color} ${statusInfo?.border}`}>
-                    {statusInfo?.label}
-                </div>
-            </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
-                <div className="bg-gray-800/50 p-3 rounded-lg border border-gray-700">
-                    <div className="text-gray-400 mb-1">{t.mining.ticketAmount}</div>
-                    <div className="text-lg font-bold text-white font-mono">{ticketInfo.amount.toString()} MC</div>
-                </div>
-                <div className="bg-gray-800/50 p-3 rounded-lg border border-gray-700">
-                    <div className="text-gray-400 mb-1">{t.mining.purchaseTime}</div>
-                    <div className="text-white font-mono">{formatDate(ticketInfo.purchaseTime)}</div>
-                </div>
-                {ticketInfo.liquidityProvided ? (
-                    <>
-                        <div className="bg-gray-800/50 p-3 rounded-lg border border-gray-700">
-                            <div className="text-gray-400 mb-1">{t.mining.startTime}</div>
-                            <div className="text-white font-mono">{formatDate(ticketInfo.startTime)}</div>
-                        </div>
-                        <div className="bg-gray-800/50 p-3 rounded-lg border border-gray-700">
-                            <div className="text-gray-400 mb-1">{t.mining.endTime}</div>
-                            <div className="text-white font-mono">
-                                {formatDate(ticketInfo.startTime + ticketInfo.cycleDays * 60)}
-                            </div>
-                        </div>
-                    </>
-                ) : !ticketInfo.redeemed && (
-                    <div className="bg-gray-800/50 p-3 rounded-lg border border-gray-700 col-span-1 md:col-span-2">
-                        <div className="text-gray-400 mb-1">{t.mining.timeLeft}</div>
-                        <div className="text-white font-mono">
-                             {isTicketExpired 
-                                ? "00:00:00" 
-                                : (() => {
-                                    const expiry = ticketInfo.purchaseTime + 72 * 3600;
-                                    const diff = expiry - now;
-                                    if (diff <= 0) return "00:00:00";
-                                    const h = Math.floor(diff / 3600);
-                                    const m = Math.floor((diff % 3600) / 60);
-                                    return `${h}h ${m}m`;
-                                })()
-                             }
-                        </div>
-                    </div>
-                )}
-            </div>
-        </div>
-      )}
 
       {/* 蹇€熻喘涔伴棬绁ㄦ寜閽尯鍩?- 鏄剧溂浣嶇疆 */}
       {isConnected && (hasReferrer || isOwner) && (
@@ -840,6 +785,63 @@ const MiningPanel: React.FC = () => {
         </div>
 
       </div>
+
+      {/* Ticket Status Display - New Addition */}
+      {isConnected && ticketInfo && hasTicket && (
+        <div className={`glass-panel p-4 md:p-6 rounded-xl border-2 animate-fade-in backdrop-blur-sm bg-gray-900/50 mt-8 ${statusInfo?.border}`}>
+            <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+                <div className="flex items-center gap-2">
+                    <Package className="text-neon-400" size={24} />
+                    <h3 className="text-xl font-bold text-white">{t.mining.currentTicket}</h3>
+                </div>
+                <div className={`px-3 py-1 rounded-full text-sm font-bold border ${statusInfo?.bg} ${statusInfo?.color} ${statusInfo?.border}`}>
+                    {statusInfo?.label}
+                </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
+                <div className="bg-gray-800/50 p-3 rounded-lg border border-gray-700">
+                    <div className="text-gray-400 mb-1">{t.mining.ticketAmount}</div>
+                    <div className="text-lg font-bold text-white font-mono">{ticketInfo.amount.toString()} MC</div>
+                </div>
+                <div className="bg-gray-800/50 p-3 rounded-lg border border-gray-700">
+                    <div className="text-gray-400 mb-1">{t.mining.purchaseTime}</div>
+                    <div className="text-white font-mono">{formatDate(ticketInfo.purchaseTime)}</div>
+                </div>
+                {ticketInfo.liquidityProvided ? (
+                    <>
+                        <div className="bg-gray-800/50 p-3 rounded-lg border border-gray-700">
+                            <div className="text-gray-400 mb-1">{t.mining.startTime}</div>
+                            <div className="text-white font-mono">{formatDate(ticketInfo.startTime)}</div>
+                        </div>
+                        <div className="bg-gray-800/50 p-3 rounded-lg border border-gray-700">
+                            <div className="text-gray-400 mb-1">{t.mining.endTime}</div>
+                            <div className="text-white font-mono">
+                                {formatDate(ticketInfo.startTime + ticketInfo.cycleDays * 60)}
+                            </div>
+                        </div>
+                    </>
+                ) : !ticketInfo.redeemed && (
+                    <div className="bg-gray-800/50 p-3 rounded-lg border border-gray-700 col-span-1 md:col-span-2">
+                        <div className="text-gray-400 mb-1">{t.mining.timeLeft}</div>
+                        <div className="text-white font-mono">
+                             {isTicketExpired 
+                                ? "00:00:00" 
+                                : (() => {
+                                    const expiry = ticketInfo.purchaseTime + 72 * 3600;
+                                    const diff = expiry - now;
+                                    if (diff <= 0) return "00:00:00";
+                                    const h = Math.floor(diff / 3600);
+                                    const m = Math.floor((diff % 3600) / 60);
+                                    return `${h}h ${m}m`;
+                                })()
+                             }
+                        </div>
+                    </div>
+                )}
+            </div>
+        </div>
+      )}
 
       {/* History Section */}
       {isConnected && (

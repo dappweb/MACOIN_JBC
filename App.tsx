@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from "react"
+import React, { useState, useEffect } from "react"
 import Navbar from "./components/Navbar"
 import NoticeBar from "./components/NoticeBar"
 import StatsPanel from "./components/StatsPanel"
@@ -43,11 +43,11 @@ const AppContent: React.FC = () => {
     return (
       <div className="min-h-screen w-full bg-black flex flex-col items-center justify-center relative overflow-hidden">
         <div className="z-10 flex flex-col items-center">
-          <div className="w-16 h-16 overflow-hidden  rounded-xl animate-spin mb-8 shadow-xl">
+          <div className="w-40 h-40 overflow-hidden  rounded-xl animate-spin mb-8 shadow-xl">
             <img src={iconImg} alt="" />
           </div>
           <h1 className="text-2xl font-bold text-white tracking-widest animate-pulse">
-            JBC <span className="text-macoin-600">RWA</span>
+            JBC <span className="text-neon-400">RWA</span>
           </h1>
           <p className="text-gray-400 text-sm mt-2">Loading Protocol Data...</p>
         </div>
@@ -56,13 +56,13 @@ const AppContent: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-black text-white selection:bg-macoin-600 selection:text-white font-sans pb-20 md:pb-8">
+    <div className="min-h-screen bg-black text-white selection:bg-neon-500 selection:text-black font-sans pb-20 md:pb-8">
       <Navbar currentTab={currentTab} setTab={setCurrentTab} />
-      <NoticeBar />
 
       <WhitepaperModal isOpen={showWhitepaper} onClose={() => setShowWhitepaper(false)} />
 
       <main className="pt-20 px-3 sm:px-4 md:pt-24 md:px-6 lg:px-8 mb-16 md:mb-0">
+        <NoticeBar />
         {/* Render Tab Content */}
         {currentTab === AppTab.HOME && (
           <StatsPanel

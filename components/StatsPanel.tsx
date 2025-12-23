@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState } from "react"
+import React, { useEffect, useState } from "react"
 import { UserStats } from "../types"
 import { Wallet, TrendingUp, Users, Coins, ArrowUpRight, Link } from "lucide-react"
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"
@@ -21,6 +21,27 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
   const [displayStats, setDisplayStats] = useState<UserStats>(initialStats)
   const [jbcPrice, setJbcPrice] = useState<string>("1.0")
   const [rewardTotals, setRewardTotals] = useState({ mc: 0, jbc: 0 })
+  const [mcUsdtPrice, setMcUsdtPrice] = useState<number>(0)
+
+  // Fetch MC/USDT Price
+  useEffect(() => {
+    const fetchMcPrice = async () => {
+      try {
+        const response = await fetch('https://api.macoin.ai/market/symbol-thumb')
+        const data = await response.json()
+        const mcData = data.find((item: any) => item.symbol === 'MC/USDT')
+        if (mcData) {
+          setMcUsdtPrice(parseFloat(mcData.close))
+        }
+      } catch (error) {
+        console.error("Failed to fetch MC price:", error)
+      }
+    }
+    
+    fetchMcPrice()
+    const interval = setInterval(fetchMcPrice, 60000) // Update every minute
+    return () => clearInterval(interval)
+  }, [])
 
   // Bind Referrer State
   const [referrer, setReferrer] = useState("")
@@ -280,75 +301,87 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
 
   return (
     <div className="max-w-7xl mx-auto space-y-8 animate-fade-in">
-      {/* Hero Section - Gold Theme */}
-      <div className="relative rounded-2xl md:rounded-3xl overflow-hidden min-h-[250px] md:min-h-[300px] flex items-center bg-gradient-to-br from-macoin-300 via-macoin-400 to-macoin-600 border border-macoin-500/50 shadow-2xl">
+      {/* Hero Section - Neon Green & Gold Theme */}
+      <div className="relative rounded-2xl md:rounded-3xl overflow-hidden min-h-[250px] md:min-h-[300px] flex items-center bg-gradient-to-br from-neon-400 via-neon-500 to-neon-600 border border-neon-500/50 shadow-2xl shadow-neon-500/30">
         {/* Texture Overlay */}
         <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10 mix-blend-overlay"></div>
-        <div className="absolute inset-0 bg-gradient-to-r from-macoin-500/20 via-transparent to-transparent"></div>
+        <div className="absolute inset-0 bg-gradient-to-r from-neon-500/20 via-transparent to-transparent"></div>
 
         <div className="relative z-10 p-5 sm:p-6 md:p-12 max-w-2xl w-full">
-          <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-black/10 text-slate-900 text-[10px] md:text-xs font-bold uppercase tracking-wider mb-3 md:mb-4 border border-black/5 backdrop-blur-sm">
+          <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-black/20 text-black text-[10px] md:text-xs font-bold uppercase tracking-wider mb-3 md:mb-4 border border-black/10 backdrop-blur-sm">
             {t.stats.protocol}
           </div>
-          <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-6xl font-extrabold text-slate-900 mb-3 md:mb-4 leading-tight drop-shadow-sm">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-6xl font-extrabold text-black mb-3 md:mb-4 leading-tight drop-shadow-sm">
             {t.stats.title} <br />
-            <span className="text-white drop-shadow-md text-xl sm:text-2xl md:text-3xl lg:text-5xl">
+            <span className="text-black/90 drop-shadow-md text-xl sm:text-2xl md:text-3xl lg:text-5xl">
               {t.stats.subtitle}
             </span>
           </h1>
-          <p className="text-slate-900/80 text-sm sm:text-base md:text-lg mb-5 md:mb-8 max-w-lg font-medium">
+          <p className="text-black/80 text-sm sm:text-base md:text-lg mb-5 md:mb-8 max-w-lg font-medium">
             {t.stats.desc}
           </p>
           <div className="flex flex-col sm:flex-row gap-3 md:gap-4">
             <button
               onClick={onJoinClick}
-              className="px-5 py-2.5 md:px-6 md:py-3 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-lg shadow-xl transition-all transform hover:-translate-y-1 text-sm md:text-base"
+              className="px-5 py-2.5 md:px-6 md:py-3 bg-black hover:bg-gray-900 text-neon-400 font-bold rounded-lg shadow-xl transition-all transform hover:-translate-y-1 text-sm md:text-base"
             >
               {t.stats.join}
             </button>
             <button
               onClick={onWhitepaperClick}
-              className="px-5 py-2.5 md:px-6 md:py-3 bg-white/20 hover:bg-white/30 text-slate-900 border border-white/40 font-bold rounded-lg backdrop-blur-md transition-all text-sm md:text-base"
+              className="px-5 py-2.5 md:px-6 md:py-3 bg-black/20 hover:bg-black/30 text-black border border-black/40 font-bold rounded-lg backdrop-blur-md transition-all text-sm md:text-base"
             >
               {t.stats.whitepaper}
             </button>
           </div>
         </div>
 
-        {/* Floating Gold Element */}
-        <div className="hidden lg:block absolute right-20 top-1/2 -translate-y-1/2">
-          <div className="relative w-64 h-64">
-            <div className="absolute inset-0 bg-macoin-200 rounded-full blur-[80px] opacity-40"></div>
-            {/* Gold bars or Coin Image Placeholder */}
-            <div className="relative z-10 w-48 h-48 bg-gradient-to-br from-macoin-100 to-macoin-600 rounded-2xl rotate-12 shadow-[0_20px_50px_rgba(180,83,9,0.5)] border-t border-l border-white/50 flex items-center justify-center">
-              <div className="text-6xl font-bold text-macoin-900 opacity-20">JBC</div>
+        {/* Decorative Ring Element */}
+        <div className="hidden lg:block absolute right-10 top-1/2 -translate-y-1/2">
+          <div className="relative w-80 h-80">
+            {/* Outer Ring */}
+            <div
+              className="absolute inset-0 rounded-full border-4 border-amber-500/30 animate-spin"
+              style={{ animationDuration: "20s" }}
+            ></div>
+            <div
+              className="absolute inset-8 rounded-full border-2 border-neon-400/40 animate-spin"
+              style={{ animationDuration: "15s", animationDirection: "reverse" }}
+            ></div>
+            <div
+              className="absolute inset-16 rounded-full border border-amber-400/30 animate-spin"
+              style={{ animationDuration: "10s" }}
+            ></div>
+            {/* Center Glow */}
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="w-32 h-32 bg-gradient-to-br from-neon-300/30 to-amber-500/20 rounded-full blur-2xl"></div>
             </div>
           </div>
         </div>
       </div>
 
       {/* Bind Referrer Section (Moved from TeamLevel) */}
-      <div className="glass-panel p-4 sm:p-5 md:p-6 rounded-xl md:rounded-2xl bg-white border-l-4 border-macoin-500 flex flex-col items-start sm:items-center gap-4 shadow-sm">
-        <div className="flex items-center gap-3 md:gap-4 w-full sm:w-auto">
-          <div className="bg-macoin-100 p-2 md:p-3 rounded-full text-macoin-600">
+      <div className="glass-panel p-4 sm:p-5 md:p-6 rounded-xl md:rounded-2xl bg-gray-900/50 border-l-4 border-neon-500 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-lg backdrop-blur-sm">
+        <div className="flex items-center gap-3 md:gap-4 w-full md:w-auto">
+          <div className="bg-neon-500/20 p-2 md:p-3 rounded-full text-neon-400 border border-neon-500/30 shrink-0">
             <Link size={20} className="md:w-6 md:h-6" />
           </div>
           <div>
-            <h3 className="font-bold text-sm md:text-base text-slate-900">{t.team.bindTitle}</h3>
-            <p className="text-xs md:text-sm text-slate-500">{t.team.bindDesc}</p>
+            <h3 className="font-bold text-sm md:text-base text-white">{t.team.bindTitle}</h3>
+            <p className="text-xs md:text-sm text-gray-400">{t.team.bindDesc}</p>
           </div>
         </div>
-        <div className="flex flex-col sm:flex-row w-full sm:w-auto gap-2">
+        <div className="flex flex-col sm:flex-row w-full md:w-auto gap-2">
           {!isConnected ? (
             <button
               disabled
-              className="px-4 py-2.5 md:px-6 md:py-3 bg-slate-200 text-slate-400 font-bold rounded-lg cursor-not-allowed whitespace-nowrap text-sm md:text-base w-full sm:w-auto"
+              className="px-4 py-2.5 md:px-6 md:py-3 bg-gray-800 text-gray-500 font-bold rounded-lg cursor-not-allowed whitespace-nowrap text-sm md:text-base w-full sm:w-auto border border-gray-700"
             >
               Connect Wallet First
             </button>
           ) : isBound ? (
-            <div className="px-4 py-2.5 md:px-6 md:py-3 bg-green-100 text-green-700 font-bold rounded-lg border border-green-200 flex items-center gap-2 text-sm md:text-base justify-center sm:justify-start">
-              <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+            <div className="px-4 py-2.5 md:px-6 md:py-3 bg-neon-500/20 text-neon-400 font-bold rounded-lg border border-neon-500/30 flex items-center gap-2 text-sm md:text-base justify-center sm:justify-start w-full md:w-auto">
+              <span className="w-2 h-2 bg-neon-500 rounded-full shrink-0"></span>
               {t.team.bindSuccess}
             </div>
           ) : (
@@ -358,12 +391,12 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
                 value={referrer}
                 onChange={(e) => setReferrer(e.target.value)}
                 placeholder={t.team.bindPlaceholder}
-                className="w-full sm:w-48 md:w-64 px-3 py-2.5 md:px-4 md:py-3 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-macoin-500 text-slate-900 text-sm md:text-base"
+                className="w-full sm:w-48 md:w-64 px-3 py-2.5 md:px-4 md:py-3 bg-gray-900/50 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-neon-500/50 text-white placeholder-gray-500 text-sm md:text-base"
               />
               <button
                 onClick={handleBind}
                 disabled={!referrer.trim() || isBinding}
-                className="px-4 py-2.5 md:px-6 md:py-3 bg-macoin-500 hover:bg-macoin-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold rounded-lg transition-colors shadow-lg shadow-macoin-500/20 whitespace-nowrap text-sm md:text-base"
+                className="px-4 py-2.5 md:px-6 md:py-3 bg-gradient-to-r from-neon-500 to-neon-600 hover:from-neon-400 hover:to-neon-500 disabled:opacity-50 disabled:cursor-not-allowed text-black font-bold rounded-lg transition-colors shadow-lg shadow-neon-500/30 whitespace-nowrap text-sm md:text-base w-full sm:w-auto"
               >
                 {isBinding ? "Binding..." : t.team.bindButton}
               </button>
@@ -375,74 +408,77 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
       {/* Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
         {/* Stat 1 */}
-        <div className="glass-panel p-4 md:p-6 rounded-xl md:rounded-2xl hover:border-macoin-500/40 transition-colors bg-white">
+        <div className="glass-panel p-4 md:p-6 rounded-xl md:rounded-2xl hover:border-neon-500/40 transition-colors bg-gray-900/50 border border-gray-800 backdrop-blur-sm">
           <div className="flex items-center justify-between mb-3 md:mb-4">
-            <span className="text-slate-500 text-xs md:text-sm">{t.stats.assets}</span>
-            <Wallet className="text-macoin-600" size={18} />
+            <span className="text-gray-400 text-xs md:text-sm">{t.stats.assets}</span>
+            <Wallet className="text-neon-400" size={18} />
           </div>
-          <div className="text-2xl md:text-3xl font-bold text-slate-900 mb-1">
+          <div className="text-2xl md:text-3xl font-bold text-white mb-1">
             {displayStats.balanceMC.toLocaleString()}
           </div>
-          {/* <div className="text-xs text-macoin-600 flex items-center gap-1">
+          {/* <div className="text-xs text-neon-400 flex items-center gap-1">
                 <ArrowUpRight size={12} /> +2.4% {t.stats.today}
             </div> */}
         </div>
 
         {/* Stat 2 */}
-        <div className="glass-panel p-4 md:p-6 rounded-xl md:rounded-2xl hover:border-macoin-500/40 transition-colors bg-white">
+        <div className="glass-panel p-4 md:p-6 rounded-xl md:rounded-2xl hover:border-amber-500/40 transition-colors bg-gray-900/50 border border-gray-800 backdrop-blur-sm">
           <div className="flex items-center justify-between mb-3 md:mb-4">
-            <span className="text-slate-500 text-xs md:text-sm">{t.stats.holding}</span>
-            <Coins className="text-macoin-500" size={18} />
+            <span className="text-gray-400 text-xs md:text-sm">{t.stats.holding}</span>
+            <Coins className="text-amber-400" size={18} />
           </div>
-          <div className="text-2xl md:text-3xl font-bold text-slate-900 mb-1">
+          <div className="text-2xl md:text-3xl font-bold text-white mb-1">
             {displayStats.balanceJBC.toLocaleString()}
           </div>
-          <div className="text-xs text-macoin-600 flex items-center gap-1">
-            鈮?{(displayStats.balanceJBC * parseFloat(jbcPrice)).toFixed(2)} MC (Price: {parseFloat(jbcPrice).toFixed(4)}
-            )
+          <div className="text-xs text-amber-400 flex items-center gap-1">
+            ≈{(displayStats.balanceJBC * parseFloat(jbcPrice)).toFixed(2)} MC (Price:{" "}
+            {parseFloat(jbcPrice).toFixed(4)})
           </div>
         </div>
 
         {/* Stat 3 */}
-        <div className="glass-panel p-4 md:p-6 rounded-xl md:rounded-2xl hover:border-macoin-500/40 transition-colors bg-white">
+        <div className="glass-panel p-4 md:p-6 rounded-xl md:rounded-2xl hover:border-neon-500/40 transition-colors bg-gray-900/50 border border-gray-800 backdrop-blur-sm">
           <div className="flex items-center justify-between mb-3 md:mb-4">
-            <span className="text-slate-500 text-xs md:text-sm">{t.stats.revenue}</span>
-            <TrendingUp className="text-blue-500" size={18} />
+            <span className="text-gray-400 text-xs md:text-sm">{t.stats.revenue}</span>
+            <TrendingUp className="text-neon-400" size={18} />
           </div>
-          <div className="text-2xl md:text-3xl font-bold text-slate-900 mb-1">
-            {rewardTotals.mc.toLocaleString()}
+          <div className="text-2xl md:text-3xl font-bold text-white mb-1">{rewardTotals.mc.toLocaleString()}</div>
+          <div className="text-xs text-gray-400 flex justify-between items-center">
+            <span>MC: {rewardTotals.mc.toLocaleString()} · JBC: {rewardTotals.jbc.toLocaleString()}</span>
+            {mcUsdtPrice > 0 && (
+              <span className="text-neon-400">
+                ≈${((rewardTotals.mc + rewardTotals.jbc * parseFloat(jbcPrice)) * mcUsdtPrice).toFixed(2)}
+              </span>
+            )}
           </div>
-          <div className="text-xs text-slate-500">
-            MC: {rewardTotals.mc.toLocaleString()} · JBC: {rewardTotals.jbc.toLocaleString()}
-          </div>
-          <div className="text-xs text-slate-400">{t.stats.settlement}</div>
+          <div className="text-xs text-gray-500">{t.stats.settlement}</div>
         </div>
 
         {/* Stat 4 */}
-        <div className="glass-panel p-4 md:p-6 rounded-xl md:rounded-2xl hover:border-macoin-500/40 transition-colors bg-gradient-to-br from-slate-50 to-white">
+        <div className="glass-panel p-4 md:p-6 rounded-xl md:rounded-2xl hover:border-amber-500/40 transition-colors bg-gradient-to-br from-gray-900/50 to-gray-800/50 border border-gray-800 backdrop-blur-sm">
           <div className="flex items-center justify-between mb-3 md:mb-4">
-            <span className="text-slate-500 text-xs md:text-sm">{t.stats.level}</span>
-            <Users className="text-purple-500" size={18} />
+            <span className="text-gray-400 text-xs md:text-sm">{t.stats.level}</span>
+            <Users className="text-amber-400" size={18} />
           </div>
-          <div className="text-2xl md:text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 mb-1">
+          <div className="text-2xl md:text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-neon-400 to-amber-400 mb-1">
             {displayStats.currentLevel}
           </div>
-          <div className="text-xs text-slate-400">
+          <div className="text-xs text-gray-500">
             {t.stats.teamCount}: {displayStats.teamCount}
           </div>
         </div>
       </div>
 
       {/* Chart Section */}
-      <div className="glass-panel p-4 md:p-6 rounded-xl md:rounded-2xl bg-white">
-        <h3 className="text-base md:text-lg font-bold mb-4 md:mb-6 text-slate-900 border-l-4 border-macoin-500 pl-3">
+      <div className="glass-panel p-4 md:p-6 rounded-xl md:rounded-2xl bg-gray-900/50 border border-gray-800 backdrop-blur-sm">
+        <h3 className="text-base md:text-lg font-bold mb-4 md:mb-6 text-white border-l-4 border-neon-500 pl-3">
           {t.stats.chartTitle}
         </h3>
         {loadingPriceHistory ? (
           <div className="h-[200px] sm:h-[250px] md:h-[300px] w-full flex items-center justify-center">
             <div className="text-center">
-              <div className="w-8 h-8 border-4 border-macoin-500 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
-              <p className="text-sm text-slate-500">Loading price history...</p>
+              <div className="w-8 h-8 border-4 border-neon-500 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+              <p className="text-sm text-gray-400">Loading price history...</p>
             </div>
           </div>
         ) : (
@@ -451,27 +487,27 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
               <AreaChart data={priceHistory}>
                 <defs>
                   <linearGradient id="colorUv" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#00dc82" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="#00dc82" stopOpacity={0} />
+                    <stop offset="5%" stopColor="#01FEAE" stopOpacity={0.4} />
+                    <stop offset="95%" stopColor="#01FEAE" stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
-                <XAxis dataKey="name" stroke="#94a3b8" />
-                <YAxis stroke="#94a3b8" />
+                <CartesianGrid strokeDasharray="3 3" stroke="#374151" vertical={false} />
+                <XAxis dataKey="name" stroke="#9ca3af" />
+                <YAxis stroke="#9ca3af" />
                 <Tooltip
                   contentStyle={{
-                    backgroundColor: "#fff",
-                    borderColor: "#e2e8f0",
-                    color: "#0f172a",
+                    backgroundColor: "#1f2937",
+                    borderColor: "#374151",
+                    color: "#f3f4f6",
                     borderRadius: "8px",
-                    boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+                    boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.3)",
                   }}
-                  itemStyle={{ color: "#16a34a" }}
+                  itemStyle={{ color: "#01FEAE" }}
                 />
                 <Area
                   type="monotone"
                   dataKey="uv"
-                  stroke="#00dc82"
+                  stroke="#01FEAE"
                   strokeWidth={3}
                   fillOpacity={1}
                   fill="url(#colorUv)"
@@ -486,8 +522,3 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
 }
 
 export default StatsPanel
-
-
-
-
-

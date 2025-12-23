@@ -180,17 +180,17 @@ const SwapPanel: React.FC = () => {
   };
 
   return (
-    <div className="max-w-md mx-auto mt-4 md:mt-10 glass-panel p-5 sm:p-6 md:p-8 rounded-2xl md:rounded-3xl relative animate-fade-in">
-        <div className="absolute inset-0 bg-macoin-500/5 blur-3xl rounded-full"></div>
-        <h2 className="text-xl md:text-2xl font-bold mb-4 md:mb-6 text-center relative z-10 text-slate-900">{t.swap.title}</h2>
+    <div className="max-w-md mx-auto mt-4 md:mt-10 glass-panel p-5 sm:p-6 md:p-8 rounded-2xl md:rounded-3xl relative animate-fade-in bg-gray-900/50 border border-gray-800 backdrop-blur-sm">
+        <div className="absolute inset-0 bg-neon-500/5 blur-3xl rounded-full"></div>
+        <h2 className="text-xl md:text-2xl font-bold mb-4 md:mb-6 text-center relative z-10 text-white">{t.swap.title}</h2>
 
         {/* 推荐人提示 - 非管理员且未绑定推荐人时显示 */}
         {isConnected && !hasReferrer && !isOwner && (
-          <div className="bg-amber-50 border-2 border-amber-400 rounded-xl p-4 mb-4 relative z-10">
-            <p className="text-amber-900 text-sm font-bold text-center">
+          <div className="bg-amber-900/20 border-2 border-amber-500/50 rounded-xl p-4 mb-4 relative z-10 backdrop-blur-sm">
+            <p className="text-amber-300 text-sm font-bold text-center">
               ⚠️ {t.referrer.noReferrer}
             </p>
-            <p className="text-amber-700 text-xs text-center mt-1">
+            <p className="text-amber-200/80 text-xs text-center mt-1">
               Please go to Mining panel to bind a referrer first
             </p>
           </div>
@@ -198,8 +198,8 @@ const SwapPanel: React.FC = () => {
 
         <div className="space-y-3 md:space-y-4 relative z-10">
             {/* Pay Input */}
-            <div className="bg-slate-100 p-3 md:p-4 rounded-lg md:rounded-xl border border-slate-200 transition-all focus-within:ring-2 focus-within:ring-macoin-500/50">
-                <div className="flex justify-between text-xs md:text-sm text-slate-500 mb-2">
+            <div className="bg-gray-800/50 p-3 md:p-4 rounded-lg md:rounded-xl border border-gray-700 transition-all focus-within:ring-2 focus-within:ring-neon-500/50">
+                <div className="flex justify-between text-xs md:text-sm text-gray-400 mb-2">
                     <span>{t.swap.pay}</span>
                     <span className="truncate ml-2">{t.swap.balance}: {isSelling ? balanceJBC : balanceMC} {isSelling ? 'JBC' : 'MC'}</span>
                 </div>
@@ -209,9 +209,9 @@ const SwapPanel: React.FC = () => {
                         value={payAmount}
                         onChange={(e) => handleInput(e.target.value)}
                         placeholder="0.0"
-                        className="bg-transparent text-xl md:text-2xl font-bold focus:outline-none w-full text-slate-900"
+                        className="bg-transparent text-xl md:text-2xl font-bold focus:outline-none w-full text-white placeholder-gray-600"
                     />
-                    <span className={`px-2 md:px-3 py-1 rounded-lg font-bold border border-slate-200 shadow-sm text-slate-700 text-sm md:text-base whitespace-nowrap ${isSelling ? 'bg-yellow-100 text-yellow-700' : 'bg-white'}`}>
+                    <span className={`px-2 md:px-3 py-1 rounded-lg font-bold border shadow-sm text-sm md:text-base whitespace-nowrap ${isSelling ? 'bg-amber-500/20 text-amber-400 border-amber-500/30' : 'bg-gray-900 text-gray-300 border-gray-700'}`}>
                         {isSelling ? 'JBC' : 'MC'}
                     </span>
                 </div>
@@ -221,15 +221,15 @@ const SwapPanel: React.FC = () => {
             <div className="flex justify-center -my-1.5 md:-my-2 relative z-20">
                 <button
                     onClick={toggleDirection}
-                    className={`bg-white border border-macoin-500 p-1.5 md:p-2 rounded-full text-macoin-600 transition-transform duration-500 shadow-sm hover:shadow-md ${isRotated ? 'rotate-180' : ''}`}
+                    className={`bg-gray-900 border-2 border-neon-500 p-1.5 md:p-2 rounded-full text-neon-400 transition-transform duration-500 shadow-lg shadow-neon-500/30 hover:shadow-neon-500/50 ${isRotated ? 'rotate-180' : ''}`}
                 >
                     <ArrowLeftRight size={18} className="md:w-5 md:h-5" />
                 </button>
             </div>
 
             {/* Receive Input */}
-            <div className="bg-slate-100 p-3 md:p-4 rounded-lg md:rounded-xl border border-slate-200">
-                    <div className="flex justify-between text-xs md:text-sm text-slate-500 mb-2">
+            <div className="bg-gray-800/50 p-3 md:p-4 rounded-lg md:rounded-xl border border-gray-700">
+                    <div className="flex justify-between text-xs md:text-sm text-gray-400 mb-2">
                     <span>{t.swap.get}</span>
                     <span className="truncate ml-2">{t.swap.balance}: {!isSelling ? balanceJBC : balanceMC} {!isSelling ? 'JBC' : 'MC'}</span>
                 </div>
@@ -239,16 +239,16 @@ const SwapPanel: React.FC = () => {
                         value={getAmount}
                         disabled
                         placeholder="0.0"
-                        className="bg-transparent text-xl md:text-2xl font-bold focus:outline-none w-full text-slate-400"
+                        className="bg-transparent text-xl md:text-2xl font-bold focus:outline-none w-full text-gray-500 placeholder-gray-700"
                     />
-                    <span className={`px-2 md:px-3 py-1 rounded-lg font-bold border border-slate-200 shadow-sm text-slate-700 text-sm md:text-base whitespace-nowrap ${!isSelling ? 'bg-yellow-100 text-yellow-700' : 'bg-white'}`}>
+                    <span className={`px-2 md:px-3 py-1 rounded-lg font-bold border shadow-sm text-sm md:text-base whitespace-nowrap ${!isSelling ? 'bg-amber-500/20 text-amber-400 border-amber-500/30' : 'bg-gray-900 text-gray-300 border-gray-700'}`}>
                         {!isSelling ? 'JBC' : 'MC'}
                     </span>
                 </div>
             </div>
 
             {/* Slippage Info */}
-            <div className="bg-red-50 border border-red-200 p-3 rounded-lg text-xs text-red-600 flex flex-col gap-1">
+            <div className="bg-red-900/20 border border-red-500/30 p-3 rounded-lg text-xs text-red-300 flex flex-col gap-1 backdrop-blur-sm">
                 <div className={`flex justify-between ${isSelling ? 'font-bold' : 'opacity-50'}`}>
                     <span>{t.swap.slipSell}</span>
                     {isSelling && <span>(Active)</span>}
@@ -260,28 +260,28 @@ const SwapPanel: React.FC = () => {
             </div>
 
             {/* Pool Liquidity Info */}
-            <div className="bg-slate-50 p-3 rounded-lg text-xs text-slate-500 flex justify-between items-center border border-slate-200">
+            <div className="bg-gray-800/50 p-3 rounded-lg text-xs text-gray-400 flex justify-between items-center border border-gray-700">
                 <span className="font-bold">{t.swap.poolLiquidity}:</span>
                 <div className="flex gap-3">
-                    <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-macoin-500"></div> {parseFloat(poolMC).toLocaleString()} MC</span>
-                    <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-yellow-500"></div> {parseFloat(poolJBC).toLocaleString()} JBC</span>
+                    <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-neon-500"></div> {parseFloat(poolMC).toLocaleString()} MC</span>
+                    <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-amber-500"></div> {parseFloat(poolJBC).toLocaleString()} JBC</span>
                 </div>
             </div>
 
             {/* Action Button */}
             {!isConnected ? (
-                 <button disabled className="w-full py-4 bg-slate-200 text-slate-400 font-bold text-lg rounded-xl cursor-not-allowed">
+                 <button disabled className="w-full py-4 bg-gray-800 text-gray-500 font-bold text-lg rounded-xl cursor-not-allowed border border-gray-700">
                     Connect Wallet
                 </button>
             ) : !hasReferrer && !isOwner ? (
-                <button disabled className="w-full py-4 bg-amber-200 text-amber-700 font-bold text-lg rounded-xl cursor-not-allowed">
+                <button disabled className="w-full py-4 bg-amber-900/30 text-amber-400 font-bold text-lg rounded-xl cursor-not-allowed border border-amber-500/50">
                     ⚠️ {t.referrer.noReferrer}
                 </button>
             ) : (
                 <button 
                     onClick={handleSwap}
                     disabled={isLoading || !payAmount}
-                    className="w-full py-4 bg-macoin-500 text-white font-bold text-lg rounded-xl hover:bg-macoin-600 transition-colors shadow-lg shadow-macoin-500/20 disabled:opacity-50 flex items-center justify-center gap-2"
+                    className="w-full py-4 bg-gradient-to-r from-neon-500 to-neon-600 hover:from-neon-400 hover:to-neon-500 text-black font-bold text-lg rounded-xl transition-colors shadow-lg shadow-neon-500/40 disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                     {isLoading && <RotateCw className="animate-spin" size={20} />}
                     {t.swap.confirm}

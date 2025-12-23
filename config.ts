@@ -12,7 +12,7 @@ const mcChain = {
   blockExplorers: {
     default: { name: 'Mcerscan', url: 'https://mcerscan.com' },
   },
-  iconUrl: '/mc_chain.png',
+  iconUrl: '/logo.png',
 } as const;
 
 export const config = getDefaultConfig({

@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState } from "react"
+import React, { useEffect, useState } from "react"
 import { AppTab } from "../types"
 import { Diamond, Home, Pickaxe, Users, ArrowLeftRight, Settings, PlusCircle, Globe, FileText, Gift } from "lucide-react"
 import { useLanguage } from "../LanguageContext"
@@ -183,7 +183,7 @@ const Navbar: React.FC<NavbarProps> = ({ currentTab, setTab }) => {
                 <ConnectButton
                   showBalance={false}
                   chainStatus="icon"
-                  accountStatus={{ smallScreen: "avatar", largeScreen: "address" }}
+                  accountStatus="address"
                 />
               </div>
             </div>

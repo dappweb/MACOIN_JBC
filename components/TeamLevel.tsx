@@ -206,11 +206,20 @@ const TeamLevel: React.FC = () => {
                 </div>
             </div>
             
-            <div className="text-right">
-                <p className="text-xs text-gray-400 uppercase font-bold tracking-wider">{t.team.netTotalAmount}</p>
-                <p className="text-xl font-black text-purple-400 font-mono">
-                    {ethers.formatEther(totalTicketAmount)} <span className="text-sm font-bold text-purple-300">MC</span>
-                </p>
+            <div className="flex items-center gap-4">
+                <div className="text-right">
+                    <p className="text-xs text-gray-400 uppercase font-bold tracking-wider">{t.team.netTotalAmount}</p>
+                    <p className="text-xl font-black text-purple-400 font-mono">
+                        {ethers.formatEther(totalTicketAmount)} <span className="text-sm font-bold text-purple-300">MC</span>
+                    </p>
+                </div>
+                <button
+                    onClick={copyReferralLink}
+                    className="p-2 bg-purple-500/20 text-purple-400 rounded-lg hover:bg-purple-500/30 transition-colors border border-purple-500/30"
+                    title="Copy Referral Link"
+                >
+                    <Copy size={20} />
+                </button>
             </div>
         </div>
 

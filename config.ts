@@ -1,5 +1,6 @@
 import { getDefaultConfig } from '@rainbow-me/rainbowkit';
 import { 
+  injectedWallet,
   tokenPocketWallet,
   metaMaskWallet,
   walletConnectWallet,
@@ -33,12 +34,13 @@ export const config = getDefaultConfig({
     {
       groupName: 'Popular',
       wallets: [
+        injectedWallet,
         tokenPocketWallet,
         metaMaskWallet,
-        walletConnectWallet,
         trustWallet,
         okxWallet,
         bitgetWallet,
+        walletConnectWallet,
         rainbowWallet,
         coinbaseWallet,
       ],

@@ -10,6 +10,7 @@ interface Transaction {
   type: 'ticket_purchased' | 'liquidity_staked' | 'reward_claimed' | 'redeemed' | 'swap_mc_to_jbc' | 'swap_jbc_to_mc';
   amount: string;
   amount2?: string; // For rewards (MC + JBC) or swap tax
+  amount3?: string; // For JBC amount in LiquidityStaked
   blockNumber: number;
   timestamp: number;
   status: 'confirmed' | 'pending';
@@ -111,6 +112,10 @@ const TransactionHistory: React.FC = () => {
           } else if (eventName === 'LiquidityStaked' && event.args) {
             tx.amount = ethers.formatEther(event.args[1]); // amount
             tx.amount2 = event.args[2].toString(); // cycleDays
+            // Try to read jbcAmount if it exists (args[3])
+            if (event.args.length > 3) {
+                tx.amount3 = ethers.formatEther(event.args[3]);
+            }
           } else if (eventName === 'RewardClaimed' && event.args) {
             tx.amount = ethers.formatEther(event.args[1]); // mcAmount
             tx.amount2 = ethers.formatEther(event.args[2]); // jbcAmount
@@ -322,6 +327,11 @@ const TransactionHistory: React.FC = () => {
                           <p className="text-sm text-gray-400">
                             {t.history.amount}: <span className="font-semibold text-neon-400">{parseFloat(tx.amount).toFixed(2)} MC</span>
                           </p>
+                          {tx.amount3 && parseFloat(tx.amount3) > 0 && (
+                              <p className="text-sm text-gray-400">
+                                {t.history.jbcQuantity || "JBC Quantity"}: <span className="font-semibold text-amber-400">{parseFloat(tx.amount3).toFixed(2)} JBC</span>
+                              </p>
+                          )}
                           <p className="text-sm text-gray-400">
                             {t.history.cycle}: <span className="font-semibold text-amber-400">{tx.amount2} {t.mining.days}</span>
                           </p>

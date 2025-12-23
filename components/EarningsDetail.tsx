@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useMemo, useState } from "react"
+import React, { useEffect, useMemo, useState } from "react"
 import { ethers } from "ethers"
 import { Clock, ExternalLink, Gift, RefreshCw } from "lucide-react"
 import { useWeb3 } from "../Web3Context"
@@ -137,6 +137,41 @@ const EarningsDetail: React.FC = () => {
     )
   }, [records])
 
+  const dailyStats = useMemo(() => {
+    const stats = {
+      static: { mc: 0, jbc: 0 },
+      dynamic: { mc: 0, jbc: 0 },
+      direct: { mc: 0, jbc: 0 },
+      level: { mc: 0, jbc: 0 },
+    }
+
+    const now = Math.floor(Date.now() / 1000)
+    const oneDayAgo = now - 24 * 3600
+
+    records.forEach((row) => {
+      if (row.timestamp >= oneDayAgo) {
+        const mc = parseFloat(row.mcAmount || "0")
+        const jbc = parseFloat(row.jbcAmount || "0")
+
+        if (row.rewardType === 0) {
+          stats.static.mc += mc
+          stats.static.jbc += jbc
+        } else if (row.rewardType === 1) {
+          stats.dynamic.mc += mc
+          stats.dynamic.jbc += jbc
+        } else if (row.rewardType === 2) {
+          stats.direct.mc += mc
+          stats.direct.jbc += jbc
+        } else if (row.rewardType === 3) {
+          stats.level.mc += mc
+          stats.level.jbc += jbc
+        }
+      }
+    })
+
+    return stats
+  }, [records])
+
   const formatDate = (timestamp: number) => {
     return new Date(timestamp * 1000).toLocaleString()
   }
@@ -204,6 +239,29 @@ const EarningsDetail: React.FC = () => {
               {ui.refresh || "Refresh"}
             </button>
           </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div className="bg-gray-900/50 border border-gray-800 rounded-xl shadow-md p-4 backdrop-blur-sm">
+          <div className="text-sm text-gray-400 mb-2">{ui.staticReward || "Static Reward"} (24h)</div>
+          <div className="text-lg font-bold text-neon-400">{dailyStats.static.mc.toFixed(2)} MC</div>
+          <div className="text-lg font-bold text-amber-400">{dailyStats.static.jbc.toFixed(2)} JBC</div>
+        </div>
+        <div className="bg-gray-900/50 border border-gray-800 rounded-xl shadow-md p-4 backdrop-blur-sm">
+          <div className="text-sm text-gray-400 mb-2">{ui.dynamicReward || "Dynamic Reward"} (24h)</div>
+          <div className="text-lg font-bold text-neon-400">{dailyStats.dynamic.mc.toFixed(2)} MC</div>
+          <div className="text-lg font-bold text-amber-400">{dailyStats.dynamic.jbc.toFixed(2)} JBC</div>
+        </div>
+        <div className="bg-gray-900/50 border border-gray-800 rounded-xl shadow-md p-4 backdrop-blur-sm">
+          <div className="text-sm text-gray-400 mb-2">{ui.directReward || "Direct Reward"} (24h)</div>
+          <div className="text-lg font-bold text-neon-400">{dailyStats.direct.mc.toFixed(2)} MC</div>
+          <div className="text-lg font-bold text-amber-400">{dailyStats.direct.jbc.toFixed(2)} JBC</div>
+        </div>
+        <div className="bg-gray-900/50 border border-gray-800 rounded-xl shadow-md p-4 backdrop-blur-sm">
+          <div className="text-sm text-gray-400 mb-2">{ui.levelReward || "Level Reward"} (24h)</div>
+          <div className="text-lg font-bold text-neon-400">{dailyStats.level.mc.toFixed(2)} MC</div>
+          <div className="text-lg font-bold text-amber-400">{dailyStats.level.jbc.toFixed(2)} JBC</div>
         </div>
       </div>
 

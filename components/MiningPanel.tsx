@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { TICKET_TIERS, MINING_PLANS } from '../constants';
 import { MiningPlan, TicketTier } from '../types';
-import { Zap, Clock, TrendingUp, AlertCircle, ArrowRight, ShieldCheck, Lock } from 'lucide-react';
+import { Zap, Clock, TrendingUp, AlertCircle, ArrowRight, ShieldCheck, Lock, Package } from 'lucide-react';
 import { useLanguage } from '../LanguageContext';
 import { useWeb3 } from '../Web3Context';
 import { ethers } from 'ethers';
@@ -13,6 +13,8 @@ type TicketInfo = {
   purchaseTime: number;
   liquidityProvided: boolean;
   redeemed: boolean;
+  startTime: number;
+  cycleDays: number;
 };
 
 const MiningPanel: React.FC = () => {
@@ -54,6 +56,21 @@ const MiningPanel: React.FC = () => {
       !isRedeemed;
   const isTicketBought = hasTicket && !isRedeemed;
 
+  // Formatting helper
+  const formatDate = (timestamp: number) => {
+    return new Date(timestamp * 1000).toLocaleString();
+  };
+
+  const getTicketStatus = () => {
+    if (!ticketInfo) return null;
+    if (ticketInfo.redeemed) return { label: t.mining.redeemed, color: 'text-gray-400', bg: 'bg-gray-500/20', border: 'border-gray-500/30' };
+    if (isTicketExpired) return { label: t.mining.expired, color: 'text-red-400', bg: 'bg-red-500/20', border: 'border-red-500/30' };
+    if (ticketInfo.liquidityProvided) return { label: t.mining.mining, color: 'text-green-400', bg: 'bg-green-500/20', border: 'border-green-500/30' };
+    return { label: t.mining.pendingLiquidity, color: 'text-amber-400', bg: 'bg-amber-500/20', border: 'border-amber-500/30' };
+  };
+
+  const statusInfo = getTicketStatus();
+
   const checkTicketStatus = async () => {
       if (!protocolContract || !account) {
           setTicketInfo(null);
@@ -77,6 +94,8 @@ const MiningPanel: React.FC = () => {
               purchaseTime: Number(ticket.purchaseTime),
               liquidityProvided: ticket.liquidityProvided,
               redeemed: ticket.redeemed,
+              startTime: Number(ticket.startTime),
+              cycleDays: Number(ticket.cycleDays),
           });
       } catch (err) {
           console.error('Failed to check ticket status', err);
@@ -360,6 +379,63 @@ const MiningPanel: React.FC = () => {
           <div className="flex-1">
             <p className="font-bold text-purple-300">{t.referrer.adminExempt}</p>
           </div>
+        </div>
+      )}
+
+      {/* Ticket Status Display - New Addition */}
+      {isConnected && ticketInfo && hasTicket && (
+        <div className={`glass-panel p-4 md:p-6 rounded-xl border-2 animate-fade-in backdrop-blur-sm bg-gray-900/50 ${statusInfo?.border}`}>
+            <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+                <div className="flex items-center gap-2">
+                    <Package className="text-neon-400" size={24} />
+                    <h3 className="text-xl font-bold text-white">{t.mining.currentTicket}</h3>
+                </div>
+                <div className={`px-3 py-1 rounded-full text-sm font-bold border ${statusInfo?.bg} ${statusInfo?.color} ${statusInfo?.border}`}>
+                    {statusInfo?.label}
+                </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
+                <div className="bg-gray-800/50 p-3 rounded-lg border border-gray-700">
+                    <div className="text-gray-400 mb-1">{t.mining.ticketAmount}</div>
+                    <div className="text-lg font-bold text-white font-mono">{ticketInfo.amount.toString()} MC</div>
+                </div>
+                <div className="bg-gray-800/50 p-3 rounded-lg border border-gray-700">
+                    <div className="text-gray-400 mb-1">{t.mining.purchaseTime}</div>
+                    <div className="text-white font-mono">{formatDate(ticketInfo.purchaseTime)}</div>
+                </div>
+                {ticketInfo.liquidityProvided ? (
+                    <>
+                        <div className="bg-gray-800/50 p-3 rounded-lg border border-gray-700">
+                            <div className="text-gray-400 mb-1">{t.mining.startTime}</div>
+                            <div className="text-white font-mono">{formatDate(ticketInfo.startTime)}</div>
+                        </div>
+                        <div className="bg-gray-800/50 p-3 rounded-lg border border-gray-700">
+                            <div className="text-gray-400 mb-1">{t.mining.endTime}</div>
+                            <div className="text-white font-mono">
+                                {formatDate(ticketInfo.startTime + ticketInfo.cycleDays * 60)}
+                            </div>
+                        </div>
+                    </>
+                ) : !ticketInfo.redeemed && (
+                    <div className="bg-gray-800/50 p-3 rounded-lg border border-gray-700 col-span-1 md:col-span-2">
+                        <div className="text-gray-400 mb-1">{t.mining.timeLeft}</div>
+                        <div className="text-white font-mono">
+                             {isTicketExpired 
+                                ? "00:00:00" 
+                                : (() => {
+                                    const expiry = ticketInfo.purchaseTime + 72 * 3600;
+                                    const diff = expiry - now;
+                                    if (diff <= 0) return "00:00:00";
+                                    const h = Math.floor(diff / 3600);
+                                    const m = Math.floor((diff % 3600) / 60);
+                                    return `${h}h ${m}m`;
+                                })()
+                             }
+                        </div>
+                    </div>
+                )}
+            </div>
         </div>
       )}
 

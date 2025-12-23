@@ -36,7 +36,7 @@ export const PROTOCOL_ABI = [
   "function getAmountOut(uint256, uint256, uint256) pure returns (uint256)",
   "event BoundReferrer(address indexed user, address indexed referrer)",
   "event TicketPurchased(address indexed user, uint256 amount, uint256 ticketId)",
-  "event LiquidityStaked(address indexed user, uint256 amount, uint256 cycleDays)",
+  "event LiquidityStaked(address indexed user, uint256 amount, uint256 cycleDays, uint256 jbcAmount)",
   "event RewardClaimed(address indexed user, uint256 mcAmount, uint256 jbcAmount, uint8 rewardType, uint256 ticketId)",
   "event ReferralRewardPaid(address indexed user, address indexed from, uint256 mcAmount, uint8 rewardType, uint256 ticketId)",
   "event Redeemed(address indexed user, uint256 principal, uint256 fee)",

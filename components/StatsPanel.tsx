@@ -410,22 +410,24 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
         {/* Stat 1 */}
         <div className="glass-panel p-4 md:p-6 rounded-xl md:rounded-2xl hover:border-neon-500/40 transition-colors bg-gray-900/50 border border-gray-800 backdrop-blur-sm">
           <div className="flex items-center justify-between mb-3 md:mb-4">
-            <span className="text-gray-400 text-xs md:text-sm">
-              {t.stats.assets}
+            <div className="flex flex-col">
+              <span className="text-gray-400 text-xs md:text-sm">{t.stats.assets}</span>
               {mcUsdtPrice > 0 && (
-                <span className="ml-2 text-neon-400 font-bold">
-                  ${mcUsdtPrice.toFixed(4)}
+                <span className="text-neon-400/80 text-[10px] md:text-xs font-mono mt-0.5">
+                  1 MC ≈ ${mcUsdtPrice.toFixed(4)}
                 </span>
               )}
-            </span>
+            </div>
             <Wallet className="text-neon-400" size={18} />
           </div>
           <div className="text-2xl md:text-3xl font-bold text-white mb-1">
             {displayStats.balanceMC.toLocaleString()}
           </div>
-          {/* <div className="text-xs text-neon-400 flex items-center gap-1">
-                <ArrowUpRight size={12} /> +2.4% {t.stats.today}
-            </div> */}
+          {mcUsdtPrice > 0 && (
+            <div className="text-xs text-neon-400 font-bold flex items-center gap-1">
+              ≈${(displayStats.balanceMC * mcUsdtPrice).toFixed(2)} USDT
+            </div>
+          )}
         </div>
 
         {/* Stat 2 */}

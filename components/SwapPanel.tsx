@@ -211,8 +211,18 @@ const SwapPanel: React.FC = () => {
                         placeholder="0.0"
                         className="bg-transparent text-xl md:text-2xl font-bold focus:outline-none w-full text-white placeholder-gray-600"
                     />
-                    <span className={`px-2 md:px-3 py-1 rounded-lg font-bold border shadow-sm text-sm md:text-base whitespace-nowrap ${isSelling ? 'bg-amber-500/20 text-amber-400 border-amber-500/30' : 'bg-gray-900 text-gray-300 border-gray-700'}`}>
-                        {isSelling ? 'JBC' : 'MC'}
+                    <span className={`px-2 md:px-3 py-1 rounded-lg font-bold border shadow-sm text-sm md:text-base whitespace-nowrap flex items-center gap-1 ${isSelling ? 'bg-amber-500/20 text-amber-400 border-amber-500/30' : 'bg-gray-900 text-gray-300 border-gray-700'}`}>
+                        {isSelling ? (
+                            <>
+                                <img src="/logo.png" alt="JBC" className="w-4 h-4 md:w-5 md:h-5 rounded-full" />
+                                JBC
+                            </>
+                        ) : (
+                            <>
+                                <img src="/mc_chain.png" alt="MC" className="w-4 h-4 md:w-5 md:h-5 rounded-full" />
+                                MC
+                            </>
+                        )}
                     </span>
                 </div>
             </div>
@@ -241,8 +251,18 @@ const SwapPanel: React.FC = () => {
                         placeholder="0.0"
                         className="bg-transparent text-xl md:text-2xl font-bold focus:outline-none w-full text-gray-500 placeholder-gray-700"
                     />
-                    <span className={`px-2 md:px-3 py-1 rounded-lg font-bold border shadow-sm text-sm md:text-base whitespace-nowrap ${!isSelling ? 'bg-amber-500/20 text-amber-400 border-amber-500/30' : 'bg-gray-900 text-gray-300 border-gray-700'}`}>
-                        {!isSelling ? 'JBC' : 'MC'}
+                    <span className={`px-2 md:px-3 py-1 rounded-lg font-bold border shadow-sm text-sm md:text-base whitespace-nowrap flex items-center gap-1 ${!isSelling ? 'bg-amber-500/20 text-amber-400 border-amber-500/30' : 'bg-gray-900 text-gray-300 border-gray-700'}`}>
+                        {!isSelling ? (
+                            <>
+                                <img src="/logo.png" alt="JBC" className="w-4 h-4 md:w-5 md:h-5 rounded-full" />
+                                JBC
+                            </>
+                        ) : (
+                            <>
+                                <img src="/mc_chain.png" alt="MC" className="w-4 h-4 md:w-5 md:h-5 rounded-full" />
+                                MC
+                            </>
+                        )}
                     </span>
                 </div>
             </div>

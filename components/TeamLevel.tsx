@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { TEAM_LEVELS } from '../constants';
-import { Crown, Users, Percent, UserCheck, Copy, Share2 } from 'lucide-react';
+import { Users, Percent, UserCheck, Copy, Share2, Crown } from 'lucide-react';
 import { useLanguage } from '../LanguageContext';
 import { useWeb3 } from '../Web3Context';
 import { ethers } from 'ethers';
@@ -153,6 +153,21 @@ const TeamLevel: React.FC = () => {
                 <tbody className="divide-y divide-gray-800">
                     {TEAM_LEVELS.map((level, index) => {
                         const isCurrent = level.level === userLevelInfo.currentLevel;
+                        
+                        let badgeStyle = isCurrent ? 'bg-neon-500 text-black' : 'bg-gray-800 text-gray-500 border border-gray-700';
+                        let icon = null;
+
+                        if (level.level === 'V7') { // Silver
+                            badgeStyle = 'bg-slate-300/20 text-slate-300 border border-slate-400/30 shadow-[0_0_10px_rgba(203,213,225,0.2)]';
+                            icon = <Crown size={14} className="fill-slate-300/20" />;
+                        } else if (level.level === 'V8') { // Platinum
+                            badgeStyle = 'bg-cyan-300/20 text-cyan-300 border border-cyan-400/30 shadow-[0_0_10px_rgba(103,232,249,0.2)]';
+                            icon = <Crown size={14} className="fill-cyan-300/20" />;
+                        } else if (level.level === 'V9') { // Gold
+                            badgeStyle = 'bg-amber-400/20 text-amber-400 border border-amber-500/30 shadow-[0_0_10px_rgba(251,191,36,0.2)]';
+                            icon = <Crown size={14} className="fill-amber-400/20" />;
+                        }
+
                         return (
                             <tr 
                                 key={level.level} 
@@ -160,11 +175,9 @@ const TeamLevel: React.FC = () => {
                             >
                                 <td className="p-2 md:p-4">
                                     <div className={`flex items-center gap-2 font-bold ${isCurrent ? 'text-neon-400' : 'text-gray-300'}`}>
-                                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                                            index >= 6 ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' : 
-                                            isCurrent ? 'bg-neon-500 text-black' : 'bg-gray-800 text-gray-500 border border-gray-700'
-                                        }`}>
-                                            {index >= 6 ? <Crown size={16} /> : level.level}
+                                        <div className={`h-8 px-3 rounded-lg flex items-center justify-center gap-1.5 min-w-[3rem] ${badgeStyle}`}>
+                                            {icon}
+                                            {level.level}
                                         </div>
                                     </div>
                                 </td>

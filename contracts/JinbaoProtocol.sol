@@ -48,7 +48,7 @@ contract JinbaoProtocol is Ownable, ReentrancyGuard {
     address public lpInjectionWallet; // Buffer Contract
     
     // Constants
-    uint256 public constant SECONDS_IN_DAY = 86400;
+    uint256 public constant SECONDS_IN_UNIT = 60; // Minutes
     
     // Distribution Config
     uint256 public directRewardPercent = 25;
@@ -321,12 +321,12 @@ contract JinbaoProtocol is Ownable, ReentrancyGuard {
         // OK, I will assume for this "Requirements Alignment" task, I can modify structs.
         // I'll calculate based on time elapsed since `startTime` but limit to `cycleDays`.
         
-        uint256 daysPassed = (block.timestamp - ticket.startTime) / SECONDS_IN_DAY;
-        if (daysPassed > ticket.cycleDays) daysPassed = ticket.cycleDays;
+        uint256 unitsPassed = (block.timestamp - ticket.startTime) / SECONDS_IN_UNIT;
+        if (unitsPassed > ticket.cycleDays) unitsPassed = ticket.cycleDays;
         
-        if (daysPassed == 0) revert("Less than 1 day");
+        if (unitsPassed == 0) revert("Less than 1 unit");
 
-        uint256 totalStaticShouldBe = (ticket.liquidityAmount * ratePerThousand * daysPassed) / 1000;
+        uint256 totalStaticShouldBe = (ticket.liquidityAmount * ratePerThousand * unitsPassed) / 1000;
         
         // We need to know how much static was already paid to avoid double paying.
         // Since I can't easily add storage without migration script issues if this was a proxy (it's not),
@@ -385,7 +385,7 @@ contract JinbaoProtocol is Ownable, ReentrancyGuard {
     function redeem() external nonReentrant {
         Ticket storage ticket = userTicket[msg.sender];
         require(ticket.liquidityProvided && !ticket.redeemed && !ticket.exited, "Cannot redeem");
-        require(block.timestamp >= ticket.startTime + (ticket.cycleDays * SECONDS_IN_DAY), "Cycle not finished");
+        require(block.timestamp >= ticket.startTime + (ticket.cycleDays * SECONDS_IN_UNIT), "Cycle not finished");
 
         // Fee: 1% of TICKET AMOUNT
         uint256 fee = (ticket.amount * redemptionFeePercent) / 100;

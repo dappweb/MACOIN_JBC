@@ -57,6 +57,9 @@ const MiningPanel: React.FC = () => {
   // 3x Cap Calculation
   const maxCap = selectedTicket.amount * 3;
 
+  // New State for Wizard Steps
+  const [currentStep, setCurrentStep] = useState(1);
+
   const now = Math.floor(Date.now() / 1000);
   const hasTicket = !!ticketInfo && ticketInfo.amount > 0n;
   const isRedeemed = !!ticketInfo && ticketInfo.redeemed;
@@ -74,6 +77,17 @@ const MiningPanel: React.FC = () => {
       !isTicketExpired &&
       !isRedeemed;
   const isTicketBought = hasTicket && !isRedeemed;
+
+  // Effect to auto-advance steps based on state
+  useEffect(() => {
+      if (hasActiveTicket) {
+          setCurrentStep(3); // Mining Dashboard
+      } else if (canStakeLiquidity) {
+          setCurrentStep(2); // Stake Liquidity
+      } else {
+          setCurrentStep(1); // Buy Ticket
+      }
+  }, [hasActiveTicket, canStakeLiquidity, ticketInfo]);
 
   // Formatting helper
   const formatDate = (timestamp: number) => {
@@ -446,6 +460,36 @@ const MiningPanel: React.FC = () => {
         <p className="text-sm md:text-base text-gray-400">{t.mining.subtitle}</p>
       </div>
 
+      {/* Step Indicator */}
+      <div className="flex items-center justify-center gap-2 md:gap-4 mb-8">
+        {[
+          { step: 1, label: t.mining.buyTicket, icon: Package },
+          { step: 2, label: t.mining.stake, icon: Lock },
+          { step: 3, label: t.mining.mining, icon: Zap }
+        ].map((s, idx) => (
+          <div key={s.step} className="flex items-center">
+            <button 
+              onClick={() => setCurrentStep(s.step)}
+              className={`flex items-center gap-2 px-4 py-2 rounded-full border transition-all cursor-pointer hover:scale-105 active:scale-95 ${
+              currentStep === s.step 
+                ? 'bg-neon-500/20 border-neon-500 text-neon-400 shadow-lg shadow-neon-500/20' 
+                : currentStep > s.step
+                  ? 'bg-green-500/10 border-green-500/30 text-green-400 hover:bg-green-500/20'
+                  : 'bg-gray-900/50 border-gray-700 text-gray-500 hover:border-gray-500 hover:text-gray-300'
+            }`}>
+              <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
+                 currentStep === s.step ? 'bg-neon-500 text-black' : 
+                 currentStep > s.step ? 'bg-green-500 text-black' : 'bg-gray-800'
+              }`}>
+                {currentStep > s.step ? '✓' : s.step}
+              </div>
+              <span className="hidden md:block font-bold text-sm">{s.label}</span>
+            </button>
+            {idx < 2 && <div className={`w-8 h-0.5 mx-2 ${currentStep > s.step ? 'bg-green-500/30' : 'bg-gray-800'}`} />}
+          </div>
+        ))}
+      </div>
+
       {/* 鎺ㄨ崘浜虹粦瀹氭彁绀?- 闈炵鐞嗗憳涓旀湭缁戝畾鎺ㄨ崘浜烘椂鏄剧ず */}
       {isConnected && !hasReferrer && !isOwner && (
         <div className="bg-amber-900/20 border-2 border-amber-500/50 rounded-xl p-6 animate-fade-in backdrop-blur-sm">
@@ -504,7 +548,7 @@ const MiningPanel: React.FC = () => {
 
 
       {/* 蹇€熻喘涔伴棬绁ㄦ寜閽尯鍩?- 鏄剧溂浣嶇疆 */}
-      {isConnected && (hasReferrer || isOwner) && (
+      {currentStep === 1 && isConnected && (hasReferrer || isOwner) && (
         <div className="glass-panel p-6 md:p-8 rounded-2xl border-2 border-neon-500/50 shadow-xl shadow-neon-500/20 animate-fade-in bg-gray-900/50">
           <div className="text-center mb-6">
             <h3 className="text-2xl md:text-3xl font-bold text-white mb-2">{t.mining.buyTicket}</h3>
@@ -590,6 +634,7 @@ const MiningPanel: React.FC = () => {
         </div>
       )}
 
+      {currentStep === 2 && (
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6 lg:gap-8">
 
             {/* Left Col: Controls */}
@@ -776,15 +821,8 @@ const MiningPanel: React.FC = () => {
                 </div>
 
                 {/* Active Mining Controls */}
-                {isTicketBought && (
+                {hasActiveTicket && (
                     <div className="mt-4 pt-4 border-t border-slate-100 flex gap-2">
-                         <button
-                            onClick={handleClaim}
-                            disabled={txPending}
-                            className="flex-1 py-2 bg-amber-500/20 text-amber-300 font-bold rounded-lg hover:bg-amber-500/30 transition-colors disabled:opacity-50 border border-amber-500/30"
-                         >
-                            {t.mining.claimRewards}
-                         </button>
                          <button
                             onClick={handleRedeem}
                             disabled={txPending}
@@ -799,11 +837,34 @@ const MiningPanel: React.FC = () => {
         </div>
 
       </div>
+      )}
 
       {/* Ticket Status Display - New Addition */}
-      {isConnected && ticketInfo && hasTicket && (
-        <div className={`glass-panel p-4 md:p-6 rounded-xl border-2 animate-fade-in backdrop-blur-sm bg-gray-900/50 mt-8 ${statusInfo?.border}`}>
-            <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+      {currentStep === 3 && (
+        <div className={`glass-panel p-4 md:p-6 rounded-xl border-2 animate-fade-in backdrop-blur-sm bg-gray-900/50 mt-8 ${statusInfo?.border || 'border-gray-800'}`}>
+            {!hasActiveTicket ? (
+                <div className="text-center py-12">
+                    <div className="bg-gray-800/50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 border border-gray-700">
+                        <Zap className="text-gray-600" size={32} />
+                    </div>
+                    <h3 className="text-xl font-bold text-gray-300 mb-2">{t.mining.unknownStatus || "No Mining Activity"}</h3>
+                    <p className="text-gray-500 max-w-md mx-auto mb-6">
+                        {canStakeLiquidity 
+                            ? t.mining.readyToStakeDesc 
+                            : isTicketBought 
+                                ? "You have a ticket but haven't staked liquidity yet."
+                                : "You haven't purchased a mining ticket yet."}
+                    </p>
+                    <button 
+                        onClick={() => setCurrentStep(canStakeLiquidity ? 2 : 1)}
+                        className="px-6 py-2 bg-gray-800 hover:bg-gray-700 text-white font-bold rounded-lg border border-gray-600 transition-colors"
+                    >
+                        {canStakeLiquidity ? t.mining.stake : t.mining.buyTicket}
+                    </button>
+                </div>
+            ) : (
+                <>
+                <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
                 <div className="flex items-center gap-2">
                     <Package className="text-neon-400" size={24} />
                     <h3 className="text-xl font-bold text-white">{t.mining.currentTicket}</h3>
@@ -870,9 +931,24 @@ const MiningPanel: React.FC = () => {
                     </div>
                 )}
             </div>
-        </div>
-      )}
 
+            {/* Action Buttons for Step 3 */}
+            {hasActiveTicket && (
+                 <div className="mt-6 pt-6 border-t border-gray-700 flex flex-col md:flex-row gap-4">
+                     <button
+                        onClick={handleRedeem}
+                        disabled={txPending}
+                        className="flex-1 py-3 md:py-4 bg-gradient-to-r from-red-500/20 to-red-600/20 hover:from-red-500/30 hover:to-red-600/30 text-red-300 font-bold rounded-xl border border-red-500/30 transition-all flex items-center justify-center gap-2 shadow-lg shadow-red-500/10"
+                     >
+                        <TrendingUp size={20} />
+                        {t.mining.redeem}
+                     </button>
+                </div>
+            )}
+          </>
+        )}
+      </div>
+    )}
       {/* History Section */}
       {isConnected && (
         <div className="glass-panel p-4 md:p-6 rounded-xl border border-gray-800 bg-gray-900/50 mt-8 animate-fade-in">

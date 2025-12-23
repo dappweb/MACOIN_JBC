@@ -183,7 +183,7 @@ const Navbar: React.FC<NavbarProps> = ({ currentTab, setTab }) => {
                 <ConnectButton
                   showBalance={false}
                   chainStatus="icon"
-                  accountStatus="address"
+                  accountStatus="avatar"
                 />
               </div>
             </div>

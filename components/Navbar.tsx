@@ -5,7 +5,6 @@ import { useLanguage } from "../LanguageContext"
 import { ConnectButton } from "@rainbow-me/rainbowkit"
 import { useWeb3 } from "../Web3Context"
 import { useChainId, useSwitchChain } from "wagmi"
-import iconImg from "../icon.png"
 
 interface NavbarProps {
   currentTab: AppTab
@@ -97,7 +96,7 @@ const Navbar: React.FC<NavbarProps> = ({ currentTab, setTab }) => {
             {/* Logo */}
             <div className="flex items-center gap-1.5 md:gap-2 cursor-pointer" onClick={() => setTab(AppTab.HOME)}>
               <div className="bg-gradient-to-tr overflow-hidden from-emerald-500 to-emerald-400 rounded-lg md:rounded-xl shadow-lg shadow-emerald-500/30 p-0">
-                <img src={iconImg} alt="" className=" w-10 md:h-10" />
+                <img src="/icon.png" alt="" className=" w-10 md:h-10" />
               </div>
               <span className="text-lg md:text-2xl font-black text-white tracking-tight">
                 JBC <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-emerald-500">RWA</span>

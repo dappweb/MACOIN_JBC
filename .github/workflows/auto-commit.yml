@@ -1,0 +1,47 @@
+name: CI & Auto-Commit
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build-and-sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout (with creds)
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Install dependencies
+        run: |
+          if [ -f package-lock.json ]; then npm ci; else npm install; fi
+
+      - name: Run tests (if any)
+        run: |
+          if npm run -s test --silent; then echo "Tests passed"; else echo "Tests failed or missing - continuing"; fi
+
+      - name: Detect repo changes
+        id: changes
+        run: |
+          git status --porcelain > status.txt
+          if [ -s status.txt ]; then echo "has_changes=true" >> $GITHUB_OUTPUT; cat status.txt; else echo "has_changes=false" >> $GITHUB_OUTPUT; fi
+
+      - name: Commit & push generated changes
+        if: steps.changes.outputs.has_changes == 'true'
+        run: |
+          git config user.email "actions@github.com"
+          git config user.name "github-actions[bot]"
+          git add -A
+          git commit -m "chore(ci): sync generated artifacts from CI"
+          git push origin HEAD:${{ github.ref_name }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

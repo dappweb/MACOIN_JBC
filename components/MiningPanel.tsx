@@ -294,32 +294,41 @@ const MiningPanel: React.FC = () => {
 
   const handleBuyTicket = async () => {
       if (!protocolContract || !mcContract) return;
+
+      // Guard removed: Allow buying multiple tickets or overwriting
+      /*
+      // Guard: Check if user already has an active ticket
+      if (ticketInfo && ticketInfo.amount > 0n && !ticketInfo.redeemed) {
+          toast.error(t.mining.activeTicketExists || "You already have a ticket. Please stake or redeem first.");
+          return;
+      }
+      */
       
       setTxPending(true);
       try {
-          // 妫€鏌?MC 浣欓
+          // 检查 MC 余额
           const amountWei = ethers.parseEther(selectedTicket.amount.toString());
           const mcBalance = await mcContract.balanceOf(account);
           
           if (mcBalance < amountWei) {
-              toast.error(`${t.mining.insufficientMC} ${t.mining.needsMC} ${selectedTicket.amount} MC锛?{t.mining.currentBalance}: ${ethers.formatEther(mcBalance)} MC`);
+              toast.error(`${t.mining.insufficientMC} ${t.mining.needsMC} ${selectedTicket.amount} MC，${t.mining.currentBalance}: ${ethers.formatEther(mcBalance)} MC`);
               return;
           }
 
           const tx = await protocolContract.buyTicket(amountWei);
           await tx.wait();
           toast.success(t.mining.ticketBuySuccess);
-          // 鍒锋柊绁ㄦ嵁鐘舵€?
+          // 刷新票据状态
           await checkTicketStatus();
           // 刷新历史记录
           await fetchHistory();
       } catch (err: any) {
           console.error(err);
           const errorMsg = err.reason || err.message || '';
-          if (errorMsg.includes('Active ticket exists')) {
-              toast.error(t.mining.activeTicketExists, {
-                  duration: 5000,
-              });
+          
+          if (errorMsg.includes('Active ticket exists') || 
+              (err.code === 'CALL_EXCEPTION' && (errorMsg.includes('missing revert data') || !err.reason))) {
+              toast.error(t.mining.activeTicketExists || "Transaction failed: You may already have an active ticket.");
           } else if (errorMsg.includes('Invalid ticket tier')) {
               toast.error(t.mining.invalidTicketTier);
           } else {

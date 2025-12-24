@@ -107,13 +107,24 @@ contract JinbaoProtocol is Ownable, ReentrancyGuard {
         address _jbcToken,
         address _marketing,
         address _treasury,
-        address _lpInjection
+        address _lpInjection,
+        address _buybackWallet // Added parameter
     ) Ownable(msg.sender) {
         mcToken = IERC20(_mcToken);
         jbcToken = IJBC(_jbcToken);
         marketingWallet = _marketing;
         treasuryWallet = _treasury;
         lpInjectionWallet = _lpInjection;
+        // buybackWallet is not stored in state variable in original code, maybe it should be?
+        // Checking state variables:
+        // address public marketingWallet;
+        // address public treasuryWallet;
+        // address public lpInjectionWallet; 
+        // No buybackWallet state variable.
+        // But deploy script passes 6 args: mc, jbc, market, treasury, lp, buyback.
+        // Constructor has 5 args.
+        // I need to add the argument to match deploy script, even if unused, or remove it from deploy script.
+        // Better to update constructor to accept it, maybe store it or ignore it.
     }
 
     // --- Admin Functions ---
@@ -208,12 +219,15 @@ contract JinbaoProtocol is Ownable, ReentrancyGuard {
         // Validate Amount (T1-T4)
         require(amount == 100 * 1e18 || amount == 300 * 1e18 || amount == 500 * 1e18 || amount == 1000 * 1e18, "Invalid ticket amount");
         
+        // Removed single active ticket restriction as per requirements
+        /*
         // Ensure previous ticket is settled
         Ticket storage prevTicket = userTicket[msg.sender];
         if (prevTicket.amount > 0) {
             bool isExpired = !prevTicket.liquidityProvided && (block.timestamp > prevTicket.purchaseTime + 72 hours);
             require(prevTicket.redeemed || prevTicket.exited || isExpired, "Previous ticket active");
         }
+        */
 
         // Transfer MC
         mcToken.transferFrom(msg.sender, address(this), amount);
@@ -236,15 +250,25 @@ contract JinbaoProtocol is Ownable, ReentrancyGuard {
         // Reset User Stats for new cycle
         userInfo[msg.sender].totalRevenue = 0;
         userInfo[msg.sender].currentCap = amount * 3;
-        // Keep isActive false until liquidity provided
+        
+        // Activate User immediately upon purchase
+        if (!userInfo[msg.sender].isActive) {
+            userInfo[msg.sender].isActive = true;
+            address referrer = userInfo[msg.sender].referrer;
+            if (referrer != address(0)) {
+                userInfo[referrer].activeDirects++;
+            }
+        }
+        
+        // Keep isActive false until liquidity provided -> This comment is now obsolete
 
         // --- Distribution ---
         
         // 1. Direct Reward (25%)
-        address referrer = userInfo[msg.sender].referrer;
-        if (referrer != address(0)) {
+        address referrerAddr = userInfo[msg.sender].referrer; // Changed variable name to avoid shadowing
+        if (referrerAddr != address(0)) {
             uint256 directAmt = (amount * directRewardPercent) / 100;
-            _distributeReward(referrer, directAmt, REWARD_DIRECT);
+            _distributeReward(referrerAddr, directAmt, REWARD_DIRECT);
         } else {
             // No referrer -> Marketing
             mcToken.transfer(marketingWallet, (amount * directRewardPercent) / 100);
@@ -289,6 +313,15 @@ contract JinbaoProtocol is Ownable, ReentrancyGuard {
         ticket.cycleDays = cycleDays;
 
         // Activate User & Update Referrer Stats
+        // Requirement changed: User is activated immediately upon ticket purchase, not staking.
+        // But code below is inside stakeLiquidity.
+        // Let's verify if "isActive" is set in buyTicket.
+        // In buyTicket: // Keep isActive false until liquidity provided
+        // So we need to move activation logic to buyTicket?
+        // User said: "User activation: User is activated upon buying a ticket"
+        // So yes, move logic.
+        
+        /* Moved to buyTicket
         if (!userInfo[msg.sender].isActive) {
             userInfo[msg.sender].isActive = true;
             address referrer = userInfo[msg.sender].referrer;
@@ -296,6 +329,7 @@ contract JinbaoProtocol is Ownable, ReentrancyGuard {
                 userInfo[referrer].activeDirects++;
             }
         }
+        */
 
         emit LiquidityStaked(msg.sender, reqAmount, cycleDays);
 
@@ -396,6 +430,12 @@ contract JinbaoProtocol is Ownable, ReentrancyGuard {
         userInfo[msg.sender].refundFeeAmount = fee;
 
         ticket.redeemed = true;
+        // Requirement changed: User remains active after redemption?
+        // User said: "After redemption, user status remains active"
+        // Original logic: userInfo[msg.sender].isActive = false;
+        // New logic: Do not set isActive to false.
+        
+        /*
         userInfo[msg.sender].isActive = false;
         
         // Decrement referrer's active count
@@ -403,6 +443,7 @@ contract JinbaoProtocol is Ownable, ReentrancyGuard {
         if (referrer != address(0) && userInfo[referrer].activeDirects > 0) {
             userInfo[referrer].activeDirects--;
         }
+        */
 
         emit Redeemed(msg.sender, ticket.liquidityAmount, fee);
         

@@ -18,32 +18,32 @@ async function main() {
 
   const fundAmount = hre.ethers.parseEther("1000000");
 
-  // Get current fee data for better gas estimation
+  // Get fee data and prepare overrides (EIP-1559 safe defaults)
   const feeData = await hre.ethers.provider.getFeeData();
-  
-  // Use slightly higher gas price to ensure it goes through
-  const txOverrides = {
-    // gasPrice: feeData.gasPrice * 120n / 100n, // Increase by 20% if needed, but EIP-1559 uses maxFeePerGas
-  };
+  const txOverrides = {};
+  if (feeData.maxFeePerGas && feeData.maxPriorityFeePerGas) {
+    txOverrides.maxFeePerGas = feeData.maxFeePerGas;
+    txOverrides.maxPriorityFeePerGas = feeData.maxPriorityFeePerGas;
+  }
 
   console.log("1. Sending 1,000,000 JBC to Protocol...");
   try {
-      const tx1 = await jbc.transfer(PROTOCOL_ADDRESS, fundAmount);
+      const tx1 = await jbc.transfer(PROTOCOL_ADDRESS, fundAmount, txOverrides);
       console.log(`   Tx Hash: ${tx1.hash}`);
       await tx1.wait();
       console.log("   ✅ JBC Transfer confirmed");
   } catch (error) {
-      console.error("   ❌ JBC Transfer failed:", error.message);
+      console.error("   ❌ JBC Transfer failed:", error?.message || error);
   }
 
   console.log("2. Sending 1,000,000 MC to Protocol...");
   try {
-      const tx2 = await mc.transfer(PROTOCOL_ADDRESS, fundAmount);
+      const tx2 = await mc.transfer(PROTOCOL_ADDRESS, fundAmount, txOverrides);
       console.log(`   Tx Hash: ${tx2.hash}`);
       await tx2.wait();
       console.log("   ✅ MC Transfer confirmed");
   } catch (error) {
-      console.error("   ❌ MC Transfer failed:", error.message);
+      console.error("   ❌ MC Transfer failed:", error?.message || error);
   }
 
   console.log("Funding Complete!");

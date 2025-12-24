@@ -1,0 +1,19 @@
+{
+  "network": "hardhat",
+  "networkName": "Hardhat Local",
+  "chainId": 31337,
+  "explorer": "N/A",
+  "deployer": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+  "timestamp": "2025-12-24T09:18:11.005Z",
+  "contracts": {
+    "MockMC": "0xB2B8777BcBc7A8DEf49F022773d392a8787cf9EF",
+    "JBC": "0xA743cB357a9f59D349efB7985072779a094658dD",
+    "JinbaoProtocol": "0x5FbDB2315678afecb367f032d93F642f64180aa3"
+  },
+  "wallets": {
+    "marketing": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+    "treasury": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+    "lpInjection": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+    "buyback": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266"
+  }
+}

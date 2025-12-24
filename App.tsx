@@ -21,7 +21,6 @@ import { RainbowKitProvider } from "@rainbow-me/rainbowkit"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { config } from "./config"
 import "@rainbow-me/rainbowkit/styles.css"
-import iconImg from "./icon.png"
 
 const queryClient = new QueryClient()
 
@@ -51,7 +50,7 @@ const AppContent: React.FC = () => {
       <div className="min-h-screen w-full bg-black flex flex-col items-center justify-center relative overflow-hidden">
         <div className="z-10 flex flex-col items-center">
           <div className="w-40 h-40 overflow-hidden  rounded-xl animate-spin mb-8 shadow-xl">
-            <img src={iconImg} alt="" />
+            <img src="/icon.png" alt="" />
           </div>
           <h1 className="text-2xl font-bold text-white tracking-widest animate-pulse">
             JBC <span className="text-neon-400">RWA</span>

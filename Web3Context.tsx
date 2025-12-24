@@ -28,6 +28,7 @@ export const PROTOCOL_ABI = [
   "function setDistributionPercents(uint256, uint256, uint256, uint256, uint256, uint256) external",
   "function setSwapTaxes(uint256, uint256) external",
   "function setRedemptionFee(uint256) external",
+  "function addLiquidity(uint256 mcAmount, uint256 jbcAmount) external",
   "function adminWithdrawMC(uint256 amount, address to) external",
   "function adminWithdrawJBC(uint256 amount, address to) external",
   "function adminSetUserStats(address, uint256, uint256) external",

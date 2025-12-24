@@ -25,8 +25,7 @@ async function main(mcAddress, jbcAddress) {
     jbcAddress,
     marketingWallet,
     treasuryWallet,
-    lpWallet,
-    buybackWallet
+    lpWallet
   );
   await protocol.waitForDeployment();
 
@@ -37,8 +36,8 @@ async function main(mcAddress, jbcAddress) {
 }
 
 if (require.main === module) {
-  const mcAddress = process.argv[2];
-  const jbcAddress = process.argv[3];
+  const mcAddress = process.argv[2] || "0xB2B8777BcBc7A8DEf49F022773d392a8787cf9EF";
+  const jbcAddress = process.argv[3] || "0xA743cB357a9f59D349efB7985072779a094658dD";
 
   if (!mcAddress || !jbcAddress) {
     console.error("❌ Usage: npx hardhat run scripts/deployProtocol.js --network mc <MC_ADDRESS> <JBC_ADDRESS>");

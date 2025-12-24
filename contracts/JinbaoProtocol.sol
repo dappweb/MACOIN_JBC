@@ -80,6 +80,10 @@ contract JinbaoProtocol is Ownable, ReentrancyGuard {
     // Static rewards paid tracking: ticketId => amount paid
     mapping(uint256 => uint256) public ticketStaticPaid;
 
+    // Swap Pool Reserves
+    uint256 public swapReserveMC;
+    uint256 public swapReserveJBC;
+
     uint256 public nextTicketId;
     
     // Events
@@ -96,6 +100,7 @@ contract JinbaoProtocol is Ownable, ReentrancyGuard {
     event SwappedMCToJBC(address indexed user, uint256 mcAmount, uint256 jbcAmount, uint256 tax);
     event SwappedJBCToMC(address indexed user, uint256 jbcAmount, uint256 mcAmount, uint256 tax);
     event BuybackAndBurn(uint256 mcAmount, uint256 jbcBurned);
+    event LiquidityAdded(uint256 mcAmount, uint256 jbcAmount);
 
     constructor(
         address _mcToken, 
@@ -148,6 +153,19 @@ contract JinbaoProtocol is Ownable, ReentrancyGuard {
 
     function adminWithdrawJBC(uint256 amount, address to) external onlyOwner {
         jbcToken.transfer(to, amount);
+    }
+
+    function addLiquidity(uint256 mcAmount, uint256 jbcAmount) external onlyOwner {
+        require(mcAmount > 0 || jbcAmount > 0, "Zero amount");
+        if (mcAmount > 0) {
+            mcToken.transferFrom(msg.sender, address(this), mcAmount);
+            swapReserveMC += mcAmount;
+        }
+        if (jbcAmount > 0) {
+            jbcToken.transferFrom(msg.sender, address(this), jbcAmount);
+            swapReserveJBC += jbcAmount;
+        }
+        emit LiquidityAdded(mcAmount, jbcAmount);
     }
 
     // --- Helper Views ---
@@ -520,14 +538,15 @@ contract JinbaoProtocol is Ownable, ReentrancyGuard {
         require(mcAmount > 0, "Invalid amount");
         mcToken.transferFrom(msg.sender, address(this), mcAmount);
 
-        uint256 mcReserve = mcToken.balanceOf(address(this)) - mcAmount;
-        uint256 jbcReserve = jbcToken.balanceOf(address(this));
-        
-        uint256 jbcOutput = getAmountOut(mcAmount, mcReserve, jbcReserve);
+        uint256 jbcOutput = getAmountOut(mcAmount, swapReserveMC, swapReserveJBC);
         uint256 tax = (jbcOutput * swapBuyTax) / 100;
         uint256 amountToUser = jbcOutput - tax;
         
         require(jbcToken.balanceOf(address(this)) >= jbcOutput, "Insufficient JBC liquidity");
+
+        // Update Reserves
+        swapReserveMC += mcAmount;
+        swapReserveJBC -= jbcOutput;
         
         jbcToken.burn(tax);
         jbcToken.transfer(msg.sender, amountToUser);
@@ -544,11 +563,24 @@ contract JinbaoProtocol is Ownable, ReentrancyGuard {
         
         jbcToken.burn(tax);
         
-        uint256 jbcReserve = jbcToken.balanceOf(address(this)) - amountToSwap; 
-        uint256 mcReserve = mcToken.balanceOf(address(this));
-        
-        uint256 mcOutput = getAmountOut(amountToSwap, jbcReserve, mcReserve);
+        uint256 mcOutput = getAmountOut(amountToSwap, swapReserveJBC, swapReserveMC);
         require(mcToken.balanceOf(address(this)) >= mcOutput, "Insufficient MC liquidity");
+
+        // Update Reserves
+        swapReserveJBC += jbcAmount; // We add full input amount? No, we burned tax.
+        // Wait, standard AMM: 
+        // Swap Input = amountToSwap (after tax?). 
+        // In this logic: tax is burned BEFORE swap math?
+        // Let's look at previous logic:
+        // uint256 jbcReserve = jbcToken.balanceOf(address(this)) - amountToSwap; 
+        // This implies amountToSwap was added to reserve implicitly by transfer.
+        
+        // Correct logic with Reserves:
+        // Input JBC comes in. Tax is burned. Remaining JBC (amountToSwap) is added to JBC Reserve.
+        // Then MC is calculated and removed from MC Reserve.
+        
+        swapReserveJBC += amountToSwap;
+        swapReserveMC -= mcOutput;
         
         mcToken.transfer(msg.sender, mcOutput);
         

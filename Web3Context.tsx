@@ -34,6 +34,8 @@ export const PROTOCOL_ABI = [
   "function adminSetReferrer(address, address) external",
   "function getJBCPrice() view returns (uint256)",
   "function getAmountOut(uint256, uint256, uint256) pure returns (uint256)",
+  "function swapReserveMC() view returns (uint256)",
+  "function swapReserveJBC() view returns (uint256)",
   "event BoundReferrer(address indexed user, address indexed referrer)",
   "event TicketPurchased(address indexed user, uint256 amount, uint256 ticketId)",
   "event LiquidityStaked(address indexed user, uint256 amount, uint256 cycleDays)",
@@ -56,19 +58,12 @@ export const PROTOCOL_ABI = [
 // MC合约地址0xB2B8777BcBc7A8DEf49F022773d392a8787cf9EF
 //
 //   JBC合约地址0xA743cB357a9f59D349efB7985072779a094658dD
-// Contract Addresses - Update these with your deployed contract addresses  - new
-// export const CONTRACT_ADDRESSES = {
-//   MC_TOKEN: "0xbe18a4e8Fc2B56b160C39C13AdC61702BB434CF9",    // MC Token (ERC20) - 用于购买 JBC
-//   JBC_TOKEN: "0x85CE579C1879301d31Ad22EDBA9ADF241C1c75fb",   // JBC Token (ERC20) - 项目主代币
-//   PROTOCOL: "0x348a77aA2A970543A128c617c3Cdc20f13bD441E"    // Protocol Contract - 主协议合约（包含兑换池）
-// };
-
-//  -old
+// Contract Addresses - Update these with your deployed contract addresses
 export const CONTRACT_ADDRESSES = {
-  MC_TOKEN: "0xB2B8777BcBc7A8DEf49F022773d392a8787cf9EF", // MC Token (ERC20) - 用于购买 JBC
-  JBC_TOKEN: "0xA743cB357a9f59D349efB7985072779a094658dD", // JBC Token (ERC20) - 项目主代币
-  PROTOCOL: "0x348a77aA2A970543A128c617c3Cdc20f13bD441E", // Protocol Contract - 主协议合约（包含兑换池）
-}
+  MC_TOKEN: "0xB2B8777BcBc7A8DEf49F022773d392a8787cf9EF",    // MC Token (ERC20) - 用于购买 JBC
+  JBC_TOKEN: "0xA743cB357a9f59D349efB7985072779a094658dD",   // JBC Token (ERC20) - 项目主代币
+  PROTOCOL: "0x0f4C066E48743A58361A237838EAfFF2A2c3f65f"    // Protocol Contract - 主协议合约（包含兑换池）
+};
 
 interface Web3ContextType {
   provider: ethers.Provider | null

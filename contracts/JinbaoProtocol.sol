@@ -46,6 +46,7 @@ contract JinbaoProtocol is Ownable, ReentrancyGuard {
     address public marketingWallet;
     address public treasuryWallet;
     address public lpInjectionWallet; // Buffer Contract
+    address public buybackWallet;     // Buyback Wallet (for future use or external buyback)
     
     // Constants
     uint256 public constant SECONDS_IN_UNIT = 60; // Minutes for Demo, Days for Prod
@@ -115,19 +116,38 @@ contract JinbaoProtocol is Ownable, ReentrancyGuard {
         marketingWallet = _marketing;
         treasuryWallet = _treasury;
         lpInjectionWallet = _lpInjection;
-        // buybackWallet is not stored in state variable in original code, maybe it should be?
-        // Checking state variables:
-        // address public marketingWallet;
-        // address public treasuryWallet;
-        // address public lpInjectionWallet; 
-        // No buybackWallet state variable.
-        // But deploy script passes 6 args: mc, jbc, market, treasury, lp, buyback.
-        // Constructor has 5 args.
-        // I need to add the argument to match deploy script, even if unused, or remove it from deploy script.
-        // Better to update constructor to accept it, maybe store it or ignore it.
+        buybackWallet = _buybackWallet;
     }
 
     // --- Admin Functions ---
+
+    function setDistributionPercents(
+        uint256 _direct, 
+        uint256 _level, 
+        uint256 _marketing, 
+        uint256 _buyback, 
+        uint256 _lp, 
+        uint256 _treasury
+    ) external onlyOwner {
+        require(_direct + _level + _marketing + _buyback + _lp + _treasury == 100, "Total must be 100");
+        directRewardPercent = _direct;
+        levelRewardPercent = _level;
+        marketingPercent = _marketing;
+        buybackPercent = _buyback;
+        lpInjectionPercent = _lp;
+        treasuryPercent = _treasury;
+    }
+
+    function setSwapTaxes(uint256 _buyTax, uint256 _sellTax) external onlyOwner {
+        require(_buyTax <= 100 && _sellTax <= 100, "Invalid tax");
+        swapBuyTax = _buyTax;
+        swapSellTax = _sellTax;
+    }
+
+    function setRedemptionFee(uint256 _fee) external onlyOwner {
+        require(_fee <= 100, "Invalid fee");
+        redemptionFeePercent = _fee;
+    }
 
     function adminSetUserStats(address user, uint256 _activeDirects, uint256 _teamCount) external onlyOwner {
         userInfo[user].activeDirects = _activeDirects;
@@ -629,9 +649,10 @@ contract JinbaoProtocol is Ownable, ReentrancyGuard {
     }
 
     // --- Admin ---
-    function setWallets(address _marketing, address _treasury, address _lpInjection) external onlyOwner {
+    function setWallets(address _marketing, address _treasury, address _lpInjection, address _buyback) external onlyOwner {
         marketingWallet = _marketing;
         treasuryWallet = _treasury;
         lpInjectionWallet = _lpInjection;
+        buybackWallet = _buyback;
     }
 }

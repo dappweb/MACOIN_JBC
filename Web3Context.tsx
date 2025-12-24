@@ -28,6 +28,7 @@ export const PROTOCOL_ABI = [
   "function setDistributionPercents(uint256, uint256, uint256, uint256, uint256, uint256) external",
   "function setSwapTaxes(uint256, uint256) external",
   "function setRedemptionFee(uint256) external",
+  "function addLiquidity(uint256 mcAmount, uint256 jbcAmount) external",
   "function adminWithdrawMC(uint256 amount, address to) external",
   "function adminWithdrawJBC(uint256 amount, address to) external",
   "function adminSetUserStats(address, uint256, uint256) external",
@@ -60,9 +61,9 @@ export const PROTOCOL_ABI = [
 //   JBC合约地址0xA743cB357a9f59D349efB7985072779a094658dD
 // Contract Addresses - Update these with your deployed contract addresses
 export const CONTRACT_ADDRESSES = {
-  MC_TOKEN: "0xB2B8777BcBc7A8DEf49F022773d392a8787cf9EF",
-  JBC_TOKEN: "0xA743cB357a9f59D349efB7985072779a094658dD",
-  PROTOCOL: "0x5FbDB2315678afecb367f032d93F642f64180aa3"
+  MC_TOKEN: "0xB2B8777BcBc7A8DEf49F022773d392a8787cf9EF",    // MC Token (ERC20) - 用于购买 JBC
+  JBC_TOKEN: "0xA743cB357a9f59D349efB7985072779a094658dD",   // JBC Token (ERC20) - 项目主代币
+  PROTOCOL: "0x2d3C48D2d24C27c9256B83d0fc4Fe8A99a9cb7de"    // Protocol Contract - 主协议合约（包含兑换池）
 };
 
 interface Web3ContextType {
@@ -95,6 +96,25 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [hasReferrer, setHasReferrer] = useState(false)
   const [isOwner, setIsOwner] = useState(false)
   const [referrerAddress, setReferrerAddress] = useState<string | null>(null)
+
+  useEffect(() => {
+    const checkOwner = async () => {
+      if (protocolContract && address) { // Use address from useAccount() instead of account from context
+        try {
+          const owner = await protocolContract.owner()
+          console.log("Web3Context CheckOwner:", {
+             contractOwner: owner,
+             userAddress: address,
+             isMatch: owner.toLowerCase() === address.toLowerCase()
+          });
+          setIsOwner(owner.toLowerCase() === address.toLowerCase())
+        } catch (e) {
+          console.error("Failed to check owner in Web3Context", e)
+        }
+      }
+    }
+    checkOwner()
+  }, [protocolContract, address])
 
   useEffect(() => {
     if (signer) {

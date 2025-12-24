@@ -1072,7 +1072,7 @@ const MiningPanel: React.FC = () => {
       )}
 
       {/* Mobile Sticky Footer */}
-      <div className="fixed bottom-0px left-0 right-0 p-4 bg-gray-900/95 border-t border-gray-800 backdrop-blur-xl md:hidden z-50 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.3)]">
+      {/* <div className="fixed bottom-0px left-0 right-0 p-4 bg-gray-900/95 border-t border-gray-800 backdrop-blur-xl md:hidden z-50 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.3)]">
         {currentStep === 1 && isConnected && (hasReferrer || isOwner) && (
             !isApproved ? (
               <button
@@ -1113,7 +1113,7 @@ const MiningPanel: React.FC = () => {
                 {t.mining.redeem}
              </button>
         )}
-      </div>
+      </div> */}
 
     </div>
   );

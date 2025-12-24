@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useWeb3 } from '../Web3Context';
 import { useLanguage } from '../LanguageContext';
-import { FileText, ExternalLink, Filter, RefreshCw, Clock, TrendingUp, TrendingDown, Package, Lock, Gift, Unlock, ChevronRight, X, Copy, CheckCircle } from 'lucide-react';
+import { FileText,X,Copy, ExternalLink, Filter, RefreshCw, Clock, TrendingUp, TrendingDown,ChevronRight, Package, Lock, Gift, Unlock } from 'lucide-react';
 import { ethers } from 'ethers';
 
 interface Transaction {
@@ -461,8 +461,8 @@ const TransactionHistory: React.FC = () => {
       {/* Detail Modal */}
       {selectedTx && (
         <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/80 backdrop-blur-sm p-0 md:p-4" onClick={() => setSelectedTx(null)}>
-          <div 
-            className="bg-gray-900 border-t md:border border-gray-800 rounded-t-2xl md:rounded-2xl w-full max-w-md p-6 relative shadow-2xl animate-in slide-in-from-bottom-10 md:slide-in-from-bottom-0 md:zoom-in-95" 
+          <div
+            className="bg-gray-900 border-t md:border border-gray-800 rounded-t-2xl md:rounded-2xl w-full max-w-md p-6 relative shadow-2xl animate-in slide-in-from-bottom-10 md:slide-in-from-bottom-0 md:zoom-in-95"
             onClick={e => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-6">
@@ -515,7 +515,7 @@ const TransactionHistory: React.FC = () => {
                       <span className="text-white font-mono text-xs break-all bg-black/30 p-2 rounded w-full">
                         {selectedTx.hash}
                       </span>
-                      <button 
+                      <button
                         onClick={() => copyToClipboard(selectedTx.hash)}
                         className="p-2 hover:bg-gray-700 rounded-lg text-gray-400 hover:text-white transition-colors"
                       >

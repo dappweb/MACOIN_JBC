@@ -1,7 +1,7 @@
-﻿import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { TICKET_TIERS, MINING_PLANS } from '../constants';
 import { MiningPlan, TicketTier } from '../types';
-import { Zap, Clock, TrendingUp, AlertCircle, ArrowRight, ShieldCheck, Lock } from 'lucide-react';
+import { Zap, Clock, TrendingUp, AlertCircle, ArrowRight, ShieldCheck, Lock, Package, History, ChevronDown, ChevronUp } from 'lucide-react';
 import { useLanguage } from '../LanguageContext';
 import { useWeb3 } from '../Web3Context';
 import { ethers } from 'ethers';
@@ -13,6 +13,18 @@ type TicketInfo = {
   purchaseTime: number;
   liquidityProvided: boolean;
   redeemed: boolean;
+  startTime: number;
+  cycleDays: number;
+};
+
+type TicketHistoryItem = {
+    ticketId: string;
+    amount: string;
+    purchaseTime: number;
+    status: 'Pending' | 'Mining' | 'Redeemed' | 'Expired';
+    cycleDays?: number;
+    startTime?: number;
+    endTime?: number;
 };
 
 const MiningPanel: React.FC = () => {
@@ -24,17 +36,29 @@ const MiningPanel: React.FC = () => {
   const [txPending, setTxPending] = useState(false);
   const [inputReferrerAddress, setInputReferrerAddress] = useState('');
   const [isBindingReferrer, setIsBindingReferrer] = useState(false);
+  
+  // History State
+  const [ticketHistory, setTicketHistory] = useState<TicketHistoryItem[]>([]);
+  const [showHistory, setShowHistory] = useState(false);
+  const [loadingHistory, setLoadingHistory] = useState(false);
 
   const { t } = useLanguage();
-  const { protocolContract, mcContract, account, isConnected, hasReferrer, isOwner, referrerAddress, checkReferrerStatus } = useWeb3();
+  const { protocolContract, mcContract, account, isConnected, hasReferrer, isOwner, referrerAddress, checkReferrerStatus, provider } = useWeb3();
 
   // Calculations based on PDF logic
+  // Update: Calculate ROI based on Liquidity Amount (Ticket Amount * 1.5) instead of Ticket Amount
   const totalInvestment = selectedTicket.amount + selectedTicket.requiredLiquidity;
-  const dailyROI = (selectedTicket.amount * selectedPlan.dailyRate) / 100;
+  const liquidityAmount = selectedTicket.requiredLiquidity; // This is typically Ticket Amount * 1.5
+  
+  // Daily ROI = Liquidity Amount * Daily Rate
+  const dailyROI = (Number(liquidityAmount) * selectedPlan.dailyRate) / 100;
   const totalROI = dailyROI * selectedPlan.days;
 
   // 3x Cap Calculation
   const maxCap = selectedTicket.amount * 3;
+
+  // New State for Wizard Steps
+  const [currentStep, setCurrentStep] = useState(1);
 
   const now = Math.floor(Date.now() / 1000);
   const hasTicket = !!ticketInfo && ticketInfo.amount > 0n;
@@ -53,6 +77,32 @@ const MiningPanel: React.FC = () => {
       !isTicketExpired &&
       !isRedeemed;
   const isTicketBought = hasTicket && !isRedeemed;
+
+  // Effect to auto-advance steps based on state
+  useEffect(() => {
+      if (hasActiveTicket) {
+          setCurrentStep(3); // Mining Dashboard
+      } else if (canStakeLiquidity) {
+          setCurrentStep(2); // Stake Liquidity
+      } else {
+          setCurrentStep(1); // Buy Ticket
+      }
+  }, [hasActiveTicket, canStakeLiquidity, ticketInfo]);
+
+  // Formatting helper
+  const formatDate = (timestamp: number) => {
+    return new Date(timestamp * 1000).toLocaleString();
+  };
+
+  const getTicketStatus = () => {
+    if (!ticketInfo) return null;
+    if (ticketInfo.redeemed) return { label: t.mining.redeemed, color: 'text-gray-400', bg: 'bg-gray-500/20', border: 'border-gray-500/30' };
+    if (isTicketExpired) return { label: t.mining.expired, color: 'text-red-400', bg: 'bg-red-500/20', border: 'border-red-500/30' };
+    if (ticketInfo.liquidityProvided) return { label: t.mining.mining, color: 'text-green-400', bg: 'bg-green-500/20', border: 'border-green-500/30' };
+    return { label: t.mining.pendingLiquidity, color: 'text-amber-400', bg: 'bg-amber-500/20', border: 'border-amber-500/30' };
+  };
+
+  const statusInfo = getTicketStatus();
 
   const checkTicketStatus = async () => {
       if (!protocolContract || !account) {
@@ -77,14 +127,106 @@ const MiningPanel: React.FC = () => {
               purchaseTime: Number(ticket.purchaseTime),
               liquidityProvided: ticket.liquidityProvided,
               redeemed: ticket.redeemed,
+              startTime: Number(ticket.startTime),
+              cycleDays: Number(ticket.cycleDays),
           });
       } catch (err) {
           console.error('Failed to check ticket status', err);
       }
   };
 
+  const fetchHistory = async () => {
+    if (!protocolContract || !account || !provider) return;
+    setLoadingHistory(true);
+    try {
+        const currentBlock = await provider.getBlockNumber();
+        const fromBlock = Math.max(0, currentBlock - 1000000); 
+
+        // Fetch events
+        const [purchaseEvents, stakeEvents, redeemEvents] = await Promise.all([
+            protocolContract.queryFilter(protocolContract.filters.TicketPurchased(account), fromBlock),
+            protocolContract.queryFilter(protocolContract.filters.LiquidityStaked(account), fromBlock),
+            protocolContract.queryFilter(protocolContract.filters.Redeemed(account), fromBlock)
+        ]);
+
+        // Merge and sort
+        const allEvents = [
+            ...purchaseEvents.map(e => ({ type: 'purchase', event: e })),
+            ...stakeEvents.map(e => ({ type: 'stake', event: e })),
+            ...redeemEvents.map(e => ({ type: 'redeem', event: e }))
+        ].sort((a, b) => {
+            if (a.event.blockNumber !== b.event.blockNumber) {
+                return a.event.blockNumber - b.event.blockNumber;
+            }
+            return a.event.index - b.event.index;
+        });
+
+        const historyItems: TicketHistoryItem[] = [];
+        let currentItem: TicketHistoryItem | null = null;
+        
+        // Cache block timestamps
+        const blockTimestamps: Record<number, number> = {};
+        const getBlockTimestamp = async (blockNumber: number) => {
+            if (blockTimestamps[blockNumber]) return blockTimestamps[blockNumber];
+            const block = await provider.getBlock(blockNumber);
+            if (block) {
+                blockTimestamps[blockNumber] = block.timestamp;
+                return block.timestamp;
+            }
+            return 0;
+        };
+
+        for (const item of allEvents) {
+            const e = item.event;
+            const args = (e as any).args;
+            const timestamp = await getBlockTimestamp(e.blockNumber);
+
+            if (item.type === 'purchase') {
+                if (currentItem) {
+                    historyItems.push(currentItem);
+                }
+                currentItem = {
+                    ticketId: args[2].toString(),
+                    amount: ethers.formatEther(args[1]),
+                    purchaseTime: timestamp,
+                    status: 'Pending'
+                };
+            } else if (item.type === 'stake') {
+                if (currentItem && currentItem.status === 'Pending') {
+                    currentItem.status = 'Mining';
+                    currentItem.cycleDays = Number(args[2]);
+                    currentItem.startTime = timestamp;
+                    currentItem.endTime = timestamp + (currentItem.cycleDays || 0) * 60; // minutes
+                }
+            } else if (item.type === 'redeem') {
+                if (currentItem && currentItem.status === 'Mining') {
+                    currentItem.status = 'Redeemed';
+                }
+            }
+        }
+        
+        if (currentItem) {
+            historyItems.push(currentItem);
+        }
+
+        const now = Math.floor(Date.now() / 1000);
+        historyItems.forEach(item => {
+            if (item.status === 'Pending' && now > item.purchaseTime + 72 * 3600) {
+                item.status = 'Expired';
+            }
+        });
+
+        setTicketHistory(historyItems.reverse());
+    } catch (err) {
+        console.error("Failed to fetch history", err);
+    } finally {
+        setLoadingHistory(false);
+    }
+  };
+
   useEffect(() => {
-    checkTicketStatus()
+    checkTicketStatus();
+    fetchHistory();
   }, [protocolContract, account]);
 
   useEffect(() => {
@@ -139,14 +281,6 @@ const MiningPanel: React.FC = () => {
 
   const handleBuyTicket = async () => {
       if (!protocolContract || !mcContract) return;
-      
-      // 妫€鏌ユ槸鍚︽湁杩囨湡绁ㄦ嵁
-      if (isTicketExpired) {
-          toast.error(t.mining.expiredTicketWarning, {
-              duration: 5000,
-          });
-          return;
-      }
       
       setTxPending(true);
       try {
@@ -308,12 +442,52 @@ const MiningPanel: React.FC = () => {
       }
   };
 
+  const handleScrollToStake = () => {
+      const element = document.getElementById('staking-section');
+      if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          // Optional: Add a highlight effect
+          element.classList.add('ring-2', 'ring-neon-500');
+          setTimeout(() => element.classList.remove('ring-2', 'ring-neon-500'), 2000);
+      }
+  };
+
   return (
     <div className="w-full max-w-4xl mx-auto space-y-6 md:space-y-8 animate-fade-in">
 
       <div className="text-center space-y-1 md:space-y-2">
         <h2 className="text-2xl md:text-3xl font-bold text-white">{t.mining.title}</h2>
         <p className="text-sm md:text-base text-gray-400">{t.mining.subtitle}</p>
+      </div>
+
+      {/* Step Indicator */}
+      <div className="flex items-center justify-center gap-2 md:gap-4 mb-8">
+        {[
+          { step: 1, label: t.mining.buyTicket, icon: Package },
+          { step: 2, label: t.mining.stake, icon: Lock },
+          { step: 3, label: t.mining.mining, icon: Zap }
+        ].map((s, idx) => (
+          <div key={s.step} className="flex items-center">
+            <button 
+              onClick={() => setCurrentStep(s.step)}
+              className={`flex items-center gap-2 px-4 py-2 rounded-full border transition-all cursor-pointer hover:scale-105 active:scale-95 ${
+              currentStep === s.step 
+                ? 'bg-neon-500/20 border-neon-500 text-neon-400 shadow-lg shadow-neon-500/20' 
+                : currentStep > s.step
+                  ? 'bg-green-500/10 border-green-500/30 text-green-400 hover:bg-green-500/20'
+                  : 'bg-gray-900/50 border-gray-700 text-gray-500 hover:border-gray-500 hover:text-gray-300'
+            }`}>
+              <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
+                 currentStep === s.step ? 'bg-neon-500 text-black' : 
+                 currentStep > s.step ? 'bg-green-500 text-black' : 'bg-gray-800'
+              }`}>
+                {currentStep > s.step ? '✓' : s.step}
+              </div>
+              <span className="hidden md:block font-bold text-sm">{s.label}</span>
+            </button>
+            {idx < 2 && <div className={`w-8 h-0.5 mx-2 ${currentStep > s.step ? 'bg-green-500/30' : 'bg-gray-800'}`} />}
+          </div>
+        ))}
       </div>
 
       {/* 鎺ㄨ崘浜虹粦瀹氭彁绀?- 闈炵鐞嗗憳涓旀湭缁戝畾鎺ㄨ崘浜烘椂鏄剧ず */}
@@ -354,8 +528,8 @@ const MiningPanel: React.FC = () => {
           <ShieldCheck className="text-neon-400 shrink-0 mt-0.5" size={20} />
           <div className="flex-1">
             <p className="font-bold text-neon-300 mb-1">{t.referrer.bound}</p>
-            <p className="text-sm text-neon-200/80">
-              {t.referrer.yourReferrer}: <span className="font-mono font-bold">{referrerAddress}</span>
+            <p className="text-sm text-neon-200/80 break-all">
+              {t.referrer.yourReferrer}: <span className="font-mono font-bold">{referrerAddress?.slice(0, 6)}...{referrerAddress?.slice(-4)}</span>
             </p>
           </div>
         </div>
@@ -371,8 +545,10 @@ const MiningPanel: React.FC = () => {
         </div>
       )}
 
+
+
       {/* 蹇€熻喘涔伴棬绁ㄦ寜閽尯鍩?- 鏄剧溂浣嶇疆 */}
-      {isConnected && (hasReferrer || isOwner) && (
+      {currentStep === 1 && isConnected && (hasReferrer || isOwner) && (
         <div className="glass-panel p-6 md:p-8 rounded-2xl border-2 border-neon-500/50 shadow-xl shadow-neon-500/20 animate-fade-in bg-gray-900/50">
           <div className="text-center mb-6">
             <h3 className="text-2xl md:text-3xl font-bold text-white mb-2">{t.mining.buyTicket}</h3>
@@ -411,7 +587,7 @@ const MiningPanel: React.FC = () => {
             ) : (
               <button
                 onClick={handleBuyTicket}
-                disabled={txPending || isTicketExpired}
+                disabled={txPending}
                 className="w-full py-4 md:py-5 bg-gradient-to-r from-neon-500 to-neon-600 hover:from-neon-400 hover:to-neon-500 text-black font-extrabold text-xl rounded-xl shadow-xl shadow-neon-500/40 transition-all transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {txPending ? t.mining.buying : `${t.mining.buyTicket} - ${selectedTicket.amount} MC`}
@@ -458,13 +634,14 @@ const MiningPanel: React.FC = () => {
         </div>
       )}
 
+      {currentStep === 2 && (
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6 lg:gap-8">
 
             {/* Left Col: Controls */}
             <div className="lg:col-span-2 space-y-4 md:space-y-6">
 
             {/* Step 2: Cycle */}
-            <div className={`glass-panel p-4 md:p-6 rounded-xl md:rounded-2xl relative overflow-hidden group transition-opacity bg-gray-900/50 border border-gray-800 ${(!isTicketBought || isTicketExpired || hasActiveTicket || (!hasReferrer && !isOwner)) ? 'opacity-50 pointer-events-none' : ''}`}>
+            <div id="staking-section" className={`glass-panel p-4 md:p-6 rounded-xl md:rounded-2xl relative overflow-hidden group transition-opacity bg-gray-900/50 border border-gray-800 ${(!isTicketBought || isTicketExpired || hasActiveTicket || (!hasReferrer && !isOwner)) ? 'opacity-50 pointer-events-none' : ''}`}>
                  {!isTicketBought && (
                     <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/70 backdrop-blur-sm rounded-xl md:rounded-2xl">
                         <div className="flex items-center gap-2 px-3 py-2 md:px-4 md:py-2 bg-gray-900 text-white rounded-lg shadow-xl border border-gray-700">
@@ -599,10 +776,11 @@ const MiningPanel: React.FC = () => {
                         </button>
                     ) : isTicketExpired ? (
                         <button
-                            disabled
-                            className="w-full py-4 bg-red-900/30 text-red-300 font-bold text-lg rounded-lg cursor-not-allowed border-2 border-red-500/50"
+                            onClick={handleScrollToBuy}
+                            disabled={txPending}
+                            className="w-full py-3 text-red-400 font-semibold rounded-lg border border-red-500/30 hover:bg-red-500/10 transition-colors disabled:opacity-50"
                         >
-                            {t.mining.ticketExpiredCannotBuy}
+                            {txPending ? t.mining.buying : t.mining.buyTicket}
                         </button>
                     ) : !isTicketBought ? (
                         <button
@@ -643,15 +821,8 @@ const MiningPanel: React.FC = () => {
                 </div>
 
                 {/* Active Mining Controls */}
-                {isTicketBought && (
+                {hasActiveTicket && (
                     <div className="mt-4 pt-4 border-t border-slate-100 flex gap-2">
-                         <button
-                            onClick={handleClaim}
-                            disabled={txPending}
-                            className="flex-1 py-2 bg-amber-500/20 text-amber-300 font-bold rounded-lg hover:bg-amber-500/30 transition-colors disabled:opacity-50 border border-amber-500/30"
-                         >
-                            {t.mining.claimRewards}
-                         </button>
                          <button
                             onClick={handleRedeem}
                             disabled={txPending}
@@ -666,6 +837,198 @@ const MiningPanel: React.FC = () => {
         </div>
 
       </div>
+      )}
+
+      {/* Ticket Status Display - New Addition */}
+      {currentStep === 3 && (
+        <div className={`glass-panel p-4 md:p-6 rounded-xl border-2 animate-fade-in backdrop-blur-sm bg-gray-900/50 mt-8 ${statusInfo?.border || 'border-gray-800'}`}>
+            {!hasActiveTicket ? (
+                <div className="text-center py-12">
+                    <div className="bg-gray-800/50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 border border-gray-700">
+                        <Zap className="text-gray-600" size={32} />
+                    </div>
+                    <h3 className="text-xl font-bold text-gray-300 mb-2">{t.mining.unknownStatus || "No Mining Activity"}</h3>
+                    <p className="text-gray-500 max-w-md mx-auto mb-6">
+                        {canStakeLiquidity 
+                            ? t.mining.readyToStakeDesc 
+                            : isTicketBought 
+                                ? "You have a ticket but haven't staked liquidity yet."
+                                : "You haven't purchased a mining ticket yet."}
+                    </p>
+                    <button 
+                        onClick={() => setCurrentStep(canStakeLiquidity ? 2 : 1)}
+                        className="px-6 py-2 bg-gray-800 hover:bg-gray-700 text-white font-bold rounded-lg border border-gray-600 transition-colors"
+                    >
+                        {canStakeLiquidity ? t.mining.stake : t.mining.buyTicket}
+                    </button>
+                </div>
+            ) : (
+                <>
+                <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+                <div className="flex items-center gap-2">
+                    <Package className="text-neon-400" size={24} />
+                    <h3 className="text-xl font-bold text-white">{t.mining.currentTicket}</h3>
+                </div>
+                <div className={`px-3 py-1 rounded-full text-sm font-bold border ${statusInfo?.bg} ${statusInfo?.color} ${statusInfo?.border}`}>
+                    {statusInfo?.label}
+                </div>
+            </div>
+
+            {/* Quick Action for Pending Liquidity */}
+            {canStakeLiquidity && (
+                <div className="mb-4 bg-amber-900/10 border border-amber-500/20 rounded-lg p-3 flex items-center justify-between gap-3 animate-fade-in">
+                    <div className="flex items-center gap-2 text-amber-200/80 text-sm">
+                        <AlertCircle size={16} className="shrink-0" />
+                        <span>{t.mining.readyToStakeDesc}</span>
+                    </div>
+                    <button
+                        onClick={handleScrollToStake}
+                        className="whitespace-nowrap px-4 py-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black font-bold rounded-lg text-sm shadow-lg shadow-amber-500/20 transition-all flex items-center gap-1"
+                    >
+                        {t.mining.stake} <ArrowRight size={14} />
+                    </button>
+                </div>
+            )}
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
+                <div className="bg-gray-800/50 p-3 rounded-lg border border-gray-700">
+                    <div className="text-gray-400 mb-1">{t.mining.ticketAmount}</div>
+                    <div className="text-lg font-bold text-white font-mono">{ticketInfo.amount.toString()} MC</div>
+                </div>
+                <div className="bg-gray-800/50 p-3 rounded-lg border border-gray-700">
+                    <div className="text-gray-400 mb-1">{t.mining.purchaseTime}</div>
+                    <div className="text-white font-mono">{formatDate(ticketInfo.purchaseTime)}</div>
+                </div>
+                {ticketInfo.liquidityProvided ? (
+                    <>
+                        <div className="bg-gray-800/50 p-3 rounded-lg border border-gray-700">
+                            <div className="text-gray-400 mb-1">{t.mining.startTime}</div>
+                            <div className="text-white font-mono">{formatDate(ticketInfo.startTime)}</div>
+                        </div>
+                        <div className="bg-gray-800/50 p-3 rounded-lg border border-gray-700">
+                            <div className="text-gray-400 mb-1">{t.mining.endTime}</div>
+                            <div className="text-white font-mono">
+                                {formatDate(ticketInfo.startTime + ticketInfo.cycleDays * 60)}
+                            </div>
+                        </div>
+                    </>
+                ) : !ticketInfo.redeemed && (
+                    <div className="bg-gray-800/50 p-3 rounded-lg border border-gray-700 col-span-1 md:col-span-2">
+                        <div className="text-gray-400 mb-1">{t.mining.timeLeft}</div>
+                        <div className="text-white font-mono">
+                             {isTicketExpired 
+                                ? "00:00:00" 
+                                : (() => {
+                                    const expiry = ticketInfo.purchaseTime + 72 * 3600;
+                                    const diff = expiry - now;
+                                    if (diff <= 0) return "00:00:00";
+                                    const h = Math.floor(diff / 3600);
+                                    const m = Math.floor((diff % 3600) / 60);
+                                    return `${h}h ${m}m`;
+                                })()
+                             }
+                        </div>
+                    </div>
+                )}
+            </div>
+
+            {/* Action Buttons for Step 3 */}
+            {hasActiveTicket && (
+                 <div className="mt-6 pt-6 border-t border-gray-700 flex flex-col md:flex-row gap-4">
+                     <button
+                        onClick={handleRedeem}
+                        disabled={txPending}
+                        className="flex-1 py-3 md:py-4 bg-gradient-to-r from-red-500/20 to-red-600/20 hover:from-red-500/30 hover:to-red-600/30 text-red-300 font-bold rounded-xl border border-red-500/30 transition-all flex items-center justify-center gap-2 shadow-lg shadow-red-500/10"
+                     >
+                        <TrendingUp size={20} />
+                        {t.mining.redeem}
+                     </button>
+                </div>
+            )}
+          </>
+        )}
+      </div>
+    )}
+      {/* History Section */}
+      {isConnected && (
+        <div className="glass-panel p-4 md:p-6 rounded-xl border border-gray-800 bg-gray-900/50 mt-8 animate-fade-in">
+            <button 
+                onClick={() => setShowHistory(!showHistory)}
+                className="w-full flex items-center justify-between text-white hover:text-neon-400 transition-colors"
+            >
+                <div className="flex items-center gap-2">
+                    <History className="text-neon-400" size={20} />
+                    <h3 className="text-lg font-bold">{t.mining.ticketHistory || "Ticket History"}</h3>
+                </div>
+                {showHistory ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+            </button>
+
+            {showHistory && (
+                <div className="mt-4 space-y-3 animate-fade-in">
+                    {loadingHistory ? (
+                        <div className="text-center py-8 text-gray-400 flex flex-col items-center gap-2">
+                             <div className="w-6 h-6 border-2 border-neon-500 border-t-transparent rounded-full animate-spin"></div>
+                             <span>Loading history...</span>
+                        </div>
+                    ) : ticketHistory.length === 0 ? (
+                        <div className="text-center py-8 text-gray-400 border-2 border-dashed border-gray-800 rounded-xl">
+                            No ticket history found
+                        </div>
+                    ) : (
+                        <div className="space-y-3">
+                            {ticketHistory.map((item, idx) => (
+                            <div key={idx} className="bg-gray-800/30 rounded-lg p-4 border border-gray-700/50 hover:border-neon-500/30 transition-colors">
+                                <div className="flex justify-between items-start mb-3">
+                                    <div className="flex items-center gap-3">
+                                        <div className="bg-gray-900/50 px-2 py-1 rounded text-xs font-mono text-gray-400 border border-gray-700">
+                                            #{item.ticketId}
+                                        </div>
+                                        <span className={`px-2 py-0.5 rounded text-xs font-bold border ${
+                                            item.status === 'Mining' ? 'bg-green-500/10 text-green-400 border-green-500/20' :
+                                            item.status === 'Redeemed' ? 'bg-gray-500/10 text-gray-400 border-gray-500/20' :
+                                            item.status === 'Expired' ? 'bg-red-500/10 text-red-400 border-red-500/20' :
+                                            'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                                        }`}>
+                                            {item.status === 'Mining' ? t.mining.mining : 
+                                             item.status === 'Redeemed' ? t.mining.redeemed :
+                                             item.status === 'Expired' ? t.mining.expired :
+                                             t.mining.pendingLiquidity}
+                                        </span>
+                                    </div>
+                                    <div className="text-right">
+                                        <div className="font-bold text-white text-lg">{item.amount} <span className="text-xs font-normal text-gray-400">MC</span></div>
+                                    </div>
+                                </div>
+                                
+                                <div className="grid grid-cols-2 gap-2 text-xs text-gray-400">
+                                    <div className="flex flex-col">
+                                        <span className="text-gray-500 mb-0.5">{t.mining.purchaseTime}</span>
+                                        <span className="font-mono text-gray-300">{formatDate(item.purchaseTime)}</span>
+                                    </div>
+                                    
+                                    {item.status === 'Mining' && item.endTime && (
+                                        <div className="flex flex-col text-right">
+                                            <span className="text-gray-500 mb-0.5">{t.mining.endTime}</span>
+                                            <span className="font-mono text-neon-400">{formatDate(item.endTime)}</span>
+                                        </div>
+                                    )}
+                                    
+                                    {item.status === 'Redeemed' && (
+                                         <div className="flex flex-col text-right">
+                                            <span className="text-gray-500 mb-0.5">{t.mining.status}</span>
+                                            <span className="font-mono text-gray-300">{t.mining.redeemed}</span>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        ))}
+                        </div>
+                    )}
+                </div>
+            )}
+        </div>
+      )}
+
     </div>
   );
 };

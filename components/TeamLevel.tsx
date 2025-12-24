@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { TEAM_LEVELS } from '../constants';
-import { Crown, Users, Percent, UserCheck, Copy, Share2 } from 'lucide-react';
+import { Users, Percent, UserCheck, Copy, Share2, Crown } from 'lucide-react';
 import { useLanguage } from '../LanguageContext';
 import { useWeb3 } from '../Web3Context';
 import { ethers } from 'ethers';
@@ -129,57 +129,67 @@ const TeamLevel: React.FC = () => {
                     {t.team.colCount}: {userLevelInfo.activeDirects} | {t.team.colReward}: {TEAM_LEVELS.find(l => l.level === userLevelInfo.currentLevel)?.reward || '0%'}
                 </p>
             </div>
-            <div className="px-3 md:px-4 py-1.5 md:py-2 bg-gray-900 rounded-lg border border-gray-700 shadow-sm">
-                <span className="text-xs md:text-sm text-gray-400">{t.team.teamCount}:</span>
-                <span className="ml-2 font-bold text-white">{userLevelInfo.teamCount}</span>
-            </div>
+
         </div>
 
         <div className="overflow-x-auto px-4 -mx-4 sm:mx-0">
-            <table className="w-full text-left min-w-[500px] sm:min-w-0">
+            <table className="w-full text-left">
                 <thead>
                     <tr className="bg-gray-800/50 border-b border-gray-800">
-                        <th className="p-3 md:p-4 text-gray-400 font-medium font-mono uppercase text-xs md:text-sm">{t.team.colLevel}</th>
-                        <th className="p-3 md:p-4 text-gray-400 font-medium font-mono uppercase text-xs md:text-sm">
+                        <th className="p-2 md:p-4 text-gray-400 font-medium font-mono uppercase text-xs md:text-sm">{t.team.colLevel}</th>
+                        <th className="p-2 md:p-4 text-gray-400 font-medium font-mono uppercase text-xs md:text-sm">
                             <div className="flex items-center gap-1 md:gap-2">
                                 <Users size={14} className="md:w-4 md:h-4" /> <span className="hidden sm:inline">{t.team.colCount}</span>
                             </div>
                         </th>
-                        <th className="p-3 md:p-4 text-gray-400 font-medium font-mono uppercase text-xs md:text-sm">
+                        <th className="p-2 md:p-4 text-gray-400 font-medium font-mono uppercase text-xs md:text-sm">
                             <div className="flex items-center gap-1 md:gap-2">
                                 <Percent size={14} className="md:w-4 md:h-4" /> <span className="hidden sm:inline">{t.team.colReward}</span>
                             </div>
                         </th>
-                        <th className="p-3 md:p-4 text-gray-400 font-medium font-mono uppercase text-xs md:text-sm text-right">{t.team.colStatus}</th>
+                        <th className="p-2 md:p-4 text-gray-400 font-medium font-mono uppercase text-xs md:text-sm text-right">{t.team.colStatus}</th>
                     </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-800">
                     {TEAM_LEVELS.map((level, index) => {
                         const isCurrent = level.level === userLevelInfo.currentLevel;
+                        
+                        let badgeStyle = isCurrent ? 'bg-neon-500 text-black' : 'bg-gray-800 text-gray-500 border border-gray-700';
+                        let icon = null;
+
+                        if (level.level === 'V7') { // Silver
+                            badgeStyle = 'bg-slate-300/20 text-slate-300 border border-slate-400/30 shadow-[0_0_10px_rgba(203,213,225,0.2)]';
+                            icon = <Crown size={14} className="fill-slate-300/20" />;
+                        } else if (level.level === 'V8') { // Platinum
+                            badgeStyle = 'bg-cyan-300/20 text-cyan-300 border border-cyan-400/30 shadow-[0_0_10px_rgba(103,232,249,0.2)]';
+                            icon = <Crown size={14} className="fill-cyan-300/20" />;
+                        } else if (level.level === 'V9') { // Gold
+                            badgeStyle = 'bg-amber-400/20 text-amber-400 border border-amber-500/30 shadow-[0_0_10px_rgba(251,191,36,0.2)]';
+                            icon = <Crown size={14} className="fill-amber-400/20" />;
+                        }
+
                         return (
                             <tr 
                                 key={level.level} 
                                 className={`group hover:bg-gray-800/50 transition-colors ${isCurrent ? 'bg-neon-900/20' : ''}`}
                             >
-                                <td className="p-4">
+                                <td className="p-2 md:p-4">
                                     <div className={`flex items-center gap-2 font-bold ${isCurrent ? 'text-neon-400' : 'text-gray-300'}`}>
-                                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                                            index >= 6 ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' : 
-                                            isCurrent ? 'bg-neon-500 text-black' : 'bg-gray-800 text-gray-500 border border-gray-700'
-                                        }`}>
-                                            {index >= 6 ? <Crown size={16} /> : level.level}
+                                        <div className={`h-8 px-3 rounded-lg flex items-center justify-center gap-1.5 min-w-[3rem] ${badgeStyle}`}>
+                                            {icon}
+                                            {level.level}
                                         </div>
                                     </div>
                                 </td>
-                                <td className="p-4 text-gray-400 font-mono">
+                                <td className="p-2 md:p-4 text-gray-400 font-mono">
                                     {level.countRequired.toLocaleString()}
                                 </td>
-                                <td className="p-4">
+                                <td className="p-2 md:p-4">
                                     <span className="inline-block px-3 py-1 rounded-full bg-amber-500/20 text-amber-400 font-bold border border-amber-500/30">
                                         {level.reward}%
                                     </span>
                                 </td>
-                                <td className="p-4 text-right">
+                                <td className="p-2 md:p-4 text-right">
                                     {isCurrent ? (
                                         <span className="text-neon-400 text-xs font-bold uppercase tracking-wider border border-neon-500 px-2 py-1 rounded bg-neon-900/20">{t.team.current}</span>
                                     ) : (
@@ -196,30 +206,37 @@ const TeamLevel: React.FC = () => {
 
       {/* Direct Referrals Network Section */}
       <div className="glass-panel p-4 md:p-6 rounded-xl md:rounded-2xl bg-gray-900/50 border border-gray-800 backdrop-blur-sm">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4 md:mb-6">
+        <div className="flex flex-wrap items-center justify-between gap-4 mb-4 md:mb-6">
             <div className="flex items-center gap-3">
                 <div className="p-3 bg-purple-500/20 text-purple-400 rounded-full border border-purple-500/30">
                     <UserCheck size={24} />
                 </div>
                 <div>
                     <h3 className="text-xl font-bold text-white">{t.team.networkTitle}</h3>
-                    <div className="flex items-center gap-2 text-sm text-gray-400">
-                        {t.team.networkSubtitle}
-                        {account && (
-                            <button onClick={copyReferralLink} className="text-neon-400 hover:text-neon-300 font-bold flex items-center gap-1 ml-2">
-                                <Copy size={12} /> Link
-                            </button>
-                        )}
-                    </div>
                 </div>
             </div>
-            
-            <div className="text-right">
-                <p className="text-xs text-gray-400 uppercase font-bold tracking-wider">{t.team.netTotalAmount}</p>
-                <p className="text-xl font-black text-purple-400 font-mono">
-                    {ethers.formatEther(totalTicketAmount)} <span className="text-sm font-bold text-purple-300">MC</span>
-                </p>
+        
+            <div className="flex flex-col items-end gap-1 ml-auto sm:ml-0">
+                 <div className="text-right">
+                     <p className="text-xs text-gray-400 uppercase font-bold tracking-wider">{t.team.netTotalAmount}</p>
+                     <p className="text-xl font-black text-purple-400 font-mono">
+                         {ethers.formatEther(totalTicketAmount)} <span className="text-sm font-bold text-purple-300">MC</span>
+                     </p>
+                 </div>
+                 <button
+                     onClick={copyReferralLink}
+                     className="flex items-center gap-2 px-3 py-1.5 bg-purple-500/20 text-purple-400 rounded-lg hover:bg-purple-500/30 transition-colors border border-purple-500/30 text-xs font-bold"
+                     title="Copy Referral Link"
+                 >
+                     <Copy size={14} />
+                     <span>COPY LINK</span>
+                 </button>
             </div>
+        </div>
+
+        <div className="text-sm text-gray-400 mb-3 font-medium flex items-center gap-2">
+            <span className="w-1 h-4 bg-neon-500 rounded-full"></span>
+            {t.team.networkSubtitle}
         </div>
 
         {isLoadingDirects ? (
@@ -229,27 +246,27 @@ const TeamLevel: React.FC = () => {
                 <table className="w-full text-left border-collapse">
                     <thead>
                         <tr className="bg-gray-800/50 border-b border-gray-800">
-                            <th className="p-4 text-gray-400 text-sm font-semibold">{t.team.netWallet}</th>
-                            <th className="p-4 text-gray-400 text-sm font-semibold whitespace-nowrap">{t.team.netTicket}</th>
-                            <th className="p-4 text-gray-400 text-sm font-semibold whitespace-nowrap">{t.team.netStatus}</th>
-                            <th className="p-4 text-gray-400 text-sm font-semibold text-right whitespace-nowrap">{t.team.netJoined}</th>
+                            <th className="p-2 md:p-4 text-gray-400 text-sm font-semibold">{t.team.netWallet}</th>
+                            <th className="p-2 md:p-4 text-gray-400 text-sm font-semibold whitespace-nowrap">{t.team.netTicket}</th>
+                            <th className="p-2 md:p-4 text-gray-400 text-sm font-semibold whitespace-nowrap">{t.team.netStatus}</th>
+                            <th className="p-2 md:p-4 text-gray-400 text-sm font-semibold text-right whitespace-nowrap">{t.team.netJoined}</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-800">
                         {directReferrals.map((item, idx) => (
                             <tr key={idx} className="hover:bg-gray-800/50 transition-colors">
-                                <td className="p-4 text-gray-300 font-mono text-sm">
+                                <td className="p-2 md:p-4 text-gray-300 font-mono text-sm">
                                     {item.user.substring(0, 6)}...{item.user.substring(38)}
                                 </td>
-                                <td className="p-4 text-white font-bold text-sm whitespace-nowrap">
+                                <td className="p-2 md:p-4 text-white font-bold text-sm whitespace-nowrap">
                                     {ethers.formatEther(item.ticketAmount)} MC
                                 </td>
-                                <td className="p-4">
+                                <td className="p-2 md:p-4">
                                     <span className={`px-2 py-1 text-xs font-bold rounded-full whitespace-nowrap ${item.ticketAmount > 0n ? 'bg-neon-500/20 text-neon-400 border border-neon-500/30' : 'bg-gray-800 text-gray-500 border border-gray-700'}`}>
                                         {item.ticketAmount > 0n ? t.team.netActive : 'Inactive'}
                                     </span>
                                 </td>
-                                <td className="p-4 text-right text-gray-500 text-sm whitespace-nowrap">
+                                <td className="p-2 md:p-4 text-right text-gray-500 text-sm whitespace-nowrap">
                                     {item.joinTime > 0n ? new Date(Number(item.joinTime) * 1000).toLocaleDateString() : '-'}
                                 </td>
                             </tr>

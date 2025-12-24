@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from "react"
+import React, { useState, useEffect } from "react"
 import Navbar from "./components/Navbar"
 import NoticeBar from "./components/NoticeBar"
 import StatsPanel from "./components/StatsPanel"
@@ -9,6 +9,7 @@ import SwapPanel from "./components/SwapPanel"
 import AdminPanel from "./components/AdminPanel"
 import TransactionHistory from "./components/TransactionHistory"
 import EarningsDetail from "./components/EarningsDetail"
+import PullToRefresh from "./components/PullToRefresh"
 import { AppTab } from "./types"
 import { MOCK_USER_STATS } from "./constants"
 import { ArrowLeftRight } from "lucide-react"
@@ -30,6 +31,12 @@ const AppContent: React.FC = () => {
   const [loading, setLoading] = useState(true)
   const [showWhitepaper, setShowWhitepaper] = useState(false)
   const { t } = useLanguage()
+
+  const handleRefresh = async () => {
+    // Small delay for visual feedback
+    await new Promise(resolve => setTimeout(resolve, 800));
+    window.location.reload();
+  }
 
   useEffect(() => {
     // Simulate initial loading
@@ -58,40 +65,42 @@ const AppContent: React.FC = () => {
   return (
     <div className="min-h-screen bg-black text-white selection:bg-neon-500 selection:text-black font-sans pb-20 md:pb-8">
       <Navbar currentTab={currentTab} setTab={setCurrentTab} />
-      <NoticeBar />
 
       <WhitepaperModal isOpen={showWhitepaper} onClose={() => setShowWhitepaper(false)} />
 
-      <main className="pt-20 px-3 sm:px-4 md:pt-24 md:px-6 lg:px-8 mb-16 md:mb-0">
-        {/* Render Tab Content */}
-        {currentTab === AppTab.HOME && (
-          <StatsPanel
-            stats={{
-              ...MOCK_USER_STATS,
-              balanceMC: 0,
-              balanceJBC: 0,
-              totalRevenue: 0,
-              teamCount: 0,
-              activeInvestment: 0,
-              pendingRewards: 0,
-            }}
-            onJoinClick={() => setCurrentTab(AppTab.MINING)}
-            onWhitepaperClick={() => setShowWhitepaper(true)}
-          />
-        )}
+      <PullToRefresh onRefresh={handleRefresh} className="pt-20 md:pt-24">
+        <main className="px-3 sm:px-4 md:px-6 lg:px-8 mb-16 md:mb-0">
+          <NoticeBar />
+          {/* Render Tab Content */}
+          {currentTab === AppTab.HOME && (
+            <StatsPanel
+              stats={{
+                ...MOCK_USER_STATS,
+                balanceMC: 0,
+                balanceJBC: 0,
+                totalRevenue: 0,
+                teamCount: 0,
+                activeInvestment: 0,
+                pendingRewards: 0,
+              }}
+              onJoinClick={() => setCurrentTab(AppTab.MINING)}
+              onWhitepaperClick={() => setShowWhitepaper(true)}
+            />
+          )}
 
-        {currentTab === AppTab.MINING && <MiningPanel />}
+          {currentTab === AppTab.MINING && <MiningPanel />}
 
-        {currentTab === AppTab.TEAM && <TeamLevel />}
+          {currentTab === AppTab.TEAM && <TeamLevel />}
 
-        {currentTab === AppTab.SWAP && <SwapPanel />}
+          {currentTab === AppTab.SWAP && <SwapPanel />}
 
-        {currentTab === AppTab.HISTORY && <TransactionHistory />}
+          {currentTab === AppTab.HISTORY && <TransactionHistory />}
 
-        {currentTab === AppTab.EARNINGS && <EarningsDetail />}
+          {currentTab === AppTab.EARNINGS && <EarningsDetail />}
 
-        {currentTab === AppTab.ADMIN && <AdminPanel />}
-      </main>
+          {currentTab === AppTab.ADMIN && <AdminPanel />}
+        </main>
+      </PullToRefresh>
 
       {/* Footer */}
       <footer className="mt-20 border-t border-gray-800 py-8 bg-black">

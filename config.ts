@@ -1,4 +1,15 @@
 import { getDefaultConfig } from '@rainbow-me/rainbowkit';
+import { 
+  injectedWallet,
+  tokenPocketWallet,
+  metaMaskWallet,
+  walletConnectWallet,
+  coinbaseWallet,
+  rainbowWallet,
+  trustWallet,
+  okxWallet,
+  bitgetWallet
+} from '@rainbow-me/rainbowkit/wallets';
 import { sepolia, bscTestnet } from 'wagmi/chains';
 import { http } from 'wagmi';
 
@@ -12,12 +23,29 @@ const mcChain = {
   blockExplorers: {
     default: { name: 'Mcerscan', url: 'https://mcerscan.com' },
   },
+  iconUrl: '/logo.png',
 } as const;
 
 export const config = getDefaultConfig({
   appName: 'RWA Jinbao',
   projectId: 'YOUR_PROJECT_ID', // Reown (WalletConnect) Project ID. Using placeholder for now or user can update later.
   chains: [mcChain, sepolia, bscTestnet],
+  wallets: [
+    {
+      groupName: 'Popular',
+      wallets: [
+        injectedWallet,
+        tokenPocketWallet,
+        metaMaskWallet,
+        trustWallet,
+        okxWallet,
+        bitgetWallet,
+        walletConnectWallet,
+        rainbowWallet,
+        coinbaseWallet,
+      ],
+    },
+  ],
   transports: {
     [mcChain.id]: http(),
     [sepolia.id]: http(),

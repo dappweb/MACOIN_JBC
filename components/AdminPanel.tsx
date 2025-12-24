@@ -41,15 +41,23 @@ const AdminPanel: React.FC = () => {
   // Announcement Management
   const [announceZh, setAnnounceZh] = useState('');
   const [announceEn, setAnnounceEn] = useState('');
+  const [announcementList, setAnnouncementList] = useState<Array<{id: number, zh: string, en: string}>>([]);
 
   // Load current announcements
   useEffect(() => {
     const storedAnnouncements = localStorage.getItem('announcements');
     if (storedAnnouncements) {
       try {
-        const announcements = JSON.parse(storedAnnouncements);
-        setAnnounceZh(announcements.zh || '');
-        setAnnounceEn(announcements.en || '');
+        const parsed = JSON.parse(storedAnnouncements);
+        
+        if (Array.isArray(parsed)) {
+            setAnnouncementList(parsed);
+        } else {
+            // Migration from single object to array
+            if (parsed.zh || parsed.en) {
+                setAnnouncementList([{ id: Date.now(), zh: parsed.zh, en: parsed.en }]);
+            }
+        }
       } catch (err) {
         console.error('Failed to load announcements', err);
       }
@@ -64,14 +72,22 @@ const AdminPanel: React.FC = () => {
 
   const publishAnnouncement = () => {
     try {
-      const announcements = {
+      if (!announceZh && !announceEn) return;
+
+      const newAnnouncement = {
+        id: Date.now(),
         zh: announceZh,
         en: announceEn
       };
-      localStorage.setItem('announcements', JSON.stringify(announcements));
+      
+      const newList = [...announcementList, newAnnouncement];
+      setAnnouncementList(newList);
+      localStorage.setItem('announcements', JSON.stringify(newList));
+      
+      setAnnounceZh('');
+      setAnnounceEn('');
+      
       toast.success(t.admin.announcementSuccess);
-
-      // 触发 NoticeBar 更新（通过 storage 事件）
       window.dispatchEvent(new Event('storage'));
     } catch (err) {
       console.error('Failed to publish announcement', err);
@@ -79,9 +95,24 @@ const AdminPanel: React.FC = () => {
     }
   };
 
+  const deleteAnnouncement = (id: number) => {
+    try {
+      const newList = announcementList.filter(item => item.id !== id);
+      setAnnouncementList(newList);
+      localStorage.setItem('announcements', JSON.stringify(newList));
+      
+      toast.success(t.admin.announcementCleared);
+      window.dispatchEvent(new Event('storage'));
+    } catch (err) {
+      console.error('Failed to delete announcement', err);
+      toast.error('Failed to delete announcement');
+    }
+  };
+
   const clearAnnouncement = () => {
     try {
       localStorage.removeItem('announcements');
+      setAnnouncementList([]);
       setAnnounceZh('');
       setAnnounceEn('');
       toast.success(t.admin.announcementCleared);
@@ -312,15 +343,39 @@ const AdminPanel: React.FC = () => {
               disabled={!announceZh && !announceEn}
               className="flex-1 py-3 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black font-bold rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-amber-500/30"
             >
-              {t.admin.publishAnnouncement}
+              {t.admin.publishAnnouncement || "Add Announcement"}
             </button>
             <button
               onClick={clearAnnouncement}
-              className="px-6 py-3 bg-gray-700 hover:bg-gray-600 text-gray-300 font-bold rounded-lg transition-colors border border-gray-600"
+              className="px-6 py-3 bg-red-900/50 hover:bg-red-800/50 text-red-200 font-bold rounded-lg transition-colors border border-red-800"
             >
-              {t.admin.clearAnnouncement}
+              {t.admin.clearAnnouncement || "Clear All"}
             </button>
           </div>
+
+          {/* Announcement List */}
+          {announcementList.length > 0 && (
+            <div className="mt-6 space-y-3">
+                <h4 className="text-sm font-bold text-gray-400 uppercase tracking-wider">Current Announcements ({announcementList.length})</h4>
+                <div className="space-y-2 max-h-60 overflow-y-auto pr-1 custom-scrollbar">
+                    {announcementList.map((item) => (
+                        <div key={item.id} className="bg-gray-900/50 border border-amber-900/30 rounded-lg p-3 flex justify-between items-start gap-3 group">
+                            <div className="flex-1 space-y-1">
+                                {item.zh && <p className="text-sm text-gray-200"><span className="text-amber-500 text-xs font-bold mr-1">ZH</span> {item.zh}</p>}
+                                {item.en && <p className="text-sm text-gray-400"><span className="text-blue-500 text-xs font-bold mr-1">EN</span> {item.en}</p>}
+                            </div>
+                            <button 
+                                onClick={() => deleteAnnouncement(item.id)}
+                                className="p-1.5 text-gray-500 hover:text-red-400 hover:bg-red-900/20 rounded transition-colors opacity-0 group-hover:opacity-100"
+                                title="Delete"
+                            >
+                                <AlertTriangle size={16} />
+                            </button>
+                        </div>
+                    ))}
+                </div>
+            </div>
+          )}
         </div>
       </div>
 

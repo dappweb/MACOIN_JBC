@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState } from "react"
+import React, { useEffect, useState } from "react"
 import { UserStats } from "../types"
 import { Wallet, TrendingUp, Users, Coins, ArrowUpRight, Link } from "lucide-react"
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"
@@ -21,6 +21,27 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
   const [displayStats, setDisplayStats] = useState<UserStats>(initialStats)
   const [jbcPrice, setJbcPrice] = useState<string>("1.0")
   const [rewardTotals, setRewardTotals] = useState({ mc: 0, jbc: 0 })
+  const [mcUsdtPrice, setMcUsdtPrice] = useState<number>(0)
+
+  // Fetch MC/USDT Price
+  useEffect(() => {
+    const fetchMcPrice = async () => {
+      try {
+        const response = await fetch('https://api.macoin.ai/market/symbol-thumb')
+        const data = await response.json()
+        const mcData = data.find((item: any) => item.symbol === 'MC/USDT')
+        if (mcData) {
+          setMcUsdtPrice(parseFloat(mcData.close))
+        }
+      } catch (error) {
+        console.error("Failed to fetch MC price:", error)
+      }
+    }
+    
+    fetchMcPrice()
+    const interval = setInterval(fetchMcPrice, 60000) // Update every minute
+    return () => clearInterval(interval)
+  }, [])
 
   // Bind Referrer State
   const [referrer, setReferrer] = useState("")
@@ -340,9 +361,9 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
       </div>
 
       {/* Bind Referrer Section (Moved from TeamLevel) */}
-      <div className="glass-panel p-4 sm:p-5 md:p-6 rounded-xl md:rounded-2xl bg-gray-900/50 border-l-4 border-neon-500 flex flex-col items-start sm:items-center gap-4 shadow-lg backdrop-blur-sm">
-        <div className="flex items-center gap-3 md:gap-4 w-full sm:w-auto">
-          <div className="bg-neon-500/20 p-2 md:p-3 rounded-full text-neon-400 border border-neon-500/30">
+      <div className="glass-panel p-4 sm:p-5 md:p-6 rounded-xl md:rounded-2xl bg-gray-900/50 border-l-4 border-neon-500 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-lg backdrop-blur-sm">
+        <div className="flex items-center gap-3 md:gap-4 w-full md:w-auto">
+          <div className="bg-neon-500/20 p-2 md:p-3 rounded-full text-neon-400 border border-neon-500/30 shrink-0">
             <Link size={20} className="md:w-6 md:h-6" />
           </div>
           <div>
@@ -350,7 +371,7 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
             <p className="text-xs md:text-sm text-gray-400">{t.team.bindDesc}</p>
           </div>
         </div>
-        <div className="flex flex-col sm:flex-row w-full sm:w-auto gap-2">
+        <div className="flex flex-col sm:flex-row w-full md:w-auto gap-2">
           {!isConnected ? (
             <button
               disabled
@@ -359,8 +380,8 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
               Connect Wallet First
             </button>
           ) : isBound ? (
-            <div className="px-4 py-2.5 md:px-6 md:py-3 bg-neon-500/20 text-neon-400 font-bold rounded-lg border border-neon-500/30 flex items-center gap-2 text-sm md:text-base justify-center sm:justify-start">
-              <span className="w-2 h-2 bg-neon-500 rounded-full"></span>
+            <div className="px-4 py-2.5 md:px-6 md:py-3 bg-neon-500/20 text-neon-400 font-bold rounded-lg border border-neon-500/30 flex items-center gap-2 text-sm md:text-base justify-center sm:justify-start w-full md:w-auto">
+              <span className="w-2 h-2 bg-neon-500 rounded-full shrink-0"></span>
               {t.team.bindSuccess}
             </div>
           ) : (
@@ -375,7 +396,7 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
               <button
                 onClick={handleBind}
                 disabled={!referrer.trim() || isBinding}
-                className="px-4 py-2.5 md:px-6 md:py-3 bg-gradient-to-r from-neon-500 to-neon-600 hover:from-neon-400 hover:to-neon-500 disabled:opacity-50 disabled:cursor-not-allowed text-black font-bold rounded-lg transition-colors shadow-lg shadow-neon-500/30 whitespace-nowrap text-sm md:text-base"
+                className="px-4 py-2.5 md:px-6 md:py-3 bg-gradient-to-r from-neon-500 to-neon-600 hover:from-neon-400 hover:to-neon-500 disabled:opacity-50 disabled:cursor-not-allowed text-black font-bold rounded-lg transition-colors shadow-lg shadow-neon-500/30 whitespace-nowrap text-sm md:text-base w-full sm:w-auto"
               >
                 {isBinding ? "Binding..." : t.team.bindButton}
               </button>
@@ -389,15 +410,24 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
         {/* Stat 1 */}
         <div className="glass-panel p-4 md:p-6 rounded-xl md:rounded-2xl hover:border-neon-500/40 transition-colors bg-gray-900/50 border border-gray-800 backdrop-blur-sm">
           <div className="flex items-center justify-between mb-3 md:mb-4">
-            <span className="text-gray-400 text-xs md:text-sm">{t.stats.assets}</span>
+            <div className="flex flex-col">
+              <span className="text-gray-400 text-xs md:text-sm">{t.stats.assets}</span>
+              {mcUsdtPrice > 0 && (
+                <span className="text-neon-400/80 text-[10px] md:text-xs font-mono mt-0.5">
+                  1 MC ≈ ${mcUsdtPrice.toFixed(4)}
+                </span>
+              )}
+            </div>
             <Wallet className="text-neon-400" size={18} />
           </div>
           <div className="text-2xl md:text-3xl font-bold text-white mb-1">
             {displayStats.balanceMC.toLocaleString()}
           </div>
-          {/* <div className="text-xs text-neon-400 flex items-center gap-1">
-                <ArrowUpRight size={12} /> +2.4% {t.stats.today}
-            </div> */}
+          {mcUsdtPrice > 0 && (
+            <div className="text-xs text-neon-400 font-bold flex items-center gap-1">
+              ≈${(displayStats.balanceMC * mcUsdtPrice).toFixed(2)} USDT
+            </div>
+          )}
         </div>
 
         {/* Stat 2 */}
@@ -422,8 +452,13 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
             <TrendingUp className="text-neon-400" size={18} />
           </div>
           <div className="text-2xl md:text-3xl font-bold text-white mb-1">{rewardTotals.mc.toLocaleString()}</div>
-          <div className="text-xs text-gray-400">
-            MC: {rewardTotals.mc.toLocaleString()} · JBC: {rewardTotals.jbc.toLocaleString()}
+          <div className="text-xs text-gray-400 flex justify-between items-center">
+            <span>MC: {rewardTotals.mc.toLocaleString()} · JBC: {rewardTotals.jbc.toLocaleString()}</span>
+            {mcUsdtPrice > 0 && (
+              <span className="text-neon-400">
+                ≈${((rewardTotals.mc + rewardTotals.jbc * parseFloat(jbcPrice)) * mcUsdtPrice).toFixed(2)}
+              </span>
+            )}
           </div>
           <div className="text-xs text-gray-500">{t.stats.settlement}</div>
         </div>

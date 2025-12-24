@@ -1,15 +1,15 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { ethers } from 'ethers';
-import { useAccount, useChainId } from 'wagmi';
-import { useEthersProvider, useEthersSigner } from './wagmi-adapters';
-import { useConnectModal } from '@rainbow-me/rainbowkit';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from "react"
+import { ethers } from "ethers"
+import { useAccount, useChainId } from "wagmi"
+import { useEthersProvider, useEthersSigner } from "./wagmi-adapters"
+import { useConnectModal } from "@rainbow-me/rainbowkit"
 
 // Partial ABIs
 export const MC_ABI = [
   "function approve(address spender, uint256 amount) external returns (bool)",
   "function allowance(address owner, address spender) external view returns (uint256)",
-  "function balanceOf(address account) external view returns (uint256)"
-];
+  "function balanceOf(address account) external view returns (uint256)",
+]
 
 export const PROTOCOL_ABI = [
   "function bindReferrer(address _referrer) external",
@@ -41,8 +41,8 @@ export const PROTOCOL_ABI = [
   "event ReferralRewardPaid(address indexed user, address indexed from, uint256 mcAmount, uint8 rewardType, uint256 ticketId)",
   "event Redeemed(address indexed user, uint256 principal, uint256 fee)",
   "event SwappedMCToJBC(address indexed user, uint256 mcAmount, uint256 jbcAmount, uint256 tax)",
-  "event SwappedJBCToMC(address indexed user, uint256 jbcAmount, uint256 mcAmount, uint256 tax)"
-];
+  "event SwappedJBCToMC(address indexed user, uint256 jbcAmount, uint256 mcAmount, uint256 tax)",
+]
 
 // Contract Addresses (Mock for now, replace with real deployment)
 // export const CONTRACT_ADDRESSES = {
@@ -50,7 +50,12 @@ export const PROTOCOL_ABI = [
 //   JBC_TOKEN: "0x89958d15c01b84c997Ca5C70b3197B738cdc706e", // Replace with real JBC Address
 //   PROTOCOL: "0xB4E8aA3f6e28D470668b038167cf9362f1c600c9"
 // };
+//
 
+//
+// MC合约地址0xB2B8777BcBc7A8DEf49F022773d392a8787cf9EF
+//
+//   JBC合约地址0xA743cB357a9f59D349efB7985072779a094658dD
 // Contract Addresses - Update these with your deployed contract addresses  - new
 // export const CONTRACT_ADDRESSES = {
 //   MC_TOKEN: "0xbe18a4e8Fc2B56b160C39C13AdC61702BB434CF9",    // MC Token (ERC20) - 用于购买 JBC
@@ -60,184 +65,186 @@ export const PROTOCOL_ABI = [
 
 //  -old
 export const CONTRACT_ADDRESSES = {
-  MC_TOKEN: "0xB2B8777BcBc7A8DEf49F022773d392a8787cf9EF",    // MC Token (ERC20) - 用于购买 JBC
-  JBC_TOKEN: "0xA743cB357a9f59D349efB7985072779a094658dD",   // JBC Token (ERC20) - 项目主代币
-  PROTOCOL: "0x348a77aA2A970543A128c617c3Cdc20f13bD441E"    // Protocol Contract - 主协议合约（包含兑换池）
-};
-
-
-interface Web3ContextType {
-  provider: ethers.Provider | null;
-  signer: ethers.Signer | null;
-  account: string | null;
-  connectWallet: () => void;
-  isConnected: boolean;
-  mcContract: ethers.Contract | null;
-  jbcContract: ethers.Contract | null;
-  protocolContract: ethers.Contract | null;
-  hasReferrer: boolean;
-  isOwner: boolean;
-  referrerAddress: string | null;
-  checkReferrerStatus: () => Promise<void>;
+  MC_TOKEN: "0xB2B8777BcBc7A8DEf49F022773d392a8787cf9EF", // MC Token (ERC20) - 用于购买 JBC
+  JBC_TOKEN: "0xA743cB357a9f59D349efB7985072779a094658dD", // JBC Token (ERC20) - 项目主代币
+  PROTOCOL: "0x348a77aA2A970543A128c617c3Cdc20f13bD441E", // Protocol Contract - 主协议合约（包含兑换池）
 }
 
-const Web3Context = createContext<Web3ContextType | undefined>(undefined);
+interface Web3ContextType {
+  provider: ethers.Provider | null
+  signer: ethers.Signer | null
+  account: string | null
+  connectWallet: () => void
+  isConnected: boolean
+  mcContract: ethers.Contract | null
+  jbcContract: ethers.Contract | null
+  protocolContract: ethers.Contract | null
+  hasReferrer: boolean
+  isOwner: boolean
+  referrerAddress: string | null
+  checkReferrerStatus: () => Promise<void>
+}
+
+const Web3Context = createContext<Web3ContextType | undefined>(undefined)
 
 export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const { address, isConnected } = useAccount();
-  const chainId = useChainId();
-  const provider = useEthersProvider({ chainId });
-  const signer = useEthersSigner({ chainId });
-  const { openConnectModal } = useConnectModal();
+  const { address, isConnected } = useAccount()
+  const chainId = useChainId()
+  const provider = useEthersProvider({ chainId })
+  const signer = useEthersSigner({ chainId })
+  const { openConnectModal } = useConnectModal()
 
-  const [mcContract, setMcContract] = useState<ethers.Contract | null>(null);
-  const [jbcContract, setJbcContract] = useState<ethers.Contract | null>(null);
-  const [protocolContract, setProtocolContract] = useState<ethers.Contract | null>(null);
-  const [hasReferrer, setHasReferrer] = useState(false);
-  const [isOwner, setIsOwner] = useState(false);
-  const [referrerAddress, setReferrerAddress] = useState<string | null>(null);
+  const [mcContract, setMcContract] = useState<ethers.Contract | null>(null)
+  const [jbcContract, setJbcContract] = useState<ethers.Contract | null>(null)
+  const [protocolContract, setProtocolContract] = useState<ethers.Contract | null>(null)
+  const [hasReferrer, setHasReferrer] = useState(false)
+  const [isOwner, setIsOwner] = useState(false)
+  const [referrerAddress, setReferrerAddress] = useState<string | null>(null)
 
   useEffect(() => {
     if (signer) {
-        // Init Contracts with Signer (Write access)
-        const _mc = new ethers.Contract(CONTRACT_ADDRESSES.MC_TOKEN, MC_ABI, signer);
-        const _jbc = new ethers.Contract(CONTRACT_ADDRESSES.JBC_TOKEN, MC_ABI, signer);
-        const _protocol = new ethers.Contract(CONTRACT_ADDRESSES.PROTOCOL, PROTOCOL_ABI, signer);
-        setMcContract(_mc);
-        setJbcContract(_jbc);
-        setProtocolContract(_protocol);
+      // Init Contracts with Signer (Write access)
+      const _mc = new ethers.Contract(CONTRACT_ADDRESSES.MC_TOKEN, MC_ABI, signer)
+      const _jbc = new ethers.Contract(CONTRACT_ADDRESSES.JBC_TOKEN, MC_ABI, signer)
+      const _protocol = new ethers.Contract(CONTRACT_ADDRESSES.PROTOCOL, PROTOCOL_ABI, signer)
+      setMcContract(_mc)
+      setJbcContract(_jbc)
+      setProtocolContract(_protocol)
     } else if (provider) {
-        // Init Contracts with Provider (Read only)
-        const _mc = new ethers.Contract(CONTRACT_ADDRESSES.MC_TOKEN, MC_ABI, provider);
-        const _jbc = new ethers.Contract(CONTRACT_ADDRESSES.JBC_TOKEN, MC_ABI, provider);
-        const _protocol = new ethers.Contract(CONTRACT_ADDRESSES.PROTOCOL, PROTOCOL_ABI, provider);
-        setMcContract(_mc);
-        setJbcContract(_jbc);
-        setProtocolContract(_protocol);
+      // Init Contracts with Provider (Read only)
+      const _mc = new ethers.Contract(CONTRACT_ADDRESSES.MC_TOKEN, MC_ABI, provider)
+      const _jbc = new ethers.Contract(CONTRACT_ADDRESSES.JBC_TOKEN, MC_ABI, provider)
+      const _protocol = new ethers.Contract(CONTRACT_ADDRESSES.PROTOCOL, PROTOCOL_ABI, provider)
+      setMcContract(_mc)
+      setJbcContract(_jbc)
+      setProtocolContract(_protocol)
     } else {
-        setMcContract(null);
-        setJbcContract(null);
-        setProtocolContract(null);
+      setMcContract(null)
+      setJbcContract(null)
+      setProtocolContract(null)
     }
-  }, [signer, provider]);
+  }, [signer, provider])
 
   // 检查推荐人状态
   const checkReferrerStatus = async () => {
     if (!protocolContract || !address) {
-      setHasReferrer(false);
-      setIsOwner(false);
-      setReferrerAddress(null);
-      return;
+      setHasReferrer(false)
+      setIsOwner(false)
+      setReferrerAddress(null)
+      return
     }
 
     try {
       // 检查是否是管理员
-      const owner = await protocolContract.owner();
-      const ownerStatus = owner.toLowerCase() === address.toLowerCase();
-      setIsOwner(ownerStatus);
+      const owner = await protocolContract.owner()
+      const ownerStatus = owner.toLowerCase() === address.toLowerCase()
+      setIsOwner(ownerStatus)
 
       // 如果是管理员，不需要推荐人
       if (ownerStatus) {
-        setHasReferrer(true);
-        setReferrerAddress(null);
-        return;
+        setHasReferrer(true)
+        setReferrerAddress(null)
+        return
       }
 
       // 检查是否有推荐人
-      const userInfo = await protocolContract.userInfo(address);
-      const referrer = userInfo[0]; // referrer is first return value
-      const hasRef = referrer !== ethers.ZeroAddress;
-      setHasReferrer(hasRef);
-      setReferrerAddress(hasRef ? referrer : null);
+      const userInfo = await protocolContract.userInfo(address)
+      const referrer = userInfo[0] // referrer is first return value
+      const hasRef = referrer !== ethers.ZeroAddress
+      setHasReferrer(hasRef)
+      setReferrerAddress(hasRef ? referrer : null)
     } catch (err) {
-      console.error('Failed to check referrer status', err);
-      setHasReferrer(false);
-      setIsOwner(false);
-      setReferrerAddress(null);
+      console.error("Failed to check referrer status", err)
+      setHasReferrer(false)
+      setIsOwner(false)
+      setReferrerAddress(null)
     }
-  };
+  }
 
   useEffect(() => {
     // Check for referral code in URL
-    const searchParams = new URLSearchParams(window.location.search);
-    const ref = searchParams.get('ref');
+    const searchParams = new URLSearchParams(window.location.search)
+    const ref = searchParams.get("ref")
     if (ref && ethers.isAddress(ref)) {
-      localStorage.setItem('pendingReferrer', ref);
-      console.log('Referrer stored:', ref);
+      localStorage.setItem("pendingReferrer", ref)
+      console.log("Referrer stored:", ref)
     }
-  }, []);
+  }, [])
 
   // 检查推荐人状态
   useEffect(() => {
-    checkReferrerStatus();
-  }, [protocolContract, address]);
+    checkReferrerStatus()
+  }, [protocolContract, address])
 
   // Auto-bind referrer when connected
   useEffect(() => {
     const bindReferrer = async () => {
-        const pendingRef = localStorage.getItem('pendingReferrer');
-        if (isConnected && address && protocolContract && pendingRef) { // Changed 'account' to 'address'
-            // Validate
-            if (pendingRef.toLowerCase() === address.toLowerCase()) return; // Self-ref
+      const pendingRef = localStorage.getItem("pendingReferrer")
+      if (isConnected && address && protocolContract && pendingRef) {
+        // Changed 'account' to 'address'
+        // Validate
+        if (pendingRef.toLowerCase() === address.toLowerCase()) return // Self-ref
 
-            try {
-                // Check if already bound
-                const userInfo = await protocolContract.userInfo(address);
-                const currentReferrer = userInfo[0]; // referrer is first return val
+        try {
+          // Check if already bound
+          const userInfo = await protocolContract.userInfo(address)
+          const currentReferrer = userInfo[0] // referrer is first return val
 
-                if (currentReferrer === ethers.ZeroAddress) {
-                    console.log("Binding referrer:", pendingRef);
-                    // Call bind
-                    const tx = await protocolContract.bindReferrer(pendingRef);
-                    await tx.wait();
-                    console.log("Bind successful");
-                    // Clear pending
-                    localStorage.removeItem('pendingReferrer');
-                    // 重新检查推荐人状态
-                    await checkReferrerStatus();
-                    // Optional: Show toast or reload
-                } else {
-                    // Already bound
-                    localStorage.removeItem('pendingReferrer');
-                }
-            } catch (err) {
-                console.error("Auto-bind failed", err);
-            }
+          if (currentReferrer === ethers.ZeroAddress) {
+            console.log("Binding referrer:", pendingRef)
+            // Call bind
+            const tx = await protocolContract.bindReferrer(pendingRef)
+            await tx.wait()
+            console.log("Bind successful")
+            // Clear pending
+            localStorage.removeItem("pendingReferrer")
+            // 重新检查推荐人状态
+            await checkReferrerStatus()
+            // Optional: Show toast or reload
+          } else {
+            // Already bound
+            localStorage.removeItem("pendingReferrer")
+          }
+        } catch (err) {
+          console.error("Auto-bind failed", err)
         }
-    };
-    bindReferrer();
-  }, [isConnected, address, protocolContract]); // Changed dependency from 'account' to 'address'
+      }
+    }
+    bindReferrer()
+  }, [isConnected, address, protocolContract]) // Changed dependency from 'account' to 'address'
 
   const connectWallet = () => {
     if (openConnectModal) {
-        openConnectModal();
+      openConnectModal()
     }
-  };
+  }
 
   return (
-    <Web3Context.Provider value={{
-      provider: provider || null,
-      signer: signer || null,
-      account: address || null,
-      connectWallet,
-      isConnected,
-      mcContract,
-      jbcContract,
-      protocolContract,
-      hasReferrer,
-      isOwner,
-      referrerAddress,
-      checkReferrerStatus
-    }}>
+    <Web3Context.Provider
+      value={{
+        provider: provider || null,
+        signer: signer || null,
+        account: address || null,
+        connectWallet,
+        isConnected,
+        mcContract,
+        jbcContract,
+        protocolContract,
+        hasReferrer,
+        isOwner,
+        referrerAddress,
+        checkReferrerStatus,
+      }}
+    >
       {children}
     </Web3Context.Provider>
-  );
-};
+  )
+}
 
 export const useWeb3 = () => {
-  const context = useContext(Web3Context);
+  const context = useContext(Web3Context)
   if (!context) {
-    throw new Error('useWeb3 must be used within a Web3Provider');
+    throw new Error("useWeb3 must be used within a Web3Provider")
   }
-  return context;
-};
+  return context
+}

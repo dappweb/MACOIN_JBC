@@ -59,9 +59,9 @@ const WhitepaperModal: React.FC<WhitepaperModalProps> = ({ isOpen, onClose }) =>
                     <li><strong>卖出滑点:</strong> 25% (25%进入黑洞地址销毁)</li>
                     <li><strong>买入滑点:</strong> 50% (50%进入黑洞地址销毁)</li>
                     <li><strong>每日通缩:</strong> JBC底池每日自动销毁1%数量</li>
-                    <li><strong>卖出机制:</strong> JBC卖出时50%币量直接销毁，50%回到底池，用户拿到原交易量的金额。
+                    <li><strong>卖出机制:</strong> JBC卖出时25%币量直接销毁，75%用于兑换，用户获得75%的交易金额。
                         <p className="mt-1 text-sm bg-gray-800/50 p-2 rounded text-gray-400 italic border border-gray-700">
-                        举例：JBC此时价格为1$，用户卖出100枚JBC，50枚JBC进入黑洞销毁地址，剩余50枚JBC回到底池，用户获得100$的MC。
+                        举例：JBC此时价格为1$，用户卖出100枚JBC，25枚JBC进入黑洞销毁地址，剩余75枚JBC用于兑换，用户获得75$的MC。
                         </p>
                     </li>
                     </ul>

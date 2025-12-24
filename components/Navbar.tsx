@@ -27,11 +27,6 @@ const Navbar: React.FC<NavbarProps> = ({ currentTab, setTab }) => {
       if (protocolContract && account) {
         try {
           const owner = await protocolContract.owner()
-          console.log("Checking Owner:", {
-             contractOwner: owner,
-             currentAccount: account,
-             match: owner.toLowerCase() === account.toLowerCase()
-          });
           setIsOwner(owner.toLowerCase() === account.toLowerCase())
         } catch (e) {
           console.error("Failed to check owner", e)

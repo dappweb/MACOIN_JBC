@@ -102,11 +102,6 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
       if (protocolContract && address) { // Use address from useAccount() instead of account from context
         try {
           const owner = await protocolContract.owner()
-          console.log("Web3Context CheckOwner:", {
-             contractOwner: owner,
-             userAddress: address,
-             isMatch: owner.toLowerCase() === address.toLowerCase()
-          });
           setIsOwner(owner.toLowerCase() === address.toLowerCase())
         } catch (e) {
           console.error("Failed to check owner in Web3Context", e)

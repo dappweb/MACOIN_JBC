@@ -198,9 +198,9 @@ const WhitepaperModal: React.FC<WhitepaperModalProps> = ({ isOpen, onClose }) =>
                     <li><strong>Sell Slippage:</strong> 25% (25% sent to Black Hole Address for burning)</li>
                     <li><strong>Buy Slippage:</strong> 50% (50% sent to Black Hole Address for burning)</li>
                     <li><strong>Daily Deflation:</strong> 1% of the JBC Liquidity Pool is automatically burnt daily.</li>
-                    <li><strong>Selling Mechanism:</strong> When selling JBC, 50% of the token amount is directly burnt, and 50% returns to the pool. The user receives the USDT/MC value equivalent to the original transaction amount.
+                    <li><strong>Selling Mechanism:</strong> When selling JBC, 25% of the token amount is directly burnt, and 75% is used for exchange. The user receives 75% of the transaction amount.
                         <p className="mt-1 text-sm bg-gray-800/50 p-2 rounded text-gray-400 italic border border-gray-700">
-                        Example: If JBC price is $1 and a user sells 100 JBC: 50 JBC go to the black hole (burnt), 50 JBC return to the pool, and the user receives $100 worth of MC.
+                        Example: If JBC price is $1 and a user sells 100 JBC: 25 JBC go to the black hole (burnt), the remaining 75 JBC are used for exchange, and the user receives $75 worth of MC.
                         </p>
                     </li>
                     </ul>

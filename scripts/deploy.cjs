@@ -121,8 +121,16 @@ async function main() {
   console.log("Setting up permissions...");
 
   // Set Protocol address in JBC (to exempt from tax)
-  await jbc.setProtocol(protocolAddress);
-  console.log("JBC: Protocol address set.");
+  try {
+    if (typeof jbc.setProtocol === "function") {
+      await jbc.setProtocol(protocolAddress);
+      console.log("JBC: Protocol address set.");
+    } else {
+      console.log("JBC.setProtocol not available on this JBC contract - skipping.");
+    }
+  } catch (err) {
+    console.warn("Warning: Failed to call jbc.setProtocol (non-fatal):", err.message || err);
+  }
 
   // Fund Protocol with Tokens for Rewards
   // Mint/Transfer initial supply to protocol

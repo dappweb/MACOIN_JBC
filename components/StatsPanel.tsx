@@ -51,8 +51,82 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
   // Price History State
   const [priceHistory, setPriceHistory] = useState<Array<{ name: string; uv: number }>>([])
   const [loadingPriceHistory, setLoadingPriceHistory] = useState(true)
+  const [realtimePrices, setRealtimePrices] = useState<Array<{ timestamp: number; price: number }>>([])
 
-  // Fetch Price History from Swap Events
+  // Helper function to format price data for chart
+  const formatPriceHistory = (pricePoints: Array<{ timestamp: number; price: number }>) => {
+    if (pricePoints.length === 0) {
+      return [{ name: "Now", uv: 1.0 }]
+    }
+
+    // Sort by timestamp
+    const sorted = [...pricePoints].sort((a, b) => a.timestamp - b.timestamp)
+
+    // Dynamic aggregation based on data count
+    let aggregatedData: Array<{ name: string; uv: number }> = []
+
+    if (sorted.length < 10) {
+      // Few data points: aggregate by hour
+      const hourlyPrices = new Map<number, number[]>()
+      for (const point of sorted) {
+        const hour = Math.floor(point.timestamp / 3600) * 3600
+        if (!hourlyPrices.has(hour)) {
+          hourlyPrices.set(hour, [])
+        }
+        hourlyPrices.get(hour)!.push(point.price)
+      }
+
+      aggregatedData = Array.from(hourlyPrices.entries())
+        .map(([hour, prices]) => {
+          const date = new Date(hour * 1000)
+          const timeStr = `${date.getHours().toString().padStart(2, "0")}:${date.getMinutes().toString().padStart(2, "0")}`
+          const avgPrice = prices.reduce((sum, p) => sum + p, 0) / prices.length
+          return { name: timeStr, uv: avgPrice }
+        })
+        .slice(-30)
+    } else if (sorted.length < 50) {
+      // Medium data points: aggregate by 3 hours
+      const period3hPrices = new Map<number, number[]>()
+      for (const point of sorted) {
+        const period = Math.floor(point.timestamp / 10800) * 10800 // 3 hours
+        if (!period3hPrices.has(period)) {
+          period3hPrices.set(period, [])
+        }
+        period3hPrices.get(period)!.push(point.price)
+      }
+
+      aggregatedData = Array.from(period3hPrices.entries())
+        .map(([period, prices]) => {
+          const date = new Date(period * 1000)
+          const timeStr = `${date.getMonth() + 1}/${date.getDate()} ${date.getHours().toString().padStart(2, "0")}:00`
+          const avgPrice = prices.reduce((sum, p) => sum + p, 0) / prices.length
+          return { name: timeStr, uv: avgPrice }
+        })
+        .slice(-30)
+    } else {
+      // Many data points: aggregate by day
+      const dailyPrices = new Map<string, number[]>()
+      for (const point of sorted) {
+        const date = new Date(point.timestamp * 1000)
+        const dateKey = `${date.getMonth() + 1}/${date.getDate()}`
+        if (!dailyPrices.has(dateKey)) {
+          dailyPrices.set(dateKey, [])
+        }
+        dailyPrices.get(dateKey)!.push(point.price)
+      }
+
+      aggregatedData = Array.from(dailyPrices.entries())
+        .map(([date, prices]) => {
+          const avgPrice = prices.reduce((sum, p) => sum + p, 0) / prices.length
+          return { name: date, uv: avgPrice }
+        })
+        .slice(-30)
+    }
+
+    return aggregatedData.length > 0 ? aggregatedData : [{ name: "Now", uv: 1.0 }]
+  }
+
+  // Fetch Initial Price History from Swap Events
   useEffect(() => {
     const fetchPriceHistory = async () => {
       if (!protocolContract || !provider) {
@@ -71,7 +145,6 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
           protocolContract.queryFilter(protocolContract.filters.SwappedJBCToMC(), fromBlock),
         ])
 
-        // Combine and parse swap events to calculate prices
         interface PricePoint {
           timestamp: number
           price: number
@@ -119,46 +192,11 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
           }
         }
 
-        // Sort by timestamp
-        pricePoints.sort((a, b) => a.timestamp - b.timestamp)
-
-        if (pricePoints.length === 0) {
-          // No swap data yet, use default initial price
-          setPriceHistory([{ name: "Now", uv: 1.0 }])
-          setLoadingPriceHistory(false)
-          return
-        }
-
-        // Aggregate prices into time buckets for chart display
-        // Group by days for better visualization
-        const dailyPrices = new Map<string, number[]>()
-
-        for (const point of pricePoints) {
-          const date = new Date(point.timestamp * 1000)
-          const dateKey = `${date.getMonth() + 1}/${date.getDate()}`
-
-          if (!dailyPrices.has(dateKey)) {
-            dailyPrices.set(dateKey, [])
-          }
-          dailyPrices.get(dateKey)!.push(point.price)
-        }
-
-        // Calculate average price for each day
-        const chartData = Array.from(dailyPrices.entries()).map(([date, prices]) => {
-          const avgPrice = prices.reduce((sum, p) => sum + p, 0) / prices.length
-          return {
-            name: date,
-            uv: avgPrice,
-          }
-        })
-
-        // Limit to last 30 data points for chart readability
-        const limitedData = chartData.slice(-30)
-
-        setPriceHistory(limitedData.length > 0 ? limitedData : [{ name: "Now", uv: 1.0 }])
+        // Store price points and format for chart
+        setRealtimePrices(pricePoints)
+        setPriceHistory(formatPriceHistory(pricePoints))
       } catch (error) {
         console.error("Failed to fetch price history:", error)
-        // Fallback to default
         setPriceHistory([{ name: "Now", uv: 1.0 }])
       } finally {
         setLoadingPriceHistory(false)
@@ -166,6 +204,63 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
     }
 
     fetchPriceHistory()
+  }, [protocolContract, provider])
+
+  // Real-time event listener for price updates
+  useEffect(() => {
+    if (!protocolContract || !provider) return
+
+    const handleSwapMCToJBC = (user: string, mcAmount: any, jbcAmount: any, event: any) => {
+      try {
+        const mcAmountNum = parseFloat(ethers.formatEther(mcAmount))
+        const jbcAmountNum = parseFloat(ethers.formatEther(jbcAmount))
+        if (jbcAmountNum > 0) {
+          const price = mcAmountNum / jbcAmountNum
+          const timestamp = Math.floor(Date.now() / 1000)
+
+          setRealtimePrices((prev) => {
+            const updated = [...prev, { timestamp, price }]
+            // Keep only last 500 points to avoid memory issues
+            const limited = updated.slice(-500)
+            setPriceHistory(formatPriceHistory(limited))
+            return limited
+          })
+        }
+      } catch (err) {
+        console.error("Error processing SwappedMCToJBC event:", err)
+      }
+    }
+
+    const handleSwapJBCToMC = (user: string, jbcAmount: any, mcAmount: any, event: any) => {
+      try {
+        const jbcAmountNum = parseFloat(ethers.formatEther(jbcAmount))
+        const mcAmountNum = parseFloat(ethers.formatEther(mcAmount))
+        if (jbcAmountNum > 0) {
+          const price = mcAmountNum / jbcAmountNum
+          const timestamp = Math.floor(Date.now() / 1000)
+
+          setRealtimePrices((prev) => {
+            const updated = [...prev, { timestamp, price }]
+            // Keep only last 500 points to avoid memory issues
+            const limited = updated.slice(-500)
+            setPriceHistory(formatPriceHistory(limited))
+            return limited
+          })
+        }
+      } catch (err) {
+        console.error("Error processing SwappedJBCToMC event:", err)
+      }
+    }
+
+    // Set up event listeners
+    protocolContract.on("SwappedMCToJBC", handleSwapMCToJBC)
+    protocolContract.on("SwappedJBCToMC", handleSwapJBCToMC)
+
+    // Cleanup listeners on unmount
+    return () => {
+      protocolContract.removeListener("SwappedMCToJBC", handleSwapMCToJBC)
+      protocolContract.removeListener("SwappedJBCToMC", handleSwapJBCToMC)
+    }
   }, [protocolContract, provider])
 
   useEffect(() => {

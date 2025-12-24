@@ -294,32 +294,38 @@ const MiningPanel: React.FC = () => {
 
   const handleBuyTicket = async () => {
       if (!protocolContract || !mcContract) return;
+
+      // Guard: Check if user already has an active ticket
+      if (ticketInfo && ticketInfo.amount > 0n && !ticketInfo.redeemed) {
+          toast.error(t.mining.activeTicketExists || "You already have a ticket. Please stake or redeem first.");
+          return;
+      }
       
       setTxPending(true);
       try {
-          // 妫€鏌?MC 浣欓
+          // 检查 MC 余额
           const amountWei = ethers.parseEther(selectedTicket.amount.toString());
           const mcBalance = await mcContract.balanceOf(account);
           
           if (mcBalance < amountWei) {
-              toast.error(`${t.mining.insufficientMC} ${t.mining.needsMC} ${selectedTicket.amount} MC锛?{t.mining.currentBalance}: ${ethers.formatEther(mcBalance)} MC`);
+              toast.error(`${t.mining.insufficientMC} ${t.mining.needsMC} ${selectedTicket.amount} MC，${t.mining.currentBalance}: ${ethers.formatEther(mcBalance)} MC`);
               return;
           }
 
           const tx = await protocolContract.buyTicket(amountWei);
           await tx.wait();
           toast.success(t.mining.ticketBuySuccess);
-          // 鍒锋柊绁ㄦ嵁鐘舵€?
+          // 刷新票据状态
           await checkTicketStatus();
           // 刷新历史记录
           await fetchHistory();
       } catch (err: any) {
           console.error(err);
           const errorMsg = err.reason || err.message || '';
-          if (errorMsg.includes('Active ticket exists')) {
-              toast.error(t.mining.activeTicketExists, {
-                  duration: 5000,
-              });
+          
+          if (errorMsg.includes('Active ticket exists') || 
+              (err.code === 'CALL_EXCEPTION' && (errorMsg.includes('missing revert data') || !err.reason))) {
+              toast.error(t.mining.activeTicketExists || "Transaction failed: You may already have an active ticket.");
           } else if (errorMsg.includes('Invalid ticket tier')) {
               toast.error(t.mining.invalidTicketTier);
           } else {
@@ -667,10 +673,10 @@ const MiningPanel: React.FC = () => {
             ) : (
               <button
                 onClick={handleBuyTicket}
-                disabled={txPending}
-                className="w-full py-4 md:py-5 bg-gradient-to-r from-neon-500 to-neon-600 hover:from-neon-400 hover:to-neon-500 text-black font-extrabold text-xl rounded-xl shadow-xl shadow-neon-500/40 transition-all transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={txPending || isTicketBought}
+                className={`w-full py-4 md:py-5 bg-gradient-to-r from-neon-500 to-neon-600 hover:from-neon-400 hover:to-neon-500 text-black font-extrabold text-xl rounded-xl shadow-xl shadow-neon-500/40 transition-all transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed ${isTicketBought ? 'grayscale' : ''}`}
               >
-                {txPending ? t.mining.buying : `${t.mining.buyTicket} - ${selectedTicket.amount} MC`}
+                {txPending ? t.mining.buying : isTicketBought ? (t.mining.activeTicketExists || "Active Ticket Exists") : `${t.mining.buyTicket} - ${selectedTicket.amount} MC`}
               </button>
             )}
           </div>

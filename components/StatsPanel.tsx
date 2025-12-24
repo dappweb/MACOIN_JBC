@@ -517,16 +517,16 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
     if (referrer.trim() && protocolContract) {
       setIsBinding(true)
       try {
-        // 鎻愬彇 ref= 涔嬪悗鐨勫湴鍧€
+        // 提取 ref= 之后的地址
         let address = referrer.trim()
         const refMatch = address.match(/ref=([^&\s]+)/i)
         if (refMatch) {
           address = refMatch[1]
         }
 
-        // 楠岃瘉鍦板潃鏍煎紡
+        // 验证地址格式
         if (!/^0x[a-fA-F0-9]{40}$/.test(address)) {
-          toast.error("璇疯緭鍏ユ纭殑閽卞寘鍦板潃")
+          toast.error(t.referrer.invalidAddress)
           setIsBinding(false)
           return
         }
@@ -534,10 +534,10 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
         const tx = await protocolContract.bindReferrer(address)
         await tx.wait()
         setIsBound(true)
-        toast.success("Referrer Bound Successfully!")
+        toast.success(t.referrer.bindSuccess)
       } catch (err: any) {
         console.error(err)
-        toast.error("缁戝畾澶辫触: " + (err.reason || err.message))
+        toast.error(t.referrer.bindError + ": " + (err.reason || err.message))
       } finally {
         setIsBinding(false)
       }
@@ -606,7 +606,7 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
       </div>
 
       {/* Bind Referrer Section (Moved from TeamLevel) */}
-      <div className="glass-panel p-4 sm:p-5 md:p-6 rounded-xl md:rounded-2xl bg-gray-900/50 border-l-4 border-neon-500 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-lg backdrop-blur-sm">
+      <div className="glass-panel p-4 sm:p-5 md:p-6 rounded-xl md:rounded-2xl bg-gray-900/50 border-x-4 border-neon-500 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-lg backdrop-blur-sm">
         <div className="flex items-center gap-3 md:gap-4 w-full md:w-auto">
           <div className="bg-neon-500/20 p-2 md:p-3 rounded-full text-neon-400 border border-neon-500/30 shrink-0">
             <Link size={20} className="md:w-6 md:h-6" />

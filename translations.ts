@@ -40,6 +40,8 @@ export const translations = {
       adminExempt: "管理员无需绑定推荐人",
       bound: "已绑定推荐人",
       yourReferrer: "您的推荐人",
+      invalidAddress: "请输入正确的钱包地址",
+      bindSuccess: "推荐人绑定成功！",
     },
     mining: {
       title: "黄金 RWA 矿池",
@@ -320,6 +322,8 @@ export const translations = {
       adminExempt: "Admin does not need to bind a referrer",
       bound: "Referrer Bound",
       yourReferrer: "Your Referrer",
+      invalidAddress: "Please enter a valid wallet address",
+      bindSuccess: "Referrer Bound Successfully!",
     },
     mining: {
       title: "Gold RWA Pool",

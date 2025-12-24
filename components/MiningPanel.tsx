@@ -42,7 +42,7 @@ const MiningPanel: React.FC = () => {
   const [showHistory, setShowHistory] = useState(false);
   const [loadingHistory, setLoadingHistory] = useState(false);
   const [maxUnredeemedTicket, setMaxUnredeemedTicket] = useState<number>(0); // 未赎回的最大门票金额
-
+  
   const { t } = useLanguage();
   const { protocolContract, mcContract, account, isConnected, hasReferrer, isOwner, referrerAddress, checkReferrerStatus, provider } = useWeb3();
 
@@ -834,7 +834,10 @@ const MiningPanel: React.FC = () => {
                                 <span className="text-xs text-amber-400 mb-1">{t.mining.maxCap}</span>
                             </div>
                             <div className="w-full bg-gray-700 h-1.5 rounded-full mt-2">
-                                <div className="bg-neon-500 h-1.5 rounded-full" style={{ width: '0%' }}></div>
+                                <div 
+                                    className="bg-neon-500 h-1.5 rounded-full" 
+                                    style={{ width: '0%' }}
+                                ></div>
                             </div>
                          </div>
                     </div>

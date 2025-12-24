@@ -61,8 +61,39 @@ const AppContent: React.FC = () => {
     )
   }
 
+  // 根据当前标签页设置背景图
+  const getBackgroundImage = () => {
+    switch (currentTab) {
+      case AppTab.HOME:
+        return '/bg-1.png'
+      case AppTab.MINING:
+        return '/bg-2.png'
+      case AppTab.TEAM:
+        return '/bg-3.png'
+      case AppTab.SWAP:
+        return '/bg-4.png'
+      case AppTab.HISTORY:
+        return '/bg-5.png'
+      case AppTab.EARNINGS:
+        return '/bg-6.png'
+      default:
+        return '/bg-1.png'
+    }
+  }
+
   return (
-    <div className="min-h-screen bg-black text-white selection:bg-neon-500 selection:text-black font-sans pb-20 md:pb-8">
+    <div 
+      className="min-h-screen bg-black text-white selection:bg-neon-500 selection:text-black font-sans pb-20 md:pb-8 relative"
+      style={{
+        backgroundImage: `url(${getBackgroundImage()})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundAttachment: 'fixed'
+      }}
+    >
+      {/* 添加半透明遮罩层以确保内容可读性 */}
+      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm -z-10"></div>
+      
       <Navbar currentTab={currentTab} setTab={setCurrentTab} />
 
       <WhitepaperModal isOpen={showWhitepaper} onClose={() => setShowWhitepaper(false)} />

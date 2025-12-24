@@ -935,7 +935,7 @@ const MiningPanel: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
                 <div className="bg-gray-800/50 p-3 rounded-lg border border-gray-700">
                     <div className="text-gray-400 mb-1">{t.mining.ticketAmount}</div>
-                    <div className="text-lg font-bold text-white font-mono">{ticketInfo.amount.toString()} MC</div>
+                    <div className="text-lg font-bold text-white font-mono">{ethers.formatEther(ticketInfo.amount)} MC</div>
                 </div>
                 <div className="bg-gray-800/50 p-3 rounded-lg border border-gray-700">
                     <div className="text-gray-400 mb-1">{t.mining.purchaseTime}</div>

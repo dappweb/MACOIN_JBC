@@ -217,7 +217,7 @@ const AdminPanel: React.FC = () => {
   };
 
   const addLiquidity = async (tokenType: 'MC' | 'JBC') => {
-    if (!isConnected || !provider) {
+    if (!isConnected || !provider || !protocolContract) {
         toast.error("Connect wallet first");
         return;
     }
@@ -235,8 +235,16 @@ const AdminPanel: React.FC = () => {
                 return;
             }
 
-            // Transfer MC to protocol contract
-            const tx = await mcContract.connect(signer).transfer(CONTRACT_ADDRESSES.PROTOCOL, amount);
+            // Step 1: Approve protocol contract to spend MC
+            const allowance = await mcContract.allowance(account, CONTRACT_ADDRESSES.PROTOCOL);
+            if (allowance < amount) {
+                const approveTx = await mcContract.connect(signer).approve(CONTRACT_ADDRESSES.PROTOCOL, amount);
+                await approveTx.wait();
+                toast.success("MC approved!");
+            }
+
+            // Step 2: Call protocol's addLiquidity function
+            const tx = await protocolContract.connect(signer).addLiquidity(amount, 0);
             await tx.wait();
             toast.success(`Added ${mcLiquidityAmount} MC to pool!`);
             setMcLiquidityAmount('');
@@ -248,8 +256,16 @@ const AdminPanel: React.FC = () => {
                 return;
             }
 
-            // Transfer JBC to protocol contract
-            const tx = await jbcContract.connect(signer).transfer(CONTRACT_ADDRESSES.PROTOCOL, amount);
+            // Step 1: Approve protocol contract to spend JBC
+            const allowance = await jbcContract.allowance(account, CONTRACT_ADDRESSES.PROTOCOL);
+            if (allowance < amount) {
+                const approveTx = await jbcContract.connect(signer).approve(CONTRACT_ADDRESSES.PROTOCOL, amount);
+                await approveTx.wait();
+                toast.success("JBC approved!");
+            }
+
+            // Step 2: Call protocol's addLiquidity function
+            const tx = await protocolContract.connect(signer).addLiquidity(0, amount);
             await tx.wait();
             toast.success(`Added ${jbcLiquidityAmount} JBC to pool!`);
             setJbcLiquidityAmount('');

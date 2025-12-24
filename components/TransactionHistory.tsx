@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useWeb3 } from '../Web3Context';
 import { useLanguage } from '../LanguageContext';
-import { FileText, ExternalLink, Filter, RefreshCw, Clock, TrendingUp, TrendingDown, Package, Lock, Gift, Unlock } from 'lucide-react';
+import { FileText,X,Copy, ExternalLink, Filter, RefreshCw, Clock, TrendingUp, TrendingDown,ChevronRight, Package, Lock, Gift, Unlock } from 'lucide-react';
 import { ethers } from 'ethers';
 
 interface Transaction {

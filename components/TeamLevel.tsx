@@ -134,26 +134,26 @@ const TeamLevel: React.FC = () => {
           </div>
         </div>
 
-        <div className="overflow-x-auto px-4 -mx-4 sm:mx-0">
-          <table className="w-full text-left">
+        <div className="overflow-x-auto px-4 -mx-4 sm:mx-0 scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-900">
+          <table className="w-full text-left min-w-[600px]">
             <thead>
               <tr className="bg-gray-800/50 border-b border-gray-800">
-                <th className="p-2 md:p-4 text-gray-400 font-medium font-mono uppercase text-xs md:text-sm">
+                <th className="p-2 md:p-4 text-gray-400 font-medium font-mono uppercase text-xs md:text-sm whitespace-nowrap">
                   {t.team.colLevel}
                 </th>
-                <th className="p-2 md:p-4 text-gray-400 font-medium font-mono uppercase text-xs md:text-sm">
+                <th className="p-2 md:p-4 text-gray-400 font-medium font-mono uppercase text-xs md:text-sm whitespace-nowrap">
                   <div className="flex items-center gap-1 md:gap-2">
                     <Users size={14} className="md:w-4 md:h-4" />{" "}
                     <span className="hidden sm:inline">{t.team.colCount}</span>
                   </div>
                 </th>
-                <th className="p-2 md:p-4 text-gray-400 font-medium font-mono uppercase text-xs md:text-sm">
+                <th className="p-2 md:p-4 text-gray-400 font-medium font-mono uppercase text-xs md:text-sm whitespace-nowrap">
                   <div className="flex items-center gap-1 md:gap-2">
                     <Percent size={14} className="md:w-4 md:h-4" />{" "}
                     <span className="hidden sm:inline">{t.team.colReward}</span>
                   </div>
                 </th>
-                <th className="p-2 md:p-4 text-gray-400 font-medium font-mono uppercase text-xs md:text-sm text-right">
+                <th className="p-2 md:p-4 text-gray-400 font-medium font-mono uppercase text-xs md:text-sm text-right whitespace-nowrap">
                   {t.team.colStatus}
                 </th>
               </tr>
@@ -189,7 +189,7 @@ const TeamLevel: React.FC = () => {
                     key={level.level}
                     className={`group hover:bg-gray-800/50 transition-colors ${isCurrent ? "bg-neon-900/20" : ""}`}
                   >
-                    <td className="p-2 md:p-4">
+                    <td className="p-2 md:p-4 whitespace-nowrap">
                       <div
                         className={`flex items-center gap-2 font-bold ${isCurrent ? "text-neon-400" : "text-gray-300"}`}
                       >
@@ -201,13 +201,13 @@ const TeamLevel: React.FC = () => {
                         </div>
                       </div>
                     </td>
-                    <td className="p-2 md:p-4 text-gray-400 font-mono">{level.countRequired.toLocaleString()}</td>
-                    <td className="p-2 md:p-4">
+                    <td className="p-2 md:p-4 text-gray-400 font-mono whitespace-nowrap">{level.countRequired.toLocaleString()}</td>
+                    <td className="p-2 md:p-4 whitespace-nowrap">
                       <span className="inline-block px-3 py-1 rounded-full bg-amber-500/20 text-amber-400 font-bold border border-amber-500/30">
                         {level.reward}%
                       </span>
                     </td>
-                    <td className="p-2 md:p-4 text-right">
+                    <td className="p-2 md:p-4 text-right whitespace-nowrap">
                       {isCurrent ? (
                         <span className="text-neon-400 text-xs font-bold uppercase tracking-wider border border-neon-500 px-2 py-1 rounded bg-neon-900/20">
                           {t.team.current}

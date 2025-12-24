@@ -41,6 +41,7 @@ const MiningPanel: React.FC = () => {
   const [ticketHistory, setTicketHistory] = useState<TicketHistoryItem[]>([]);
   const [showHistory, setShowHistory] = useState(false);
   const [loadingHistory, setLoadingHistory] = useState(false);
+  const [maxUnredeemedTicket, setMaxUnredeemedTicket] = useState<number>(0); // 未赎回的最大门票金额
 
   const { t } = useLanguage();
   const { protocolContract, mcContract, account, isConnected, hasReferrer, isOwner, referrerAddress, checkReferrerStatus, provider } = useWeb3();
@@ -217,6 +218,18 @@ const MiningPanel: React.FC = () => {
         });
 
         setTicketHistory(historyItems.reverse());
+        
+        // 计算未赎回的最大门票金额
+        const unredeemedTickets = historyItems.filter(item => 
+            item.status === 'Mining' || item.status === 'Pending'
+        );
+        
+        if (unredeemedTickets.length > 0) {
+            const maxAmount = Math.max(...unredeemedTickets.map(item => parseFloat(item.amount)));
+            setMaxUnredeemedTicket(maxAmount);
+        } else {
+            setMaxUnredeemedTicket(0);
+        }
     } catch (err) {
         console.error("Failed to fetch history", err);
     } finally {
@@ -298,6 +311,8 @@ const MiningPanel: React.FC = () => {
           toast.success(t.mining.ticketBuySuccess);
           // 鍒锋柊绁ㄦ嵁鐘舵€?
           await checkTicketStatus();
+          // 刷新历史记录
+          await fetchHistory();
       } catch (err: any) {
           console.error(err);
           const errorMsg = err.reason || err.message || '';
@@ -347,6 +362,8 @@ const MiningPanel: React.FC = () => {
           toast.success(t.mining.stakeSuccess);
           // 鍒锋柊绁ㄦ嵁鐘舵€?
           await checkTicketStatus();
+          // 刷新历史记录
+          await fetchHistory();
       } catch (err: any) {
           console.error(t.mining.stakeFailed, err);
           const errorMsg = err.reason || err.message || '';
@@ -393,6 +410,8 @@ const MiningPanel: React.FC = () => {
           await tx.wait();
           toast.success(t.mining.redeemSuccess);
           await checkTicketStatus();
+          // 刷新历史记录
+          await fetchHistory();
       } catch (err: any) {
           console.error(err);
           const errorMsg = err.reason || err.message || '';
@@ -597,24 +616,44 @@ const MiningPanel: React.FC = () => {
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 md:gap-4 mb-6">
-            {TICKET_TIERS.map((tier) => (
-              <button
-                key={tier.amount}
-                onClick={() => setSelectedTicket(tier)}
-                className={`relative py-4 md:py-6 rounded-xl border-2 transition-all duration-300 flex flex-col items-center justify-center gap-1 ${
-                  selectedTicket.amount === tier.amount
-                    ? 'bg-gradient-to-br from-neon-500 to-neon-600 text-black border-neon-400 shadow-lg shadow-neon-500/40 transform scale-105 z-10'
-                    : 'bg-gray-900/50 border-gray-700 text-gray-300 hover:border-neon-500/50 hover:bg-gray-800/50'
-                }`}
-              >
-                <span className="text-2xl md:text-3xl font-bold">{tier.amount}</span>
-                <span className="text-sm font-semibold">MC</span>
-                <span className={`text-xs ${selectedTicket.amount === tier.amount ? 'text-black/80' : 'text-gray-400'}`}>
-                  +{tier.requiredLiquidity} {t.mining.liquidity}
-                </span>
-              </button>
-            ))}
+            {TICKET_TIERS.map((tier) => {
+              const isDisabled = tier.amount < maxUnredeemedTicket;
+              return (
+                <button
+                  key={tier.amount}
+                  onClick={() => !isDisabled && setSelectedTicket(tier)}
+                  disabled={isDisabled}
+                  className={`relative py-4 md:py-6 rounded-xl border-2 transition-all duration-300 flex flex-col items-center justify-center gap-1 ${
+                    isDisabled
+                      ? 'bg-gray-900/30 border-gray-800 text-gray-600 cursor-not-allowed opacity-50'
+                      : selectedTicket.amount === tier.amount
+                      ? 'bg-gradient-to-br from-neon-500 to-neon-600 text-black border-neon-400 shadow-lg shadow-neon-500/40 transform scale-105 z-10'
+                      : 'bg-gray-900/50 border-gray-700 text-gray-300 hover:border-neon-500/50 hover:bg-gray-800/50'
+                  }`}
+                >
+                  {isDisabled && (
+                    <div className="absolute top-1 right-1">
+                      <Lock className="w-4 h-4 text-gray-600" />
+                    </div>
+                  )}
+                  <span className="text-2xl md:text-3xl font-bold">{tier.amount}</span>
+                  <span className="text-sm font-semibold">MC</span>
+                  <span className={`text-xs ${selectedTicket.amount === tier.amount ? 'text-black/80' : isDisabled ? 'text-gray-600' : 'text-gray-400'}`}>
+                    +{tier.requiredLiquidity} {t.mining.liquidity}
+                  </span>
+                </button>
+              );
+            })}
           </div>
+
+          {maxUnredeemedTicket > 0 && (
+            <div className="mb-4 bg-amber-900/20 border border-amber-500/30 rounded-lg p-3 flex items-start gap-2 backdrop-blur-sm">
+              <AlertCircle className="text-amber-400 shrink-0 mt-0.5" size={16} />
+              <p className="text-xs text-amber-200/80">
+                {t.mining.minTicketWarning || `您有未赎回的 ${maxUnredeemedTicket} MC 门票，只能购买 >= ${maxUnredeemedTicket} MC 的门票。赎回后可购买更小金额的门票。`}
+              </p>
+            </div>
+          )}
 
           <div className="space-y-3">
             {!isApproved ? (
@@ -935,7 +974,7 @@ const MiningPanel: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
                 <div className="bg-gray-800/50 p-3 rounded-lg border border-gray-700">
                     <div className="text-gray-400 mb-1">{t.mining.ticketAmount}</div>
-                    <div className="text-lg font-bold text-white font-mono">{ticketInfo.amount.toString()} MC</div>
+                    <div className="text-lg font-bold text-white font-mono">{ethers.formatEther(ticketInfo.amount)} MC</div>
                 </div>
                 <div className="bg-gray-800/50 p-3 rounded-lg border border-gray-700">
                     <div className="text-gray-400 mb-1">{t.mining.purchaseTime}</div>

@@ -170,12 +170,12 @@ const Navbar: React.FC<NavbarProps> = ({ currentTab, setTab }) => {
             <div className="flex items-center gap-2 md:gap-4">
               <button
                 onClick={() => setLanguage(language === "zh" ? "en" : "zh")}
-                className="p-1.5 md:p-2 rounded-lg md:rounded-xl bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-emerald-400 transition-colors flex items-center gap-1 md:gap-2 border border-gray-700"
+                className="p-1.5 md:p-2 transition-colors rounded-lg md:rounded-xl bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-emerald-400  flex items-center gap-1 md:gap-2 border border-gray-700"
                 title="Switch Language"
               >
                 <Globe size={18} className="md:w-5 md:h-5" />
                 <span className="text-xs md:text-sm font-bold hidden sm:inline">
-                  {language === "zh" ? "EN" : "涓枃"}
+                  {language === "zh" ? "EN" : "ZH"}
                 </span>
               </button>
               {/* Button removed as requested for auto-logic */}

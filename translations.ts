@@ -160,7 +160,7 @@ export const translations = {
       slipSell: "卖出滑点 25% (25% 销毁)",
       slipBuy: "买入滑点 50% (50% 销毁)",
       confirm: "确认兑换",
-      poolLiquidity: "  LP总量",
+      poolLiquidity: "  LP流动池",
     },
     admin: {
       title: "管理员控制面板",

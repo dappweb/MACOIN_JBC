@@ -115,6 +115,52 @@
           background: #606060;
         }
       }
+
+      /* Mobile scrollbar - thinner and more subtle */
+      @media (max-width: 767px) {
+        ::-webkit-scrollbar {
+          width: 4px;
+          height: 4px;
+        }
+        ::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+          background: rgba(64, 64, 64, 0.5);
+          border-radius: 2px;
+        }
+      }
+
+      /* Smooth momentum scrolling for iOS */
+      .overflow-x-auto, .overflow-y-auto {
+        -webkit-overflow-scrolling: touch;
+        scroll-behavior: smooth;
+      }
+
+      /* Hide scrollbar but keep functionality */
+      .no-scrollbar::-webkit-scrollbar {
+        display: none;
+      }
+      .no-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+      }
+
+      /* Thin scrollbar utility */
+      .scrollbar-thin::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+      }
+      .scrollbar-thin::-webkit-scrollbar-track {
+        background: #1a1a1a;
+      }
+      .scrollbar-thin::-webkit-scrollbar-thumb {
+        background: #404040;
+        border-radius: 3px;
+      }
+      .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+        background: #606060;
+      }
     </style>
   </head>
   <body>

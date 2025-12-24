@@ -147,6 +147,15 @@ async function main() {
   // JBC: 100M minted to deployer. Let's send 1M to protocol.
   const fundAmount = hre.ethers.parseEther("1000000");
 
+  // Transfer Ownership to User Address if on Hardhat Network
+  // This ensures the user sees the Admin Panel in frontend
+  if (networkName === "hardhat" || networkName === "localhost") {
+      const targetOwner = "0x4C10831CBcF9884ba72051b5287b6c87E4F74A48";
+      console.log(`Transferring ownership to ${targetOwner}...`);
+      await protocol.transferOwnership(targetOwner);
+      console.log("Ownership transferred successfully.");
+  }
+
   /*
   try {
       console.log("Transferring JBC to Protocol...");

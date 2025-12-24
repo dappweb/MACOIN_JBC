@@ -60,9 +60,9 @@ export const PROTOCOL_ABI = [
 //   JBC合约地址0xA743cB357a9f59D349efB7985072779a094658dD
 // Contract Addresses - Update these with your deployed contract addresses
 export const CONTRACT_ADDRESSES = {
-  MC_TOKEN: "0xB2B8777BcBc7A8DEf49F022773d392a8787cf9EF",
-  JBC_TOKEN: "0xA743cB357a9f59D349efB7985072779a094658dD",
-  PROTOCOL: "0x5FbDB2315678afecb367f032d93F642f64180aa3"
+  MC_TOKEN: "0xB2B8777BcBc7A8DEf49F022773d392a8787cf9EF",    // MC Token (ERC20) - 用于购买 JBC
+  JBC_TOKEN: "0xA743cB357a9f59D349efB7985072779a094658dD",   // JBC Token (ERC20) - 项目主代币
+  PROTOCOL: "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512"    // Protocol Contract - 主协议合约（包含兑换池）
 };
 
 interface Web3ContextType {

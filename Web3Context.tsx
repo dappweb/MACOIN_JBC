@@ -148,8 +148,8 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const hasRef = referrer !== ethers.ZeroAddress
       setHasReferrer(hasRef)
       setReferrerAddress(hasRef ? referrer : null)
+      
     } catch (err) {
-      console.error("Failed to check referrer status", err)
       setHasReferrer(false)
       setIsOwner(false)
       setReferrerAddress(null)
@@ -162,7 +162,6 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const ref = searchParams.get("ref")
     if (ref && ethers.isAddress(ref)) {
       localStorage.setItem("pendingReferrer", ref)
-      console.log("Referrer stored:", ref)
     }
   }, [])
 

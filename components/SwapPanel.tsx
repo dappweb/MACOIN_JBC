@@ -28,22 +28,36 @@ const SwapPanel: React.FC = () => {
             // Pool Liquidity should be fetched from Protocol Contract state variables
             // swapReserveMC and swapReserveJBC
             
+            console.log('💰 [SwapPanel] 正在获取池子储备量...')
+            
             // Note: If contract instance is created with provider, these calls are read-only
             const poolMcBal = await protocolContract.swapReserveMC();
-            setPoolMC(ethers.formatEther(poolMcBal));
+            const poolMcFormatted = ethers.formatEther(poolMcBal);
+            setPoolMC(poolMcFormatted);
+            console.log('💰 [SwapPanel] MC 池子储备:', poolMcFormatted, 'MC')
+            console.log('💰 [SwapPanel] MC 池子储备 (原始):', poolMcBal.toString(), 'wei')
 
             const poolJbcBal = await protocolContract.swapReserveJBC();
-            setPoolJBC(ethers.formatEther(poolJbcBal));
+            const poolJbcFormatted = ethers.formatEther(poolJbcBal);
+            setPoolJBC(poolJbcFormatted);
+            console.log('💰 [SwapPanel] JBC 池子储备:', poolJbcFormatted, 'JBC')
+            console.log('💰 [SwapPanel] JBC 池子储备 (原始):', poolJbcBal.toString(), 'wei')
+            
+            // 计算 LP 总量
+            const mcAmount = parseFloat(poolMcFormatted);
+            const jbcAmount = parseFloat(poolJbcFormatted);
+            const totalLpTokens = mcAmount + jbcAmount;
+            
+            console.log('📊 [SwapPanel] ========== LP 总量统计 ==========')
+            console.log('📊 [SwapPanel] MC 数量:', mcAmount.toFixed(4), 'MC')
+            console.log('📊 [SwapPanel] JBC 数量:', jbcAmount.toFixed(4), 'JBC')
+            console.log('📊 [SwapPanel] LP 总量 (MC + JBC):', totalLpTokens.toFixed(4))
+            console.log('📊 [SwapPanel] =====================================')
         } catch (err) {
-            console.error("Failed to fetch pool balances", err);
+            console.error("❌ [SwapPanel] 获取池子余额失败:", err);
         }
-    } else if (mcContract && jbcContract && provider) {
-         // Fallback: If protocolContract is not available (e.g. not connected), create a read-only instance
-         // But wait, useWeb3 context usually provides protocolContract if provider is available
-         // Let's assume protocolContract might be null if not connected, but actually Web3Context initializes it with provider if not connected
-         
-         // If we are here and protocolContract is null, it might be due to init delay.
-         // Let's try to manual init if needed or just wait for effect.
+    } else {
+         console.log('⚠️ [SwapPanel] protocolContract 未初始化')
     }
 
     // 2. Fetch User Balances (Private Data)

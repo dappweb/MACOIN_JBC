@@ -318,7 +318,7 @@ const TransactionHistory: React.FC = () => {
       </div>
 
       {/* Filter Tabs */}
-      {/* <div className="bg-gray-900/50 border border-gray-800 rounded-xl shadow-md p-4 mb-6 backdrop-blur-sm overflow-hidden">
+      <div className="bg-gray-900/50 border border-gray-800 rounded-xl shadow-md p-4 mb-6 backdrop-blur-sm overflow-hidden">
         <div className="flex items-center gap-2 overflow-x-auto pb-2 -mb-2 no-scrollbar">
           <Filter className="w-5 h-5 text-gray-500 flex-shrink-0" />
           <button
@@ -345,7 +345,7 @@ const TransactionHistory: React.FC = () => {
             </button>
           ))}
         </div>
-      </div> */}
+      </div>
 
       {/* Transactions List */}
       {loading ? (

@@ -37,7 +37,7 @@ const MiningPanel: React.FC = () => {
   const [inputReferrerAddress, setInputReferrerAddress] = useState('');
   const [isBindingReferrer, setIsBindingReferrer] = useState(false);
   
-  // History State
+  // 历史记录状态
   const [ticketHistory, setTicketHistory] = useState<TicketHistoryItem[]>([]);
   const [showHistory, setShowHistory] = useState(false);
   const [loadingHistory, setLoadingHistory] = useState(false);
@@ -45,19 +45,19 @@ const MiningPanel: React.FC = () => {
   const { t } = useLanguage();
   const { protocolContract, mcContract, account, isConnected, hasReferrer, isOwner, referrerAddress, checkReferrerStatus, provider } = useWeb3();
 
-  // Calculations based on PDF logic
-  // Update: Calculate ROI based on Liquidity Amount (Ticket Amount * 1.5) instead of Ticket Amount
+  // 基于PDF逻辑的计算
+  // 更新：基于流动性金额（门票金额 * 1.5）计算ROI，而不是门票金额
   const totalInvestment = selectedTicket.amount + selectedTicket.requiredLiquidity;
-  const liquidityAmount = selectedTicket.requiredLiquidity; // This is typically Ticket Amount * 1.5
+  const liquidityAmount = selectedTicket.requiredLiquidity; // 通常是门票金额 * 1.5
   
-  // Daily ROI = Liquidity Amount * Daily Rate
+  // 每日ROI = 流动性金额 * 每日利率
   const dailyROI = (Number(liquidityAmount) * selectedPlan.dailyRate) / 100;
   const totalROI = dailyROI * selectedPlan.days;
 
-  // 3x Cap Calculation
+  // 3倍上限计算
   const maxCap = selectedTicket.amount * 3;
 
-  // New State for Wizard Steps
+  // 向导步骤状态
   const [currentStep, setCurrentStep] = useState(1);
 
   const now = Math.floor(Date.now() / 1000);
@@ -78,18 +78,18 @@ const MiningPanel: React.FC = () => {
       !isRedeemed;
   const isTicketBought = hasTicket && !isRedeemed;
 
-  // Effect to auto-advance steps based on state
+  // 根据状态自动推进步骤
   useEffect(() => {
       if (hasActiveTicket) {
-          setCurrentStep(3); // Mining Dashboard
+          setCurrentStep(3); // 挖矿仪表板
       } else if (canStakeLiquidity) {
-          setCurrentStep(2); // Stake Liquidity
+          setCurrentStep(2); // 质押流动性
       } else {
-          setCurrentStep(1); // Buy Ticket
+          setCurrentStep(1); // 购买门票
       }
   }, [hasActiveTicket, canStakeLiquidity, ticketInfo]);
 
-  // Formatting helper
+  // 格式化日期辅助函数
   const formatDate = (timestamp: number) => {
     return new Date(timestamp * 1000).toLocaleString();
   };
@@ -142,14 +142,14 @@ const MiningPanel: React.FC = () => {
         const currentBlock = await provider.getBlockNumber();
         const fromBlock = Math.max(0, currentBlock - 1000000); 
 
-        // Fetch events
+        // 获取事件
         const [purchaseEvents, stakeEvents, redeemEvents] = await Promise.all([
             protocolContract.queryFilter(protocolContract.filters.TicketPurchased(account), fromBlock),
             protocolContract.queryFilter(protocolContract.filters.LiquidityStaked(account), fromBlock),
             protocolContract.queryFilter(protocolContract.filters.Redeemed(account), fromBlock)
         ]);
 
-        // Merge and sort
+        // 合并并排序
         const allEvents = [
             ...purchaseEvents.map(e => ({ type: 'purchase', event: e })),
             ...stakeEvents.map(e => ({ type: 'stake', event: e })),
@@ -164,7 +164,7 @@ const MiningPanel: React.FC = () => {
         const historyItems: TicketHistoryItem[] = [];
         let currentItem: TicketHistoryItem | null = null;
         
-        // Cache block timestamps
+        // 缓存区块时间戳
         const blockTimestamps: Record<number, number> = {};
         const getBlockTimestamp = async (blockNumber: number) => {
             if (blockTimestamps[blockNumber]) return blockTimestamps[blockNumber];
@@ -196,7 +196,7 @@ const MiningPanel: React.FC = () => {
                     currentItem.status = 'Mining';
                     currentItem.cycleDays = Number(args[2]);
                     currentItem.startTime = timestamp;
-                    currentItem.endTime = timestamp + (currentItem.cycleDays || 0) * 60; // minutes
+                    currentItem.endTime = timestamp + (currentItem.cycleDays || 0) * 60; // 分钟
                 }
             } else if (item.type === 'redeem') {
                 if (currentItem && currentItem.status === 'Mining') {
@@ -236,9 +236,9 @@ const MiningPanel: React.FC = () => {
             try {
                 const protocolAddr = await protocolContract.getAddress();
                 const allowance = await mcContract.allowance(account, protocolAddr);
-                // Check if allowance covers the total investment required
-                // Using a slightly lower threshold to catch "already approved infinite"
-                // or just check against the needed amount
+                // 检查授权额度是否覆盖所需的总投资
+                // 使用稍低的阈值来捕获"已批准无限额度"
+                // 或仅检查所需金额
                 const requiredWei = ethers.parseEther(totalInvestment.toString());
 
                 if (allowance >= requiredWei) {
@@ -267,7 +267,7 @@ const MiningPanel: React.FC = () => {
       } catch (err: any) {
           console.error(err);
           toast.error(`${t.mining.claimFailed}: ${err.reason || err.message}`);
-          // Fallback for demo
+          // 演示用回退
           setIsApproved(true);
       } finally {
           setTxPending(false);
@@ -406,38 +406,79 @@ const MiningPanel: React.FC = () => {
       }
   };
 
+  /**
+   * 处理绑定推荐人操作
+   * Handles the referrer binding operation
+   * 
+   * 功能流程 / Function Flow:
+   * 1. 验证合约实例和输入地址是否存在
+   * 2. 验证地址格式的有效性
+   * 3. 防止用户绑定自己为推荐人
+   * 4. 调用智能合约执行绑定操作
+   * 5. 等待交易确认并更新UI状态
+   * 
+   * @throws {Error} 地址格式无效 / Invalid address format
+   * @throws {Error} 不能绑定自己 / Cannot bind yourself
+   * @throws {Error} 已经绑定过推荐人 / Already bound a referrer
+   */
   const handleBindReferrer = async () => {
+      // 前置检查：确保合约实例和输入地址都存在
+      // Pre-check: Ensure contract instance and input address exist
       if (!protocolContract || !inputReferrerAddress) return;
 
-      // 楠岃瘉鍦板潃鏍煎紡
+      // 验证地址格式是否符合以太坊地址规范
+      // Validate if address format conforms to Ethereum address standard
       if (!ethers.isAddress(inputReferrerAddress)) {
           toast.error('Invalid address format!');
           return;
       }
 
-      // 妫€鏌ユ槸鍚︾粦瀹氳嚜宸?
+      // 防止用户将自己设置为推荐人（业务逻辑限制）
+      // Prevent user from setting themselves as referrer (business logic restriction)
       if (inputReferrerAddress.toLowerCase() === account?.toLowerCase()) {
           toast.error('Cannot bind yourself as referrer!');
           return;
       }
 
+      // 设置加载状态，禁用按钮防止重复提交
+      // Set loading state to disable button and prevent duplicate submissions
       setIsBindingReferrer(true);
       try {
+          // 调用智能合约的 bindReferrer 方法
+          // Call smart contract's bindReferrer method
           const tx = await protocolContract.bindReferrer(inputReferrerAddress);
+          
+          // 等待交易被区块链确认
+          // Wait for transaction to be confirmed on blockchain
           await tx.wait();
+          
+          // 绑定成功：显示成功提示并清空输入框
+          // Binding successful: Show success message and clear input
           toast.success(t.team.bindSuccess);
           setInputReferrerAddress('');
-          // 閲嶆柊妫€鏌ユ帹鑽愪汉鐘舵€?
+          
+          // 重新检查推荐人状态以更新UI
+          // Re-check referrer status to update UI
           await checkReferrerStatus();
       } catch (err: any) {
           console.error(err);
+          
+          // 提取错误信息
+          // Extract error message
           const errorMsg = err.reason || err.message || '';
+          
+          // 处理特定错误：已经绑定过推荐人
+          // Handle specific error: Already bound a referrer
           if (errorMsg.includes('Already bound')) {
               toast.error('You have already bound a referrer!');
           } else {
+              // 显示其他错误信息
+              // Display other error messages
               toast.error(`${t.referrer.bindError}: ${errorMsg}`);
           }
       } finally {
+          // 无论成功或失败，都重置加载状态
+          // Reset loading state regardless of success or failure
           setIsBindingReferrer(false);
       }
   };
@@ -446,7 +487,7 @@ const MiningPanel: React.FC = () => {
       const element = document.getElementById('staking-section');
       if (element) {
           element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          // Optional: Add a highlight effect
+          // 可选：添加高亮效果
           element.classList.add('ring-2', 'ring-neon-500');
           setTimeout(() => element.classList.remove('ring-2', 'ring-neon-500'), 2000);
       }
@@ -522,7 +563,7 @@ const MiningPanel: React.FC = () => {
         </div>
       )}
 
-      {/* 宸茬粦瀹氭帹鑽愪汉鎻愮ず - 鏄剧ず鎺ㄨ崘浜哄湴鍧€ */}
+      {/* 已绑定推荐人提示 - 显示推荐人地址 */}
       {isConnected && hasReferrer && !isOwner && referrerAddress && (
         <div className="bg-neon-900/20 border-2 border-neon-500/50 rounded-xl p-4 flex items-start gap-3 animate-fade-in backdrop-blur-sm">
           <ShieldCheck className="text-neon-400 shrink-0 mt-0.5" size={20} />
@@ -535,7 +576,7 @@ const MiningPanel: React.FC = () => {
         </div>
       )}
 
-      {/* 绠＄悊鍛樻彁绀?*/}
+      {/* 管理员提示 */}
       {isConnected && isOwner && (
         <div className="bg-purple-900/20 border-2 border-purple-500/50 rounded-xl p-4 flex items-start gap-3 animate-fade-in backdrop-blur-sm">
           <ShieldCheck className="text-purple-400 shrink-0 mt-0.5" size={20} />
@@ -1031,7 +1072,7 @@ const MiningPanel: React.FC = () => {
       )}
 
       {/* Mobile Sticky Footer */}
-      <div className="fixed bottom-0 left-0 right-0 p-4 bg-gray-900/95 border-t border-gray-800 backdrop-blur-xl md:hidden z-50 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.3)]">
+      <div className="fixed bottom-0px left-0 right-0 p-4 bg-gray-900/95 border-t border-gray-800 backdrop-blur-xl md:hidden z-50 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.3)]">
         {currentStep === 1 && isConnected && (hasReferrer || isOwner) && (
             !isApproved ? (
               <button

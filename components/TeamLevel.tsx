@@ -206,8 +206,8 @@ const TeamLevel: React.FC = () => {
 
       {/* Direct Referrals Network Section */}
       <div className="glass-panel p-4 md:p-6 rounded-xl md:rounded-2xl bg-gray-900/50 border border-gray-800 backdrop-blur-sm">
-        <div className="flex flex-wrap items-center justify-between gap-4 mb-4 md:mb-6">
-            <div className="flex items-center gap-3">
+        <div className="mb-4 md:mb-6">
+            <div className="flex items-center gap-3 mb-4">
                 <div className="p-3 bg-purple-500/20 text-purple-400 rounded-full border border-purple-500/30">
                     <UserCheck size={24} />
                 </div>
@@ -216,8 +216,8 @@ const TeamLevel: React.FC = () => {
                 </div>
             </div>
         
-            <div className="flex flex-col items-end gap-1 ml-auto sm:ml-0">
-                 <div className="text-right">
+            <div className="flex flex-wrap items-center justify-between gap-4">
+                 <div className="text-left">
                      <p className="text-xs text-gray-400 uppercase font-bold tracking-wider">{t.team.netTotalAmount}</p>
                      <p className="text-xl font-black text-purple-400 font-mono">
                          {ethers.formatEther(totalTicketAmount)} <span className="text-sm font-bold text-purple-300">MC</span>

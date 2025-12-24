@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react"
 import { ethers } from "ethers"
-import { Clock, ExternalLink, Gift, RefreshCw } from "lucide-react"
+import { Clock, ExternalLink, Gift, RefreshCw, Filter, X, ChevronRight, Copy, CheckCircle } from "lucide-react"
 import { useWeb3 } from "../Web3Context"
 import { useLanguage } from "../LanguageContext"
 
@@ -25,6 +25,9 @@ const EarningsDetail: React.FC = () => {
   const [refreshing, setRefreshing] = useState(false)
   const [isOwner, setIsOwner] = useState(false)
   const [viewMode, setViewMode] = useState<"self" | "all">("self")
+  const [filterType, setFilterType] = useState<number | 'all'>('all')
+  const [selectedRecord, setSelectedRecord] = useState<RewardRecord | null>(null)
+  const [copied, setCopied] = useState(false)
 
   useEffect(() => {
     const checkOwner = async () => {
@@ -176,8 +179,15 @@ const EarningsDetail: React.FC = () => {
     return new Date(timestamp * 1000).toLocaleString()
   }
 
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+
   const explorerUrl = "https://sepolia.etherscan.io"
   const ui = t.earnings || {}
+  
   const getRewardTypeLabel = (value: number) => {
     if (value === 0) return ui.staticReward || "Static Reward"
     if (value === 1) return ui.dynamicReward || "Dynamic Reward"
@@ -185,6 +195,17 @@ const EarningsDetail: React.FC = () => {
     if (value === 3) return ui.levelReward || "Level Reward"
     return ui.unknownType || "Unknown"
   }
+
+  const rewardTypes = [
+    { value: 0, label: ui.staticReward || "Static Reward" },
+    { value: 1, label: ui.dynamicReward || "Dynamic Reward" },
+    { value: 2, label: ui.directReward || "Direct Reward" },
+    { value: 3, label: ui.levelReward || "Level Reward" },
+  ]
+
+  const filteredRecords = filterType === 'all' 
+    ? records 
+    : records.filter(r => r.rewardType === filterType)
 
   if (!account) {
     return (
@@ -242,6 +263,36 @@ const EarningsDetail: React.FC = () => {
         </div>
       </div>
 
+      {/* Filter Tabs */}
+      <div className="bg-gray-900/50 border border-gray-800 rounded-xl shadow-md p-4 mb-6 backdrop-blur-sm overflow-hidden">
+        <div className="flex items-center gap-2 overflow-x-auto pb-2 -mb-2 no-scrollbar">
+          <Filter className="w-5 h-5 text-gray-500 flex-shrink-0" />
+          <button
+            onClick={() => setFilterType('all')}
+            className={`px-4 py-2 rounded-lg font-medium transition-colors whitespace-nowrap flex-shrink-0 ${
+              filterType === 'all'
+                ? 'bg-neon-500/20 text-neon-400 border border-neon-500/30'
+                : 'bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-gray-300 border border-gray-700'
+            }`}
+          >
+            {t.history?.all || "All"}
+          </button>
+          {rewardTypes.map((type) => (
+            <button
+              key={type.value}
+              onClick={() => setFilterType(type.value)}
+              className={`px-4 py-2 rounded-lg font-medium transition-colors whitespace-nowrap flex-shrink-0 ${
+                filterType === type.value
+                  ? 'bg-neon-500/20 text-neon-400 border border-neon-500/30'
+                  : 'bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-gray-300 border border-gray-700'
+              }`}
+            >
+              {type.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <div className="bg-gray-900/50 border border-gray-800 rounded-xl shadow-md p-4 backdrop-blur-sm">
           <div className="text-sm text-gray-400 mb-2">{ui.staticReward || "Static Reward"} (24h)</div>
@@ -281,7 +332,7 @@ const EarningsDetail: React.FC = () => {
           <div className="w-12 h-12 border-4 border-neon-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-gray-400">{ui.loading || "Loading..."}</p>
         </div>
-      ) : records.length === 0 ? (
+      ) : filteredRecords.length === 0 ? (
         <div className="bg-gray-900/50 border border-gray-800 rounded-xl shadow-md p-12 text-center backdrop-blur-sm">
           <Gift className="w-16 h-16 mx-auto text-gray-600 mb-4" />
           <h3 className="text-xl font-bold text-white mb-2">{ui.noRecords || "No Reward Records"}</h3>
@@ -289,79 +340,213 @@ const EarningsDetail: React.FC = () => {
         </div>
       ) : (
         <div className="space-y-3">
-          {records.map((row, index) => (
+          {filteredRecords.map((row, index) => (
             <div
               key={`${row.hash}-${index}`}
-              className="bg-gray-900/50 border border-gray-800 rounded-xl shadow-md hover:shadow-lg hover:border-neon-500/50 transition-all p-5 backdrop-blur-sm"
+              onClick={() => setSelectedRecord(row)}
+              className="bg-gray-900/50 border border-gray-800 rounded-xl shadow-md hover:shadow-lg hover:border-neon-500/50 transition-all cursor-pointer backdrop-blur-sm"
             >
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex items-start gap-4 flex-1">
-                  <div className="mt-1">
-                    <Gift className="w-5 h-5 text-neon-400" />
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1 flex-wrap">
-                      <h4 className="font-bold text-white">{t.history.reward_claimed || "Reward Claimed"}</h4>
-                      <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-neon-500/20 text-neon-400 border border-neon-500/30">
-                        {t.history.confirmed || "Confirmed"}
-                      </span>
-                      {isOwner && viewMode === "all" && row.user && (
-                        <span className="px-2 py-0.5 rounded-full text-xs font-mono bg-blue-500/20 text-blue-400 border border-blue-500/30">
-                          {row.user.slice(0, 6)}...{row.user.slice(-4)}
+              {/* Desktop View */}
+              <div className="hidden md:block p-5">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex items-start gap-4 flex-1">
+                    <div className="mt-1">
+                      <Gift className="w-5 h-5 text-neon-400" />
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1 flex-wrap">
+                        <h4 className="font-bold text-white">{t.history.reward_claimed || "Reward Claimed"}</h4>
+                        <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-neon-500/20 text-neon-400 border border-neon-500/30">
+                          {t.history.confirmed || "Confirmed"}
                         </span>
-                      )}
-                    </div>
-                    <div className="space-y-1 mb-2">
-                      <p className="text-sm text-gray-400">
-                        {ui.mcAmount || "MC Reward"}:{" "}
-                        <span className="font-semibold text-neon-400">{parseFloat(row.mcAmount).toFixed(4)} MC</span>
-                      </p>
-                      <p className="text-sm text-gray-400">
-                        {ui.jbcAmount || "JBC Reward"}:{" "}
-                        <span className="font-semibold text-amber-400">{parseFloat(row.jbcAmount).toFixed(4)} JBC</span>
-                      </p>
-                      {row.source && (
-                        <p className="text-sm text-gray-600">
-                          {ui.rewardFrom || "From"}:{" "}
-                          <span className="font-mono text-slate-700">
-                            {row.source.slice(0, 6)}...{row.source.slice(-4)}
+                        {isOwner && viewMode === "all" && row.user && (
+                          <span className="px-2 py-0.5 rounded-full text-xs font-mono bg-blue-500/20 text-blue-400 border border-blue-500/30">
+                            {row.user.slice(0, 6)}...{row.user.slice(-4)}
                           </span>
-                        </p>
-                      )}
-                      <p className="text-sm text-gray-600">
-                        {ui.rewardType || "Reward Type"}:{" "}
-                        <span className="font-semibold text-gray-300">{getRewardTypeLabel(row.rewardType)}</span>
-                      </p>
-                      {row.ticketId && (
+                        )}
+                      </div>
+                      <div className="space-y-1 mb-2">
                         <p className="text-sm text-gray-400">
-                          {ui.ticketId || "Ticket ID"}:{" "}
-                          <span className="font-semibold text-gray-300">{row.ticketId}</span>
+                          {ui.mcAmount || "MC Reward"}:{" "}
+                          <span className="font-semibold text-neon-400">{parseFloat(row.mcAmount).toFixed(4)} MC</span>
                         </p>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-4 text-xs text-gray-500">
-                      <div className="flex items-center gap-1">
-                        <Clock className="w-3 h-3" />
-                        {formatDate(row.timestamp)}
+                        <p className="text-sm text-gray-400">
+                          {ui.jbcAmount || "JBC Reward"}:{" "}
+                          <span className="font-semibold text-amber-400">{parseFloat(row.jbcAmount).toFixed(4)} JBC</span>
+                        </p>
+                        {row.source && (
+                          <p className="text-sm text-gray-600">
+                            {ui.rewardFrom || "From"}:{" "}
+                            <span className="font-mono text-slate-700">
+                              {row.source.slice(0, 6)}...{row.source.slice(-4)}
+                            </span>
+                          </p>
+                        )}
+                        <p className="text-sm text-gray-600">
+                          {ui.rewardType || "Reward Type"}:{" "}
+                          <span className="font-semibold text-gray-300">{getRewardTypeLabel(row.rewardType)}</span>
+                        </p>
+                        {row.ticketId && (
+                          <p className="text-sm text-gray-400">
+                            {ui.ticketId || "Ticket ID"}:{" "}
+                            <span className="font-semibold text-gray-300">{row.ticketId}</span>
+                          </p>
+                        )}
                       </div>
-                      <div>
-                        {ui.block || "Block"}: {row.blockNumber}
+                      <div className="flex items-center gap-4 text-xs text-gray-500">
+                        <div className="flex items-center gap-1">
+                          <Clock className="w-3 h-3" />
+                          {formatDate(row.timestamp)}
+                        </div>
+                        <div>
+                          {ui.block || "Block"}: {row.blockNumber}
+                        </div>
                       </div>
                     </div>
+                  </div>
+                  <div className="flex flex-col items-end gap-2">
+                    <a
+                      href={`${explorerUrl}/tx/${row.hash}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={(e) => e.stopPropagation()}
+                      className="flex items-center gap-1 px-3 py-1.5 bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-lg text-sm font-mono text-gray-400 transition-colors"
+                    >
+                      {row.hash.slice(0, 6)}...{row.hash.slice(-4)}
+                      <ExternalLink className="w-3 h-3" />
+                    </a>
                   </div>
                 </div>
-                <a
-                  href={`${explorerUrl}/tx/${row.hash}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-1 px-3 py-1.5 bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-lg text-sm font-mono text-gray-400 transition-colors"
-                >
-                  {row.hash.slice(0, 6)}...{row.hash.slice(-4)}
-                  <ExternalLink className="w-3 h-3" />
-                </a>
+              </div>
+
+              {/* Mobile Compact View */}
+              <div className="md:hidden p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-gray-800 rounded-lg">
+                      <Gift className="w-5 h-5 text-neon-400" />
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-white text-sm">{getRewardTypeLabel(row.rewardType)}</h4>
+                      <div className="flex items-center gap-2 text-xs text-gray-500 mt-0.5">
+                        <span>{formatDate(row.timestamp).split(' ')[0]}</span>
+                        <span className="px-1.5 py-0.5 rounded text-[10px] bg-neon-500/10 text-neon-400">
+                          {t.history.confirmed || "Confirmed"}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="space-y-0.5">
+                      <p className="text-sm text-right font-semibold text-neon-400">+{parseFloat(row.mcAmount).toFixed(2)} MC</p>
+                      <p className="text-sm text-right font-semibold text-amber-400">+{parseFloat(row.jbcAmount).toFixed(2)} JBC</p>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-gray-600 ml-auto mt-1" />
+                  </div>
+                </div>
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Detail Modal */}
+      {selectedRecord && (
+        <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/80 backdrop-blur-sm p-0 md:p-4" onClick={() => setSelectedRecord(null)}>
+          <div 
+            className="bg-gray-900 border-t md:border border-gray-800 rounded-t-2xl md:rounded-2xl w-full max-w-md p-6 relative shadow-2xl animate-in slide-in-from-bottom-10 md:slide-in-from-bottom-0 md:zoom-in-95" 
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-bold text-white">{t.history.details || '交易详情'}</h3>
+              <button onClick={() => setSelectedRecord(null)} className="p-2 rounded-lg hover:bg-gray-800 text-gray-400 hover:text-white transition-colors">
+                <X size={24} />
+              </button>
+            </div>
+
+            <div className="space-y-6">
+              {/* Type & Status */}
+              <div className="flex items-center justify-between p-4 bg-gray-800/50 rounded-xl">
+                <div className="flex items-center gap-3">
+                  <Gift className="w-8 h-8 text-neon-400" />
+                  <div>
+                    <div className="font-bold text-white">{getRewardTypeLabel(selectedRecord.rewardType)}</div>
+                    <div className="text-xs text-gray-400">{formatDate(selectedRecord.timestamp)}</div>
+                  </div>
+                </div>
+                <span className="px-2 py-1 rounded-lg text-xs font-bold bg-neon-500/20 text-neon-400 border border-neon-500/30">
+                  {t.history.confirmed || "Confirmed"}
+                </span>
+              </div>
+
+              {/* Amounts */}
+              <div className="space-y-3">
+                <div className="text-sm text-gray-400 uppercase font-mono tracking-wider">{ui.mcAmount || "MC Reward"}</div>
+                <div className="bg-gray-800/30 rounded-xl p-4 border border-gray-800">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-gray-400">MC</span>
+                    <span className="font-bold text-neon-400 text-lg">{parseFloat(selectedRecord.mcAmount).toFixed(4)}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-400">JBC</span>
+                    <span className="font-bold text-amber-400 text-lg">{parseFloat(selectedRecord.jbcAmount).toFixed(4)}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Transaction Info */}
+              <div className="space-y-3">
+                <div className="text-sm text-gray-400 uppercase font-mono tracking-wider">{t.history.info || '信息'}</div>
+                <div className="bg-gray-800/30 rounded-xl p-4 border border-gray-800 space-y-3">
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-400 text-sm">{ui.block || "Block"}:</span>
+                    <span className="text-white font-mono">{selectedRecord.blockNumber}</span>
+                  </div>
+                  
+                  {selectedRecord.ticketId && (
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-400 text-sm">{ui.ticketId || "Ticket ID"}:</span>
+                      <span className="text-white font-mono">{selectedRecord.ticketId}</span>
+                    </div>
+                  )}
+
+                  {selectedRecord.source && (
+                    <div className="flex flex-col gap-1">
+                      <span className="text-gray-400 text-sm">{ui.rewardFrom || "From"}:</span>
+                      <span className="text-white font-mono text-xs break-all bg-black/30 p-2 rounded w-full">
+                        {selectedRecord.source}
+                      </span>
+                    </div>
+                  )}
+
+                  <div className="flex flex-col gap-1">
+                    <span className="text-gray-400 text-sm">Hash:</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-white font-mono text-xs break-all bg-black/30 p-2 rounded w-full">
+                        {selectedRecord.hash}
+                      </span>
+                      <button 
+                        onClick={() => copyToClipboard(selectedRecord.hash)}
+                        className="p-2 hover:bg-gray-700 rounded-lg text-gray-400 hover:text-white transition-colors"
+                      >
+                        {copied ? <CheckCircle size={16} className="text-green-500" /> : <Copy size={16} />}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Button */}
+              <a
+                href={`${explorerUrl}/tx/${selectedRecord.hash}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block w-full py-3 bg-neon-500 hover:bg-neon-600 text-black font-bold rounded-xl text-center transition-colors"
+              >
+                {t.history.viewOnExplorer || '在浏览器中查看'}
+              </a>
+            </div>
+          </div>
         </div>
       )}
     </div>

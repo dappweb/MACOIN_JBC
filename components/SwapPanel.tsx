@@ -21,40 +21,55 @@ const SwapPanel: React.FC = () => {
 
   // 提取余额获取逻辑为独立函数，方便在交易后刷新
   const fetchBalances = async () => {
+    try {
+        // 1. Fetch Pool Liquidity (Public Data)
+        // 尝试使用已有合约实例，或者使用 provider 创建临时实例
+        let mc = mcContract;
+        let jbc = jbcContract;
+
+        if (!mc && provider) {
+            mc = new ethers.Contract(CONTRACT_ADDRESSES.MC_TOKEN, ["function balanceOf(address) view returns (uint256)"], provider);
+        }
+        if (!jbc && provider) {
+            jbc = new ethers.Contract(CONTRACT_ADDRESSES.JBC_TOKEN, ["function balanceOf(address) view returns (uint256)"], provider);
+        }
+
+        if (mc && jbc) {
+            // Pool Liquidity (MC is ERC20 in contract)
+            const poolMcBal = await mc.balanceOf(CONTRACT_ADDRESSES.PROTOCOL);
+            setPoolMC(ethers.formatEther(poolMcBal));
+
+            // Pool Liquidity
+            const poolJbcBal = await jbc.balanceOf(CONTRACT_ADDRESSES.PROTOCOL);
+            setPoolJBC(ethers.formatEther(poolJbcBal));
+        }
+    } catch (err) {
+        console.error("Failed to fetch pool balances", err);
+    }
+
+    // 2. Fetch User Balances (Private Data)
     if (isConnected && account) {
         try {
             if (mcContract) {
                 // Fetch ERC20 MC Balance (Contract uses ERC20)
                 const mcBal = await mcContract.balanceOf(account);
                 setBalanceMC(ethers.formatEther(mcBal));
-
-                // Pool Liquidity (MC is ERC20 in contract)
-                const poolMcBal = await mcContract.balanceOf(CONTRACT_ADDRESSES.PROTOCOL);
-                setPoolMC(ethers.formatEther(poolMcBal));
             }
 
             if (jbcContract) {
                 const jbcBal = await jbcContract.balanceOf(account);
                 setBalanceJBC(ethers.formatEther(jbcBal));
-
-                // Pool Liquidity
-                const poolJbcBal = await jbcContract.balanceOf(CONTRACT_ADDRESSES.PROTOCOL);
-                setPoolJBC(ethers.formatEther(poolJbcBal));
             }
-
-            // Optional: Log native balance for debugging
-            if (provider) {
-                const native = await provider.getBalance(account);
-            }
-
         } catch (err) {
-            console.error("Failed to fetch balances", err);
+            console.error("Failed to fetch user balances", err);
         }
     }
   };
 
   useEffect(() => {
     fetchBalances();
+    const interval = setInterval(fetchBalances, 10000);
+    return () => clearInterval(interval);
   }, [isConnected, account, mcContract, jbcContract, provider]);
 
   // Debounce effect for calculating estimate
@@ -128,7 +143,7 @@ const SwapPanel: React.FC = () => {
       // AMM Formula: dy = (y * dx) / (x + dx)
       // x = ReserveIn, y = ReserveOut, dx = AmountIn
       
-      if (isSelling) {
+      if (!isSelling) {
           // Sell JBC (Input JBC) -> Get MC
           // 1. Tax 25% on Input
           const tax = amount * 0.25;
@@ -211,8 +226,8 @@ const SwapPanel: React.FC = () => {
                         placeholder="0.0"
                         className="bg-transparent text-xl md:text-2xl font-bold focus:outline-none w-full text-white placeholder-gray-600"
                     />
-                    <span className={`px-2 md:px-3 py-1 rounded-lg font-bold border shadow-sm text-sm md:text-base whitespace-nowrap flex items-center gap-1 ${isSelling ? 'bg-amber-500/20 text-amber-400 border-amber-500/30' : 'bg-gray-900 text-gray-300 border-gray-700'}`}>
-                        {isSelling ? (
+                    <span className={`px-2 md:px-3 py-1 rounded-lg font-bold border shadow-sm text-sm md:text-base whitespace-nowrap flex items-center gap-1 ${!isSelling ? 'bg-amber-500/20 text-amber-400 border-amber-500/30' : 'bg-gray-900 text-gray-300 border-gray-700'}`}>
+                        {!isSelling ? (
                             <>
                                 <img src="/logo.png" alt="JBC" className="w-4 h-4 md:w-5 md:h-5 rounded-full" />
                                 JBC
@@ -241,7 +256,7 @@ const SwapPanel: React.FC = () => {
             <div className="bg-gray-800/50 p-3 md:p-4 rounded-lg md:rounded-xl border border-gray-700">
                     <div className="flex justify-between text-xs md:text-sm text-gray-400 mb-2">
                     <span>{t.swap.get}</span>
-                    <span className="truncate ml-2">{t.swap.balance}: {!isSelling ? balanceJBC : balanceMC} {!isSelling ? 'JBC' : 'MC'}</span>
+                    <span className="truncate ml-2">{t.swap.balance}: {isSelling ? balanceJBC : balanceMC} {isSelling ? 'JBC' : 'MC'}</span>
                 </div>
                 <div className="flex items-center justify-between gap-2">
                     <input
@@ -269,13 +284,13 @@ const SwapPanel: React.FC = () => {
 
             {/* Slippage Info */}
             <div className="bg-red-900/20 border border-red-500/30 p-3 rounded-lg text-xs text-red-300 flex flex-col gap-1 backdrop-blur-sm">
-                <div className={`flex justify-between ${isSelling ? 'font-bold' : 'opacity-50'}`}>
-                    <span>{t.swap.slipSell}</span>
-                    {isSelling && <span>(Active)</span>}
-                </div>
                 <div className={`flex justify-between ${!isSelling ? 'font-bold' : 'opacity-50'}`}>
-                    <span>{t.swap.slipBuy}</span>
+                    <span>{t.swap.slipSell}</span>
                     {!isSelling && <span>(Active)</span>}
+                </div>
+                <div className={`flex justify-between ${isSelling ? 'font-bold' : 'opacity-50'}`}>
+                    <span>{t.swap.slipBuy}</span>
+                    {isSelling && <span>(Active)</span>}
                 </div>
             </div>
 

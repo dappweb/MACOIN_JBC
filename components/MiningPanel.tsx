@@ -453,7 +453,7 @@ const MiningPanel: React.FC = () => {
   };
 
   return (
-    <div className="w-full max-w-4xl mx-auto space-y-6 md:space-y-8 animate-fade-in">
+    <div className="w-full max-w-4xl mx-auto space-y-6 md:space-y-8 animate-fade-in pb-28 md:pb-0">
 
       <div className="text-center space-y-1 md:space-y-2">
         <h2 className="text-2xl md:text-3xl font-bold text-white">{t.mining.title}</h2>
@@ -738,6 +738,7 @@ const MiningPanel: React.FC = () => {
                          </div>
 
                          <div className="bg-gray-800/30 rounded-lg p-3 border border-dashed border-gray-700">
+                            {/* User Note: This place currently displays the 3x cap for the selected ticket. User indicated it should represent historical total quota in the future. */}
                             <div className="text-xs text-gray-400 uppercase mb-1">{t.mining.cap}</div>
                             <div className="flex justify-between items-end">
                                 <span className="text-2xl font-bold text-white">{maxCap} MC</span>
@@ -1028,6 +1029,50 @@ const MiningPanel: React.FC = () => {
             )}
         </div>
       )}
+
+      {/* Mobile Sticky Footer */}
+      <div className="fixed bottom-0 left-0 right-0 p-4 bg-gray-900/95 border-t border-gray-800 backdrop-blur-xl md:hidden z-50 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.3)]">
+        {currentStep === 1 && isConnected && (hasReferrer || isOwner) && (
+            !isApproved ? (
+              <button
+                onClick={handleApprove}
+                disabled={txPending}
+                className="w-full py-3 bg-gray-700 hover:bg-gray-600 text-white font-bold text-lg rounded-xl transition-colors shadow-lg disabled:opacity-50"
+              >
+                {txPending ? t.mining.approving : t.mining.approve}
+              </button>
+            ) : (
+              <button
+                onClick={handleBuyTicket}
+                disabled={txPending}
+                className="w-full py-3 bg-gradient-to-r from-neon-500 to-neon-600 text-black font-extrabold text-xl rounded-xl shadow-lg shadow-neon-500/20 disabled:opacity-50"
+              >
+                {txPending ? t.mining.buying : `${t.mining.buyTicket} - ${selectedTicket.amount} MC`}
+              </button>
+            )
+        )}
+
+        {currentStep === 2 && canStakeLiquidity && (
+            <button
+                onClick={handleStake}
+                disabled={txPending}
+                className="w-full py-3 bg-gradient-to-r from-neon-500 to-neon-600 text-black font-extrabold text-lg rounded-xl shadow-lg shadow-neon-500/20 disabled:opacity-50 flex items-center justify-center gap-2"
+             >
+                {txPending ? t.mining.staking : t.mining.stake} <ArrowRight size={20} />
+            </button>
+        )}
+
+        {currentStep === 3 && hasActiveTicket && (
+             <button
+                onClick={handleRedeem}
+                disabled={txPending}
+                className="w-full py-3 bg-gradient-to-r from-red-500/20 to-red-600/20 text-red-300 font-bold rounded-xl border border-red-500/30 disabled:opacity-50 flex items-center justify-center gap-2"
+             >
+                <TrendingUp size={20} />
+                {t.mining.redeem}
+             </button>
+        )}
+      </div>
 
     </div>
   );

@@ -31,8 +31,7 @@ describe("Jinbao Protocol System", function () {
       await jbc.getAddress(),
       marketing.address,
       treasury.address,
-      lpInjection.address,
-      buyback.address
+      lpInjection.address
     );
     await protocol.waitForDeployment();
 
@@ -46,6 +45,11 @@ describe("Jinbao Protocol System", function () {
     // Fund Users
     await mc.mint(user1.address, ethers.parseEther("10000"));
     await mc.mint(user2.address, ethers.parseEther("10000"));
+    await mc.mint(referrer.address, ethers.parseEther("10000")); // Fund referrer
+
+    // Referrer buys a ticket to be active
+    await mc.connect(referrer).approve(await protocol.getAddress(), ethers.MaxUint256);
+    await protocol.connect(referrer).buyTicket(TICKET_PRICE);
   });
 
   describe("Token Mechanics (JBC)", function () {
@@ -95,11 +99,11 @@ describe("Jinbao Protocol System", function () {
       // Referrer: 25% = 25 MC
       expect(await mc.balanceOf(referrer.address)).to.equal(initialReferrer + ethers.parseEther("25"));
       
-      // Marketing: 5% + 15% (Level reward placeholder) = 20% = 20 MC
-      expect(await mc.balanceOf(marketing.address)).to.equal(initialMarketing + ethers.parseEther("20"));
+      // Marketing: 5% = 5 MC
+      expect(await mc.balanceOf(marketing.address)).to.equal(initialMarketing + ethers.parseEther("5"));
       
       // Treasury: 25% = 25 MC
-      expect(await mc.balanceOf(treasury.address)).to.equal(ethers.parseEther("25"));
+      expect(await mc.balanceOf(treasury.address)).to.equal(ethers.parseEther("50")); // 25 from Referrer + 25 from User1
     });
 
     it("Should handle liquidity staking and rewards", async function () {
@@ -119,9 +123,9 @@ describe("Jinbao Protocol System", function () {
       await time.increase(7 * 24 * 60 * 60 + 1);
 
       // Claim Rewards
-      // Rate: 2.0% daily * 7 days = 14%
-      // 14% of 100 MC = 14 MC total reward
-      // Split: 7 MC + 7 JBC (assuming 1:1 price mock)
+      // Rate: 2.0% daily * 7 days = 14% of Liquidity (150)
+      // 14% of 150 = 21 Total
+      // Split: 10.5 MC + 10.5 JBC (assuming 1:1 price mock)
       
       const initialMc = await mc.balanceOf(user1.address);
       const initialJbc = await jbc.balanceOf(user1.address);
@@ -132,8 +136,8 @@ describe("Jinbao Protocol System", function () {
       const finalJbc = await jbc.balanceOf(user1.address);
 
       // Allow for small rounding errors
-      expect(finalMc - initialMc).to.be.closeTo(ethers.parseEther("7"), ethers.parseEther("0.1"));
-      expect(finalJbc - initialJbc).to.be.closeTo(ethers.parseEther("7"), ethers.parseEther("0.1"));
+      expect(finalMc - initialMc).to.be.closeTo(ethers.parseEther("10.5"), ethers.parseEther("0.1"));
+      expect(finalJbc - initialJbc).to.be.closeTo(ethers.parseEther("10.5"), ethers.parseEther("0.1"));
     });
 
     it("Should handle redemption", async function () {
@@ -159,6 +163,23 @@ describe("Jinbao Protocol System", function () {
        const finalMc = await mc.balanceOf(user1.address);
        
        expect(finalMc - initialMc).to.equal(ethers.parseEther("149"));
+    });
+
+    it("Should allow buying a new ticket if previous one is expired", async function () {
+       // Buy Ticket 1
+       await mc.connect(user1).approve(await protocol.getAddress(), ethers.MaxUint256);
+       await protocol.connect(user1).buyTicket(TICKET_PRICE);
+       
+       // Don't stake. Fast forward > 72 hours
+       await time.increase(72 * 60 * 60 + 100);
+       
+       // Try to buy Ticket 2 (Should succeed now with my fix)
+       await expect(protocol.connect(user1).buyTicket(TICKET_PRICE)).to.not.be.reverted;
+       
+       // Verify new ticket ID (assuming it increments globally, first was 1, user2 might have bought? No, tests are isolated if using fresh snapshot, but here beforeEach deploys fresh)
+       // nextTicketId starts at 0. Referrer Buy -> 1. User1 Buy 1 -> 2. User1 Buy 2 -> 3.
+       const ticket = await protocol.userTicket(user1.address);
+       expect(ticket.ticketId).to.equal(3);
     });
   });
 });

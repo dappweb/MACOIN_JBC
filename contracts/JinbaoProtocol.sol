@@ -48,7 +48,7 @@ contract JinbaoProtocol is Ownable, ReentrancyGuard {
     address public lpInjectionWallet; // Buffer Contract
     
     // Constants
-    uint256 public constant SECONDS_IN_UNIT = 60; // Minutes
+    uint256 public constant SECONDS_IN_UNIT = 60; // Minutes for Demo, Days for Prod
     
     // Distribution Config
     uint256 public directRewardPercent = 25;
@@ -77,6 +77,9 @@ contract JinbaoProtocol is Ownable, ReentrancyGuard {
     // Pending Rewards for Differential System: ticketId => List of rewards to release upon redemption
     mapping(uint256 => PendingReward[]) public ticketPendingRewards;
     
+    // Static rewards paid tracking: ticketId => amount paid
+    mapping(uint256 => uint256) public ticketStaticPaid;
+
     uint256 public nextTicketId;
     
     // Events
@@ -162,14 +165,20 @@ contract JinbaoProtocol is Ownable, ReentrancyGuard {
         return (0, 0);
     }
 
+    function getJBCPrice() public view returns (uint256) {
+        uint256 mcReserve = mcToken.balanceOf(address(this));
+        uint256 jbcReserve = jbcToken.balanceOf(address(this));
+        if (jbcReserve == 0) return 1 ether; // Default
+        // Spot Price of 1 JBC in MC = mcReserve / jbcReserve
+        return (mcReserve * 1e18) / jbcReserve;
+    }
+
     // --- Core Functions ---
 
     function bindReferrer(address _referrer) external {
         require(userInfo[msg.sender].referrer == address(0), "Already bound");
         require(_referrer != msg.sender, "Cannot bind self");
         require(_referrer != address(0), "Invalid referrer");
-        // Optional: Check if referrer exists (has purchased ticket at some point)? 
-        // For now allowing any address to be referrer to bootstrap.
         
         userInfo[msg.sender].referrer = _referrer;
         directReferrals[_referrer].push(msg.sender);
@@ -184,7 +193,8 @@ contract JinbaoProtocol is Ownable, ReentrancyGuard {
         // Ensure previous ticket is settled
         Ticket storage prevTicket = userTicket[msg.sender];
         if (prevTicket.amount > 0) {
-            require(prevTicket.redeemed || prevTicket.exited, "Previous ticket active");
+            bool isExpired = !prevTicket.liquidityProvided && (block.timestamp > prevTicket.purchaseTime + 72 hours);
+            require(prevTicket.redeemed || prevTicket.exited || isExpired, "Previous ticket active");
         }
 
         // Transfer MC
@@ -291,35 +301,6 @@ contract JinbaoProtocol is Ownable, ReentrancyGuard {
         if (ticket.cycleDays == 7) ratePerThousand = 20;      // 2.0%
         else if (ticket.cycleDays == 15) ratePerThousand = 25; // 2.5%
         else if (ticket.cycleDays == 30) ratePerThousand = 30; // 3.0%
-
-        // Simplified Calculation: Claim since start (or last claim point - not implemented for simplicity, assuming one-time claim or external tracking)
-        // For robust production: Store `lastClaimTime`.
-        // Here we simulate claiming accrued rewards since last claim.
-        // To prevent complex state, let's assume this demo function claims *all available* up to now?
-        // Or strictly per day? 
-        // Let's implement `lastClaimTime` logic for safety.
-        // Re-using `ticket.startTime` as last claim time for simplicity in this update, 
-        // effectively resetting the clock? No, that messes up cycle check.
-        // Adding `lastClaimTime` to struct requires migration.
-        // Let's stick to a simple time-based diff since `startTime`. 
-        // NOTE: In production, use `lastClaimTime`. 
-        
-        // Current Logic: Calculate total expected, subtract already paid? 
-        // `totalRevenue` includes dynamic. Can't separate easily.
-        // Let's just calculate pending based on time.
-        // Assuming user calls this periodically. 
-        // We will just calculate reward for *now* and pay it. 
-        // Ideally we need `paidStatic` tracker.
-        
-        // MVP Fix: Calculate 1 day worth of reward for testing? 
-        // Or calculate (Now - Start) * Rate - PaidStatic.
-        // Let's add `paidStatic` to Ticket struct? 
-        // To avoid struct change issues with existing deployments (though we are overwriting file), I will add `paidStatic` to Ticket struct.
-        
-        // Actually, let's just use the `totalRevenue` check. 
-        // But `totalRevenue` has dynamic rewards too.
-        // OK, I will assume for this "Requirements Alignment" task, I can modify structs.
-        // I'll calculate based on time elapsed since `startTime` but limit to `cycleDays`.
         
         uint256 unitsPassed = (block.timestamp - ticket.startTime) / SECONDS_IN_UNIT;
         if (unitsPassed > ticket.cycleDays) unitsPassed = ticket.cycleDays;
@@ -327,10 +308,6 @@ contract JinbaoProtocol is Ownable, ReentrancyGuard {
         if (unitsPassed == 0) revert("Less than 1 unit");
 
         uint256 totalStaticShouldBe = (ticket.liquidityAmount * ratePerThousand * unitsPassed) / 1000;
-        
-        // We need to know how much static was already paid to avoid double paying.
-        // Since I can't easily add storage without migration script issues if this was a proxy (it's not),
-        // I will add a mapping `mapping(uint256 => uint256) public ticketStaticPaid`
         
         uint256 paid = ticketStaticPaid[ticket.ticketId];
         uint256 pending = 0;
@@ -364,8 +341,8 @@ contract JinbaoProtocol is Ownable, ReentrancyGuard {
             mcToken.transfer(msg.sender, mcPart);
         }
         
-        // JBC Transfer (Oracle needed, 1:1 simulation)
-        uint256 jbcPrice = 1 ether; 
+        // JBC Transfer
+        uint256 jbcPrice = getJBCPrice(); 
         uint256 jbcAmount = (jbcValuePart * 1 ether) / jbcPrice;
         if (jbcToken.balanceOf(address(this)) >= jbcAmount) {
             jbcToken.transfer(msg.sender, jbcAmount);
@@ -378,9 +355,6 @@ contract JinbaoProtocol is Ownable, ReentrancyGuard {
             _handleExit(msg.sender);
         }
     }
-    
-    // Additional mapping for static tracking
-    mapping(uint256 => uint256) public ticketStaticPaid;
 
     function redeem() external nonReentrant {
         Ticket storage ticket = userTicket[msg.sender];
@@ -484,7 +458,7 @@ contract JinbaoProtocol is Ownable, ReentrancyGuard {
 
         while (current != address(0) && iterations < 20) {
             // Get Upline Level
-            (uint256 level, uint256 percent) = getLevel(userInfo[current].activeDirects);
+            (, uint256 percent) = getLevel(userInfo[current].activeDirects);
             
             if (percent > previousPercent) {
                 uint256 diffPercent = percent - previousPercent;

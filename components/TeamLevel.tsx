@@ -169,19 +169,22 @@ const TeamLevel: React.FC = () => {
 
                 if (level.level === "V7") {
                   // Silver
-                  badgeStyle =
-                    "bg-slate-300/20 text-slate-300 border border-slate-400/30 shadow-[0_0_10px_rgba(203,213,225,0.2)]"
-                  icon = <Crown size={14} className="fill-slate-300/20" />
+                  badgeStyle = isCurrent
+                    ? "bg-slate-300 text-black border border-slate-400 shadow-[0_0_15px_rgba(203,213,225,0.4)]"
+                    : "bg-slate-300/20 text-slate-300 border border-slate-400/30 shadow-[0_0_10px_rgba(203,213,225,0.2)]"
+                  icon = <Crown size={14} className={isCurrent ? "fill-black" : "fill-slate-300/20"} />
                 } else if (level.level === "V8") {
                   // Platinum
-                  badgeStyle =
-                    "bg-cyan-300/20 text-cyan-300 border border-cyan-400/30 shadow-[0_0_10px_rgba(103,232,249,0.2)]"
-                  icon = <Crown size={14} className="fill-cyan-300/20" />
+                  badgeStyle = isCurrent
+                    ? "bg-cyan-300 text-black border border-cyan-400 shadow-[0_0_15px_rgba(103,232,249,0.4)]"
+                    : "bg-cyan-300/20 text-cyan-300 border border-cyan-400/30 shadow-[0_0_10px_rgba(103,232,249,0.2)]"
+                  icon = <Crown size={14} className={isCurrent ? "fill-black" : "fill-cyan-300/20"} />
                 } else if (level.level === "V9") {
                   // Gold
-                  badgeStyle =
-                    "bg-amber-400/20 text-amber-400 border border-amber-500/30 shadow-[0_0_10px_rgba(251,191,36,0.2)]"
-                  icon = <Crown size={14} className="fill-amber-400/20" />
+                  badgeStyle = isCurrent
+                    ? "bg-amber-400 text-black border border-amber-500 shadow-[0_0_15px_rgba(251,191,36,0.4)]"
+                    : "bg-amber-400/20 text-amber-400 border border-amber-500/30 shadow-[0_0_10px_rgba(251,191,36,0.2)]"
+                  icon = <Crown size={14} className={isCurrent ? "fill-black" : "fill-amber-400/20"} />
                 }
 
                 return (

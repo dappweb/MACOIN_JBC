@@ -293,6 +293,17 @@ const EarningsDetail: React.FC = () => {
         </div>
       </div>
 
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+        <div className="bg-gray-900/50 border border-gray-800 rounded-xl shadow-md p-5 backdrop-blur-sm">
+          <div className="text-sm text-gray-400 mb-2">{ui.totalJbc || "Total JBC Rewards"}</div>
+          <div className="text-2xl font-bold text-amber-400">{totals.jbc.toFixed(4)} JBC</div>
+        </div>
+        <div className="bg-gray-900/50 border border-gray-800 rounded-xl shadow-md p-5 backdrop-blur-sm">
+          <div className="text-sm text-gray-400 mb-2">{ui.totalMc || "Total MC Rewards"}</div>
+          <div className="text-2xl font-bold text-neon-400">{totals.mc.toFixed(4)} MC</div>
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <div className="bg-gray-900/50 border border-gray-800 rounded-xl shadow-md p-4 backdrop-blur-sm">
           <div className="text-sm text-gray-400 mb-2">{ui.staticReward || "Static Reward"} (24h)</div>
@@ -313,17 +324,6 @@ const EarningsDetail: React.FC = () => {
           <div className="text-sm text-gray-400 mb-2">{ui.levelReward || "Level Reward"} (24h)</div>
           <div className="text-lg font-bold text-neon-400">{dailyStats.level.mc.toFixed(2)} MC</div>
           <div className="text-lg font-bold text-amber-400">{dailyStats.level.jbc.toFixed(2)} JBC</div>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-        <div className="bg-gray-900/50 border border-gray-800 rounded-xl shadow-md p-5 backdrop-blur-sm">
-          <div className="text-sm text-gray-400 mb-2">{ui.totalMc || "Total MC Rewards"}</div>
-          <div className="text-2xl font-bold text-neon-400">{totals.mc.toFixed(4)} MC</div>
-        </div>
-        <div className="bg-gray-900/50 border border-gray-800 rounded-xl shadow-md p-5 backdrop-blur-sm">
-          <div className="text-sm text-gray-400 mb-2">{ui.totalJbc || "Total JBC Rewards"}</div>
-          <div className="text-2xl font-bold text-amber-400">{totals.jbc.toFixed(4)} JBC</div>
         </div>
       </div>
 

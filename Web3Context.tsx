@@ -62,7 +62,7 @@ export const PROTOCOL_ABI = [
 export const CONTRACT_ADDRESSES = {
   MC_TOKEN: "0xB2B8777BcBc7A8DEf49F022773d392a8787cf9EF",    // MC Token (ERC20) - 用于购买 JBC
   JBC_TOKEN: "0xA743cB357a9f59D349efB7985072779a094658dD",   // JBC Token (ERC20) - 项目主代币
-  PROTOCOL: "0x0f4C066E48743A58361A237838EAfFF2A2c3f65f"    // Protocol Contract - 主协议合约（包含兑换池）
+  PROTOCOL: "0x5FbDB2315678afecb367f032d93F642f64180aa3"    // Protocol Contract - 主协议合约（包含兑换池）
 };
 
 interface Web3ContextType {

@@ -295,11 +295,14 @@ const MiningPanel: React.FC = () => {
   const handleBuyTicket = async () => {
       if (!protocolContract || !mcContract) return;
 
+      // Guard removed: Allow buying multiple tickets or overwriting
+      /*
       // Guard: Check if user already has an active ticket
       if (ticketInfo && ticketInfo.amount > 0n && !ticketInfo.redeemed) {
           toast.error(t.mining.activeTicketExists || "You already have a ticket. Please stake or redeem first.");
           return;
       }
+      */
       
       setTxPending(true);
       try {
@@ -673,10 +676,10 @@ const MiningPanel: React.FC = () => {
             ) : (
               <button
                 onClick={handleBuyTicket}
-                disabled={txPending || isTicketBought}
-                className={`w-full py-4 md:py-5 bg-gradient-to-r from-neon-500 to-neon-600 hover:from-neon-400 hover:to-neon-500 text-black font-extrabold text-xl rounded-xl shadow-xl shadow-neon-500/40 transition-all transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed ${isTicketBought ? 'grayscale' : ''}`}
+                disabled={txPending}
+                className="w-full py-4 md:py-5 bg-gradient-to-r from-neon-500 to-neon-600 hover:from-neon-400 hover:to-neon-500 text-black font-extrabold text-xl rounded-xl shadow-xl shadow-neon-500/40 transition-all transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {txPending ? t.mining.buying : isTicketBought ? (t.mining.activeTicketExists || "Active Ticket Exists") : `${t.mining.buyTicket} - ${selectedTicket.amount} MC`}
+                {txPending ? t.mining.buying : `${t.mining.buyTicket} - ${selectedTicket.amount} MC`}
               </button>
             )}
           </div>

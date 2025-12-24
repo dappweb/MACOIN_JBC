@@ -216,7 +216,7 @@ const TeamLevel: React.FC = () => {
                 </div>
             </div>
         
-            <div className="flex flex-col items-end gap-1 ml-auto sm:ml-0">
+            <div className="flex items-center gap-4 ml-auto">
                  <div className="text-right">
                      <p className="text-xs text-gray-400 uppercase font-bold tracking-wider">{t.team.netTotalAmount}</p>
                      <p className="text-xl font-black text-purple-400 font-mono">
@@ -229,7 +229,8 @@ const TeamLevel: React.FC = () => {
                      title="Copy Referral Link"
                  >
                      <Copy size={14} />
-                     <span>COPY LINK</span>
+                     <span className="hidden sm:inline">COPY LINK</span>
+                     <span className="sm:hidden">COPY</span>
                  </button>
             </div>
         </div>

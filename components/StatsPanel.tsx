@@ -49,9 +49,39 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
   const [isBinding, setIsBinding] = useState(false)
 
   // Price History State
-  const [priceHistory, setPriceHistory] = useState<Array<{ name: string; uv: number }>>([])
+  interface PriceDataPoint {
+    name: string
+    uv: number
+    ema?: number
+    high?: number
+    low?: number
+    change?: number
+  }
+
+  const [priceHistory, setPriceHistory] = useState<PriceDataPoint[]>([])
   const [loadingPriceHistory, setLoadingPriceHistory] = useState(true)
   const [realtimePrices, setRealtimePrices] = useState<Array<{ timestamp: number; price: number }>>([])
+  const [priceStats, setPriceStats] = useState({ high: 0, low: 0, change: 0, avgPrice: 0 })
+
+  // Calculate EMA (Exponential Moving Average)
+  const calculateEMA = (prices: number[], period: number = 7): number[] => {
+    if (prices.length === 0) return []
+    
+    const emaValues: number[] = []
+    const multiplier = 2 / (period + 1)
+    
+    // Start EMA with SMA
+    let sma = prices.slice(0, Math.min(period, prices.length)).reduce((a, b) => a + b, 0) / Math.min(period, prices.length)
+    emaValues.push(sma)
+    
+    // Calculate EMA for remaining values
+    for (let i = 1; i < prices.length; i++) {
+      const ema = (prices[i] - emaValues[i - 1]) * multiplier + emaValues[i - 1]
+      emaValues.push(ema)
+    }
+    
+    return emaValues
+  }
 
   // Helper function to format price data for chart
   const formatPriceHistory = (pricePoints: Array<{ timestamp: number; price: number }>) => {
@@ -62,11 +92,34 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
     // Sort by timestamp
     const sorted = [...pricePoints].sort((a, b) => a.timestamp - b.timestamp)
 
-    // Dynamic aggregation based on data count
-    let aggregatedData: Array<{ name: string; uv: number }> = []
+    // Dynamic aggregation based on data count - keep more data points for better granularity
+    let aggregatedData: Array<{ name: string; prices: number[]; high: number; low: number }> = []
 
-    if (sorted.length < 10) {
-      // Few data points: aggregate by hour
+    if (sorted.length < 15) {
+      // Few data points: aggregate by 30 minutes
+      const period30mPrices = new Map<number, number[]>()
+      for (const point of sorted) {
+        const period = Math.floor(point.timestamp / 1800) * 1800 // 30 minutes
+        if (!period30mPrices.has(period)) {
+          period30mPrices.set(period, [])
+        }
+        period30mPrices.get(period)!.push(point.price)
+      }
+
+      aggregatedData = Array.from(period30mPrices.entries())
+        .map(([period, prices]) => {
+          const date = new Date(period * 1000)
+          const timeStr = `${date.getHours().toString().padStart(2, "0")}:${date.getMinutes().toString().padStart(2, "0")}`
+          return {
+            name: timeStr,
+            prices,
+            high: Math.max(...prices),
+            low: Math.min(...prices),
+          }
+        })
+        .slice(-50)
+    } else if (sorted.length < 100) {
+      // Medium data points: aggregate by hour
       const hourlyPrices = new Map<number, number[]>()
       for (const point of sorted) {
         const hour = Math.floor(point.timestamp / 3600) * 3600
@@ -79,51 +132,75 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
       aggregatedData = Array.from(hourlyPrices.entries())
         .map(([hour, prices]) => {
           const date = new Date(hour * 1000)
-          const timeStr = `${date.getHours().toString().padStart(2, "0")}:${date.getMinutes().toString().padStart(2, "0")}`
-          const avgPrice = prices.reduce((sum, p) => sum + p, 0) / prices.length
-          return { name: timeStr, uv: avgPrice }
+          const timeStr = `${date.getMonth() + 1}/${date.getDate()} ${date.getHours().toString().padStart(2, "0")}:00`
+          return {
+            name: timeStr,
+            prices,
+            high: Math.max(...prices),
+            low: Math.min(...prices),
+          }
         })
-        .slice(-30)
-    } else if (sorted.length < 50) {
-      // Medium data points: aggregate by 3 hours
-      const period3hPrices = new Map<number, number[]>()
+        .slice(-50)
+    } else {
+      // Many data points: aggregate by 4 hours
+      const period4hPrices = new Map<number, number[]>()
       for (const point of sorted) {
-        const period = Math.floor(point.timestamp / 10800) * 10800 // 3 hours
-        if (!period3hPrices.has(period)) {
-          period3hPrices.set(period, [])
+        const period = Math.floor(point.timestamp / 14400) * 14400 // 4 hours
+        if (!period4hPrices.has(period)) {
+          period4hPrices.set(period, [])
         }
-        period3hPrices.get(period)!.push(point.price)
+        period4hPrices.get(period)!.push(point.price)
       }
 
-      aggregatedData = Array.from(period3hPrices.entries())
+      aggregatedData = Array.from(period4hPrices.entries())
         .map(([period, prices]) => {
           const date = new Date(period * 1000)
-          const timeStr = `${date.getMonth() + 1}/${date.getDate()} ${date.getHours().toString().padStart(2, "0")}:00`
-          const avgPrice = prices.reduce((sum, p) => sum + p, 0) / prices.length
-          return { name: timeStr, uv: avgPrice }
+          const timeStr = `${date.getMonth() + 1}/${date.getDate()}`
+          return {
+            name: timeStr,
+            prices,
+            high: Math.max(...prices),
+            low: Math.min(...prices),
+          }
         })
-        .slice(-30)
-    } else {
-      // Many data points: aggregate by day
-      const dailyPrices = new Map<string, number[]>()
-      for (const point of sorted) {
-        const date = new Date(point.timestamp * 1000)
-        const dateKey = `${date.getMonth() + 1}/${date.getDate()}`
-        if (!dailyPrices.has(dateKey)) {
-          dailyPrices.set(dateKey, [])
-        }
-        dailyPrices.get(dateKey)!.push(point.price)
-      }
-
-      aggregatedData = Array.from(dailyPrices.entries())
-        .map(([date, prices]) => {
-          const avgPrice = prices.reduce((sum, p) => sum + p, 0) / prices.length
-          return { name: date, uv: avgPrice }
-        })
-        .slice(-30)
+        .slice(-50)
     }
 
-    return aggregatedData.length > 0 ? aggregatedData : [{ name: "Now", uv: 1.0 }]
+    // Convert to chart format with EMA and stats
+    const allPrices = aggregatedData.flatMap(d => d.prices)
+    const emaValues = calculateEMA(allPrices, 7)
+    
+    const chartData: PriceDataPoint[] = aggregatedData.map((data, idx) => {
+      const avgPrice = data.prices.reduce((a, b) => a + b, 0) / data.prices.length
+      const change = idx === 0 ? 0 : ((avgPrice - aggregatedData[idx - 1].prices[0]) / aggregatedData[idx - 1].prices[0]) * 100
+      
+      return {
+        name: data.name,
+        uv: avgPrice,
+        ema: emaValues[idx] || avgPrice,
+        high: data.high,
+        low: data.low,
+        change: parseFloat(change.toFixed(2)),
+      }
+    })
+
+    // Calculate overall stats
+    if (chartData.length > 0) {
+      const prices = chartData.map(d => d.uv)
+      const high = Math.max(...prices)
+      const low = Math.min(...prices)
+      const change = ((prices[prices.length - 1] - prices[0]) / prices[0]) * 100
+      const avgPrice = prices.reduce((a, b) => a + b, 0) / prices.length
+      
+      setPriceStats({
+        high: parseFloat(high.toFixed(6)),
+        low: parseFloat(low.toFixed(6)),
+        change: parseFloat(change.toFixed(2)),
+        avgPrice: parseFloat(avgPrice.toFixed(6)),
+      })
+    }
+
+    return chartData.length > 0 ? chartData : [{ name: "Now", uv: 1.0 }]
   }
 
   // Fetch Initial Price History from Swap Events
@@ -575,9 +652,34 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
 
       {/* Chart Section */}
       <div className="glass-panel p-4 md:p-6 rounded-xl md:rounded-2xl bg-gray-900/50 border border-gray-800 backdrop-blur-sm">
-        <h3 className="text-base md:text-lg font-bold mb-4 md:mb-6 text-white border-l-4 border-neon-500 pl-3">
-          {t.stats.chartTitle}
-        </h3>
+        <div className="flex items-center justify-between mb-4 md:mb-6">
+          <h3 className="text-base md:text-lg font-bold text-white border-l-4 border-neon-500 pl-3">
+            {t.stats.chartTitle}
+          </h3>
+          {!loadingPriceHistory && priceHistory.length > 1 && (
+            <div className="flex gap-2 md:gap-4 text-xs md:text-sm">
+              <div className="text-center">
+                <div className="text-gray-400">Highest</div>
+                <div className="text-amber-400 font-bold">${priceStats.high.toFixed(6)}</div>
+              </div>
+              <div className="text-center">
+                <div className="text-gray-400">Lowest</div>
+                <div className="text-amber-400 font-bold">${priceStats.low.toFixed(6)}</div>
+              </div>
+              <div className="text-center">
+                <div className="text-gray-400">Change</div>
+                <div className={`font-bold ${priceStats.change >= 0 ? "text-neon-400" : "text-red-400"}`}>
+                  {priceStats.change >= 0 ? "+" : ""}{priceStats.change.toFixed(2)}%
+                </div>
+              </div>
+              <div className="text-center">
+                <div className="text-gray-400">Average</div>
+                <div className="text-neon-400 font-bold">${priceStats.avgPrice.toFixed(6)}</div>
+              </div>
+            </div>
+          )}
+        </div>
+
         {loadingPriceHistory ? (
           <div className="h-[200px] sm:h-[250px] md:h-[300px] w-full flex items-center justify-center">
             <div className="text-center">
@@ -586,40 +688,142 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
             </div>
           </div>
         ) : (
-          <div className="h-[200px] sm:h-[250px] md:h-[300px] w-full">
+          <div className="h-[250px] sm:h-[300px] md:h-[400px] w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={priceHistory}>
+              <AreaChart
+                data={priceHistory}
+                margin={{ top: 10, right: 20, left: 10, bottom: 10 }}
+              >
                 <defs>
                   <linearGradient id="colorUv" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#01FEAE" stopOpacity={0.4} />
+                    <stop offset="5%" stopColor="#01FEAE" stopOpacity={0.3} />
                     <stop offset="95%" stopColor="#01FEAE" stopOpacity={0} />
                   </linearGradient>
+                  <linearGradient id="colorEma" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#FBBF24" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#FBBF24" stopOpacity={0} />
+                  </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#374151" vertical={false} />
-                <XAxis dataKey="name" stroke="#9ca3af" />
-                <YAxis stroke="#9ca3af" />
+                {/* Enhanced Grid */}
+                <CartesianGrid
+                  strokeDasharray="4 4"
+                  stroke="#4B5563"
+                  vertical={true}
+                  horizontalPoints={[]}
+                />
+                {/* Y Axis with 6 decimal precision */}
+                <YAxis
+                  stroke="#9ca3af"
+                  tickFormatter={(value) => value.toFixed(6)}
+                  width={80}
+                  tick={{ fontSize: 12 }}
+                  domain={["dataMin - 0.1%", "dataMax + 0.1%"]}
+                />
+                {/* X Axis */}
+                <XAxis
+                  dataKey="name"
+                  stroke="#9ca3af"
+                  tick={{ fontSize: 11 }}
+                  angle={-45}
+                  textAnchor="end"
+                  height={80}
+                />
+                {/* Enhanced Tooltip */}
                 <Tooltip
                   contentStyle={{
                     backgroundColor: "#1f2937",
-                    borderColor: "#374151",
+                    border: "2px solid #01FEAE",
                     color: "#f3f4f6",
-                    borderRadius: "8px",
-                    boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.3)",
+                    borderRadius: "12px",
+                    boxShadow: "0 8px 16px -2px rgba(1, 254, 174, 0.2)",
+                    padding: "12px",
                   }}
-                  itemStyle={{ color: "#01FEAE" }}
+                  labelStyle={{ color: "#01FEAE", fontWeight: "bold", marginBottom: "8px" }}
+                  formatter={(value: any) => {
+                    if (typeof value === "number") {
+                      return value.toFixed(6)
+                    }
+                    return value
+                  }}
+                  labelFormatter={(label) => `Time: ${label}`}
+                  cursor={{
+                    stroke: "#01FEAE",
+                    strokeWidth: 2,
+                    strokeDasharray: "5 5",
+                  }}
+                  contentFormatter={(content: any) => {
+                    if (!content.payload || content.payload.length === 0) return null
+                    const payload = content.payload[0]?.payload as any
+                    return (
+                      <div className="bg-gray-900 border border-neon-500 rounded-lg p-3">
+                        <p className="text-neon-400 font-bold mb-2">{payload.name}</p>
+                        <p className="text-gray-300 text-sm">
+                          Price: <span className="text-neon-400 font-mono">${payload.uv.toFixed(6)}</span>
+                        </p>
+                        {payload.ema && (
+                          <p className="text-gray-300 text-sm">
+                            EMA(7): <span className="text-amber-400 font-mono">${payload.ema.toFixed(6)}</span>
+                          </p>
+                        )}
+                        {payload.high && (
+                          <p className="text-gray-300 text-sm">
+                            Range: <span className="text-gray-400 font-mono">${payload.low.toFixed(6)} ~ ${payload.high.toFixed(6)}</span>
+                          </p>
+                        )}
+                        {payload.change !== undefined && (
+                          <p className={`text-sm font-mono ${payload.change >= 0 ? "text-neon-400" : "text-red-400"}`}>
+                            Change: {payload.change >= 0 ? "+" : ""}{payload.change.toFixed(2)}%
+                          </p>
+                        )}
+                      </div>
+                    )
+                  }}
                 />
+                {/* Price Line */}
                 <Area
                   type="monotone"
                   dataKey="uv"
                   stroke="#01FEAE"
                   strokeWidth={3}
-                  fillOpacity={1}
                   fill="url(#colorUv)"
+                  isAnimationActive={true}
+                  animationDuration={300}
+                  dot={false}
+                  name="Price"
                 />
+                {/* EMA Line */}
+                {priceHistory.length > 5 && (
+                  <Area
+                    type="monotone"
+                    dataKey="ema"
+                    stroke="#FBBF24"
+                    strokeWidth={2}
+                    strokeDasharray="5 5"
+                    fill="url(#colorEma)"
+                    isAnimationActive={true}
+                    animationDuration={300}
+                    dot={false}
+                    name="EMA(7)"
+                  />
+                )}
               </AreaChart>
             </ResponsiveContainer>
           </div>
         )}
+
+        {/* Legend */}
+        <div className="mt-4 flex gap-4 text-xs md:text-sm text-gray-400">
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded-full bg-neon-500"></div>
+            <span>Price</span>
+          </div>
+          {priceHistory.length > 5 && (
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-0.5 bg-amber-400"></div>
+              <span>EMA(7) - 7-Period Exponential Moving Average</span>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   )

@@ -1379,7 +1379,7 @@ const MiningPanel: React.FC = () => {
                     </button>
                 )}
 
-                {currentStep === 3 && hasActiveTicket && (
+                {currentStep === 3 && hasValidTicket && (
                     <button
                         onClick={handleRedeem}
                         disabled={txPending}

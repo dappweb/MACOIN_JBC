@@ -2,14 +2,16 @@
 pragma solidity ^0.8.20;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
 interface IJBC is IERC20 {
     function burn(uint256 amount) external;
 }
 
-contract JinbaoProtocol is Ownable, ReentrancyGuard {
+contract JinbaoProtocol is Initializable, OwnableUpgradeable, ReentrancyGuardUpgradeable, UUPSUpgradeable {
     
     struct UserInfo {
         address referrer;
@@ -42,6 +44,12 @@ contract JinbaoProtocol is Ownable, ReentrancyGuard {
         uint256 amount;
     }
 
+    struct LevelConfig {
+        uint256 minDirects;
+        uint256 level;
+        uint256 percent;
+    }
+
     IERC20 public mcToken;
     IJBC public jbcToken;
     
@@ -55,17 +63,17 @@ contract JinbaoProtocol is Ownable, ReentrancyGuard {
     uint256 public constant SECONDS_IN_UNIT = 60; // Minutes for Demo, Days for Prod
     
     // Distribution Config
-    uint256 public directRewardPercent = 25;
-    uint256 public levelRewardPercent = 15;
-    uint256 public marketingPercent = 5;
-    uint256 public buybackPercent = 5;
-    uint256 public lpInjectionPercent = 25;
-    uint256 public treasuryPercent = 25;
+    uint256 public directRewardPercent;
+    uint256 public levelRewardPercent;
+    uint256 public marketingPercent;
+    uint256 public buybackPercent;
+    uint256 public lpInjectionPercent;
+    uint256 public treasuryPercent;
     
     // Fees & Taxes
-    uint256 public redemptionFeePercent = 1; // 1% of Ticket Amount
-    uint256 public swapBuyTax = 50; // 50%
-    uint256 public swapSellTax = 25; // 25%
+    uint256 public redemptionFeePercent; // 1% of Ticket Amount
+    uint256 public swapBuyTax; // 50%
+    uint256 public swapSellTax; // 25%
 
     // Reward Types
     uint8 public constant REWARD_STATIC = 0;
@@ -82,6 +90,14 @@ contract JinbaoProtocol is Ownable, ReentrancyGuard {
     // Pending Rewards for Differential System: ticketId => List of rewards to release upon redemption
     mapping(uint256 => PendingReward[]) public ticketPendingRewards;
     
+    // Level Configs
+    LevelConfig[] public levelConfigs;
+
+    // Admin Controls
+    uint256 public ticketFlexibilityDuration;
+    bool public liquidityEnabled;
+    bool public redeemEnabled;
+
     // Swap Pool Reserves
     uint256 public swapReserveMC;
     uint256 public swapReserveJBC;
@@ -104,22 +120,64 @@ contract JinbaoProtocol is Ownable, ReentrancyGuard {
     event SwappedJBCToMC(address indexed user, uint256 jbcAmount, uint256 mcAmount, uint256 tax);
     event BuybackAndBurn(uint256 mcAmount, uint256 jbcBurned);
     event LiquidityAdded(uint256 mcAmount, uint256 jbcAmount);
+    event LevelConfigsUpdated();
+    event TicketFlexibilityDurationUpdated(uint256 newDuration);
+    event LiquidityStatusUpdated(bool enabled);
+    event RedeemStatusUpdated(bool enabled);
 
-    constructor(
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
+    }
+
+    function initialize(
         address _mcToken, 
         address _jbcToken,
         address _marketing,
         address _treasury,
         address _lpInjection,
-        address _buybackWallet // Added parameter
-    ) Ownable(msg.sender) {
+        address _buybackWallet
+    ) public initializer {
+        __Ownable_init(msg.sender);
+        __ReentrancyGuard_init();
+        __UUPSUpgradeable_init();
+
         mcToken = IERC20(_mcToken);
         jbcToken = IJBC(_jbcToken);
         marketingWallet = _marketing;
         treasuryWallet = _treasury;
         lpInjectionWallet = _lpInjection;
         buybackWallet = _buybackWallet;
+
+        // Init Default Values
+        directRewardPercent = 25;
+        levelRewardPercent = 15;
+        marketingPercent = 5;
+        buybackPercent = 5;
+        lpInjectionPercent = 25;
+        treasuryPercent = 25;
+        
+        redemptionFeePercent = 1;
+        swapBuyTax = 50;
+        swapSellTax = 25;
+
+        ticketFlexibilityDuration = 72 hours;
+        liquidityEnabled = true;
+        redeemEnabled = true;
+
+        // Init Levels
+        levelConfigs.push(LevelConfig(100000, 9, 45));
+        levelConfigs.push(LevelConfig(30000, 8, 40));
+        levelConfigs.push(LevelConfig(10000, 7, 35));
+        levelConfigs.push(LevelConfig(3000, 6, 30));
+        levelConfigs.push(LevelConfig(1000, 5, 25));
+        levelConfigs.push(LevelConfig(300, 4, 20));
+        levelConfigs.push(LevelConfig(100, 3, 15));
+        levelConfigs.push(LevelConfig(30, 2, 10));
+        levelConfigs.push(LevelConfig(10, 1, 5));
     }
+
+    function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
 
     // --- Admin Functions ---
 
@@ -201,18 +259,46 @@ contract JinbaoProtocol is Ownable, ReentrancyGuard {
         emit LiquidityAdded(mcAmount, jbcAmount);
     }
 
+    function setWallets(address _marketing, address _treasury, address _lpInjection, address _buyback) external onlyOwner {
+        marketingWallet = _marketing;
+        treasuryWallet = _treasury;
+        lpInjectionWallet = _lpInjection;
+        buybackWallet = _buyback;
+    }
+
+    // New Admin Features
+
+    function setLevelConfigs(LevelConfig[] memory _configs) external onlyOwner {
+        delete levelConfigs;
+        for(uint i=0; i<_configs.length; i++) {
+            levelConfigs.push(_configs[i]);
+        }
+        emit LevelConfigsUpdated();
+    }
+
+    function setTicketFlexibilityDuration(uint256 _duration) external onlyOwner {
+        ticketFlexibilityDuration = _duration;
+        emit TicketFlexibilityDurationUpdated(_duration);
+    }
+
+    function setLiquidityEnabled(bool _enabled) external onlyOwner {
+        liquidityEnabled = _enabled;
+        emit LiquidityStatusUpdated(_enabled);
+    }
+
+    function setRedeemEnabled(bool _enabled) external onlyOwner {
+        redeemEnabled = _enabled;
+        emit RedeemStatusUpdated(_enabled);
+    }
+
     // --- Helper Views ---
 
-    function getLevel(uint256 activeDirects) public pure returns (uint256 level, uint256 percent) {
-        if (activeDirects >= 100000) return (9, 45);
-        if (activeDirects >= 30000) return (8, 40);
-        if (activeDirects >= 10000) return (7, 35);
-        if (activeDirects >= 3000) return (6, 30);
-        if (activeDirects >= 1000) return (5, 25);
-        if (activeDirects >= 300) return (4, 20);
-        if (activeDirects >= 100) return (3, 15);
-        if (activeDirects >= 30) return (2, 10);
-        if (activeDirects >= 10) return (1, 5);
+    function getLevel(uint256 activeDirects) public view returns (uint256 level, uint256 percent) {
+        for(uint i = 0; i < levelConfigs.length; i++) {
+            if (activeDirects >= levelConfigs[i].minDirects) {
+                return (levelConfigs[i].level, levelConfigs[i].percent);
+            }
+        }
         return (0, 0);
     }
 
@@ -241,15 +327,6 @@ contract JinbaoProtocol is Ownable, ReentrancyGuard {
         // Validate Amount (T1-T4)
         require(amount == 100 * 1e18 || amount == 300 * 1e18 || amount == 500 * 1e18 || amount == 1000 * 1e18, "Invalid ticket amount");
         
-        // Removed restriction: Users can buy ticket anytime
-        /*
-        // Ensure previous ticket is exited if it existed
-        Ticket storage prevTicket = userTicket[msg.sender];
-        if (prevTicket.amount > 0) {
-            require(prevTicket.exited, "Previous ticket active");
-        }
-        */
-
         // Transfer MC
         mcToken.transferFrom(msg.sender, address(this), amount);
 
@@ -278,7 +355,7 @@ contract JinbaoProtocol is Ownable, ReentrancyGuard {
         // --- Distribution ---
         
         // 1. Direct Reward (25%)
-        address referrerAddr = userInfo[msg.sender].referrer; // Changed variable name to avoid shadowing
+        address referrerAddr = userInfo[msg.sender].referrer;
         if (referrerAddr != address(0)) {
             uint256 directAmt = (amount * directRewardPercent) / 100;
             _distributeReward(referrerAddr, directAmt, REWARD_DIRECT);
@@ -307,6 +384,7 @@ contract JinbaoProtocol is Ownable, ReentrancyGuard {
     }
 
     function stakeLiquidity(uint256 amount, uint256 cycleDays) external nonReentrant {
+        require(liquidityEnabled, "Liquidity disabled");
         Ticket storage ticket = userTicket[msg.sender];
         require(ticket.amount > 0, "No ticket");
         require(!ticket.exited, "Ticket exited");
@@ -409,21 +487,35 @@ contract JinbaoProtocol is Ownable, ReentrancyGuard {
     }
 
     function redeem() external nonReentrant {
+        require(redeemEnabled, "Redeem disabled");
         // Redeem all expired stakes
         Stake[] storage stakes = userStakes[msg.sender];
         uint256 totalReturn = 0;
         uint256 totalFee = 0;
+        uint256 totalYield = 0;
         
         for (uint256 i = 0; i < stakes.length; i++) {
             if (!stakes[i].active) continue;
             
             uint256 endTime = stakes[i].startTime + (stakes[i].cycleDays * SECONDS_IN_UNIT);
             if (block.timestamp >= endTime) {
-                // Expired, can redeem
-                uint256 fee = (stakes[i].amount * redemptionFeePercent) / 100; // Fee based on stake amount now?
-                // User said "Ticket 1% fee". But since stakes are decoupled, maybe fee on stake?
-                // Or fee based on ticket amount? 
-                // Let's stick to fee on Principal being returned for simplicity and fairness.
+                // 1. Calculate and Settle Static Yield
+                uint256 ratePerThousand = 0;
+                if (stakes[i].cycleDays == 7) ratePerThousand = 20;      // 2.0%
+                else if (stakes[i].cycleDays == 15) ratePerThousand = 25; // 2.5%
+                else if (stakes[i].cycleDays == 30) ratePerThousand = 30; // 3.0%
+                
+                uint256 totalStaticShouldBe = (stakes[i].amount * ratePerThousand * stakes[i].cycleDays) / 1000;
+                uint256 pending = 0;
+                if (totalStaticShouldBe > stakes[i].paid) {
+                    pending = totalStaticShouldBe - stakes[i].paid;
+                }
+                
+                totalYield += pending;
+                stakes[i].paid += pending;
+
+                // 2. Calculate Principal Return & Fee
+                uint256 fee = (stakes[i].amount * redemptionFeePercent) / 100;
                 
                 uint256 returnAmt = stakes[i].amount;
                 if (returnAmt >= fee) {
@@ -439,22 +531,51 @@ contract JinbaoProtocol is Ownable, ReentrancyGuard {
             }
         }
         
-        require(totalReturn > 0, "Nothing to redeem");
+        require(totalReturn > 0 || totalYield > 0, "Nothing to redeem");
 
-        mcToken.transfer(msg.sender, totalReturn);
+        // Distribute Yield (Subject to Cap)
+        if (totalYield > 0) {
+            uint256 available = userInfo[msg.sender].currentCap - userInfo[msg.sender].totalRevenue;
+            if (totalYield > available) {
+                emit RewardCapped(msg.sender, totalYield, available);
+                totalYield = available;
+            }
+            
+            if (totalYield > 0) {
+                userInfo[msg.sender].totalRevenue += totalYield;
+                
+                uint256 mcPart = totalYield / 2;
+                uint256 jbcValuePart = totalYield / 2;
+                
+                if (mcToken.balanceOf(address(this)) >= mcPart) {
+                    mcToken.transfer(msg.sender, mcPart);
+                }
+                
+                uint256 jbcPrice = getJBCPrice(); 
+                uint256 jbcAmount = (jbcValuePart * 1 ether) / jbcPrice;
+                if (jbcToken.balanceOf(address(this)) >= jbcAmount) {
+                    jbcToken.transfer(msg.sender, jbcAmount);
+                }
+                
+                emit RewardPaid(msg.sender, totalYield, REWARD_STATIC);
+            }
+        }
+
+        if (totalReturn > 0) {
+            mcToken.transfer(msg.sender, totalReturn);
+        }
         
         // Record Fee for next refund
         userInfo[msg.sender].refundFeeAmount += totalFee;
 
         emit Redeemed(msg.sender, totalReturn, totalFee);
         
-        // Release Pending Level Rewards?
-        // Level rewards are tied to TicketId.
-        // If ticket is still active, we can release? 
-        // Logic: Level rewards are released when user "Redeems".
-        // Now multiple redeems possible.
-        // Let's release all pending rewards for current ticket.
         _releaseLevelRewards(userTicket[msg.sender].ticketId);
+        
+        // Check Exit
+        if (userInfo[msg.sender].totalRevenue >= userInfo[msg.sender].currentCap) {
+            _handleExit(msg.sender);
+        }
     }
 
     // --- Internal Logic ---
@@ -463,8 +584,6 @@ contract JinbaoProtocol is Ownable, ReentrancyGuard {
         UserInfo storage u = userInfo[user];
         Ticket storage t = userTicket[user];
         
-        // If user has no active ticket or exited, they might still receive dynamic rewards? 
-        // Doc: "3倍出局... 该用户不再享受任何动态奖励"
         if (t.exited || t.amount == 0) {
             return; // Burn/Keep in contract
         }
@@ -631,31 +750,11 @@ contract JinbaoProtocol is Ownable, ReentrancyGuard {
         require(mcToken.balanceOf(address(this)) >= mcOutput, "Insufficient MC liquidity");
 
         // Update Reserves
-        swapReserveJBC += jbcAmount; // We add full input amount? No, we burned tax.
-        // Wait, standard AMM: 
-        // Swap Input = amountToSwap (after tax?). 
-        // In this logic: tax is burned BEFORE swap math?
-        // Let's look at previous logic:
-        // uint256 jbcReserve = jbcToken.balanceOf(address(this)) - amountToSwap; 
-        // This implies amountToSwap was added to reserve implicitly by transfer.
-        
-        // Correct logic with Reserves:
-        // Input JBC comes in. Tax is burned. Remaining JBC (amountToSwap) is added to JBC Reserve.
-        // Then MC is calculated and removed from MC Reserve.
-        
         swapReserveJBC += amountToSwap;
         swapReserveMC -= mcOutput;
         
         mcToken.transfer(msg.sender, mcOutput);
         
         emit SwappedJBCToMC(msg.sender, jbcAmount, mcOutput, tax);
-    }
-
-    // --- Admin ---
-    function setWallets(address _marketing, address _treasury, address _lpInjection, address _buyback) external onlyOwner {
-        marketingWallet = _marketing;
-        treasuryWallet = _treasury;
-        lpInjectionWallet = _lpInjection;
-        buybackWallet = _buyback;
     }
 }

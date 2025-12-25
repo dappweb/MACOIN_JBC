@@ -77,7 +77,7 @@ const TransactionHistory: React.FC = () => {
       const events = await Promise.all([
         protocolContract.queryFilter(protocolContract.filters.TicketPurchased(targetUser), fromBlock),
         protocolContract.queryFilter(protocolContract.filters.LiquidityStaked(targetUser), fromBlock),
-        protocolContract.queryFilter(protocolContract.filters.RewardClaimed(targetUser), fromBlock),
+        protocolContract.queryFilter(protocolContract.filters.RewardPaid(targetUser), fromBlock),
         protocolContract.queryFilter(protocolContract.filters.Redeemed(targetUser), fromBlock),
         protocolContract.queryFilter(protocolContract.filters.SwappedMCToJBC(targetUser), fromBlock),
         protocolContract.queryFilter(protocolContract.filters.SwappedJBCToMC(targetUser), fromBlock)

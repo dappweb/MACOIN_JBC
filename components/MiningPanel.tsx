@@ -1108,7 +1108,42 @@ const MiningPanel: React.FC = () => {
       {/* Ticket Status Display - New Addition */}
       {currentStep === 3 && (
         <div className={`glass-panel p-4 md:p-6 rounded-xl border-2 animate-fade-in backdrop-blur-sm bg-gray-900/50 mt-8 ${statusInfo?.border || 'border-gray-800'}`}>
-            {!hasStakedLiquidity ? (
+            {isExited ? (
+                 <div className="text-center py-8">
+                    <div className="bg-purple-900/20 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 border border-purple-500/30">
+                        <TrendingUp className="text-purple-400" size={32} />
+                    </div>
+                    <h3 className="text-xl font-bold text-white mb-2">{t.mining.completed || "Mining Completed (Exited)"}</h3>
+                    <p className="text-gray-400 max-w-md mx-auto mb-6">
+                        You have reached the 3x Cap limit.
+                    </p>
+                    
+                    <div className="max-w-sm mx-auto bg-gray-800/50 rounded-lg p-4 border border-gray-700 mb-6">
+                        <div className="flex justify-between items-center mb-2">
+                             <span className="text-gray-400">Total Revenue</span>
+                             <span className="text-neon-400 font-mono font-bold">{currentRevenue.toFixed(2)} MC</span>
+                        </div>
+                        <div className="flex justify-between items-center mb-4">
+                             <span className="text-gray-400">Cap Limit</span>
+                             <span className="text-white font-mono font-bold">{displayCap} MC</span>
+                        </div>
+                        <div className="w-full bg-gray-700 h-2 rounded-full overflow-hidden">
+                             <div className="bg-purple-500 h-full w-full"></div>
+                        </div>
+                        <div className="text-center mt-2 text-xs text-purple-400 font-bold">100% Completed</div>
+                    </div>
+
+                    <button 
+                        onClick={() => {
+                            setCurrentStep(1);
+                            handleScrollToBuy();
+                        }}
+                        className="px-8 py-3 bg-gradient-to-r from-neon-500 to-neon-600 hover:from-neon-400 hover:to-neon-500 text-black font-bold rounded-xl shadow-lg shadow-neon-500/20 transition-all transform hover:scale-105"
+                    >
+                        {t.mining.buyTicket} (Start New Round)
+                    </button>
+                 </div>
+            ) : !hasStakedLiquidity ? (
                 <div className="text-center py-12">
                     <div className="bg-gray-800/50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 border border-gray-700">
                         <Zap className="text-gray-600" size={32} />
@@ -1323,7 +1358,7 @@ const MiningPanel: React.FC = () => {
       )}
 
       {/* Mobile Sticky Footer */}
-      <div className="fixed bottom-16 left-0 right-0 p-4 bg-gray-900/95 border-t border-gray-800 backdrop-blur-xl md:hidden z-40 shadow-[0_-4px_20px_-1px_rgba(0,0,0,0.5)] safe-area-bottom">
+      <div className={`fixed bottom-16 left-0 right-0 p-4 bg-gray-900/95 border-t border-gray-800 backdrop-blur-xl md:hidden z-40 shadow-[0_-4px_20px_-1px_rgba(0,0,0,0.5)] safe-area-bottom ${currentStep === 2 ? 'hidden' : ''}`}>
         <div className="flex items-center gap-4">
             {/* Status Summary */}
             <div className="flex-1">
@@ -1369,16 +1404,8 @@ const MiningPanel: React.FC = () => {
                     )
                 )}
 
-                {currentStep === 2 && canStakeLiquidity && (
-                    <button
-                        onClick={handleStake}
-                        disabled={txPending || stakeAmount <= 0n}
-                        className="w-full py-3 bg-gradient-to-r from-neon-500 to-neon-600 text-black font-extrabold text-lg rounded-xl shadow-lg shadow-neon-500/20 disabled:opacity-50 flex items-center justify-center gap-2"
-                    >
-                        {txPending ? t.mining.staking : t.mining.stake} <ArrowRight size={18} />
-                    </button>
-                )}
-
+                {/* Step 2 Button Removed from Sticky Footer as requested */}
+                
                 {currentStep === 3 && hasValidTicket && (
                     <button
                         onClick={handleRedeem}

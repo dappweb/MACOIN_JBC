@@ -38,6 +38,13 @@ export const PROTOCOL_ABI = [
   "function getAmountOut(uint256, uint256, uint256) pure returns (uint256)",
   "function swapReserveMC() view returns (uint256)",
   "function swapReserveJBC() view returns (uint256)",
+  "function setLevelConfigs(tuple(uint256 minDirects, uint256 level, uint256 percent)[]) external",
+  "function setTicketFlexibilityDuration(uint256) external",
+  "function setLiquidityEnabled(bool) external",
+  "function setRedeemEnabled(bool) external",
+  "function liquidityEnabled() view returns (bool)",
+  "function redeemEnabled() view returns (bool)",
+  "function ticketFlexibilityDuration() view returns (uint256)",
   "event BoundReferrer(address indexed user, address indexed referrer)",
   "event TicketPurchased(address indexed user, uint256 amount, uint256 ticketId)",
   "event LiquidityStaked(address indexed user, uint256 amount, uint256 cycleDays)",
@@ -49,22 +56,11 @@ export const PROTOCOL_ABI = [
 ]
 
 // Contract Addresses (Mock for now, replace with real deployment)
-// export const CONTRACT_ADDRESSES = {
-//   MC_TOKEN: "0x26e3215C86E82735238219367894AFF589076Ea4",
-//   JBC_TOKEN: "0x89958d15c01b84c997Ca5C70b3197B738cdc706e", // Replace with real JBC Address
-//   PROTOCOL: "0xB4E8aA3f6e28D470668b038167cf9362f1c600c9"
-// };
-//
-
-//
-// MC合约地址0xB2B8777BcBc7A8DEf49F022773d392a8787cf9EF
-//
-//   JBC合约地址0xA743cB357a9f59D349efB7985072779a094658dD
-// Contract Addresses - Update these with your deployed contract addresses
+// Contract Addresses
 export const CONTRACT_ADDRESSES = {
-  MC_TOKEN: "0xB2B8777BcBc7A8DEf49F022773d392a8787cf9EF",
-  JBC_TOKEN: "0xA743cB357a9f59D349efB7985072779a094658dD",
-  PROTOCOL: "0x51577047B8dc22C53b31F986441656B3AEAc2263"
+  MC_TOKEN: "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
+  JBC_TOKEN: "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
+  PROTOCOL: "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707"
 };
 
 interface Web3ContextType {

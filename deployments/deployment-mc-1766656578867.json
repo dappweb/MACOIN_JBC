@@ -1,0 +1,19 @@
+{
+  "network": "mc",
+  "networkName": "MC Chain",
+  "chainId": 88813,
+  "explorer": "https://mcerscan.com",
+  "deployer": "0x4C10831CBcF9884ba72051b5287b6c87E4F74A48",
+  "timestamp": "2025-12-25T09:56:18.867Z",
+  "contracts": {
+    "MockMC": "0xB2B8777BcBc7A8DEf49F022773d392a8787cf9EF",
+    "JBC": "0xA743cB357a9f59D349efB7985072779a094658dD",
+    "JinbaoProtocol": "0xe91680Cc2a1722BFb986bCCDA8C1D4A5F5cA6341"
+  },
+  "wallets": {
+    "marketing": "0x4C10831CBcF9884ba72051b5287b6c87E4F74A48",
+    "treasury": "0x4C10831CBcF9884ba72051b5287b6c87E4F74A48",
+    "lpInjection": "0x4C10831CBcF9884ba72051b5287b6c87E4F74A48",
+    "buyback": "0x4C10831CBcF9884ba72051b5287b6c87E4F74A48"
+  }
+}

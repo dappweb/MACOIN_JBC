@@ -105,15 +105,7 @@ const AppContent: React.FC = () => {
           {/* Render Tab Content */}
           {currentTab === AppTab.HOME && (
             <StatsPanel
-              stats={{
-                ...MOCK_USER_STATS,
-                balanceMC: 0,
-                balanceJBC: 0,
-                totalRevenue: 0,
-                teamCount: 0,
-                activeInvestment: 0,
-                pendingRewards: 0,
-              }}
+              stats={MOCK_USER_STATS}
               onJoinClick={() => setCurrentTab(AppTab.MINING)}
               onWhitepaperClick={() => setShowWhitepaper(true)}
             />

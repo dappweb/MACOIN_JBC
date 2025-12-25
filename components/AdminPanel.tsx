@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useWeb3 } from '../Web3Context';
-import { Settings, Save, AlertTriangle, Megaphone } from 'lucide-react';
+import { Settings, Save, AlertTriangle, Megaphone, CheckCircle, XCircle } from 'lucide-react';
 import { useLanguage } from '../LanguageContext';
 import { ethers } from 'ethers';
 import toast from 'react-hot-toast';
@@ -69,6 +69,92 @@ const AdminPanel: React.FC = () => {
   const [jbcLiquidityAmount, setJbcLiquidityAmount] = useState('');
   const [mcLiquidityRemoveAmount, setMcLiquidityRemoveAmount] = useState('');
   const [jbcLiquidityRemoveAmount, setJbcLiquidityRemoveAmount] = useState('');
+
+  // Feature Controls
+  const [ticketFlexibility, setTicketFlexibility] = useState('72');
+  const [liquidityEnabled, setLiquidityEnabled] = useState(true);
+  const [redeemEnabled, setRedeemEnabled] = useState(true);
+  const [levelConfigJson, setLevelConfigJson] = useState(JSON.stringify([
+      {minDirects: 100000, level: 9, percent: 45},
+      {minDirects: 30000, level: 8, percent: 40},
+      {minDirects: 10000, level: 7, percent: 35},
+      {minDirects: 3000, level: 6, percent: 30},
+      {minDirects: 1000, level: 5, percent: 25},
+      {minDirects: 300, level: 4, percent: 20},
+      {minDirects: 100, level: 3, percent: 15},
+      {minDirects: 30, level: 2, percent: 10},
+      {minDirects: 10, level: 1, percent: 5}
+  ], null, 2));
+
+  useEffect(() => {
+    if (protocolContract) {
+      // Check if functions exist to avoid errors on old deployments if not fully updated
+      // But we assume we updated the contract
+      protocolContract.liquidityEnabled().then(setLiquidityEnabled).catch(console.error);
+      protocolContract.redeemEnabled().then(setRedeemEnabled).catch(console.error);
+      protocolContract.ticketFlexibilityDuration().then((d: any) => setTicketFlexibility((Number(d) / 3600).toString())).catch(console.error);
+    }
+  }, [protocolContract]);
+
+  const updateLevelConfigs = async () => {
+    if (!protocolContract) return;
+    setLoading(true);
+    try {
+      const configs = JSON.parse(levelConfigJson);
+      const tx = await protocolContract.setLevelConfigs(configs);
+      await tx.wait();
+      toast.success(t.admin.success);
+    } catch (err: any) {
+      toast.error(t.admin.failed + (err.reason || err.message));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const updateTicketFlexibility = async () => {
+    if (!protocolContract) return;
+    setLoading(true);
+    try {
+      const seconds = Number(ticketFlexibility) * 3600;
+      const tx = await protocolContract.setTicketFlexibilityDuration(seconds);
+      await tx.wait();
+      toast.success(t.admin.success);
+    } catch (err: any) {
+      toast.error(t.admin.failed + (err.reason || err.message));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const toggleLiquidity = async () => {
+    if (!protocolContract) return;
+    setLoading(true);
+    try {
+      const tx = await protocolContract.setLiquidityEnabled(!liquidityEnabled);
+      await tx.wait();
+      setLiquidityEnabled(!liquidityEnabled);
+      toast.success(t.admin.success);
+    } catch (err: any) {
+      toast.error(t.admin.failed + (err.reason || err.message));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const toggleRedeem = async () => {
+    if (!protocolContract) return;
+    setLoading(true);
+    try {
+      const tx = await protocolContract.setRedeemEnabled(!redeemEnabled);
+      await tx.wait();
+      setRedeemEnabled(!redeemEnabled);
+      toast.success(t.admin.success);
+    } catch (err: any) {
+      toast.error(t.admin.failed + (err.reason || err.message));
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const publishAnnouncement = () => {
     try {
@@ -459,6 +545,69 @@ const AdminPanel: React.FC = () => {
                   <button onClick={updateRedeemFee} disabled={loading} className="w-full py-2 md:py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black font-bold rounded-lg mt-2 disabled:opacity-50 text-sm md:text-base shadow-lg shadow-amber-500/30">
                       {t.admin.updateFee}
                   </button>
+              </div>
+          </div>
+      </div>
+
+      {/* Protocol Features */}
+      <div className="glass-panel p-4 md:p-6 rounded-xl md:rounded-2xl bg-gray-900/50 border border-gray-800">
+          <h3 className="text-lg md:text-xl font-bold mb-3 md:mb-4 text-white">{t.admin.featureSettings}</h3>
+          
+          {/* Level Configs */}
+          <div className="space-y-2 mb-6">
+              <label className="text-sm md:text-base text-gray-300 block mb-1">{t.admin.levelConfig}</label>
+              <textarea 
+                  value={levelConfigJson} 
+                  onChange={e => setLevelConfigJson(e.target.value)} 
+                  rows={6}
+                  className="w-full p-2 border border-gray-700 bg-gray-900/50 rounded text-white text-xs font-mono"
+              />
+              <button onClick={updateLevelConfigs} disabled={loading} className="w-full py-2 bg-gray-700 hover:bg-gray-600 text-white rounded disabled:opacity-50 text-sm">
+                  {t.admin.updateLevel}
+              </button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Ticket Flexibility */}
+              <div className="space-y-2">
+                  <label className="text-sm md:text-base text-gray-300 block">{t.admin.ticketFlex}</label>
+                  <div className="flex gap-2">
+                      <input 
+                          type="number" 
+                          value={ticketFlexibility} 
+                          onChange={e => setTicketFlexibility(e.target.value)} 
+                          className="flex-1 p-2 border border-gray-700 bg-gray-900/50 rounded text-white text-sm" 
+                      />
+                      <button onClick={updateTicketFlexibility} disabled={loading} className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded disabled:opacity-50 text-sm whitespace-nowrap">
+                          {t.admin.updateFlex}
+                      </button>
+                  </div>
+              </div>
+
+              {/* Switches */}
+              <div className="space-y-3">
+                  <div className="flex items-center justify-between p-3 border border-gray-700 rounded bg-gray-900/30">
+                      <span className="text-gray-300 text-sm">{t.admin.liquiditySwitch}</span>
+                      <button 
+                          onClick={toggleLiquidity}
+                          disabled={loading}
+                          className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold transition-colors ${liquidityEnabled ? 'bg-green-500/20 text-green-400 border border-green-500/30' : 'bg-red-500/20 text-red-400 border border-red-500/30'}`}
+                      >
+                          {liquidityEnabled ? <CheckCircle size={14} /> : <XCircle size={14} />}
+                          {liquidityEnabled ? t.admin.enabled : t.admin.disabled}
+                      </button>
+                  </div>
+                  <div className="flex items-center justify-between p-3 border border-gray-700 rounded bg-gray-900/30">
+                      <span className="text-gray-300 text-sm">{t.admin.redeemSwitch}</span>
+                      <button 
+                          onClick={toggleRedeem}
+                          disabled={loading}
+                          className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold transition-colors ${redeemEnabled ? 'bg-green-500/20 text-green-400 border border-green-500/30' : 'bg-red-500/20 text-red-400 border border-red-500/30'}`}
+                      >
+                          {redeemEnabled ? <CheckCircle size={14} /> : <XCircle size={14} />}
+                          {redeemEnabled ? t.admin.enabled : t.admin.disabled}
+                      </button>
+                  </div>
               </div>
           </div>
       </div>

@@ -15,6 +15,8 @@ type TicketInfo = {
   redeemed: boolean;
   startTime: number;
   cycleDays: number;
+  totalRevenue: bigint;
+  currentCap: bigint;
 };
 
 type TicketHistoryItem = {
@@ -57,6 +59,12 @@ const MiningPanel: React.FC = () => {
 
   // 3倍上限计算
   const maxCap = selectedTicket.amount * 3;
+
+  // Revenue & Progress
+  const currentRevenueWei = ticketInfo?.totalRevenue || 0n;
+  const currentRevenue = parseFloat(ethers.formatEther(currentRevenueWei));
+  const displayCap = ticketInfo && ticketInfo.currentCap > 0n ? parseFloat(ethers.formatEther(ticketInfo.currentCap)) : maxCap;
+  const progressPercent = displayCap > 0 ? Math.min((currentRevenue / displayCap) * 100, 100) : 0;
 
   // 向导步骤状态
   const [currentStep, setCurrentStep] = useState(1);
@@ -112,7 +120,10 @@ const MiningPanel: React.FC = () => {
       }
 
       try {
-          const ticket = await protocolContract.userTicket(account);
+          const [ticket, userInfo] = await Promise.all([
+              protocolContract.userTicket(account),
+              protocolContract.userInfo(account)
+          ]);
 
           console.log('ticket info:', {
               amount: ticket.amount.toString(),
@@ -120,6 +131,8 @@ const MiningPanel: React.FC = () => {
               redeemed: ticket.redeemed,
               purchaseTime: Number(ticket.purchaseTime),
               requiredLiquidity: ticket.requiredLiquidity.toString(),
+              totalRevenue: userInfo.totalRevenue.toString(),
+              currentCap: userInfo.currentCap.toString(),
           });
 
           setTicketInfo({
@@ -130,6 +143,8 @@ const MiningPanel: React.FC = () => {
               redeemed: ticket.redeemed,
               startTime: Number(ticket.startTime),
               cycleDays: Number(ticket.cycleDays),
+              totalRevenue: userInfo.totalRevenue,
+              currentCap: userInfo.currentCap,
           });
       } catch (err) {
           console.error('Failed to check ticket status', err);
@@ -827,16 +842,21 @@ const MiningPanel: React.FC = () => {
                          </div>
 
                          <div className="bg-gray-800/30 rounded-lg p-3 border border-dashed border-gray-700">
-                            {/* User Note: This place currently displays the 3x cap for the selected ticket. User indicated it should represent historical total quota in the future. */}
-                            <div className="text-xs text-gray-400 uppercase mb-1">{t.mining.cap}</div>
+                            <div className="flex justify-between items-center mb-1">
+                                <div className="text-xs text-gray-400 uppercase">{t.mining.cap}</div>
+                                <div className="text-xs text-neon-400">{progressPercent.toFixed(1)}%</div>
+                            </div>
                             <div className="flex justify-between items-end">
-                                <span className="text-2xl font-bold text-white">{maxCap} MC</span>
+                                <div>
+                                    <span className="text-2xl font-bold text-white">{currentRevenue.toFixed(2)}</span>
+                                    <span className="text-xs text-gray-500 ml-1">/ {displayCap} MC</span>
+                                </div>
                                 <span className="text-xs text-amber-400 mb-1">{t.mining.maxCap}</span>
                             </div>
                             <div className="w-full bg-gray-700 h-1.5 rounded-full mt-2">
                                 <div 
-                                    className="bg-neon-500 h-1.5 rounded-full" 
-                                    style={{ width: '0%' }}
+                                    className="bg-neon-500 h-1.5 rounded-full transition-all duration-500" 
+                                    style={{ width: `${progressPercent}%` }}
                                 ></div>
                             </div>
                          </div>

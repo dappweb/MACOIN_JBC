@@ -14,13 +14,14 @@ export const MC_ABI = [
 export const PROTOCOL_ABI = [
   "function bindReferrer(address _referrer) external",
   "function buyTicket(uint256 amount) external",
-  "function stakeLiquidity(uint256 cycleDays) external",
+  "function stakeLiquidity(uint256 amount, uint256 cycleDays) external",
   "function claimRewards() external",
   "function redeem() external",
   "function swapMCToJBC(uint256 mcAmount) external",
   "function swapJBCToMC(uint256 jbcAmount) external",
   "function userInfo(address) view returns (address referrer, uint256 activeDirects, uint256 teamCount, uint256 totalRevenue, uint256 currentCap, bool isActive)",
-  "function userTicket(address) view returns (uint256 ticketId, uint256 amount, uint256 requiredLiquidity, uint256 purchaseTime, bool liquidityProvided, uint256 liquidityAmount, uint256 startTime, uint256 cycleDays, bool redeemed)",
+  "function userTicket(address) view returns (uint256 ticketId, uint256 amount, uint256 purchaseTime, bool exited)",
+  "function userStakes(address, uint256) view returns (uint256 id, uint256 amount, uint256 startTime, uint256 cycleDays, bool active, uint256 paid)",
   "function getDirectReferrals(address) view returns (address[])",
   "function getDirectReferralsData(address) view returns (tuple(address user, uint256 ticketAmount, uint256 joinTime)[])",
   "function owner() view returns (address)",
@@ -63,7 +64,7 @@ export const PROTOCOL_ABI = [
 export const CONTRACT_ADDRESSES = {
   MC_TOKEN: "0xB2B8777BcBc7A8DEf49F022773d392a8787cf9EF",    // MC Token (ERC20) - 用于购买 JBC
   JBC_TOKEN: "0xA743cB357a9f59D349efB7985072779a094658dD",   // JBC Token (ERC20) - 项目主代币
-  PROTOCOL: "0x2d3C48D2d24C27c9256B83d0fc4Fe8A99a9cb7de"    // Protocol Contract - 主协议合约（包含兑换池）
+  PROTOCOL: "0x5FbDB2315678afecb367f032d93F642f64180aa3"    // Protocol Contract - 主协议合约（包含兑换池）
 };
 
 interface Web3ContextType {

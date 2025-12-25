@@ -17,6 +17,7 @@ type TicketInfo = {
   cycleDays: number;
   totalRevenue: bigint;
   currentCap: bigint;
+  exited: boolean;
 };
 
 type TicketHistoryItem = {
@@ -45,16 +46,27 @@ const MiningPanel: React.FC = () => {
   const [loadingHistory, setLoadingHistory] = useState(false);
   const [maxUnredeemedTicket, setMaxUnredeemedTicket] = useState<number>(0); // 未赎回的最大门票金额
   
+  const [liquidityAmountInput, setLiquidityAmountInput] = useState('');
+  const [stakeAmount, setStakeAmount] = useState<bigint>(0n);
+  
   const { t } = useLanguage();
   const { protocolContract, mcContract, account, isConnected, hasReferrer, isOwner, referrerAddress, checkReferrerStatus, provider } = useWeb3();
 
-  // 基于PDF逻辑的计算
-  // 更新：基于流动性金额（门票金额 * 1.5）计算ROI，而不是门票金额
-  const totalInvestment = selectedTicket.amount + selectedTicket.requiredLiquidity;
-  const liquidityAmount = selectedTicket.requiredLiquidity; // 通常是门票金额 * 1.5
-  
-  // 每日ROI = 流动性金额 * 每日利率
-  const dailyROI = (Number(liquidityAmount) * selectedPlan.dailyRate) / 100;
+  // Handle liquidity amount change
+  useEffect(() => {
+    try {
+        if (liquidityAmountInput) {
+            setStakeAmount(ethers.parseEther(liquidityAmountInput));
+        } else {
+            setStakeAmount(0n);
+        }
+    } catch (e) {
+        setStakeAmount(0n);
+    }
+  }, [liquidityAmountInput]);
+
+  // Update calculations
+  const dailyROI = (Number(liquidityAmountInput || 0) * selectedPlan.dailyRate) / 100;
   const totalROI = dailyROI * selectedPlan.days;
 
   // 3倍上限计算
@@ -71,32 +83,22 @@ const MiningPanel: React.FC = () => {
 
   const now = Math.floor(Date.now() / 1000);
   const hasTicket = !!ticketInfo && ticketInfo.amount > 0n;
-  const isRedeemed = !!ticketInfo && ticketInfo.redeemed;
-  const hasActiveTicket = !!ticketInfo && ticketInfo.liquidityProvided && !ticketInfo.redeemed;
-  const isTicketExpired =
-      hasTicket &&
-      ticketInfo &&
-      !ticketInfo.liquidityProvided &&
-      !isRedeemed &&
-      now > ticketInfo.purchaseTime + 72 * 3600;
-  const canStakeLiquidity =
-      hasTicket &&
-      ticketInfo &&
-      !ticketInfo.liquidityProvided &&
-      !isTicketExpired &&
-      !isRedeemed;
-  const isTicketBought = hasTicket && !isRedeemed;
+  const isExited = !!ticketInfo && ticketInfo.exited;
+  
+  // Logic updated: Can stake if has active ticket (not exited)
+  const canStakeLiquidity = hasTicket && !isExited;
+  const isTicketBought = hasTicket && !isExited;
 
   // 根据状态自动推进步骤
   useEffect(() => {
-      if (hasActiveTicket) {
-          setCurrentStep(3); // 挖矿仪表板
-      } else if (canStakeLiquidity) {
-          setCurrentStep(2); // 质押流动性
+      if (canStakeLiquidity) {
+          // If user has active stakes, maybe go to dashboard (step 3), but allow going back to 2
+          // For now, default to step 1 if no ticket, step 2/3 if ticket
+          if (currentStep === 1) setCurrentStep(2);
       } else {
           setCurrentStep(1); // 购买门票
       }
-  }, [hasActiveTicket, canStakeLiquidity, ticketInfo]);
+  }, [canStakeLiquidity, ticketInfo]);
 
   // 格式化日期辅助函数
   const formatDate = (timestamp: number) => {
@@ -127,24 +129,23 @@ const MiningPanel: React.FC = () => {
 
           console.log('ticket info:', {
               amount: ticket.amount.toString(),
-              liquidityProvided: ticket.liquidityProvided,
-              redeemed: ticket.redeemed,
+              exited: ticket.exited,
               purchaseTime: Number(ticket.purchaseTime),
-              requiredLiquidity: ticket.requiredLiquidity.toString(),
               totalRevenue: userInfo.totalRevenue.toString(),
               currentCap: userInfo.currentCap.toString(),
           });
 
           setTicketInfo({
               amount: ticket.amount,
-              requiredLiquidity: ticket.requiredLiquidity,
+              requiredLiquidity: 0n, // Deprecated
               purchaseTime: Number(ticket.purchaseTime),
-              liquidityProvided: ticket.liquidityProvided,
-              redeemed: ticket.redeemed,
-              startTime: Number(ticket.startTime),
-              cycleDays: Number(ticket.cycleDays),
+              liquidityProvided: false, // Deprecated, logic changed
+              redeemed: false, // Deprecated
+              startTime: 0, // Deprecated
+              cycleDays: 0, // Deprecated
               totalRevenue: userInfo.totalRevenue,
               currentCap: userInfo.currentCap,
+              exited: ticket.exited
           });
       } catch (err) {
           console.error('Failed to check ticket status', err);
@@ -356,18 +357,23 @@ const MiningPanel: React.FC = () => {
 
   const handleStake = async () => {
       if (!protocolContract || !mcContract) return;
+      if (stakeAmount <= 0n) {
+          toast.error(t.mining.invalidAmount || "Invalid amount");
+          return;
+      }
+
       setTxPending(true);
       try {
-          // 1. 妫€鏌?MC 浣欓
-          const requiredAmount = ethers.parseEther(selectedTicket.requiredLiquidity.toString());
+          // 1. 检查 MC 余额
+          const requiredAmount = stakeAmount;
           const mcBalance = await mcContract.balanceOf(account);
           
           if (mcBalance < requiredAmount) {
-              toast.error(`${t.mining.insufficientMC} ${t.mining.needsMC} ${selectedTicket.requiredLiquidity} MC锛?{t.mining.currentBalance}: ${ethers.formatEther(mcBalance)} MC`);
+              toast.error(`${t.mining.insufficientMC} ${t.mining.needsMC} ${liquidityAmountInput} MC，${t.mining.currentBalance}: ${ethers.formatEther(mcBalance)} MC`);
               return;
           }
 
-          // 2. 妫€鏌ユ巿鏉?
+          // 2. 检查授权
           const protocolAddr = await protocolContract.getAddress();
           const allowance = await mcContract.allowance(account, protocolAddr);
           
@@ -379,15 +385,17 @@ const MiningPanel: React.FC = () => {
               return;
           }
 
-          // 3. 鎵ц璐ㄦ娂
-          const tx = await protocolContract.stakeLiquidity(selectedPlan.days);
+          // 3. 执行质押
+          const tx = await protocolContract.stakeLiquidity(requiredAmount, selectedPlan.days);
           await tx.wait();
 
           toast.success(t.mining.stakeSuccess);
-          // 鍒锋柊绁ㄦ嵁鐘舵€?
+          // 刷新票据状态
           await checkTicketStatus();
           // 刷新历史记录
           await fetchHistory();
+          // Clear input
+          setLiquidityAmountInput('');
       } catch (err: any) {
           console.error(t.mining.stakeFailed, err);
           const errorMsg = err.reason || err.message || '';
@@ -789,6 +797,20 @@ const MiningPanel: React.FC = () => {
                         </button>
                     ))}
                 </div>
+
+                <div className="mt-4">
+                    <label className="block text-sm font-bold text-gray-300 mb-2">{t.mining.liqInv || "Liquidity Amount (MC)"}</label>
+                    <div className="relative">
+                        <input
+                            type="number"
+                            value={liquidityAmountInput}
+                            onChange={(e) => setLiquidityAmountInput(e.target.value)}
+                            placeholder="Enter MC Amount"
+                            className="w-full px-4 py-3 bg-gray-900/50 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-neon-500/50 placeholder-gray-600"
+                        />
+                        <div className="absolute right-3 top-3 text-sm font-bold text-gray-500">MC</div>
+                    </div>
+                </div>
             </div>
 
              {/* Warnings */}
@@ -823,7 +845,7 @@ const MiningPanel: React.FC = () => {
                         </div>
                         <div className="flex justify-between items-center py-2 border-b border-gray-800">
                             <span className="text-gray-400">{t.mining.liqInv}</span>
-                            <span className="font-mono text-white">{selectedTicket.requiredLiquidity} MC</span>
+                            <span className="font-mono text-white">{liquidityAmountInput || '0'} MC</span>
                         </div>
                         {/*<div className="flex justify-between items-center py-2 border-b border-slate-100">*/}
                         {/*    <span className="text-slate-500">{t.mining.totalLock}</span>*/}
@@ -906,7 +928,7 @@ const MiningPanel: React.FC = () => {
                     ) : canStakeLiquidity ? (
                          <button
                             onClick={handleStake}
-                            disabled={txPending}
+                            disabled={txPending || stakeAmount <= 0n}
                             className="w-full py-4 bg-gradient-to-r from-neon-500 to-neon-600 hover:from-neon-400 hover:to-neon-500 text-black font-extrabold text-lg rounded-lg shadow-lg shadow-neon-500/40 transition-all transform hover:scale-[1.02] flex items-center justify-center gap-2 disabled:opacity-50"
                          >
                             {txPending ? t.mining.staking : t.mining.stake} <ArrowRight size={20} />

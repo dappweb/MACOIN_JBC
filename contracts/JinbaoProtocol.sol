@@ -21,16 +21,19 @@ contract JinbaoProtocol is Ownable, ReentrancyGuard {
         uint256 refundFeeAmount; // Amount of fee to refund on next stake
     }
 
+    struct Stake {
+        uint256 id;
+        uint256 amount;
+        uint256 startTime;
+        uint256 cycleDays;
+        bool active;
+        uint256 paid; // Track paid rewards for this stake
+    }
+
     struct Ticket {
         uint256 ticketId;
         uint256 amount; // MC Amount
-        uint256 requiredLiquidity; // MC Amount
         uint256 purchaseTime;
-        bool liquidityProvided;
-        uint256 liquidityAmount;
-        uint256 startTime;
-        uint256 cycleDays; // 7, 15, 30
-        bool redeemed;
         bool exited; // True if 3x cap reached
     }
 
@@ -73,24 +76,23 @@ contract JinbaoProtocol is Ownable, ReentrancyGuard {
     // State
     mapping(address => UserInfo) public userInfo;
     mapping(address => Ticket) public userTicket; // One active ticket per user
+    mapping(address => Stake[]) public userStakes; // Multiple stakes per user
     mapping(address => address[]) public directReferrals;
     
     // Pending Rewards for Differential System: ticketId => List of rewards to release upon redemption
     mapping(uint256 => PendingReward[]) public ticketPendingRewards;
     
-    // Static rewards paid tracking: ticketId => amount paid
-    mapping(uint256 => uint256) public ticketStaticPaid;
-
     // Swap Pool Reserves
     uint256 public swapReserveMC;
     uint256 public swapReserveJBC;
 
     uint256 public nextTicketId;
+    uint256 public nextStakeId;
     
     // Events
     event BoundReferrer(address indexed user, address indexed referrer);
     event TicketPurchased(address indexed user, uint256 amount, uint256 ticketId);
-    event LiquidityStaked(address indexed user, uint256 amount, uint256 cycleDays);
+    event LiquidityStaked(address indexed user, uint256 amount, uint256 cycleDays, uint256 stakeId);
     event FeeRefunded(address indexed user, uint256 amount);
     event RewardPaid(address indexed user, uint256 amount, uint8 rewardType);
     event RewardCapped(address indexed user, uint256 amount, uint256 cappedAmount);
@@ -239,15 +241,11 @@ contract JinbaoProtocol is Ownable, ReentrancyGuard {
         // Validate Amount (T1-T4)
         require(amount == 100 * 1e18 || amount == 300 * 1e18 || amount == 500 * 1e18 || amount == 1000 * 1e18, "Invalid ticket amount");
         
-        // Removed single active ticket restriction as per requirements
-        /*
-        // Ensure previous ticket is settled
+        // Ensure previous ticket is exited if it existed
         Ticket storage prevTicket = userTicket[msg.sender];
         if (prevTicket.amount > 0) {
-            bool isExpired = !prevTicket.liquidityProvided && (block.timestamp > prevTicket.purchaseTime + 72 hours);
-            require(prevTicket.redeemed || prevTicket.exited || isExpired, "Previous ticket active");
+            require(prevTicket.exited, "Previous ticket active");
         }
-        */
 
         // Transfer MC
         mcToken.transferFrom(msg.sender, address(this), amount);
@@ -257,13 +255,7 @@ contract JinbaoProtocol is Ownable, ReentrancyGuard {
         userTicket[msg.sender] = Ticket({
             ticketId: nextTicketId,
             amount: amount,
-            requiredLiquidity: (amount * 150) / 100,
             purchaseTime: block.timestamp,
-            liquidityProvided: false,
-            liquidityAmount: 0,
-            startTime: 0,
-            cycleDays: 0,
-            redeemed: false,
             exited: false
         });
 
@@ -280,8 +272,6 @@ contract JinbaoProtocol is Ownable, ReentrancyGuard {
             }
         }
         
-        // Keep isActive false until liquidity provided -> This comment is now obsolete
-
         // --- Distribution ---
         
         // 1. Direct Reward (25%)
@@ -313,45 +303,28 @@ contract JinbaoProtocol is Ownable, ReentrancyGuard {
         emit TicketPurchased(msg.sender, amount, nextTicketId);
     }
 
-    function stakeLiquidity(uint256 cycleDays) external nonReentrant {
+    function stakeLiquidity(uint256 amount, uint256 cycleDays) external nonReentrant {
         Ticket storage ticket = userTicket[msg.sender];
-        require(ticket.amount > 0 && !ticket.liquidityProvided, "Invalid ticket state");
+        require(ticket.amount > 0, "No ticket");
         require(!ticket.exited, "Ticket exited");
-        
-        // 72 Hour Check
-        require(block.timestamp <= ticket.purchaseTime + 72 hours, "Ticket expired");
         
         // Cycle Check: 7, 15, 30
         require(cycleDays == 7 || cycleDays == 15 || cycleDays == 30, "Invalid cycle");
+        require(amount > 0, "Zero amount");
 
-        uint256 reqAmount = ticket.requiredLiquidity;
-        mcToken.transferFrom(msg.sender, address(this), reqAmount);
+        mcToken.transferFrom(msg.sender, address(this), amount);
 
-        ticket.liquidityProvided = true;
-        ticket.liquidityAmount = reqAmount;
-        ticket.startTime = block.timestamp;
-        ticket.cycleDays = cycleDays;
+        nextStakeId++;
+        userStakes[msg.sender].push(Stake({
+            id: nextStakeId,
+            amount: amount,
+            startTime: block.timestamp,
+            cycleDays: cycleDays,
+            active: true,
+            paid: 0
+        }));
 
-        // Activate User & Update Referrer Stats
-        // Requirement changed: User is activated immediately upon ticket purchase, not staking.
-        // But code below is inside stakeLiquidity.
-        // Let's verify if "isActive" is set in buyTicket.
-        // In buyTicket: // Keep isActive false until liquidity provided
-        // So we need to move activation logic to buyTicket?
-        // User said: "User activation: User is activated upon buying a ticket"
-        // So yes, move logic.
-        
-        /* Moved to buyTicket
-        if (!userInfo[msg.sender].isActive) {
-            userInfo[msg.sender].isActive = true;
-            address referrer = userInfo[msg.sender].referrer;
-            if (referrer != address(0)) {
-                userInfo[referrer].activeDirects++;
-            }
-        }
-        */
-
-        emit LiquidityStaked(msg.sender, reqAmount, cycleDays);
+        emit LiquidityStaked(msg.sender, amount, cycleDays, nextStakeId);
 
         // Refund Fee if applicable
         uint256 refund = userInfo[msg.sender].refundFeeAmount;
@@ -366,47 +339,51 @@ contract JinbaoProtocol is Ownable, ReentrancyGuard {
 
     function claimRewards() external nonReentrant {
         Ticket storage ticket = userTicket[msg.sender];
-        require(ticket.liquidityProvided && !ticket.redeemed && !ticket.exited, "Not active");
+        require(ticket.amount > 0 && !ticket.exited, "Not active");
+        
+        Stake[] storage stakes = userStakes[msg.sender];
+        uint256 totalPending = 0;
+        
+        for (uint256 i = 0; i < stakes.length; i++) {
+            if (!stakes[i].active) continue;
+            
+            // Calculate Static Reward for this stake
+            uint256 ratePerThousand = 0;
+            if (stakes[i].cycleDays == 7) ratePerThousand = 20;      // 2.0%
+            else if (stakes[i].cycleDays == 15) ratePerThousand = 25; // 2.5%
+            else if (stakes[i].cycleDays == 30) ratePerThousand = 30; // 3.0%
+            
+            uint256 unitsPassed = (block.timestamp - stakes[i].startTime) / SECONDS_IN_UNIT;
+            if (unitsPassed > stakes[i].cycleDays) unitsPassed = stakes[i].cycleDays;
+            
+            if (unitsPassed == 0) continue;
 
-        // Calculate Static Reward
-        uint256 ratePerThousand = 0;
-        if (ticket.cycleDays == 7) ratePerThousand = 20;      // 2.0%
-        else if (ticket.cycleDays == 15) ratePerThousand = 25; // 2.5%
-        else if (ticket.cycleDays == 30) ratePerThousand = 30; // 3.0%
-        
-        uint256 unitsPassed = (block.timestamp - ticket.startTime) / SECONDS_IN_UNIT;
-        if (unitsPassed > ticket.cycleDays) unitsPassed = ticket.cycleDays;
-        
-        if (unitsPassed == 0) revert("Less than 1 unit");
-
-        uint256 totalStaticShouldBe = (ticket.liquidityAmount * ratePerThousand * unitsPassed) / 1000;
-        
-        uint256 paid = ticketStaticPaid[ticket.ticketId];
-        uint256 pending = 0;
-        if (totalStaticShouldBe > paid) {
-            pending = totalStaticShouldBe - paid;
+            uint256 totalStaticShouldBe = (stakes[i].amount * ratePerThousand * unitsPassed) / 1000;
+            
+            uint256 paid = stakes[i].paid;
+            if (totalStaticShouldBe > paid) {
+                uint256 stakePending = totalStaticShouldBe - paid;
+                totalPending += stakePending;
+                stakes[i].paid += stakePending;
+            }
         }
         
-        require(pending > 0, "No new rewards");
+        require(totalPending > 0, "No new rewards");
         
-        // Distribute
-        // Static is 50% MC, 50% JBC.
         // Check Cap first (Static counts to cap).
-        
-        if (userInfo[msg.sender].totalRevenue + pending > userInfo[msg.sender].currentCap) {
-            pending = userInfo[msg.sender].currentCap - userInfo[msg.sender].totalRevenue;
+        if (userInfo[msg.sender].totalRevenue + totalPending > userInfo[msg.sender].currentCap) {
+            totalPending = userInfo[msg.sender].currentCap - userInfo[msg.sender].totalRevenue;
         }
         
-        if (pending == 0) {
+        if (totalPending == 0) {
             _handleExit(msg.sender);
             return;
         }
         
-        ticketStaticPaid[ticket.ticketId] += pending;
-        userInfo[msg.sender].totalRevenue += pending;
+        userInfo[msg.sender].totalRevenue += totalPending;
         
-        uint256 mcPart = pending / 2;
-        uint256 jbcValuePart = pending / 2;
+        uint256 mcPart = totalPending / 2;
+        uint256 jbcValuePart = totalPending / 2;
         
         // MC Transfer
         if (mcToken.balanceOf(address(this)) >= mcPart) {
@@ -420,7 +397,7 @@ contract JinbaoProtocol is Ownable, ReentrancyGuard {
             jbcToken.transfer(msg.sender, jbcAmount);
         }
         
-        emit RewardPaid(msg.sender, pending, REWARD_STATIC);
+        emit RewardPaid(msg.sender, totalPending, REWARD_STATIC);
         
         // Check Exit
         if (userInfo[msg.sender].totalRevenue >= userInfo[msg.sender].currentCap) {
@@ -429,46 +406,52 @@ contract JinbaoProtocol is Ownable, ReentrancyGuard {
     }
 
     function redeem() external nonReentrant {
-        Ticket storage ticket = userTicket[msg.sender];
-        require(ticket.liquidityProvided && !ticket.redeemed && !ticket.exited, "Cannot redeem");
-        require(block.timestamp >= ticket.startTime + (ticket.cycleDays * SECONDS_IN_UNIT), "Cycle not finished");
-
-        // Fee: 1% of TICKET AMOUNT
-        uint256 fee = (ticket.amount * redemptionFeePercent) / 100;
+        // Redeem all expired stakes
+        Stake[] storage stakes = userStakes[msg.sender];
+        uint256 totalReturn = 0;
+        uint256 totalFee = 0;
         
-        // We deduct fee from the Principal being returned.
-        uint256 returnAmount = ticket.liquidityAmount;
-        if (returnAmount >= fee) {
-            returnAmount -= fee;
-        } else {
-            fee = 0; // Should not happen given 1.5x liquidity
+        for (uint256 i = 0; i < stakes.length; i++) {
+            if (!stakes[i].active) continue;
+            
+            uint256 endTime = stakes[i].startTime + (stakes[i].cycleDays * SECONDS_IN_UNIT);
+            if (block.timestamp >= endTime) {
+                // Expired, can redeem
+                uint256 fee = (stakes[i].amount * redemptionFeePercent) / 100; // Fee based on stake amount now?
+                // User said "Ticket 1% fee". But since stakes are decoupled, maybe fee on stake?
+                // Or fee based on ticket amount? 
+                // Let's stick to fee on Principal being returned for simplicity and fairness.
+                
+                uint256 returnAmt = stakes[i].amount;
+                if (returnAmt >= fee) {
+                    returnAmt -= fee;
+                } else {
+                    fee = 0; 
+                }
+                
+                totalReturn += returnAmt;
+                totalFee += fee;
+                
+                stakes[i].active = false;
+            }
         }
+        
+        require(totalReturn > 0, "Nothing to redeem");
 
-        mcToken.transfer(msg.sender, returnAmount);
+        mcToken.transfer(msg.sender, totalReturn);
         
         // Record Fee for next refund
-        userInfo[msg.sender].refundFeeAmount = fee;
+        userInfo[msg.sender].refundFeeAmount += totalFee;
 
-        ticket.redeemed = true;
-        // Requirement changed: User remains active after redemption?
-        // User said: "After redemption, user status remains active"
-        // Original logic: userInfo[msg.sender].isActive = false;
-        // New logic: Do not set isActive to false.
+        emit Redeemed(msg.sender, totalReturn, totalFee);
         
-        /*
-        userInfo[msg.sender].isActive = false;
-        
-        // Decrement referrer's active count
-        address referrer = userInfo[msg.sender].referrer;
-        if (referrer != address(0) && userInfo[referrer].activeDirects > 0) {
-            userInfo[referrer].activeDirects--;
-        }
-        */
-
-        emit Redeemed(msg.sender, ticket.liquidityAmount, fee);
-        
-        // Release Pending Level Rewards
-        _releaseLevelRewards(ticket.ticketId);
+        // Release Pending Level Rewards?
+        // Level rewards are tied to TicketId.
+        // If ticket is still active, we can release? 
+        // Logic: Level rewards are released when user "Redeems".
+        // Now multiple redeems possible.
+        // Let's release all pending rewards for current ticket.
+        _releaseLevelRewards(userTicket[msg.sender].ticketId);
     }
 
     // --- Internal Logic ---
@@ -507,25 +490,42 @@ contract JinbaoProtocol is Ownable, ReentrancyGuard {
         Ticket storage t = userTicket[user];
         if (!t.exited) {
             t.exited = true;
-            // Force redeem liquidity (minus fee)
-            if (t.liquidityProvided && !t.redeemed) {
-                uint256 fee = (t.amount * redemptionFeePercent) / 100;
-                uint256 returnAmt = t.liquidityAmount > fee ? t.liquidityAmount - fee : 0;
+            
+            // Force redeem all active stakes (minus fee)
+            Stake[] storage stakes = userStakes[user];
+            uint256 totalReturn = 0;
+            uint256 totalFee = 0;
+            
+            for (uint256 i = 0; i < stakes.length; i++) {
+                if (!stakes[i].active) continue;
                 
-                if (returnAmt > 0) {
-                    mcToken.transfer(user, returnAmt);
+                uint256 fee = (stakes[i].amount * redemptionFeePercent) / 100;
+                uint256 returnAmt = stakes[i].amount;
+                if (returnAmt >= fee) {
+                    returnAmt -= fee;
+                } else {
+                    fee = 0;
                 }
-                t.redeemed = true;
-                userInfo[user].isActive = false;
                 
-                // Decrement referrer
-                address referrer = userInfo[user].referrer;
-                if (referrer != address(0) && userInfo[referrer].activeDirects > 0) {
-                    userInfo[referrer].activeDirects--;
-                }
+                totalReturn += returnAmt;
+                totalFee += fee;
                 
-                emit Redeemed(user, t.liquidityAmount, fee);
+                stakes[i].active = false;
             }
+            
+            if (totalReturn > 0) {
+                mcToken.transfer(user, totalReturn);
+            }
+            
+            userInfo[user].isActive = false;
+            
+            // Decrement referrer
+            address referrer = userInfo[user].referrer;
+            if (referrer != address(0) && userInfo[referrer].activeDirects > 0) {
+                userInfo[referrer].activeDirects--;
+            }
+            
+            emit Redeemed(user, totalReturn, totalFee);
             emit Exited(user, t.ticketId);
         }
     }

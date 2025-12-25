@@ -1,5 +1,5 @@
 const { expect } = require("chai");
-const { ethers } = require("hardhat");
+const { ethers, upgrades } = require("hardhat");
 const { time } = require("@nomicfoundation/hardhat-toolbox/network-helpers");
 
 describe("Jinbao Protocol System", function () {
@@ -26,12 +26,17 @@ describe("Jinbao Protocol System", function () {
 
     // Deploy Protocol
     Protocol = await ethers.getContractFactory("JinbaoProtocol");
-    protocol = await Protocol.deploy(
-      await mc.getAddress(),
-      await jbc.getAddress(),
-      marketing.address,
-      treasury.address,
-      lpInjection.address
+    protocol = await upgrades.deployProxy(
+      Protocol,
+      [
+        await mc.getAddress(),
+        await jbc.getAddress(),
+        marketing.address,
+        treasury.address,
+        lpInjection.address,
+        buyback.address,
+      ],
+      { initializer: "initialize", kind: "uups" }
     );
     await protocol.waitForDeployment();
 
@@ -47,9 +52,10 @@ describe("Jinbao Protocol System", function () {
     await mc.mint(user2.address, ethers.parseEther("10000"));
     await mc.mint(referrer.address, ethers.parseEther("10000")); // Fund referrer
 
-    // Referrer buys a ticket to be active
+    // Referrer buys a ticket and stakes to be active
     await mc.connect(referrer).approve(await protocol.getAddress(), ethers.MaxUint256);
     await protocol.connect(referrer).buyTicket(TICKET_PRICE);
+    await protocol.connect(referrer).stakeLiquidity(LIQUIDITY_AMOUNT, 7);
   });
 
   describe("Token Mechanics (JBC)", function () {
@@ -91,6 +97,8 @@ describe("Jinbao Protocol System", function () {
       
       const initialMarketing = await mc.balanceOf(marketing.address);
       const initialReferrer = await mc.balanceOf(referrer.address);
+      const initialTreasury = await mc.balanceOf(treasury.address);
+      const initialLpInjection = await mc.balanceOf(lpInjection.address);
 
       // Buy Ticket
       await protocol.connect(user1).buyTicket(TICKET_PRICE);
@@ -103,29 +111,26 @@ describe("Jinbao Protocol System", function () {
       expect(await mc.balanceOf(marketing.address)).to.equal(initialMarketing + ethers.parseEther("5"));
       
       // Treasury: 25% = 25 MC
-      expect(await mc.balanceOf(treasury.address)).to.equal(ethers.parseEther("50")); // 25 from Referrer + 25 from User1
+      expect(await mc.balanceOf(treasury.address)).to.equal(initialTreasury + ethers.parseEther("25"));
+
+      // LP Injection: 25% = 25 MC
+      expect(await mc.balanceOf(lpInjection.address)).to.equal(initialLpInjection + ethers.parseEther("25"));
     });
 
     it("Should handle liquidity staking and rewards", async function () {
-      // Buy Ticket
       await mc.connect(user1).approve(await protocol.getAddress(), ethers.MaxUint256);
       await protocol.connect(user1).buyTicket(TICKET_PRICE);
 
       // Stake Liquidity (150 MC)
-      await protocol.connect(user1).stakeLiquidity(7); // 7 Days
+      await protocol.connect(user1).stakeLiquidity(LIQUIDITY_AMOUNT, 7);
 
-      // Verify Liquidity
-      const ticket = await protocol.userTicket(user1.address);
-      expect(ticket.liquidityProvided).to.be.true;
-      expect(ticket.liquidityAmount).to.equal(LIQUIDITY_AMOUNT);
-
-      // Fast forward 7 days
-      await time.increase(7 * 24 * 60 * 60 + 1);
+      // Fast forward 7 units (demo units are minutes)
+      await time.increase(7 * 60 + 1);
 
       // Claim Rewards
-      // Rate: 2.0% daily * 7 days = 14% of Liquidity (150)
+      // Rate: 2.0% per unit * 7 units = 14% of Liquidity (150)
       // 14% of 150 = 21 Total
-      // Split: 10.5 MC + 10.5 JBC (assuming 1:1 price mock)
+      // Split: 10.5 MC + 10.5 JBC (if price is 1:1)
       
       const initialMc = await mc.balanceOf(user1.address);
       const initialJbc = await jbc.balanceOf(user1.address);
@@ -144,17 +149,17 @@ describe("Jinbao Protocol System", function () {
        // Setup
        await mc.connect(user1).approve(await protocol.getAddress(), ethers.MaxUint256);
        await protocol.connect(user1).buyTicket(TICKET_PRICE);
-       await protocol.connect(user1).stakeLiquidity(7);
+       await protocol.connect(user1).stakeLiquidity(LIQUIDITY_AMOUNT, 7);
 
-       // Fast forward
-       await time.increase(8 * 24 * 60 * 60);
+       // Fast forward and claim yield first so redeem only returns principal minus fee
+       await time.increase(7 * 60 + 1);
+       await protocol.connect(user1).claimRewards();
 
        // Redeem
        // 1% Fee = 1 MC
        // Return = 150 MC Principal
-       // User pays 1 MC fee (transferFrom) -> Protocol
-       // Protocol sends 150 MC -> User
-       // Net change for user: +150 - 1 = +149 MC
+       // Protocol sends 149 MC -> User
+       // Net change for user: +149 MC
        
        const initialMc = await mc.balanceOf(user1.address);
        
@@ -165,21 +170,37 @@ describe("Jinbao Protocol System", function () {
        expect(finalMc - initialMc).to.equal(ethers.parseEther("149"));
     });
 
-    it("Should allow buying a new ticket if previous one is expired", async function () {
-       // Buy Ticket 1
-       await mc.connect(user1).approve(await protocol.getAddress(), ethers.MaxUint256);
-       await protocol.connect(user1).buyTicket(TICKET_PRICE);
-       
-       // Don't stake. Fast forward > 72 hours
-       await time.increase(72 * 60 * 60 + 100);
-       
-       // Try to buy Ticket 2 (Should succeed now with my fix)
-       await expect(protocol.connect(user1).buyTicket(TICKET_PRICE)).to.not.be.reverted;
-       
-       // Verify new ticket ID (assuming it increments globally, first was 1, user2 might have bought? No, tests are isolated if using fresh snapshot, but here beforeEach deploys fresh)
-       // nextTicketId starts at 0. Referrer Buy -> 1. User1 Buy 1 -> 2. User1 Buy 2 -> 3.
-       const ticket = await protocol.userTicket(user1.address);
-       expect(ticket.ticketId).to.equal(3);
+    it("Should enforce 72h staking window unless user buys again", async function () {
+      await mc.connect(user1).approve(await protocol.getAddress(), ethers.MaxUint256);
+      await protocol.connect(user1).buyTicket(TICKET_PRICE);
+
+      await time.increase(72 * 60 * 60 + 1);
+
+      await expect(protocol.connect(user1).stakeLiquidity(LIQUIDITY_AMOUNT, 7)).to.be.revertedWith("Ticket expired");
+
+      await protocol.connect(user1).buyTicket(TICKET_PRICE);
+      await expect(protocol.connect(user1).stakeLiquidity(LIQUIDITY_AMOUNT * 2n, 7)).to.not.be.reverted;
+    });
+
+    it("Should refund redeem fee on next stake", async function () {
+      await mc.connect(user1).approve(await protocol.getAddress(), ethers.MaxUint256);
+      await protocol.connect(user1).buyTicket(TICKET_PRICE);
+      await protocol.connect(user1).stakeLiquidity(LIQUIDITY_AMOUNT, 7);
+
+      await time.increase(7 * 60 + 1);
+      await protocol.connect(user1).claimRewards();
+      await protocol.connect(user1).redeem();
+
+      const userInfoAfterRedeem = await protocol.userInfo(user1.address);
+      expect(userInfoAfterRedeem.refundFeeAmount).to.equal(ethers.parseEther("1"));
+
+      await protocol.connect(user1).buyTicket(TICKET_PRICE);
+
+      const balBeforeStake = await mc.balanceOf(user1.address);
+      await protocol.connect(user1).stakeLiquidity(LIQUIDITY_AMOUNT * 2n, 7);
+      const balAfterStake = await mc.balanceOf(user1.address);
+
+      expect(balBeforeStake - balAfterStake).to.equal(ethers.parseEther("299"));
     });
   });
 });

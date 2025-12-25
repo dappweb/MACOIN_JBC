@@ -77,7 +77,7 @@ const TransactionHistory: React.FC = () => {
       const events = await Promise.all([
         protocolContract.queryFilter(protocolContract.filters.TicketPurchased(targetUser), fromBlock),
         protocolContract.queryFilter(protocolContract.filters.LiquidityStaked(targetUser), fromBlock),
-        protocolContract.queryFilter(protocolContract.filters.RewardPaid(targetUser), fromBlock),
+        protocolContract.queryFilter(protocolContract.filters.RewardClaimed(targetUser), fromBlock),
         protocolContract.queryFilter(protocolContract.filters.Redeemed(targetUser), fromBlock),
         protocolContract.queryFilter(protocolContract.filters.SwappedMCToJBC(targetUser), fromBlock),
         protocolContract.queryFilter(protocolContract.filters.SwappedJBCToMC(targetUser), fromBlock)
@@ -114,10 +114,6 @@ const TransactionHistory: React.FC = () => {
           } else if (eventName === 'LiquidityStaked' && event.args) {
             tx.amount = ethers.formatEther(event.args[1]); // amount
             tx.amount2 = event.args[2].toString(); // cycleDays
-            // Try to read jbcAmount if it exists (args[3])
-            if (event.args.length > 3) {
-                tx.amount3 = ethers.formatEther(event.args[3]);
-            }
           } else if (eventName === 'RewardClaimed' && event.args) {
             tx.amount = ethers.formatEther(event.args[1]); // mcAmount
             tx.amount2 = ethers.formatEther(event.args[2]); // jbcAmount

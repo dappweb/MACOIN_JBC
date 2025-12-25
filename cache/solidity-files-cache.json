@@ -10,7 +10,7 @@
         "settings": {
           "optimizer": {
             "enabled": true,
-            "runs": 200
+            "runs": 1
           },
           "evmVersion": "paris",
           "outputSelection": {
@@ -50,7 +50,7 @@
         "settings": {
           "optimizer": {
             "enabled": true,
-            "runs": 200
+            "runs": 1
           },
           "evmVersion": "paris",
           "outputSelection": {
@@ -92,7 +92,7 @@
         "settings": {
           "optimizer": {
             "enabled": true,
-            "runs": 200
+            "runs": 1
           },
           "evmVersion": "paris",
           "outputSelection": {
@@ -131,7 +131,7 @@
         "settings": {
           "optimizer": {
             "enabled": true,
-            "runs": 200
+            "runs": 1
           },
           "evmVersion": "paris",
           "outputSelection": {
@@ -168,7 +168,7 @@
         "settings": {
           "optimizer": {
             "enabled": true,
-            "runs": 200
+            "runs": 1
           },
           "evmVersion": "paris",
           "outputSelection": {
@@ -205,7 +205,7 @@
         "settings": {
           "optimizer": {
             "enabled": true,
-            "runs": 200
+            "runs": 1
           },
           "evmVersion": "paris",
           "outputSelection": {
@@ -244,7 +244,7 @@
         "settings": {
           "optimizer": {
             "enabled": true,
-            "runs": 200
+            "runs": 1
           },
           "evmVersion": "paris",
           "outputSelection": {
@@ -275,15 +275,15 @@
       ]
     },
     "C:\\Users\\Administrator\\Documents\\GitHub\\MACOIN_JBC\\contracts\\JinbaoProtocol.sol": {
-      "lastModificationDate": 1766658419161,
-      "contentHash": "d075e14a7b9ee395ad0b8134297c7ba6",
+      "lastModificationDate": 1766671920685,
+      "contentHash": "f6d5de83550e859304fde639579b0c3f",
       "sourceName": "contracts/JinbaoProtocol.sol",
       "solcConfig": {
         "version": "0.8.22",
         "settings": {
           "optimizer": {
             "enabled": true,
-            "runs": 200
+            "runs": 1
           },
           "evmVersion": "paris",
           "outputSelection": {
@@ -363,7 +363,7 @@
         "settings": {
           "optimizer": {
             "enabled": true,
-            "runs": 200
+            "runs": 1
           },
           "evmVersion": "paris",
           "outputSelection": {
@@ -402,7 +402,7 @@
         "settings": {
           "optimizer": {
             "enabled": true,
-            "runs": 200
+            "runs": 1
           },
           "evmVersion": "paris",
           "outputSelection": {
@@ -441,7 +441,7 @@
         "settings": {
           "optimizer": {
             "enabled": true,
-            "runs": 200
+            "runs": 1
           },
           "evmVersion": "paris",
           "outputSelection": {
@@ -481,7 +481,7 @@
         "settings": {
           "optimizer": {
             "enabled": true,
-            "runs": 200
+            "runs": 1
           },
           "evmVersion": "paris",
           "outputSelection": {
@@ -522,7 +522,7 @@
         "settings": {
           "optimizer": {
             "enabled": true,
-            "runs": 200
+            "runs": 1
           },
           "evmVersion": "paris",
           "outputSelection": {
@@ -559,7 +559,7 @@
         "settings": {
           "optimizer": {
             "enabled": true,
-            "runs": 200
+            "runs": 1
           },
           "evmVersion": "paris",
           "outputSelection": {
@@ -598,7 +598,7 @@
         "settings": {
           "optimizer": {
             "enabled": true,
-            "runs": 200
+            "runs": 1
           },
           "evmVersion": "paris",
           "outputSelection": {
@@ -635,7 +635,7 @@
         "settings": {
           "optimizer": {
             "enabled": true,
-            "runs": 200
+            "runs": 1
           },
           "evmVersion": "paris",
           "outputSelection": {
@@ -677,7 +677,7 @@
         "settings": {
           "optimizer": {
             "enabled": true,
-            "runs": 200
+            "runs": 1
           },
           "evmVersion": "paris",
           "outputSelection": {
@@ -714,7 +714,7 @@
         "settings": {
           "optimizer": {
             "enabled": true,
-            "runs": 200
+            "runs": 1
           },
           "evmVersion": "paris",
           "outputSelection": {
@@ -751,7 +751,7 @@
         "settings": {
           "optimizer": {
             "enabled": true,
-            "runs": 200
+            "runs": 1
           },
           "evmVersion": "paris",
           "outputSelection": {
@@ -790,7 +790,7 @@
         "settings": {
           "optimizer": {
             "enabled": true,
-            "runs": 200
+            "runs": 1
           },
           "evmVersion": "paris",
           "outputSelection": {
@@ -827,7 +827,7 @@
         "settings": {
           "optimizer": {
             "enabled": true,
-            "runs": 200
+            "runs": 1
           },
           "evmVersion": "paris",
           "outputSelection": {

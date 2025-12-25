@@ -1,5 +1,5 @@
 const { expect } = require("chai");
-const { ethers } = require("hardhat");
+const { ethers, upgrades } = require("hardhat");
 
 describe("Jinbao Protocol Swap System", function () {
   let JBC, jbc;
@@ -22,22 +22,28 @@ describe("Jinbao Protocol Swap System", function () {
 
     // Deploy Protocol
     Protocol = await ethers.getContractFactory("JinbaoProtocol");
-    protocol = await Protocol.deploy(
-      await mc.getAddress(),
-      await jbc.getAddress(),
-      owner.address,
-      owner.address,
-      owner.address,
-      owner.address
+    protocol = await upgrades.deployProxy(
+      Protocol,
+      [
+        await mc.getAddress(),
+        await jbc.getAddress(),
+        owner.address,
+        owner.address,
+        owner.address,
+        owner.address,
+      ],
+      { initializer: "initialize", kind: "uups" }
     );
     await protocol.waitForDeployment();
 
     // Setup Permissions
     await jbc.setProtocol(await protocol.getAddress());
     
-    // Fund Protocol with MC and JBC
-    await mc.transfer(await protocol.getAddress(), ethers.parseEther("1000000"));
-    await jbc.transfer(await protocol.getAddress(), ethers.parseEther("1000000"));
+    const liquidityMC = ethers.parseEther("1000000");
+    const liquidityJBC = ethers.parseEther("1000000");
+    await mc.approve(await protocol.getAddress(), liquidityMC);
+    await jbc.approve(await protocol.getAddress(), liquidityJBC);
+    await protocol.addLiquidity(liquidityMC, liquidityJBC);
 
     // Fund User
     await mc.mint(user1.address, ethers.parseEther("10000"));
@@ -54,6 +60,11 @@ describe("Jinbao Protocol Swap System", function () {
       const initialMcUser = await mc.balanceOf(user1.address);
       const initialJbcUser = await jbc.balanceOf(user1.address);
       const initialJbcProtocol = await jbc.balanceOf(await protocol.getAddress());
+      const reserveMC = await protocol.swapReserveMC();
+      const reserveJBC = await protocol.swapReserveJBC();
+      const jbcOutput = await protocol.getAmountOut(swapAmount, reserveMC, reserveJBC);
+      const tax = (jbcOutput * 50n) / 100n;
+      const expectedUserOut = jbcOutput - tax;
       
       await protocol.connect(user1).swapMCToJBC(swapAmount);
       
@@ -64,12 +75,9 @@ describe("Jinbao Protocol Swap System", function () {
       // Check MC Balance: -100
       expect(initialMcUser - finalMcUser).to.equal(swapAmount);
       
-      // Check JBC Balance: +50 (100 input -> 100 JBC value -> 50% Tax -> 50 JBC)
-      const expectedJbcOut = ethers.parseEther("50");
-      expect(finalJbcUser - initialJbcUser).to.equal(expectedJbcOut);
+      expect(finalJbcUser - initialJbcUser).to.equal(expectedUserOut);
       
-      // Check Protocol JBC Balance: -100 (50 to user, 50 burned)
-      expect(initialJbcProtocol - finalJbcProtocol).to.equal(ethers.parseEther("100"));
+      expect(initialJbcProtocol - finalJbcProtocol).to.equal(jbcOutput);
   });
 
   it("Should swap JBC to MC with 25% tax", async function () {
@@ -83,6 +91,11 @@ describe("Jinbao Protocol Swap System", function () {
       const initialJbcUser = await jbc.balanceOf(user1.address);
       const initialJbcProtocol = await jbc.balanceOf(await protocol.getAddress());
       const initialMcProtocol = await mc.balanceOf(await protocol.getAddress());
+      const reserveMC = await protocol.swapReserveMC();
+      const reserveJBC = await protocol.swapReserveJBC();
+      const tax = (swapAmount * 25n) / 100n;
+      const amountToSwap = swapAmount - tax;
+      const expectedMcOut = await protocol.getAmountOut(amountToSwap, reserveJBC, reserveMC);
       
       await protocol.connect(user1).swapJBCToMC(swapAmount);
       
@@ -94,13 +107,11 @@ describe("Jinbao Protocol Swap System", function () {
       // Check JBC Balance: -100
       expect(initialJbcUser - finalJbcUser).to.equal(swapAmount);
       
-      // Check MC Balance: +75 (100 input -> 25% Tax -> 75 MC)
-      const expectedMcOut = ethers.parseEther("75");
       expect(finalMcUser - initialMcUser).to.equal(expectedMcOut);
       
       // Check Protocol JBC Balance: +75 (100 in, 25 burned)
       // Actually: 100 JBC came in. 25 burned. Net +75.
-      expect(finalJbcProtocol - initialJbcProtocol).to.equal(ethers.parseEther("75"));
+      expect(finalJbcProtocol - initialJbcProtocol).to.equal(amountToSwap);
       
       // Check Protocol MC Balance: -75
       expect(initialMcProtocol - finalMcProtocol).to.equal(expectedMcOut);

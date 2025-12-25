@@ -4,6 +4,7 @@ import { useWeb3, CONTRACT_ADDRESSES } from '../Web3Context';
 import { ArrowLeftRight, RotateCw } from 'lucide-react';
 import { ethers } from 'ethers';
 import toast from 'react-hot-toast';
+import { formatContractError } from '../utils/errorFormatter';
 
 const SwapPanel: React.FC = () => {
   const { t } = useLanguage();
@@ -136,7 +137,7 @@ const SwapPanel: React.FC = () => {
           // 刷新余额和池子数据
           await fetchBalances();
       } catch (err: any) {
-          toast.error("Swap Failed: " + (err.reason || err.message));
+          toast.error(formatContractError(err));
       } finally {
           setIsLoading(false);
       }

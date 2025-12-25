@@ -61,7 +61,7 @@ const EarningsDetail: React.FC = () => {
 
       const targetUser = isOwner && viewMode === "all" ? null : account
       const [rewardEvents, referralEvents] = await Promise.all([
-        protocolContract.queryFilter(protocolContract.filters.RewardPaid(targetUser), fromBlock),
+        protocolContract.queryFilter(protocolContract.filters.RewardClaimed(targetUser), fromBlock),
         protocolContract.queryFilter(protocolContract.filters.ReferralRewardPaid(targetUser), fromBlock),
       ])
 
@@ -70,21 +70,10 @@ const EarningsDetail: React.FC = () => {
       for (const event of rewardEvents) {
         try {
           const block = await provider.getBlock(event.blockNumber)
-          const totalAmount = event.args ? ethers.formatEther(event.args[1]) : "0"
-          const rewardType = event.args ? Number(event.args[2]) : 0
-          
-          let mcAmount = totalAmount
-          let jbcAmount = "0"
-
-          // If Static Reward (0), split 50/50 value
-          // Note: This is an estimation for display as the event only emits total value in MC
-          if (rewardType === 0) {
-              const half = parseFloat(totalAmount) / 2
-              mcAmount = half.toString()
-              // We don't know exact JBC amount from this event, so we might show value in MC or try to estimate
-              // For now, let's show the MC value part for JBC column to indicate 50/50 value split
-              jbcAmount = `Value: ${half.toFixed(2)} MC` 
-          }
+          const mcAmount = event.args ? ethers.formatEther(event.args[1]) : "0"
+          const jbcAmount = event.args ? ethers.formatEther(event.args[2]) : "0"
+          const rewardType = event.args ? Number(event.args[3]) : 0
+          const ticketId = event.args ? event.args[4].toString() : ""
 
           rows.push({
             hash: event.transactionHash,
@@ -92,7 +81,7 @@ const EarningsDetail: React.FC = () => {
             mcAmount,
             jbcAmount,
             rewardType,
-            ticketId: "", // Not available in RewardPaid
+            ticketId,
             blockNumber: event.blockNumber,
             timestamp: block ? block.timestamp : 0,
             status: "confirmed",

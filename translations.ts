@@ -68,7 +68,7 @@ export const translations = {
       agreement: "点击提供流动性即代表您同意 DeFi 4.0 协议规则",
       ticketHistory: "门票历史记录",
       ticketExpired: "票据已过期",
-      ticketExpiredDesc: "您的票据已过期（超过72小时）。过期票据无法进行流动性提供或购买新票操作。请联系管理员处理过期票据。",
+      ticketExpiredDesc: "您的票据已过期（超过72小时）。请重新购买门票以激活账户（旧门票将自动清理）。",
       alreadyStaked: "已提供流动性",
       alreadyStakedDesc: "您的票据已提供流动性，挖矿进行中。",
       readyToStake: "准备提供流动性",
@@ -372,7 +372,7 @@ export const translations = {
       ticketHistory: "Ticket History",
       ticketExpired: "Ticket Expired",
       ticketExpiredDesc:
-        "Your ticket has expired (over 72 hours). Expired tickets cannot be staked or used to purchase new tickets. Please contact admin to handle expired tickets.",
+        "Your ticket has expired (over 72 hours). Please buy a new ticket to reactivate your account (old ticket will be cleared automatically).",
       alreadyStaked: "Liquidity Added",
       alreadyStakedDesc: "Your ticket has added liquidity and mining is in progress.",
       readyToStake: "Ready to Stake",

@@ -13,13 +13,15 @@ export const MC_ABI = [
 
 export const PROTOCOL_ABI = [
   "function bindReferrer(address _referrer) external",
+  "function expireMyTicket() external",
   "function buyTicket(uint256 amount) external",
   "function stakeLiquidity(uint256 amount, uint256 cycleDays) external",
   "function claimRewards() external",
   "function redeem() external",
   "function swapMCToJBC(uint256 mcAmount) external",
   "function swapJBCToMC(uint256 jbcAmount) external",
-  "function userInfo(address) view returns (address referrer, uint256 activeDirects, uint256 teamCount, uint256 totalRevenue, uint256 currentCap, bool isActive)",
+  "function dailyBurn() external",
+  "function userInfo(address) view returns (address referrer, uint256 activeDirects, uint256 teamCount, uint256 totalRevenue, uint256 currentCap, bool isActive, uint256 refundFeeAmount)",
   "function userTicket(address) view returns (uint256 ticketId, uint256 amount, uint256 purchaseTime, bool exited)",
   "function userStakes(address, uint256) view returns (uint256 id, uint256 amount, uint256 startTime, uint256 cycleDays, bool active, uint256 paid)",
   "function getDirectReferrals(address) view returns (address[])",
@@ -38,6 +40,7 @@ export const PROTOCOL_ABI = [
   "function getAmountOut(uint256, uint256, uint256) pure returns (uint256)",
   "function swapReserveMC() view returns (uint256)",
   "function swapReserveJBC() view returns (uint256)",
+  "function lastBurnTime() view returns (uint256)",
   "function setLevelConfigs(tuple(uint256 minDirects, uint256 level, uint256 percent)[]) external",
   "function setTicketFlexibilityDuration(uint256) external",
   "function setLiquidityEnabled(bool) external",
@@ -47,7 +50,9 @@ export const PROTOCOL_ABI = [
   "function ticketFlexibilityDuration() view returns (uint256)",
   "event BoundReferrer(address indexed user, address indexed referrer)",
   "event TicketPurchased(address indexed user, uint256 amount, uint256 ticketId)",
-  "event LiquidityStaked(address indexed user, uint256 amount, uint256 cycleDays)",
+  "event TicketExpired(address indexed user, uint256 ticketId, uint256 amount)",
+  "event LiquidityStaked(address indexed user, uint256 amount, uint256 cycleDays, uint256 stakeId)",
+  "event RewardPaid(address indexed user, uint256 amount, uint8 rewardType)",
   "event RewardClaimed(address indexed user, uint256 mcAmount, uint256 jbcAmount, uint8 rewardType, uint256 ticketId)",
   "event ReferralRewardPaid(address indexed user, address indexed from, uint256 mcAmount, uint8 rewardType, uint256 ticketId)",
   "event Redeemed(address indexed user, uint256 principal, uint256 fee)",
@@ -55,12 +60,11 @@ export const PROTOCOL_ABI = [
   "event SwappedJBCToMC(address indexed user, uint256 jbcAmount, uint256 mcAmount, uint256 tax)",
 ]
 
-// Contract Addresses (Mock for now, replace with real deployment)
 // Contract Addresses
 export const CONTRACT_ADDRESSES = {
-  MC_TOKEN: "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
-  JBC_TOKEN: "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
-  PROTOCOL: "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707"
+  MC_TOKEN: "0xB2B8777BcBc7A8DEf49F022773d392a8787cf9EF",
+  JBC_TOKEN: "0xA743cB357a9f59D349efB7985072779a094658dD",
+  PROTOCOL: "0xA7Fc6aa5493C65740572E8cA6B1877fC9E274Fd4"
 };
 
 interface Web3ContextType {

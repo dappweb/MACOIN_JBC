@@ -1,6 +1,7 @@
 import React from 'react';
 import { PlusCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { formatContractError } from '../utils/errorFormatter';
 
 interface TokenConfig {
   address: string;
@@ -56,7 +57,7 @@ const AddTokenHelper: React.FC<AddTokenHelperProps> = ({ className = '' }) => {
       }
     } catch (error: any) {
       console.error('添加代币失败:', error);
-      toast.error(`添加失败: ${error.message}`);
+      toast.error(formatContractError(error));
     }
   };
 

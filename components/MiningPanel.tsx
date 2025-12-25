@@ -6,6 +6,7 @@ import { useLanguage } from '../LanguageContext';
 import { useWeb3 } from '../Web3Context';
 import { ethers } from 'ethers';
 import toast from 'react-hot-toast';
+import { formatContractError } from '../utils/errorFormatter';
 
 type TicketInfo = {
   amount: bigint;
@@ -48,6 +49,7 @@ const MiningPanel: React.FC = () => {
   
   const [liquidityAmountInput, setLiquidityAmountInput] = useState('');
   const [stakeAmount, setStakeAmount] = useState<bigint>(0n);
+  const [ticketFlexibilityDuration, setTicketFlexibilityDuration] = useState<number>(72 * 3600);
   
   const { t } = useLanguage();
   const { protocolContract, mcContract, account, isConnected, hasReferrer, isOwner, referrerAddress, checkReferrerStatus, provider } = useWeb3();
@@ -101,16 +103,6 @@ const MiningPanel: React.FC = () => {
   const now = Math.floor(Date.now() / 1000);
   const hasTicket = !!ticketInfo && ticketInfo.amount > 0n;
   const isExited = !!ticketInfo && ticketInfo.exited;
-  
-  // Define isTicketExpired (assuming 72 hours expiration logic if not staked, but new logic might be different)
-  // For now, let's assume a ticket never expires in the new logic unless exited.
-  // Or if there was an expiration logic intended:
-  const isTicketExpired = false; // Placeholder, adjust logic if needed based on requirements
-
-  // Logic updated: Can stake if has active ticket (not exited)
-  const canStakeLiquidity = hasTicket && !isExited;
-  const isTicketBought = hasTicket && !isExited;
-  const hasValidTicket = hasTicket && !isExited; // Renamed from hasActiveTicket to avoid confusion
   const [hasStaked, setHasStaked] = useState(false);
 
   // New: Check if user has actually staked liquidity (by checking history or stakes array length if available)
@@ -125,6 +117,16 @@ const MiningPanel: React.FC = () => {
       if (!ticketInfo) return false;
       return ticketHistory.some(item => item.ticketId === ticketInfo.ticketId?.toString() && (item.status === 'Mining' || item.status === 'Redeemed'));
   }, [ticketHistory, ticketInfo, hasStaked]);
+  
+  // Define isTicketExpired (assuming 72 hours expiration logic if not staked, but new logic might be different)
+  // For now, let's assume a ticket never expires in the new logic unless exited.
+  // Or if there was an expiration logic intended:
+  const isTicketExpired = hasTicket && !hasStakedLiquidity && ticketInfo ? now > (ticketInfo.purchaseTime + ticketFlexibilityDuration) : false;
+
+  // Logic updated: Can stake if has active ticket (not exited)
+  const canStakeLiquidity = hasTicket && !isExited && !isTicketExpired;
+  const isTicketBought = hasTicket && !isExited;
+  const hasValidTicket = hasTicket && !isExited; // Renamed from hasActiveTicket to avoid confusion
 
   // 根据状态自动推进步骤
   useEffect(() => {
@@ -266,7 +268,7 @@ const MiningPanel: React.FC = () => {
 
         const now = Math.floor(Date.now() / 1000);
         historyItems.forEach(item => {
-            if (item.status === 'Pending' && now > item.purchaseTime + 72 * 3600) {
+            if (item.status === 'Pending' && now > item.purchaseTime + ticketFlexibilityDuration) {
                 item.status = 'Expired';
             }
         });
@@ -295,6 +297,18 @@ const MiningPanel: React.FC = () => {
     checkTicketStatus();
     fetchHistory();
   }, [protocolContract, account]);
+
+  useEffect(() => {
+    const fetchFlexDuration = async () => {
+      if (!protocolContract) return
+      try {
+        const duration = await protocolContract.ticketFlexibilityDuration()
+        setTicketFlexibilityDuration(Number(duration))
+      } catch (e) {
+      }
+    }
+    fetchFlexDuration()
+  }, [protocolContract])
 
   // Check direct stakes from contract as fallback source of truth
   const checkDirectStakes = async () => {
@@ -372,7 +386,7 @@ const MiningPanel: React.FC = () => {
           toast.success(t.mining.approveSuccess);
       } catch (err: any) {
           console.error(err);
-          toast.error(`${t.mining.claimFailed}: ${err.reason || err.message}`);
+          toast.error(formatContractError(err));
           // 演示用回退
           setIsApproved(true);
       } finally {
@@ -417,15 +431,15 @@ const MiningPanel: React.FC = () => {
           await fetchHistory();
       } catch (err: any) {
           console.error(err);
-          const errorMsg = err.reason || err.message || '';
-          
-          if (errorMsg.includes('Active ticket exists') || 
-              (err.code === 'CALL_EXCEPTION' && (errorMsg.includes('missing revert data') || !err.reason))) {
-              toast.error(t.mining.activeTicketExists || "Transaction failed: You may already have an active ticket.");
-          } else if (errorMsg.includes('Invalid ticket tier')) {
-              toast.error(t.mining.invalidTicketTier);
+          // Special handling for active ticket using the new formatter context if needed, 
+          // or just rely on formatter. For now, let's use the formatter which handles most cases nicely.
+          // If we want to preserve the specific "Active ticket" hint for missing revert data in buyTicket:
+          const formatted = formatContractError(err);
+          if (formatted.includes('Contract execution error') || formatted.includes('missing revert data')) {
+             // In buyTicket context, this often means active ticket exists
+             toast.error(t.mining.activeTicketExists || "Transaction failed: You may already have an active ticket.");
           } else {
-              toast.error(`${t.mining.ticketBuyFailed}: ${errorMsg}`);
+             toast.error(formatted);
           }
       } finally {
           setTxPending(false);
@@ -436,6 +450,10 @@ const MiningPanel: React.FC = () => {
       if (!protocolContract || !mcContract) return;
       if (stakeAmount <= 0n) {
           toast.error(t.mining.invalidAmount || "Invalid amount");
+          return;
+      }
+      if (isTicketExpired) {
+          toast.error(t.mining.ticketExpired || "Ticket expired");
           return;
       }
 
@@ -475,17 +493,7 @@ const MiningPanel: React.FC = () => {
           setLiquidityAmountInput('');
       } catch (err: any) {
           console.error(t.mining.stakeFailed, err);
-          const errorMsg = err.reason || err.message || '';
-          
-          if (errorMsg.includes('Ticket expired')) {
-              toast.error(t.mining.ticketExpiredBuy, { duration: 5000 });
-          } else if (errorMsg.includes('No valid ticket')) {
-              toast.error(t.mining.noValidTicket);
-          } else if (errorMsg.includes('Invalid cycle')) {
-              toast.error(t.mining.invalidCycle);
-          } else {
-              toast.error(`${t.mining.stakeFailed}: ${errorMsg}`);
-          }
+          toast.error(formatContractError(err));
       } finally {
           setTxPending(false);
       }
@@ -500,12 +508,7 @@ const MiningPanel: React.FC = () => {
           toast.success(t.mining.claimSuccess);
       } catch (err: any) {
           console.error(err);
-          const errorMsg = err.reason || err.message || '';
-          if (errorMsg.includes("No rewards yet")) {
-            toast.error(t.mining.noRewardsYet);
-          } else {
-            toast.error(`${t.mining.claimFailed}: ${errorMsg || t.mining.noRewards}`);
-          }
+          toast.error(formatContractError(err));
       } finally {
           setTxPending(false);
       }
@@ -523,12 +526,7 @@ const MiningPanel: React.FC = () => {
           await fetchHistory();
       } catch (err: any) {
           console.error(err);
-          const errorMsg = err.reason || err.message || '';
-          if (errorMsg.includes('Cycle not finished')) {
-              toast.error(t.mining.cycleNotFinished);
-          } else {
-              toast.error(`${t.mining.redeemFailed}: ${errorMsg}`);
-          }
+          toast.error(formatContractError(err));
       } finally {
           setTxPending(false);
       }
@@ -590,20 +588,7 @@ const MiningPanel: React.FC = () => {
           await checkReferrerStatus();
       } catch (err: any) {
           console.error(err);
-          
-          // 提取错误信息
-          // Extract error message
-          const errorMsg = err.reason || err.message || '';
-          
-          // 处理特定错误：已经绑定过推荐人
-          // Handle specific error: Already bound a referrer
-          if (errorMsg.includes('Already bound')) {
-              toast.error('You have already bound a referrer!');
-          } else {
-              // 显示其他错误信息
-              // Display other error messages
-              toast.error(`${t.referrer.bindError}: ${errorMsg}`);
-          }
+          toast.error(formatContractError(err));
       } finally {
           // 无论成功或失败，都重置加载状态
           // Reset loading state regardless of success or failure
@@ -994,25 +979,6 @@ const MiningPanel: React.FC = () => {
                             </div>
                          </div>
 
-                         <div className="bg-gray-800/30 rounded-lg p-3 border border-dashed border-gray-700">
-                            <div className="flex justify-between items-center mb-1">
-                                <div className="text-xs text-gray-400 uppercase">{t.mining.cap}</div>
-                                <div className="text-xs text-neon-400">{progressPercent.toFixed(1)}%</div>
-                            </div>
-                            <div className="flex justify-between items-end">
-                                <div>
-                                    <span className="text-2xl font-bold text-white">{currentRevenue.toFixed(2)}</span>
-                                    <span className="text-xs text-gray-500 ml-1">/ {displayCap} MC</span>
-                                </div>
-                                <span className="text-xs text-amber-400 mb-1">{t.mining.maxCap}</span>
-                            </div>
-                            <div className="w-full bg-gray-700 h-1.5 rounded-full mt-2">
-                                <div 
-                                    className="bg-neon-500 h-1.5 rounded-full transition-all duration-500" 
-                                    style={{ width: `${progressPercent}%` }}
-                                ></div>
-                            </div>
-                         </div>
                     </div>
                 </div>
 
@@ -1250,6 +1216,30 @@ const MiningPanel: React.FC = () => {
         )}
       </div>
     )}
+      {/* 3x Cap Section */}
+      {isConnected && (
+        <div className="glass-panel p-4 md:p-6 rounded-xl border border-gray-800 bg-gray-900/50 mt-8 animate-fade-in">
+          <div className="bg-gray-800/30 rounded-lg p-3 border border-dashed border-gray-700">
+            <div className="flex justify-between items-center mb-1">
+              <div className="text-xs text-gray-400 uppercase">{t.mining.cap}</div>
+              <div className="text-xs text-neon-400">{progressPercent.toFixed(1)}%</div>
+            </div>
+            <div className="flex justify-between items-end">
+              <div>
+                <span className="text-2xl font-bold text-white">{currentRevenue.toFixed(2)}</span>
+                <span className="text-xs text-gray-500 ml-1">/ {displayCap} MC</span>
+              </div>
+              <span className="text-xs text-amber-400 mb-1">{t.mining.maxCap}</span>
+            </div>
+            <div className="w-full bg-gray-700 h-1.5 rounded-full mt-2">
+              <div
+                className="bg-neon-500 h-1.5 rounded-full transition-all duration-500"
+                style={{ width: `${progressPercent}%` }}
+              ></div>
+            </div>
+          </div>
+        </div>
+      )}
       {/* History Section */}
       {isConnected && (
         <div className="glass-panel p-4 md:p-6 rounded-xl border border-gray-800 bg-gray-900/50 mt-8 animate-fade-in">
@@ -1425,7 +1415,5 @@ const MiningPanel: React.FC = () => {
 };
 
 export default MiningPanel;
-
-
 
 

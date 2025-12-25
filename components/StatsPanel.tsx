@@ -6,6 +6,7 @@ import { useLanguage } from "../LanguageContext"
 import { useWeb3 } from "../Web3Context"
 import { ethers } from "ethers"
 import toast from "react-hot-toast"
+import { formatContractError } from "../utils/errorFormatter"
 
 interface StatsPanelProps {
   stats: UserStats
@@ -563,7 +564,7 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
         toast.success(t.referrer.bindSuccess)
       } catch (err: any) {
         console.error(err)
-        toast.error(t.referrer.bindError + ": " + (err.reason || err.message))
+        toast.error(formatContractError(err))
       } finally {
         setIsBinding(false)
       }

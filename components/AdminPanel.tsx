@@ -5,6 +5,7 @@ import { useLanguage } from '../LanguageContext';
 import { ethers } from 'ethers';
 import toast from 'react-hot-toast';
 import { API_BASE_URL } from '../constants';
+import { formatContractError } from '../utils/errorFormatter';
 
 const AdminPanel: React.FC = () => {
   const { t } = useLanguage();
@@ -105,7 +106,7 @@ const AdminPanel: React.FC = () => {
       await tx.wait();
       toast.success(t.admin.success);
     } catch (err: any) {
-      toast.error(t.admin.failed + (err.reason || err.message));
+      toast.error(formatContractError(err));
     } finally {
       setLoading(false);
     }
@@ -120,7 +121,7 @@ const AdminPanel: React.FC = () => {
       await tx.wait();
       toast.success(t.admin.success);
     } catch (err: any) {
-      toast.error(t.admin.failed + (err.reason || err.message));
+      toast.error(formatContractError(err));
     } finally {
       setLoading(false);
     }
@@ -135,7 +136,7 @@ const AdminPanel: React.FC = () => {
       setLiquidityEnabled(!liquidityEnabled);
       toast.success(t.admin.success);
     } catch (err: any) {
-      toast.error(t.admin.failed + (err.reason || err.message));
+      toast.error(formatContractError(err));
     } finally {
       setLoading(false);
     }
@@ -150,9 +151,24 @@ const AdminPanel: React.FC = () => {
       setRedeemEnabled(!redeemEnabled);
       toast.success(t.admin.success);
     } catch (err: any) {
-      toast.error(t.admin.failed + (err.reason || err.message));
+      toast.error(formatContractError(err));
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDailyBurn = async () => {
+    if (!protocolContract) return;
+    setLoading(true);
+    try {
+        const tx = await protocolContract.dailyBurn();
+        await tx.wait();
+        toast.success("Daily burn executed successfully!");
+    } catch (err: any) {
+        console.error(err);
+        toast.error(formatContractError(err));
+    } finally {
+        setLoading(false);
     }
   };
 
@@ -221,7 +237,7 @@ const AdminPanel: React.FC = () => {
       await tx.wait();
       toast.success(t.admin.success);
     } catch (err: any) {
-      toast.error(t.admin.failed + (err.reason || err.message));
+      toast.error(formatContractError(err));
     } finally {
       setLoading(false);
     }
@@ -235,7 +251,7 @@ const AdminPanel: React.FC = () => {
       await tx.wait();
       toast.success(t.admin.success);
     } catch (err: any) {
-      toast.error(t.admin.failed + (err.reason || err.message));
+      toast.error(formatContractError(err));
     } finally {
       setLoading(false);
     }
@@ -249,7 +265,7 @@ const AdminPanel: React.FC = () => {
       await tx.wait();
       toast.success(t.admin.success);
     } catch (err: any) {
-      toast.error(t.admin.failed + (err.reason || err.message));
+      toast.error(formatContractError(err));
     } finally {
       setLoading(false);
     }
@@ -268,7 +284,7 @@ const AdminPanel: React.FC = () => {
       await tx.wait();
       toast.success(t.admin.success);
     } catch (err: any) {
-      toast.error(t.admin.failed + (err.reason || err.message));
+      toast.error(formatContractError(err));
     } finally {
       setLoading(false);
     }
@@ -282,7 +298,7 @@ const AdminPanel: React.FC = () => {
         await tx.wait();
         toast.success(t.admin.success);
     } catch (err: any) {
-        toast.error(t.admin.failed + (err.reason || err.message));
+        toast.error(formatContractError(err));
     } finally {
         setLoading(false);
     }
@@ -296,7 +312,7 @@ const AdminPanel: React.FC = () => {
         await tx.wait();
         toast.success(t.admin.success);
     } catch (err: any) {
-        toast.error(t.admin.failed + (err.reason || err.message));
+        toast.error(formatContractError(err));
     } finally {
         setLoading(false);
     }
@@ -358,7 +374,7 @@ const AdminPanel: React.FC = () => {
         }
     } catch (err: any) {
         console.error(err);
-        toast.error("Failed: " + (err.reason || err.message));
+        toast.error(formatContractError(err));
     } finally {
         setLoading(false);
     }
@@ -389,7 +405,7 @@ const AdminPanel: React.FC = () => {
         }
     } catch (err: any) {
         console.error(err);
-        toast.error(t.admin.failed + (err.reason || err.message));
+        toast.error(formatContractError(err));
     } finally {
         setLoading(false);
     }
@@ -635,6 +651,26 @@ const AdminPanel: React.FC = () => {
               <button onClick={updateWallets} disabled={loading} className="w-full py-2 md:py-2.5 bg-gradient-to-r from-neon-500 to-neon-600 hover:from-neon-400 hover:to-neon-500 text-black font-bold rounded-lg mt-2 disabled:opacity-50 text-sm md:text-base shadow-lg shadow-neon-500/30">
                   {t.admin.updateWallets}
               </button>
+          </div>
+      </div>
+
+      {/* Protocol Maintenance */}
+      <div className="glass-panel p-4 md:p-6 rounded-xl md:rounded-2xl bg-gray-900/50 border border-gray-800">
+          <h3 className="text-lg md:text-xl font-bold mb-3 md:mb-4 text-white">Protocol Maintenance</h3>
+          <div className="space-y-3">
+               <div className="flex items-center justify-between p-3 border border-gray-700 rounded bg-gray-900/30">
+                  <div>
+                      <span className="text-gray-300 text-sm font-bold block">Daily Burn</span>
+                      <span className="text-gray-500 text-xs">Burn 1% of JBC in LP Pool (Once per 24h)</span>
+                  </div>
+                  <button 
+                      onClick={handleDailyBurn}
+                      disabled={loading}
+                      className="px-4 py-2 bg-red-500/20 text-red-400 border border-red-500/30 hover:bg-red-500/30 rounded-lg text-sm font-bold transition-all"
+                  >
+                      Execute Burn
+                  </button>
+              </div>
           </div>
       </div>
 

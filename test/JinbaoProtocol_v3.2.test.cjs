@@ -1,5 +1,5 @@
 const { expect } = require("chai");
-const { ethers } = require("hardhat");
+const { ethers, upgrades } = require("hardhat");
 const { time } = require("@nomicfoundation/hardhat-toolbox/network-helpers");
 
 describe("Jinbao Protocol System v3.2", function () {
@@ -26,12 +26,17 @@ describe("Jinbao Protocol System v3.2", function () {
 
     // Deploy Protocol
     Protocol = await ethers.getContractFactory("JinbaoProtocol");
-    protocol = await Protocol.deploy(
-      await mc.getAddress(),
-      await jbc.getAddress(),
-      marketing.address,
-      treasury.address,
-      lpInjection.address
+    protocol = await upgrades.deployProxy(
+      Protocol,
+      [
+        await mc.getAddress(),
+        await jbc.getAddress(),
+        marketing.address,
+        treasury.address,
+        lpInjection.address,
+        buyback.address,
+      ],
+      { initializer: "initialize", kind: "uups" }
     );
     await protocol.waitForDeployment();
 
@@ -52,7 +57,7 @@ describe("Jinbao Protocol System v3.2", function () {
   });
 
   describe("Ticket System & Distribution", function () {
-    it("Should distribute ticket funds correctly (v3.2)", async function () {
+    it("Should route direct percent to marketing if referrer inactive", async function () {
       // Bind Referrer
       await protocol.connect(user1).bindReferrer(referrer.address);
       
@@ -69,27 +74,20 @@ describe("Jinbao Protocol System v3.2", function () {
       await protocol.connect(user1).buyTicket(TICKET_PRICE);
       
       // Check Distribution
-      // 1. Referrer: 25% = 25 MC
-      // Note: Referrer has NO ticket, so _distributeReward will NOT pay.
-      // Funds stay in Protocol.
+      // Referrer inactive -> no direct reward payout
       expect(await mc.balanceOf(referrer.address)).to.equal(initialReferrer);
       
-      // 2. Differential (15%): Stays in Protocol (Pending)
-      // 3. Buyback (5%): Stays in Protocol (Internal Swap MC->JBC, MC stays)
-      // 4. Direct Reward (25%): Stays in Protocol (Referrer ineligible)
-      // Total Stays: 15 + 5 + 25 = 45 MC.
-      // Protocol Balance should increase by 45 MC.
-      
-      expect(await mc.balanceOf(await protocol.getAddress())).to.equal(initialProtocol + ethers.parseEther("45"));
+      // Marketing gets base 5% + direct 25% = 30%
+      expect(await mc.balanceOf(marketing.address)).to.equal(initialMarketing + ethers.parseEther("30"));
 
-      // 4. Marketing: 5% = 5 MC
-      expect(await mc.balanceOf(marketing.address)).to.equal(initialMarketing + ethers.parseEther("5"));
-      
-      // 5. Treasury: 25% = 25 MC
+      // Treasury: 25% = 25 MC
       expect(await mc.balanceOf(treasury.address)).to.equal(initialTreasury + ethers.parseEther("25"));
       
-      // 6. LpInjection: 25% = 25 MC
+      // LpInjection: 25% = 25 MC
       expect(await mc.balanceOf(lpInjection.address)).to.equal(initialLpInjection + ethers.parseEther("25"));
+
+      // Protocol keeps level pending (15%) + buyback (5%) when reserves are empty
+      expect(await mc.balanceOf(await protocol.getAddress())).to.equal(initialProtocol + ethers.parseEther("20"));
     });
   });
 
@@ -98,29 +96,21 @@ describe("Jinbao Protocol System v3.2", function () {
       await mc.connect(user1).approve(await protocol.getAddress(), ethers.MaxUint256);
       await protocol.connect(user1).buyTicket(TICKET_PRICE);
 
-      // Stake Liquidity (150 MC) - 7 Days (2.0%)
-      await protocol.connect(user1).stakeLiquidity(7);
+      await protocol.connect(user1).stakeLiquidity(LIQUIDITY_AMOUNT, 7);
 
-      // Verify
-      const ticket = await protocol.userTicket(user1.address);
-      expect(ticket.liquidityProvided).to.be.true;
-      expect(ticket.liquidityAmount).to.equal(LIQUIDITY_AMOUNT);
-
-      // Fast forward 3.5 days (half cycle)
-      // Rate: 2.0% daily. 150 * 0.02 = 3.0 MC daily.
-      // Solidity uses integer division for days. 3.5 days -> 3 days.
-      // 3 days * 3.0 = 9.0 MC total.
-      // 50% MC = 4.5 MC.
-      await time.increase(3.5 * 24 * 60 * 60);
+      await time.increase(3 * 60 + 1);
 
       const initialMc = await mc.balanceOf(user1.address);
-      
+      const initialJbc = await jbc.balanceOf(user1.address);
+
       await protocol.connect(user1).claimRewards();
-      
+
       const finalMc = await mc.balanceOf(user1.address);
-      
-      // Received 4.5 MC.
+      const finalJbc = await jbc.balanceOf(user1.address);
+
+      // 150 * 2% * 3 = 9 total, split 4.5/4.5
       expect(finalMc - initialMc).to.be.closeTo(ethers.parseEther("4.5"), ethers.parseEther("0.1"));
+      expect(finalJbc - initialJbc).to.be.closeTo(ethers.parseEther("4.5"), ethers.parseEther("0.1"));
     });
   });
   
@@ -128,9 +118,9 @@ describe("Jinbao Protocol System v3.2", function () {
       it("Should redeem and refund fee on next stake", async function () {
           await mc.connect(user1).approve(await protocol.getAddress(), ethers.MaxUint256);
           await protocol.connect(user1).buyTicket(TICKET_PRICE);
-          await protocol.connect(user1).stakeLiquidity(7);
-          
-          await time.increase(8 * 86400); // 8 days
+          await protocol.connect(user1).stakeLiquidity(LIQUIDITY_AMOUNT, 7);
+          await time.increase(7 * 60 + 1);
+          await protocol.connect(user1).claimRewards();
           
           // Redeem
           // Fee = 1% of Ticket (100) = 1 MC.
@@ -151,11 +141,11 @@ describe("Jinbao Protocol System v3.2", function () {
           await protocol.connect(user1).buyTicket(TICKET_PRICE);
           
           const balBeforeStake = await mc.balanceOf(user1.address);
-          await protocol.connect(user1).stakeLiquidity(7);
+          await protocol.connect(user1).stakeLiquidity(LIQUIDITY_AMOUNT * 2n, 7);
           const balAfterStake = await mc.balanceOf(user1.address);
           
           // Stake costs 150 MC. Refund +1 MC. Net = -149 MC.
-          expect(balBeforeStake - balAfterStake).to.equal(ethers.parseEther("149"));
+          expect(balBeforeStake - balAfterStake).to.equal(ethers.parseEther("299"));
       });
   });
 });

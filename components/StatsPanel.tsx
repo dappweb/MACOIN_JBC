@@ -239,39 +239,34 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
     return result
   }
 
-  // Generate mock price data (10+ points)
-  const generateMockPriceData = (): PriceDataPoint[] => {
+  // Generate fallback data (flat line based on current price)
+  const generateFallbackData = (currentPriceStr: string = "1.0"): PriceDataPoint[] => {
     const now = Math.floor(Date.now() / 1000)
-    const basePrice = 1.0
+    const price = parseFloat(currentPriceStr) || 1.0
     const data: PriceDataPoint[] = []
 
-    // Generate 15 data points with realistic price movements
+    // Generate 15 points (flat line)
     for (let i = 0; i < 15; i++) {
-      const timestamp = now - (14 - i) * 3600 // Hourly points for last 15 hours
+      const timestamp = now - (14 - i) * 3600
       const date = new Date(timestamp * 1000)
       const timeStr = `${date.getMonth() + 1}/${date.getDate()} ${date.getHours().toString().padStart(2, "0")}:00`
       
-      // Simulate realistic price movement (±3% per hour)
-      const randomWalk = (Math.random() - 0.5) * 0.06
-      const price = basePrice * (1 + randomWalk * (i + 1))
-      
       data.push({
         name: timeStr,
-        uv: parseFloat(price.toFixed(6)),
-        ema: parseFloat(price.toFixed(6)),
-        high: parseFloat((price * 1.01).toFixed(6)),
-        low: parseFloat((price * 0.99).toFixed(6)),
+        uv: price,
+        ema: price,
+        high: price,
+        low: price,
         change: 0,
       })
     }
 
-    // Calculate stats for mock data
-    const prices = data.map(d => d.uv)
+    // Calculate stats
     setPriceStats({
-      high: Math.max(...prices),
-      low: Math.min(...prices),
-      change: ((prices[prices.length - 1] - prices[0]) / prices[0]) * 100,
-      avgPrice: prices.reduce((a, b) => a + b, 0) / prices.length,
+      high: price,
+      low: price,
+      change: 0,
+      avgPrice: price,
     })
 
     return data
@@ -358,11 +353,11 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
              for(let i = 0; i < targetCount - existingCount; i++) {
                  // Create points every hour going backwards
                  const timeOffset = (targetCount - existingCount - i) * 3600; 
-                 // Random slight variation
-                 const variation = (Math.random() - 0.5) * 0.02; // 2% variation
+                 // Use flat price for padding (no random variation)
+                 const variation = 0; 
                  mockPoints.push({
                      timestamp: now - timeOffset,
-                     price: basePrice * (1 + variation)
+                     price: basePrice
                  });
              }
              finalPricePoints = [...mockPoints, ...pricePoints].sort((a, b) => a.timestamp - b.timestamp);
@@ -848,7 +843,7 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
                     }
                     return value
                   }}
-                  labelFormatter={(label) => `Time: ${label}`}
+                  labelFormatter={(label) => `${t.stats.time || "Time"}: ${label}`}
                   cursor={{
                     stroke: "#01FEAE",
                     strokeWidth: 2,
@@ -861,7 +856,7 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
                       <div className="bg-gray-900 border border-neon-500 rounded p-2 text-xs">
                         <p className="text-neon-400 font-bold mb-1">{payload.name}</p>
                         <p className="text-gray-300">
-                          Price: <span className="text-neon-400 font-mono">${payload.uv.toFixed(6)}</span>
+                          {t.stats.price || "Price"}: <span className="text-neon-400 font-mono">${payload.uv.toFixed(6)}</span>
                         </p>
                         {payload.ema && (
                           <p className="text-gray-300">
@@ -870,7 +865,7 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
                         )}
                         {payload.high && (
                           <p className="text-gray-300">
-                            Range: <span className="text-gray-400 font-mono">${payload.low.toFixed(6)}~${payload.high.toFixed(6)}</span>
+                            {t.stats.range || "Range"}: <span className="text-gray-400 font-mono">${payload.low.toFixed(6)}~${payload.high.toFixed(6)}</span>
                           </p>
                         )}
                       </div>
@@ -887,7 +882,7 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
                   isAnimationActive={true}
                   animationDuration={300}
                   dot={false}
-                  name="Price"
+                  name={t.stats.price || "Price"}
                 />
                 {/* EMA Line */}
                 {priceHistory.length > 5 && (
@@ -913,7 +908,7 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
         <div className="mt-3 sm:mt-4 flex flex-wrap gap-2 sm:gap-4 text-[10px] sm:text-xs text-gray-300">
           <div className="flex items-center gap-1 sm:gap-2">
             <div className="w-2 h-2 sm:w-3 sm:h-3 rounded-full bg-neon-500"></div>
-            <span>Price</span>
+            <span>{t.stats.price || "Price"}</span>
           </div>
           {priceHistory.length > 5 && (
             <div className="flex items-center gap-1 sm:gap-2">
@@ -922,7 +917,7 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
             </div>
           )}
           <div className="flex items-center gap-1 sm:gap-2 text-gray-400 text-[9px] sm:text-[10px]">
-            (Min 10 points)
+            {t.stats.minPoints || "(Min 10 points)"}
           </div>
         </div>
       </div>

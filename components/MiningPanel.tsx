@@ -1240,6 +1240,10 @@ const MiningPanel: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Liquidity Positions Section */}
+      {isConnected && <LiquidityPositions />}
+
       {/* History Section */}
       {isConnected && (
         <div className="glass-panel p-4 md:p-6 rounded-xl border border-gray-800 bg-gray-900/50 mt-8 animate-fade-in">

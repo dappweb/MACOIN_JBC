@@ -96,7 +96,7 @@ const Navbar: React.FC<NavbarProps> = ({ currentTab, setTab }) => {
             {/* Logo */}
             <div className="flex items-center gap-1.5 md:gap-2 cursor-pointer" onClick={() => setTab(AppTab.HOME)}>
               <div className="bg-gradient-to-tr overflow-hidden from-emerald-500 to-emerald-400 rounded-lg md:rounded-xl shadow-lg shadow-emerald-500/30 p-0">
-                <img src="/icon.png" alt="" className=" w-10 md:h-10" />
+                <img src="/icon.png" alt="" className="w-10 md:h-10" />
               </div>
               <span className="text-lg md:text-2xl font-black text-white tracking-tight">
                 JBC <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-emerald-500">RWA</span>
@@ -196,8 +196,9 @@ const Navbar: React.FC<NavbarProps> = ({ currentTab, setTab }) => {
           <button
             onClick={() => setTab(AppTab.HOME)}
             className={`p-2 rounded-lg flex flex-col items-center gap-1 ${
-              currentTab === AppTab.HOME ? "text-emerald-400 bg-emerald-500/10" : "text-gray-500"
+              currentTab === AppTab.HOME ? "bg-[#10b981]/10" : ""
             }`}
+            style={{ color: currentTab === AppTab.HOME ? "#10b981" : "#6B7280" }}
           >
             <Home size={20} />
             <span className="text-[10px] font-medium">{t.nav.home}</span>
@@ -205,8 +206,9 @@ const Navbar: React.FC<NavbarProps> = ({ currentTab, setTab }) => {
           <button
             onClick={() => setTab(AppTab.MINING)}
             className={`p-2 rounded-lg flex flex-col items-center gap-1 ${
-              currentTab === AppTab.MINING ? "text-emerald-400 bg-emerald-500/10" : "text-gray-500"
+              currentTab === AppTab.MINING ? "bg-[#10b981]/10" : ""
             }`}
+            style={{ color: currentTab === AppTab.MINING ? "#10b981" : "#6B7280" }}
           >
             <Pickaxe size={20} />
             <span className="text-[10px] font-medium">{t.nav.mining}</span>
@@ -214,8 +216,9 @@ const Navbar: React.FC<NavbarProps> = ({ currentTab, setTab }) => {
           <button
             onClick={() => setTab(AppTab.SWAP)}
             className={`p-2 rounded-lg flex flex-col items-center gap-1 ${
-              currentTab === AppTab.SWAP ? "text-emerald-400 bg-emerald-500/10" : "text-gray-500"
+              currentTab === AppTab.SWAP ? "bg-[#10b981]/10" : ""
             }`}
+            style={{ color: currentTab === AppTab.SWAP ? "#10b981" : "#6B7280" }}
           >
             <ArrowLeftRight size={20} />
             <span className="text-[10px] font-medium">Swap</span>
@@ -223,8 +226,9 @@ const Navbar: React.FC<NavbarProps> = ({ currentTab, setTab }) => {
           <button
             onClick={() => setTab(AppTab.HISTORY)}
             className={`p-2 rounded-lg flex flex-col items-center gap-1 ${
-              currentTab === AppTab.HISTORY ? "text-emerald-400 bg-emerald-500/10" : "text-gray-500"
+              currentTab === AppTab.HISTORY ? "bg-[#10b981]/10" : ""
             }`}
+            style={{ color: currentTab === AppTab.HISTORY ? "#10b981" : "#6B7280" }}
           >
             <FileText size={20} />
             <span className="text-[10px] font-medium">{t.nav.history}</span>
@@ -232,8 +236,9 @@ const Navbar: React.FC<NavbarProps> = ({ currentTab, setTab }) => {
           <button
             onClick={() => setTab(AppTab.EARNINGS)}
             className={`p-2 rounded-lg flex flex-col items-center gap-1 ${
-              currentTab === AppTab.EARNINGS ? "text-emerald-400 bg-emerald-500/10" : "text-gray-500"
+              currentTab === AppTab.EARNINGS ? "bg-[#10b981]/10" : ""
             }`}
+            style={{ color: currentTab === AppTab.EARNINGS ? "#10b981" : "#6B7280" }}
           >
             <Gift size={20} />
             <span className="text-[10px] font-medium">{t.nav.earnings || "Earnings"}</span>
@@ -241,8 +246,9 @@ const Navbar: React.FC<NavbarProps> = ({ currentTab, setTab }) => {
           <button
             onClick={() => setTab(AppTab.TEAM)}
             className={`p-2 rounded-lg flex flex-col items-center gap-1 ${
-              currentTab === AppTab.TEAM ? "text-emerald-400 bg-emerald-500/10" : "text-gray-500"
+              currentTab === AppTab.TEAM ? "bg-[#10b981]/10" : ""
             }`}
+            style={{ color: currentTab === AppTab.TEAM ? "#10b981" : "#6B7280" }}
           >
             <Users size={20} />
             <span className="text-[10px] font-medium">{t.nav.team}</span>

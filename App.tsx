@@ -65,19 +65,19 @@ const AppContent: React.FC = () => {
   const getBackgroundImage = () => {
     switch (currentTab) {
       case AppTab.HOME:
-        return '/bg-1.png'
-      case AppTab.MINING:
-        return '/bg-2.png'
-      case AppTab.TEAM:
         return '/bg-3.png'
+      case AppTab.MINING:
+        return '/bg-16.png'
+      case AppTab.TEAM:
+        return '/bg-11.png'
       case AppTab.SWAP:
-        return '/bg-4.png'
+        return '/bg-2.png'
       case AppTab.HISTORY:
-        return '/bg-5.png'
+        return '/bg-14.png'
       case AppTab.EARNINGS:
-        return '/bg-6.png'
+        return '/bg-14.png'
       default:
-        return '/bg-1.png'
+        return '/bg-11.png'
     }
   }
 
@@ -86,9 +86,10 @@ const AppContent: React.FC = () => {
       className="min-h-screen bg-black text-white selection:bg-neon-500 selection:text-black font-sans pb-20 md:pb-8 relative"
       style={{
         backgroundImage: `url(${getBackgroundImage()})`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundAttachment: 'fixed'
+        backgroundSize:'cover',
+        backgroundPosition:currentTab === AppTab.TEAM ? '26% 100%' : currentTab ===AppTab.HISTORY ? '24% 100%' : 'center',
+        backgroundAttachment: 'fixed',
+        backgroundRepeat: 'no-repeat'
       }}
     >
       {/* 添加半透明遮罩层以确保内容可读性 */}

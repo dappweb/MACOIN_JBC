@@ -606,14 +606,14 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
       </div>
 
       {/* Bind Referrer Section (Moved from TeamLevel) */}
-      <div className="glass-panel p-4 sm:p-5 md:p-6 rounded-xl md:rounded-2xl bg-gray-900/50 border-x-4 border-neon-500 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-lg backdrop-blur-sm">
+      <div className="glass-panel p-4 sm:p-5 md:p-6 rounded-xl md:rounded-2xl bg-black/60 border-x-4 border-neon-500 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-lg backdrop-blur-sm">
         <div className="flex items-center gap-3 md:gap-4 w-full md:w-auto">
           <div className="bg-neon-500/20 p-2 md:p-3 rounded-full text-neon-400 border border-neon-500/30 shrink-0">
             <Link size={20} className="md:w-6 md:h-6" />
           </div>
           <div>
             <h3 className="font-bold text-sm md:text-base text-white">{t.team.bindTitle}</h3>
-            <p className="text-xs md:text-sm text-gray-400">{t.team.bindDesc}</p>
+            <p className="text-xs md:text-sm text-gray-300">{t.team.bindDesc}</p>
           </div>
         </div>
         <div className="flex flex-col sm:flex-row w-full md:w-auto gap-2">
@@ -653,10 +653,10 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
       {/* Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
         {/* Stat 1 */}
-        <div className="glass-panel p-4 md:p-6 rounded-xl md:rounded-2xl hover:border-neon-500/40 transition-colors bg-gray-900/50 border border-gray-800 backdrop-blur-sm">
+        <div className="glass-panel p-4 md:p-6 rounded-xl md:rounded-2xl hover:border-neon-500/40 transition-colors bg-black/60 border border-gray-700 backdrop-blur-sm">
           <div className="flex items-center justify-between mb-3 md:mb-4">
             <div className="flex flex-col">
-              <span className="text-gray-400 text-xs md:text-sm">{t.stats.assets}</span>
+              <span className="text-gray-300 text-xs md:text-sm font-medium">{t.stats.assets}</span>
               {mcUsdtPrice > 0 && (
                 <span className="text-neon-400/80 text-[10px] md:text-xs font-mono mt-0.5">
                   1 MC ≈ ${mcUsdtPrice.toFixed(4)}
@@ -676,9 +676,9 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
         </div>
 
         {/* Stat 2 */}
-        <div className="glass-panel p-4 md:p-6 rounded-xl md:rounded-2xl hover:border-amber-500/40 transition-colors bg-gray-900/50 border border-gray-800 backdrop-blur-sm">
+        <div className="glass-panel p-4 md:p-6 rounded-xl md:rounded-2xl hover:border-amber-500/40 transition-colors bg-black/60 border border-gray-700 backdrop-blur-sm">
           <div className="flex items-center justify-between mb-3 md:mb-4">
-            <span className="text-gray-400 text-xs md:text-sm">{t.stats.holding}</span>
+            <span className="text-gray-300 text-xs md:text-sm font-medium">{t.stats.holding}</span>
             <Coins className="text-amber-400" size={18} />
           </div>
           <div className="text-2xl md:text-3xl font-bold text-white mb-1">
@@ -691,13 +691,13 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
         </div>
 
         {/* Stat 3 */}
-        <div className="glass-panel p-4 md:p-6 rounded-xl md:rounded-2xl hover:border-neon-500/40 transition-colors bg-gray-900/50 border border-gray-800 backdrop-blur-sm">
+        <div className="glass-panel p-4 md:p-6 rounded-xl md:rounded-2xl hover:border-neon-500/40 transition-colors bg-black/60 border border-gray-700 backdrop-blur-sm">
           <div className="flex items-center justify-between mb-3 md:mb-4">
-            <span className="text-gray-400 text-xs md:text-sm">{t.stats.revenue}</span>
+            <span className="text-gray-300 text-xs md:text-sm font-medium">{t.stats.revenue}</span>
             <TrendingUp className="text-neon-400" size={18} />
           </div>
           <div className="text-2xl md:text-3xl font-bold text-white mb-1">{rewardTotals.mc.toLocaleString()}</div>
-          <div className="text-xs text-gray-400 flex justify-between items-center">
+          <div className="text-xs text-gray-300 flex justify-between items-center">
             <span>MC: {rewardTotals.mc.toLocaleString()} · JBC: {rewardTotals.jbc.toLocaleString()}</span>
             {mcUsdtPrice > 0 && (
               <span className="text-neon-400">
@@ -705,48 +705,48 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
               </span>
             )}
           </div>
-          <div className="text-xs text-gray-500">{t.stats.settlement}</div>
+          <div className="text-xs text-gray-400">{t.stats.settlement}</div>
         </div>
 
         {/* Stat 4 */}
-        <div className="glass-panel p-4 md:p-6 rounded-xl md:rounded-2xl hover:border-amber-500/40 transition-colors bg-gradient-to-br from-gray-900/50 to-gray-800/50 border border-gray-800 backdrop-blur-sm">
+        <div className="glass-panel p-4 md:p-6 rounded-xl md:rounded-2xl hover:border-amber-500/40 transition-colors bg-gradient-to-br from-black/40 to-gray-900/60 border border-gray-700 backdrop-blur-sm">
           <div className="flex items-center justify-between mb-3 md:mb-4">
-            <span className="text-gray-400 text-xs md:text-sm">{t.stats.level}</span>
+            <span className="text-gray-300 text-xs md:text-sm font-medium">{t.stats.level}</span>
             <Users className="text-amber-400" size={18} />
           </div>
           <div className="text-2xl md:text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-neon-400 to-amber-400 mb-1">
             {displayStats.currentLevel}
           </div>
-          <div className="text-xs text-gray-500">
+          <div className="text-xs text-gray-400">
             {t.stats.teamCount}: {displayStats.teamCount}
           </div>
         </div>
       </div>
 
       {/* Chart Section */}
-      <div className="glass-panel p-3 sm:p-4 md:p-6 rounded-xl md:rounded-2xl bg-gray-900/50 border border-gray-800 backdrop-blur-sm">
+      <div className="glass-panel p-3 sm:p-4 md:p-6 rounded-xl md:rounded-2xl bg-black/60 border border-gray-700 backdrop-blur-sm">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 mb-4 md:mb-6">
           <h3 className="text-sm sm:text-base md:text-lg font-bold text-white border-l-4 border-neon-500 pl-3">
             {t.stats.chartTitle}
           </h3>
           {!loadingPriceHistory && priceHistory.length > 1 && (
             <div className="grid grid-cols-2 sm:flex sm:gap-2 md:gap-4 text-xs md:text-sm gap-2">
-              <div className="text-center bg-gray-800/50 p-2 sm:p-3 rounded">
-                <div className="text-gray-400 text-[10px] sm:text-xs">Highest</div>
+              <div className="text-center bg-gray-900/70 p-2 sm:p-3 rounded border border-gray-700">
+                <div className="text-gray-300 text-[10px] sm:text-xs font-medium">Highest</div>
                 <div className="text-amber-400 font-bold text-xs sm:text-sm">${priceStats.high.toFixed(6)}</div>
               </div>
-              <div className="text-center bg-gray-800/50 p-2 sm:p-3 rounded">
-                <div className="text-gray-400 text-[10px] sm:text-xs">Lowest</div>
+              <div className="text-center bg-gray-900/70 p-2 sm:p-3 rounded border border-gray-700">
+                <div className="text-gray-300 text-[10px] sm:text-xs font-medium">Lowest</div>
                 <div className="text-amber-400 font-bold text-xs sm:text-sm">${priceStats.low.toFixed(6)}</div>
               </div>
-              <div className="text-center bg-gray-800/50 p-2 sm:p-3 rounded">
-                <div className="text-gray-400 text-[10px] sm:text-xs">Change</div>
+              <div className="text-center bg-gray-900/70 p-2 sm:p-3 rounded border border-gray-700">
+                <div className="text-gray-300 text-[10px] sm:text-xs font-medium">Change</div>
                 <div className={`font-bold text-xs sm:text-sm ${priceStats.change >= 0 ? "text-neon-400" : "text-red-400"}`}>
                   {priceStats.change >= 0 ? "+" : ""}{priceStats.change.toFixed(2)}%
                 </div>
               </div>
-              <div className="text-center bg-gray-800/50 p-2 sm:p-3 rounded">
-                <div className="text-gray-400 text-[10px] sm:text-xs">Average</div>
+              <div className="text-center bg-gray-900/70 p-2 sm:p-3 rounded border border-gray-700">
+                <div className="text-gray-300 text-[10px] sm:text-xs font-medium">Average</div>
                 <div className="text-neon-400 font-bold text-xs sm:text-sm">${priceStats.avgPrice.toFixed(6)}</div>
               </div>
             </div>
@@ -757,7 +757,7 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
           <div className="h-[200px] sm:h-[250px] md:h-[400px] w-full flex items-center justify-center">
             <div className="text-center">
               <div className="w-8 h-8 border-4 border-neon-500 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
-              <p className="text-xs sm:text-sm text-gray-400">Loading price history...</p>
+              <p className="text-xs sm:text-sm text-gray-300">Loading price history...</p>
             </div>
           </div>
         ) : (
@@ -883,7 +883,7 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
         )}
 
         {/* Legend - responsive */}
-        <div className="mt-3 sm:mt-4 flex flex-wrap gap-2 sm:gap-4 text-[10px] sm:text-xs text-gray-400">
+        <div className="mt-3 sm:mt-4 flex flex-wrap gap-2 sm:gap-4 text-[10px] sm:text-xs text-gray-300">
           <div className="flex items-center gap-1 sm:gap-2">
             <div className="w-2 h-2 sm:w-3 sm:h-3 rounded-full bg-neon-500"></div>
             <span>Price</span>
@@ -894,7 +894,7 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
               <span>EMA(7)</span>
             </div>
           )}
-          <div className="flex items-center gap-1 sm:gap-2 text-gray-500 text-[9px] sm:text-[10px]">
+          <div className="flex items-center gap-1 sm:gap-2 text-gray-400 text-[9px] sm:text-[10px]">
             (Min 10 points)
           </div>
         </div>

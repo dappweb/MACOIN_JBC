@@ -7,6 +7,7 @@ import { useWeb3 } from '../Web3Context';
 import { ethers } from 'ethers';
 import toast from 'react-hot-toast';
 import { formatContractError } from '../utils/errorFormatter';
+import LiquidityPositions from './LiquidityPositions';
 
 type TicketInfo = {
   amount: bigint;

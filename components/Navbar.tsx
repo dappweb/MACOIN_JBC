@@ -24,9 +24,21 @@ const Navbar: React.FC<NavbarProps> = ({ currentTab, setTab }) => {
 
   useEffect(() => {
     const checkOwner = async () => {
+      console.log("Navbar Debug Info:", {
+        account,
+        chainId,
+        isConnected,
+        protocolAddress: await protocolContract?.getAddress().catch(() => "Unknown"),
+      });
+
       if (protocolContract && account) {
         try {
           const owner = await protocolContract.owner()
+          console.log("Navbar Check Owner:", {
+            contractOwner: owner,
+            userAccount: account,
+            isMatch: owner.toLowerCase() === account.toLowerCase()
+          });
           setIsOwner(owner.toLowerCase() === account.toLowerCase())
         } catch (e) {
           console.error("Failed to check owner", e)
@@ -34,7 +46,7 @@ const Navbar: React.FC<NavbarProps> = ({ currentTab, setTab }) => {
       }
     }
     checkOwner()
-  }, [protocolContract, account])
+  }, [protocolContract, account, chainId])
 
   // Automatic Chain Switching/Adding - DISABLED to allow multi-network support
   // Users can manually switch networks using their wallet or the ConnectButton

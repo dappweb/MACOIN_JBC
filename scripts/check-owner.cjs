@@ -1,18 +1,21 @@
 const hre = require("hardhat");
 
 async function main() {
-  const protocolAddress = "0x6ca5Bf30BC2C43Fc172A4B81C246eb351E94480B"; // MC Chain Address
-  const Protocol = await hre.ethers.getContractFactory("JinbaoProtocol");
-  const protocol = Protocol.attach(protocolAddress);
-
-  const owner = await protocol.owner();
-  console.log("Protocol Owner:", owner);
+  const protocolAddress = "0x51577047B8dc22C53b31F986441656B3AEAc2263";
+  const protocol = await hre.ethers.getContractAt("JinbaoProtocol", protocolAddress);
   
-  const targetAdmin = "0x4C10831CBcF9884ba72051b5287b6c87E4F74A48";
-  if (owner.toLowerCase() === targetAdmin.toLowerCase()) {
-      console.log("✅ YES, 0x4C10... is the Admin.");
-  } else {
-      console.log("❌ NO, 0x4C10... is NOT the Admin.");
+  try {
+    const owner = await protocol.owner();
+    console.log(`Contract Owner: ${owner}`);
+    
+    const expectedOwner = "0x4C10831CBcF9884ba72051b5287b6c87E4F74A48";
+    if (owner.toLowerCase() === expectedOwner.toLowerCase()) {
+        console.log("MATCH: Owner matches expected address.");
+    } else {
+        console.log("MISMATCH: Owner DOES NOT match expected address!");
+    }
+  } catch (error) {
+    console.error("Error fetching owner:", error);
   }
 }
 

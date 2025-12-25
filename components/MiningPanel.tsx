@@ -1323,7 +1323,7 @@ const MiningPanel: React.FC = () => {
       )}
 
       {/* Mobile Sticky Footer */}
-      <div className="fixed bottom-0 left-0 right-0 p-4 bg-gray-900/95 border-t border-gray-800 backdrop-blur-xl md:hidden z-50 shadow-[0_-4px_20px_-1px_rgba(0,0,0,0.5)] safe-area-bottom">
+      <div className="fixed bottom-16 left-0 right-0 p-4 bg-gray-900/95 border-t border-gray-800 backdrop-blur-xl md:hidden z-40 shadow-[0_-4px_20px_-1px_rgba(0,0,0,0.5)] safe-area-bottom">
         <div className="flex items-center gap-4">
             {/* Status Summary */}
             <div className="flex-1">

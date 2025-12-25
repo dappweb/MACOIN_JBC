@@ -1,0 +1,17 @@
+{
+  "network": "mc",
+  "chainId": "88813",
+  "deployer": "0x4C10831CBcF9884ba72051b5287b6c87E4F74A48",
+  "timestamp": "2025-12-25T02:26:22.391Z",
+  "contracts": {
+    "MockMC": "0x3d32D93Bb4a723F9eC6ccE58656C3EDC63e69DD7",
+    "JBC": "0x400875986eb0436a6BEe937d31Db8F0B6b4B088b",
+    "JinbaoProtocol": "0x054C6B207669884A61F3c1fF219b5CE2ad277204"
+  },
+  "wallets": {
+    "marketing": "0x4C10831CBcF9884ba72051b5287b6c87E4F74A48",
+    "treasury": "0x4C10831CBcF9884ba72051b5287b6c87E4F74A48",
+    "lp": "0x4C10831CBcF9884ba72051b5287b6c87E4F74A48",
+    "buyback": "0x4C10831CBcF9884ba72051b5287b6c87E4F74A48"
+  }
+}

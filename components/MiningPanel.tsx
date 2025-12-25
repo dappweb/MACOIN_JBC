@@ -52,7 +52,16 @@ const MiningPanel: React.FC = () => {
   const { t } = useLanguage();
   const { protocolContract, mcContract, account, isConnected, hasReferrer, isOwner, referrerAddress, checkReferrerStatus, provider } = useWeb3();
 
-  // Handle liquidity amount change
+  // Auto-set liquidity amount based on ticket (1.5x rule)
+  useEffect(() => {
+    if (ticketInfo && ticketInfo.amount > 0n) {
+        const amount = parseFloat(ethers.formatEther(ticketInfo.amount));
+        const required = amount * 1.5;
+        setLiquidityAmountInput(required.toString());
+    }
+  }, [ticketInfo]);
+
+  // Handle liquidity amount change (Sync state)
   useEffect(() => {
     try {
         if (liquidityAmountInput) {
@@ -69,8 +78,19 @@ const MiningPanel: React.FC = () => {
   const dailyROI = (Number(liquidityAmountInput || 0) * selectedPlan.dailyRate) / 100;
   const totalROI = dailyROI * selectedPlan.days;
 
+  // 向导步骤状态
+  const [currentStep, setCurrentStep] = useState(1);
+
   // 3倍上限计算
   const maxCap = selectedTicket.amount * 3;
+
+  // Calculate total investment required for current step (for allowance check)
+  const totalInvestment = useMemo(() => {
+    if (currentStep === 1) {
+        return selectedTicket.amount;
+    } 
+    return Number(liquidityAmountInput) || 0;
+  }, [currentStep, selectedTicket.amount, liquidityAmountInput]);
 
   // Revenue & Progress
   const currentRevenueWei = ticketInfo?.totalRevenue || 0n;
@@ -78,27 +98,45 @@ const MiningPanel: React.FC = () => {
   const displayCap = ticketInfo && ticketInfo.currentCap > 0n ? parseFloat(ethers.formatEther(ticketInfo.currentCap)) : maxCap;
   const progressPercent = displayCap > 0 ? Math.min((currentRevenue / displayCap) * 100, 100) : 0;
 
-  // 向导步骤状态
-  const [currentStep, setCurrentStep] = useState(1);
-
   const now = Math.floor(Date.now() / 1000);
   const hasTicket = !!ticketInfo && ticketInfo.amount > 0n;
   const isExited = !!ticketInfo && ticketInfo.exited;
   
+  // Define isTicketExpired (assuming 72 hours expiration logic if not staked, but new logic might be different)
+  // For now, let's assume a ticket never expires in the new logic unless exited.
+  // Or if there was an expiration logic intended:
+  const isTicketExpired = false; // Placeholder, adjust logic if needed based on requirements
+
   // Logic updated: Can stake if has active ticket (not exited)
   const canStakeLiquidity = hasTicket && !isExited;
   const isTicketBought = hasTicket && !isExited;
+  const hasValidTicket = hasTicket && !isExited; // Renamed from hasActiveTicket to avoid confusion
+  const [hasStaked, setHasStaked] = useState(false);
+
+  // New: Check if user has actually staked liquidity (by checking history or stakes array length if available)
+  // Since we don't have stakes array in ticketInfo, we can infer from history or just use a new logic.
+  // Ideally, we should fetch stakes from contract. For now, let's use a simple heuristic:
+  // If ticketInfo.totalRevenue > 0, they definitely staked.
+  // If not, we might need to check stakes count.
+  // Let's assume 'liquidityProvided' in ticketInfo was meant for this but is deprecated.
+  // We can use ticketHistory to check if there is any 'Mining' status item for current ticketId.
+  const hasStakedLiquidity = useMemo(() => {
+      if (hasStaked) return true;
+      if (!ticketInfo) return false;
+      return ticketHistory.some(item => item.ticketId === ticketInfo.ticketId?.toString() && (item.status === 'Mining' || item.status === 'Redeemed'));
+  }, [ticketHistory, ticketInfo, hasStaked]);
 
   // 根据状态自动推进步骤
   useEffect(() => {
-      if (canStakeLiquidity) {
-          // If user has active stakes, maybe go to dashboard (step 3), but allow going back to 2
-          // For now, default to step 1 if no ticket, step 2/3 if ticket
+      if (hasStakedLiquidity) {
+          // If already staked, go to dashboard (step 3), but allow going back to 2
+          if (currentStep < 3) setCurrentStep(3);
+      } else if (canStakeLiquidity) {
           if (currentStep === 1) setCurrentStep(2);
       } else {
           setCurrentStep(1); // 购买门票
       }
-  }, [canStakeLiquidity, ticketInfo]);
+  }, [canStakeLiquidity, hasStakedLiquidity]);
 
   // 格式化日期辅助函数
   const formatDate = (timestamp: number) => {
@@ -109,7 +147,7 @@ const MiningPanel: React.FC = () => {
     if (!ticketInfo) return null;
     if (ticketInfo.redeemed) return { label: t.mining.redeemed, color: 'text-gray-400', bg: 'bg-gray-500/20', border: 'border-gray-500/30' };
     if (isTicketExpired) return { label: t.mining.expired, color: 'text-red-400', bg: 'bg-red-500/20', border: 'border-red-500/30' };
-    if (ticketInfo.liquidityProvided) return { label: t.mining.mining, color: 'text-green-400', bg: 'bg-green-500/20', border: 'border-green-500/30' };
+    if (hasStakedLiquidity) return { label: t.mining.mining, color: 'text-green-400', bg: 'bg-green-500/20', border: 'border-green-500/30' };
     return { label: t.mining.pendingLiquidity, color: 'text-amber-400', bg: 'bg-amber-500/20', border: 'border-amber-500/30' };
   };
 
@@ -258,6 +296,45 @@ const MiningPanel: React.FC = () => {
     fetchHistory();
   }, [protocolContract, account]);
 
+  // Check direct stakes from contract as fallback source of truth
+  const checkDirectStakes = async () => {
+    if (!protocolContract || !account || !ticketInfo) return;
+    try {
+        // Try to fetch first 10 stakes. If any is active and matches current ticket timeframe, set hasStaked=true
+        // We iterate blindly because we don't know the length.
+        let found = false;
+        for (let i = 0; i < 10; i++) {
+            try {
+                const stake = await protocolContract.userStakes(account, i);
+                // stake struct: id, amount, startTime, cycleDays, active, paid
+                // Note: Ethers returns struct as array-like object with named properties
+                const startTime = Number(stake.startTime);
+                const active = stake.active;
+                
+                // If stake is active and started after or at ticket purchase time (with small buffer)
+                if (active && startTime >= (ticketInfo.purchaseTime - 60)) {
+                    found = true;
+                    break;
+                }
+            } catch (e) {
+                // End of array or error
+                break;
+            }
+        }
+        if (found) {
+            setHasStaked(true);
+        }
+    } catch (e) {
+        console.error("Error checking stakes:", e);
+    }
+  };
+
+  useEffect(() => {
+    if (ticketInfo) {
+        checkDirectStakes();
+    }
+  }, [ticketInfo, protocolContract]);
+
   useEffect(() => {
     const checkAllowance = async () => {
         if (mcContract && account && protocolContract) {
@@ -314,7 +391,7 @@ const MiningPanel: React.FC = () => {
       // Guard removed: Allow buying multiple tickets or overwriting
       /*
       // Guard: Check if user already has an active ticket
-      if (ticketInfo && ticketInfo.amount > 0n && !ticketInfo.redeemed) {
+      if (ticketInfo && ticketInfo.amount > 0n && !ticketInfo.exited) {
           toast.error(t.mining.activeTicketExists || "You already have a ticket. Please stake or redeem first.");
           return;
       }
@@ -558,28 +635,39 @@ const MiningPanel: React.FC = () => {
           { step: 1, label: t.mining.buyTicket, icon: Package },
           { step: 2, label: t.mining.stake, icon: Lock },
           { step: 3, label: t.mining.mining, icon: Zap }
-        ].map((s, idx) => (
+        ].map((s, idx) => {
+          // Determine if step is completed
+          const isCompleted = (s.step === 1 && isTicketBought) || (s.step === 2 && hasStakedLiquidity);
+          // Determine if step is accessible
+          const isAccessible = s.step === 1 || (s.step === 2 && isTicketBought) || (s.step === 3 && hasStakedLiquidity);
+          
+          return (
           <div key={s.step} className="flex items-center">
             <button 
-              onClick={() => setCurrentStep(s.step)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-full border transition-all cursor-pointer hover:scale-105 active:scale-95 ${
+              onClick={() => {
+                if (isAccessible) setCurrentStep(s.step);
+              }}
+              disabled={!isAccessible}
+              className={`flex items-center gap-2 px-4 py-2 rounded-full border transition-all ${
+                isAccessible ? 'cursor-pointer hover:scale-105 active:scale-95' : 'cursor-not-allowed opacity-50'
+              } ${
               currentStep === s.step 
                 ? 'bg-neon-500/20 border-neon-500 text-neon-400 shadow-lg shadow-neon-500/20' 
-                : currentStep > s.step
+                : isCompleted
                   ? 'bg-green-500/10 border-green-500/30 text-green-400 hover:bg-green-500/20'
                   : 'bg-gray-900/50 border-gray-700 text-gray-500 hover:border-gray-500 hover:text-gray-300'
             }`}>
               <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
                  currentStep === s.step ? 'bg-neon-500 text-black' : 
-                 currentStep > s.step ? 'bg-green-500 text-black' : 'bg-gray-800'
+                 isCompleted ? 'bg-green-500 text-black' : 'bg-gray-800'
               }`}>
-                {currentStep > s.step ? '✓' : s.step}
+                {isCompleted ? '✓' : s.step}
               </div>
               <span className="hidden md:block font-bold text-sm">{s.label}</span>
             </button>
-            {idx < 2 && <div className={`w-8 h-0.5 mx-2 ${currentStep > s.step ? 'bg-green-500/30' : 'bg-gray-800'}`} />}
+            {idx < 2 && <div className={`w-8 h-0.5 mx-2 ${isCompleted ? 'bg-green-500/30' : 'bg-gray-800'}`} />}
           </div>
-        ))}
+        )})}
       </div>
 
       {/* 鎺ㄨ崘浜虹粦瀹氭彁绀?- 闈炵鐞嗗憳涓旀湭缁戝畾鎺ㄨ崘浜烘椂鏄剧ず */}
@@ -639,70 +727,102 @@ const MiningPanel: React.FC = () => {
 
 
 
-      {/* 蹇€熻喘涔伴棬绁ㄦ寜閽尯鍩?- 鏄剧溂浣嶇疆 */}
+      {/* Ticket Selection UI Enhancement */}
       {currentStep === 1 && isConnected && (hasReferrer || isOwner) && (
-        <div className="glass-panel p-6 md:p-8 rounded-2xl border-2 border-neon-500/50 shadow-xl shadow-neon-500/20 animate-fade-in bg-gray-900/50">
-          <div className="text-center mb-6">
-            <h3 className="text-2xl md:text-3xl font-bold text-white mb-2">{t.mining.buyTicket}</h3>
-            <p className="text-gray-400">{t.mining.step1}</p>
+        <div className="glass-panel p-6 md:p-8 rounded-2xl border-2 border-neon-500/50 shadow-xl shadow-neon-500/20 animate-fade-in bg-gray-900/50 relative overflow-hidden">
+          {/* Background Decorative Elements */}
+          <div className="absolute top-0 right-0 w-64 h-64 bg-neon-500/5 rounded-full blur-3xl -z-10"></div>
+          
+          <div className="text-center mb-8">
+            <h3 className="text-2xl md:text-3xl font-bold text-white mb-2 flex items-center justify-center gap-2">
+              <Package className="text-neon-400" /> {t.mining.buyTicket}
+            </h3>
+            <p className="text-gray-400 max-w-lg mx-auto">{t.mining.step1}</p>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 md:gap-4 mb-6">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 md:gap-6 mb-8">
             {TICKET_TIERS.map((tier) => {
               const isDisabled = tier.amount < maxUnredeemedTicket;
+              const isSelected = selectedTicket.amount === tier.amount;
               return (
                 <button
                   key={tier.amount}
                   onClick={() => !isDisabled && setSelectedTicket(tier)}
                   disabled={isDisabled}
-                  className={`relative py-4 md:py-6 rounded-xl border-2 transition-all duration-300 flex flex-col items-center justify-center gap-1 ${
+                  className={`group relative py-6 md:py-8 rounded-xl border transition-all duration-300 flex flex-col items-center justify-center gap-2 overflow-hidden ${
                     isDisabled
-                      ? 'bg-gray-900/30 border-gray-800 text-gray-600 cursor-not-allowed opacity-50'
-                      : selectedTicket.amount === tier.amount
-                      ? 'bg-gradient-to-br from-neon-500 to-neon-600 text-black border-neon-400 shadow-lg shadow-neon-500/40 transform scale-105 z-10'
-                      : 'bg-gray-900/50 border-gray-700 text-gray-300 hover:border-neon-500/50 hover:bg-gray-800/50'
+                      ? 'bg-gray-900/30 border-gray-800 text-gray-600 cursor-not-allowed opacity-50 grayscale'
+                      : isSelected
+                      ? 'bg-gradient-to-br from-gray-800 to-gray-900 border-neon-400 shadow-[0_0_20px_rgba(34,197,94,0.3)] transform scale-105 z-10'
+                      : 'bg-gray-900/50 border-gray-700 text-gray-300 hover:border-neon-500/50 hover:bg-gray-800/80 hover:shadow-lg'
                   }`}
                 >
+                  {/* Selection Indicator */}
+                  {isSelected && (
+                    <div className="absolute top-0 right-0 w-8 h-8 bg-neon-500 text-black flex items-center justify-center rounded-bl-xl font-bold">
+                      ✓
+                    </div>
+                  )}
+                  
+                  {/* Holographic Effect for Selected */}
+                  {isSelected && (
+                     <div className="absolute inset-0 bg-gradient-to-tr from-neon-500/10 via-transparent to-transparent opacity-50 pointer-events-none"></div>
+                  )}
+
                   {isDisabled && (
-                    <div className="absolute top-1 right-1">
+                    <div className="absolute top-2 right-2">
                       <Lock className="w-4 h-4 text-gray-600" />
                     </div>
                   )}
-                  <span className="text-2xl md:text-3xl font-bold">{tier.amount}</span>
-                  <span className="text-sm font-semibold">MC</span>
-                  <span className={`text-xs ${selectedTicket.amount === tier.amount ? 'text-black/80' : isDisabled ? 'text-gray-600' : 'text-gray-400'}`}>
-                    +{tier.requiredLiquidity} {t.mining.liquidity}
-                  </span>
+                  
+                  <div className={`text-3xl md:text-4xl font-bold font-mono tracking-tighter ${isSelected ? 'text-neon-400 text-shadow-neon' : 'text-white'}`}>
+                    {tier.amount}
+                  </div>
+                  <span className={`text-xs font-bold uppercase tracking-wider ${isSelected ? 'text-white' : 'text-gray-500'}`}>MC Token</span>
+                  
+                  {/* Cap Info */}
+                  <div className={`mt-2 px-2 py-1 rounded text-[10px] md:text-xs font-mono border ${
+                      isSelected ? 'bg-neon-500/20 border-neon-500/30 text-neon-300' : 'bg-gray-800 border-gray-700 text-gray-500'
+                  }`}>
+                    Cap: {tier.amount * 3}
+                  </div>
                 </button>
               );
             })}
           </div>
 
           {maxUnredeemedTicket > 0 && (
-            <div className="mb-4 bg-amber-900/20 border border-amber-500/30 rounded-lg p-3 flex items-start gap-2 backdrop-blur-sm">
-              <AlertCircle className="text-amber-400 shrink-0 mt-0.5" size={16} />
-              <p className="text-xs text-amber-200/80">
+            <div className="mb-6 bg-amber-900/20 border border-amber-500/30 rounded-xl p-4 flex items-start gap-3 backdrop-blur-sm">
+              <AlertCircle className="text-amber-400 shrink-0 mt-0.5" size={20} />
+              <div className="text-sm text-amber-200/80">
+                 <span className="font-bold text-amber-300 block mb-1">Upgrade Required</span>
                 {t.mining.minTicketWarning || `您有未赎回的 ${maxUnredeemedTicket} MC 门票，只能购买 >= ${maxUnredeemedTicket} MC 的门票。赎回后可购买更小金额的门票。`}
-              </p>
+              </div>
             </div>
           )}
 
-          <div className="space-y-3">
+          <div className="space-y-4 max-w-md mx-auto">
             {!isApproved ? (
               <button
                 onClick={handleApprove}
                 disabled={txPending}
-                className="w-full py-4 bg-gray-700 hover:bg-gray-600 text-white font-bold text-lg rounded-xl transition-colors shadow-lg disabled:opacity-50"
+                className="w-full py-4 bg-gray-700 hover:bg-gray-600 text-white font-bold text-lg rounded-xl transition-all shadow-lg hover:shadow-xl border border-gray-600 disabled:opacity-50 relative overflow-hidden group"
               >
+                <div className="absolute inset-0 bg-white/5 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
                 {txPending ? t.mining.approving : `${t.mining.approve}`}
               </button>
             ) : (
               <button
                 onClick={handleBuyTicket}
                 disabled={txPending}
-                className="w-full py-4 md:py-5 bg-gradient-to-r from-neon-500 to-neon-600 hover:from-neon-400 hover:to-neon-500 text-black font-extrabold text-xl rounded-xl shadow-xl shadow-neon-500/40 transition-all transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full py-4 md:py-5 bg-gradient-to-r from-neon-500 to-neon-600 hover:from-neon-400 hover:to-neon-500 text-black font-extrabold text-xl rounded-xl shadow-[0_0_20px_rgba(34,197,94,0.4)] hover:shadow-[0_0_30px_rgba(34,197,94,0.6)] transition-all transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed relative overflow-hidden"
               >
-                {txPending ? t.mining.buying : `${t.mining.buyTicket} - ${selectedTicket.amount} MC`}
+                <div className="absolute inset-0 bg-white/20 translate-x-[-100%] animate-[shimmer_2s_infinite]"></div>
+                {txPending ? t.mining.buying : (
+                    <span className="flex items-center justify-center gap-2">
+                        {t.mining.buyTicket} <span className="opacity-80 font-mono text-lg">({selectedTicket.amount} MC)</span>
+                    </span>
+                )}
               </button>
             )}
           </div>
@@ -722,7 +842,7 @@ const MiningPanel: React.FC = () => {
         </div>
       )}
       
-      {hasActiveTicket && !isTicketExpired && (
+      {hasStakedLiquidity && !isTicketExpired && (
         <div className="bg-neon-900/20 border-2 border-neon-500/50 rounded-xl p-4 flex items-start gap-3 animate-fade-in backdrop-blur-sm">
           <AlertCircle className="text-neon-400 shrink-0 mt-0.5" size={20} />
           <div className="flex-1">
@@ -734,7 +854,7 @@ const MiningPanel: React.FC = () => {
         </div>
       )}
       
-      {canStakeLiquidity && !hasActiveTicket && !isTicketExpired && (
+      {canStakeLiquidity && !hasStakedLiquidity && !isTicketExpired && (
         <div className="bg-green-50 border-2 border-green-300 rounded-xl p-4 flex items-start gap-3 animate-fade-in">
           <AlertCircle className="text-green-600 shrink-0 mt-0.5" size={20} />
           <div className="flex-1">
@@ -753,7 +873,7 @@ const MiningPanel: React.FC = () => {
             <div className="lg:col-span-2 space-y-4 md:space-y-6">
 
             {/* Step 2: Cycle */}
-            <div id="staking-section" className={`glass-panel p-4 md:p-6 rounded-xl md:rounded-2xl relative overflow-hidden group transition-opacity bg-gray-900/50 border border-gray-800 ${(!isTicketBought || isTicketExpired || hasActiveTicket || (!hasReferrer && !isOwner)) ? 'opacity-50 pointer-events-none' : ''}`}>
+            <div id="staking-section" className={`glass-panel p-4 md:p-6 rounded-xl md:rounded-2xl relative overflow-hidden group transition-opacity bg-gray-900/50 border border-gray-800 ${(!isTicketBought || isTicketExpired || (!hasReferrer && !isOwner)) ? 'opacity-50 pointer-events-none' : ''}`}>
                  {!isTicketBought && (
                     <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/70 backdrop-blur-sm rounded-xl md:rounded-2xl">
                         <div className="flex items-center gap-2 px-3 py-2 md:px-4 md:py-2 bg-gray-900 text-white rounded-lg shadow-xl border border-gray-700">
@@ -762,11 +882,11 @@ const MiningPanel: React.FC = () => {
                         </div>
                     </div>
                 )}
-                 {(isTicketExpired || hasActiveTicket) && isTicketBought && (
+                 {isTicketExpired && isTicketBought && (
                     <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/50 backdrop-blur-sm rounded-xl md:rounded-2xl">
                         <div className="flex items-center gap-2 px-3 py-2 md:px-4 md:py-2 bg-gray-900 border border-gray-700 text-white rounded-lg shadow-xl">
                             <Lock size={14} className="md:w-4 md:h-4" />
-                            <span className="text-xs md:text-sm font-bold">{isTicketExpired ? t.mining.ticketExpired : t.mining.alreadyStaked}</span>
+                            <span className="text-xs md:text-sm font-bold">{t.mining.ticketExpired}</span>
                         </div>
                     </div>
                 )}
@@ -798,17 +918,28 @@ const MiningPanel: React.FC = () => {
                     ))}
                 </div>
 
-                <div className="mt-4">
-                    <label className="block text-sm font-bold text-gray-300 mb-2">{t.mining.liqInv || "Liquidity Amount (MC)"}</label>
-                    <div className="relative">
+                <div className="mt-6 md:mt-8 bg-gray-950/50 p-4 rounded-xl border border-gray-800">
+                    <div className="flex justify-between items-center mb-4">
+                        <label className="text-sm font-bold text-gray-300 flex items-center gap-2">
+                            <Zap className="text-neon-400" size={16} />
+                            {t.mining.liqInv || "Liquidity Amount"} <span className="text-neon-500 text-xs">(Fixed 1.5x Ticket)</span>
+                        </label>
+                        <span className="text-xs text-gray-500 font-mono">Balance: 10,000 MC</span>
+                    </div>
+                    
+                    <div className="relative mb-6">
                         <input
                             type="number"
                             value={liquidityAmountInput}
-                            onChange={(e) => setLiquidityAmountInput(e.target.value)}
-                            placeholder="Enter MC Amount"
-                            className="w-full px-4 py-3 bg-gray-900/50 border border-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-neon-500/50 placeholder-gray-600"
+                            readOnly
+                            className="w-full px-4 py-4 bg-gray-900 border border-gray-700 rounded-xl text-white text-xl font-mono focus:outline-none focus:ring-2 focus:ring-neon-500/50 placeholder-gray-700 transition-all cursor-not-allowed opacity-80"
                         />
-                        <div className="absolute right-3 top-3 text-sm font-bold text-gray-500">MC</div>
+                        <div className="absolute right-4 top-1/2 -translate-y-1/2 font-bold text-gray-500 pointer-events-none">MC</div>
+                    </div>
+
+                    {/* Fixed Amount Info */}
+                    <div className="text-xs text-gray-400 text-center mb-2">
+                        Required Liquidity: <span className="text-neon-400 font-bold">{liquidityAmountInput} MC</span> (1.5x Ticket Amount)
                     </div>
                 </div>
             </div>
@@ -933,7 +1064,7 @@ const MiningPanel: React.FC = () => {
                          >
                             {txPending ? t.mining.staking : t.mining.stake} <ArrowRight size={20} />
                         </button>
-                    ) : hasActiveTicket ? (
+                    ) : hasValidTicket ? (
                         <button
                             onClick={handleScrollToBuy}
                             disabled={txPending}
@@ -956,7 +1087,7 @@ const MiningPanel: React.FC = () => {
                 </div>
 
                 {/* Active Mining Controls */}
-                {hasActiveTicket && (
+                {hasStakedLiquidity && (
                     <div className="mt-4 pt-4 border-t border-slate-100 flex gap-2">
                          <button
                             onClick={handleRedeem}
@@ -977,7 +1108,7 @@ const MiningPanel: React.FC = () => {
       {/* Ticket Status Display - New Addition */}
       {currentStep === 3 && (
         <div className={`glass-panel p-4 md:p-6 rounded-xl border-2 animate-fade-in backdrop-blur-sm bg-gray-900/50 mt-8 ${statusInfo?.border || 'border-gray-800'}`}>
-            {!hasActiveTicket ? (
+            {!hasStakedLiquidity ? (
                 <div className="text-center py-12">
                     <div className="bg-gray-800/50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 border border-gray-700">
                         <Zap className="text-gray-600" size={32} />
@@ -1068,7 +1199,7 @@ const MiningPanel: React.FC = () => {
             </div>
 
             {/* Action Buttons for Step 3 */}
-            {hasActiveTicket && (
+            {hasValidTicket && (
                  <div className="mt-6 pt-6 border-t border-gray-700 flex flex-col md:flex-row gap-4">
                      <button
                         onClick={handleRedeem}
@@ -1111,24 +1242,30 @@ const MiningPanel: React.FC = () => {
                         </div>
                     ) : (
                         <div className="space-y-3">
-                            {ticketHistory.map((item, idx) => (
-                            <div key={idx} className="bg-gray-800/30 rounded-lg p-4 border border-gray-700/50 hover:border-neon-500/30 transition-colors">
+                            {ticketHistory.map((item, idx) => {
+                                // Calculate expiration time for pending tickets
+                                const expireTime = item.purchaseTime + 72 * 3600;
+                                const isExpired = now > expireTime;
+                                const showStakeAction = item.status === 'Pending' && !isExpired && !hasStakedLiquidity && !isTicketExpired;
+
+                                return (
+                                <div key={idx} className="bg-gray-800/30 rounded-lg p-4 border border-gray-700/50 hover:border-neon-500/30 transition-colors">
                                 <div className="flex justify-between items-start mb-3">
                                     <div className="flex items-center gap-3">
                                         <div className="bg-gray-900/50 px-2 py-1 rounded text-xs font-mono text-gray-400 border border-gray-700">
                                             #{item.ticketId}
                                         </div>
                                         <span className={`px-2 py-0.5 rounded text-xs font-bold border ${
-                                            item.status === 'Mining' ? 'bg-green-500/10 text-green-400 border-green-500/20' :
-                                            item.status === 'Redeemed' ? 'bg-gray-500/10 text-gray-400 border-gray-500/20' :
-                                            item.status === 'Expired' ? 'bg-red-500/10 text-red-400 border-red-500/20' :
-                                            'bg-amber-500/10 text-amber-400 border-amber-500/20'
-                                        }`}>
-                                            {item.status === 'Mining' ? t.mining.mining : 
-                                             item.status === 'Redeemed' ? t.mining.redeemed :
-                                             item.status === 'Expired' ? t.mining.expired :
-                                             t.mining.pendingLiquidity}
-                                        </span>
+                    item.status === 'Mining' ? 'bg-green-500/10 text-green-400 border-green-500/20' :
+                    item.status === 'Redeemed' ? 'bg-gray-500/10 text-gray-400 border-gray-500/20' :
+                    (item.status === 'Expired' || isExpired) ? 'bg-red-500/10 text-red-400 border-red-500/20' :
+                    'hidden' // Hide Pending status
+                }`}>
+                    {item.status === 'Mining' ? t.mining.mining : 
+                     item.status === 'Redeemed' ? t.mining.redeemed : 
+                     (item.status === 'Expired' || isExpired) ? t.mining.expired : 
+                     ''}
+                </span>
                                     </div>
                                     <div className="text-right">
                                         <div className="font-bold text-white text-lg">{item.amount} <span className="text-xs font-normal text-gray-400">MC</span></div>
@@ -1154,9 +1291,30 @@ const MiningPanel: React.FC = () => {
                                             <span className="font-mono text-gray-300">{t.mining.redeemed}</span>
                                         </div>
                                     )}
+
+                                    {item.status === 'Pending' && !isExpired && (
+                                        <div className="flex flex-col text-right">
+                                            <span className="text-gray-500 mb-0.5">{t.mining.endTime || "Valid Until"}</span>
+                                            <span className="font-mono text-amber-400">{formatDate(expireTime)}</span>
+                                        </div>
+                                    )}
                                 </div>
+
+                                {showStakeAction && (
+                                    <div className="mt-3 pt-3 border-t border-gray-700/50">
+                                        <button
+                                            onClick={() => {
+                                                handleScrollToStake();
+                                                setCurrentStep(2);
+                                            }}
+                                            className="w-full py-2 bg-gradient-to-r from-amber-500/20 to-amber-600/20 hover:from-amber-500/30 hover:to-amber-600/30 text-amber-300 font-bold rounded-lg border border-amber-500/30 transition-all flex items-center justify-center gap-2 text-sm"
+                                        >
+                                            {t.mining.stake} <ArrowRight size={14} />
+                                        </button>
+                                    </div>
+                                )}
                             </div>
-                        ))}
+                            )})}
                         </div>
                     )}
                 </div>
@@ -1165,48 +1323,75 @@ const MiningPanel: React.FC = () => {
       )}
 
       {/* Mobile Sticky Footer */}
-      {/* <div className="fixed bottom-0px left-0 right-0 p-4 bg-gray-900/95 border-t border-gray-800 backdrop-blur-xl md:hidden z-50 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.3)]">
-        {currentStep === 1 && isConnected && (hasReferrer || isOwner) && (
-            !isApproved ? (
-              <button
-                onClick={handleApprove}
-                disabled={txPending}
-                className="w-full py-3 bg-gray-700 hover:bg-gray-600 text-white font-bold text-lg rounded-xl transition-colors shadow-lg disabled:opacity-50"
-              >
-                {txPending ? t.mining.approving : t.mining.approve}
-              </button>
-            ) : (
-              <button
-                onClick={handleBuyTicket}
-                disabled={txPending}
-                className="w-full py-3 bg-gradient-to-r from-neon-500 to-neon-600 text-black font-extrabold text-xl rounded-xl shadow-lg shadow-neon-500/20 disabled:opacity-50"
-              >
-                {txPending ? t.mining.buying : `${t.mining.buyTicket} - ${selectedTicket.amount} MC`}
-              </button>
-            )
-        )}
+      <div className="fixed bottom-0 left-0 right-0 p-4 bg-gray-900/95 border-t border-gray-800 backdrop-blur-xl md:hidden z-50 shadow-[0_-4px_20px_-1px_rgba(0,0,0,0.5)] safe-area-bottom">
+        <div className="flex items-center gap-4">
+            {/* Status Summary */}
+            <div className="flex-1">
+                {currentStep === 1 && (
+                     <div className="flex flex-col">
+                        <span className="text-xs text-gray-400 uppercase font-bold">Ticket</span>
+                        <span className="text-white font-mono font-bold">{selectedTicket.amount} MC</span>
+                    </div>
+                )}
+                {currentStep === 2 && (
+                    <div className="flex flex-col">
+                        <span className="text-xs text-gray-400 uppercase font-bold">Staking</span>
+                        <span className="text-neon-400 font-mono font-bold">{liquidityAmountInput || 0} MC</span>
+                    </div>
+                )}
+                 {currentStep === 3 && (
+                    <div className="flex flex-col">
+                        <span className="text-xs text-gray-400 uppercase font-bold">Mining</span>
+                        <span className="text-green-400 font-bold text-xs">Active</span>
+                    </div>
+                )}
+            </div>
 
-        {currentStep === 2 && canStakeLiquidity && (
-            <button
-                onClick={handleStake}
-                disabled={txPending}
-                className="w-full py-3 bg-gradient-to-r from-neon-500 to-neon-600 text-black font-extrabold text-lg rounded-xl shadow-lg shadow-neon-500/20 disabled:opacity-50 flex items-center justify-center gap-2"
-             >
-                {txPending ? t.mining.staking : t.mining.stake} <ArrowRight size={20} />
-            </button>
-        )}
+            {/* Action Button */}
+            <div className="flex-[2]">
+                {currentStep === 1 && isConnected && (hasReferrer || isOwner) && (
+                    !isApproved ? (
+                    <button
+                        onClick={handleApprove}
+                        disabled={txPending}
+                        className="w-full py-3 bg-gray-700 hover:bg-gray-600 text-white font-bold rounded-xl transition-colors shadow-lg disabled:opacity-50"
+                    >
+                        {txPending ? t.mining.approving : t.mining.approve}
+                    </button>
+                    ) : (
+                    <button
+                        onClick={handleBuyTicket}
+                        disabled={txPending}
+                        className="w-full py-3 bg-gradient-to-r from-neon-500 to-neon-600 text-black font-extrabold text-lg rounded-xl shadow-lg shadow-neon-500/20 disabled:opacity-50"
+                    >
+                        {txPending ? t.mining.buying : `${t.mining.buyTicket}`}
+                    </button>
+                    )
+                )}
 
-        {currentStep === 3 && hasActiveTicket && (
-             <button
-                onClick={handleRedeem}
-                disabled={txPending}
-                className="w-full py-3 bg-gradient-to-r from-red-500/20 to-red-600/20 text-red-300 font-bold rounded-xl border border-red-500/30 disabled:opacity-50 flex items-center justify-center gap-2"
-             >
-                <TrendingUp size={20} />
-                {t.mining.redeem}
-             </button>
-        )}
-      </div> */}
+                {currentStep === 2 && canStakeLiquidity && (
+                    <button
+                        onClick={handleStake}
+                        disabled={txPending || stakeAmount <= 0n}
+                        className="w-full py-3 bg-gradient-to-r from-neon-500 to-neon-600 text-black font-extrabold text-lg rounded-xl shadow-lg shadow-neon-500/20 disabled:opacity-50 flex items-center justify-center gap-2"
+                    >
+                        {txPending ? t.mining.staking : t.mining.stake} <ArrowRight size={18} />
+                    </button>
+                )}
+
+                {currentStep === 3 && hasActiveTicket && (
+                    <button
+                        onClick={handleRedeem}
+                        disabled={txPending}
+                        className="w-full py-3 bg-gradient-to-r from-red-500/20 to-red-600/20 text-red-300 font-bold rounded-xl border border-red-500/30 disabled:opacity-50 flex items-center justify-center gap-2"
+                    >
+                        <TrendingUp size={18} />
+                        {t.mining.redeem}
+                    </button>
+                )}
+            </div>
+        </div>
+      </div>
 
     </div>
   );

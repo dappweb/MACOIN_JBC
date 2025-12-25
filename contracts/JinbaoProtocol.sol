@@ -241,11 +241,14 @@ contract JinbaoProtocol is Ownable, ReentrancyGuard {
         // Validate Amount (T1-T4)
         require(amount == 100 * 1e18 || amount == 300 * 1e18 || amount == 500 * 1e18 || amount == 1000 * 1e18, "Invalid ticket amount");
         
+        // Removed restriction: Users can buy ticket anytime
+        /*
         // Ensure previous ticket is exited if it existed
         Ticket storage prevTicket = userTicket[msg.sender];
         if (prevTicket.amount > 0) {
             require(prevTicket.exited, "Previous ticket active");
         }
+        */
 
         // Transfer MC
         mcToken.transferFrom(msg.sender, address(this), amount);

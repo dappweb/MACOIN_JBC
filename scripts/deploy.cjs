@@ -176,6 +176,34 @@ async function main() {
   }
   */
 
+  // 5. Initialize Liquidity Pool (Optional but recommended)
+  console.log("Initializing Liquidity Pool...");
+  // Add 1000 MC and 10000 JBC to pool as initial liquidity
+  const mcInitLiquidity = hre.ethers.parseEther("1000");
+  const jbcInitLiquidity = hre.ethers.parseEther("10000");
+
+  try {
+      // Need to approve first
+      const mc = MockMC.attach(mcAddress);
+      // For JBC we don't have artifacts for real token sometimes, but let's assume standard ERC20 interface
+      // Or use the one we have
+      const JBC = await hre.ethers.getContractFactory("JBC");
+      const jbc = JBC.attach(jbcAddress);
+
+      console.log("Approving MC...");
+      await (await mc.approve(protocolAddress, mcInitLiquidity, txOverrides)).wait();
+      
+      console.log("Approving JBC...");
+      await (await jbc.approve(protocolAddress, jbcInitLiquidity, txOverrides)).wait();
+
+      console.log("Adding Liquidity...");
+      const addLiqTx = await protocol.addLiquidity(mcInitLiquidity, jbcInitLiquidity, txOverrides);
+      await addLiqTx.wait();
+      console.log("✅ Initial Liquidity Added: 1000 MC + 10000 JBC");
+  } catch (error) {
+      console.warn("⚠️ Failed to add initial liquidity (Check balances/allowances):", error.message);
+  }
+
   // Save deployment info
   const deploymentInfo = {
     network: networkName,

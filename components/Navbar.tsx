@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react"
 import { AppTab } from "../types"
-import { Diamond, Home, Pickaxe, Users, ArrowLeftRight, Settings, PlusCircle, Globe, FileText, Gift } from "lucide-react"
+import { Diamond, Home, Pickaxe, Users, ArrowLeftRight, Settings, PlusCircle, Globe, FileText, Gift, AlertTriangle } from "lucide-react"
 import { useLanguage } from "../LanguageContext"
 import { ConnectButton } from "@rainbow-me/rainbowkit"
 import { useWeb3 } from "../Web3Context"
@@ -100,9 +100,45 @@ const Navbar: React.FC<NavbarProps> = ({ currentTab, setTab }) => {
     }
   }
 
+  // Check if on wrong network
+  const isWrongNetwork = isConnected && chainId !== MC_CHAIN_ID;
+
+  const handleSwitchNetwork = async () => {
+    if (switchChain) {
+      try {
+        switchChain({ chainId: MC_CHAIN_ID });
+      } catch (error) {
+        console.log("Switch chain via wagmi failed, trying wallet_addEthereumChain...", error);
+        await addMcChain();
+      }
+    } else {
+      await addMcChain();
+    }
+  };
+
   return (
     <>
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-black/90 backdrop-blur-md border-b border-emerald-500/20 shadow-lg shadow-emerald-500/10">
+      {/* Network Warning Banner */}
+      {isWrongNetwork && (
+        <div className="fixed top-0 left-0 right-0 z-[60] bg-gradient-to-r from-amber-600 to-amber-500 text-black">
+          <div className="max-w-7xl mx-auto px-4 py-2 flex items-center justify-between gap-4">
+            <div className="flex items-center gap-2">
+              <AlertTriangle size={18} />
+              <span className="text-sm font-bold">
+                {language === 'zh' ? '您当前不在 MC Chain 网络' : 'You are not on MC Chain network'}
+              </span>
+            </div>
+            <button
+              onClick={handleSwitchNetwork}
+              className="px-4 py-1.5 bg-black text-white text-sm font-bold rounded-lg hover:bg-gray-900 transition-colors"
+            >
+              {language === 'zh' ? '切换网络' : 'Switch Network'}
+            </button>
+          </div>
+        </div>
+      )}
+
+      <nav className={`fixed left-0 right-0 z-50 bg-black/90 backdrop-blur-md border-b border-emerald-500/20 shadow-lg shadow-emerald-500/10 ${isWrongNetwork ? 'top-10' : 'top-0'}`}>
         <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16 md:h-20">
             {/* Logo */}
@@ -119,58 +155,51 @@ const Navbar: React.FC<NavbarProps> = ({ currentTab, setTab }) => {
             <div className="hidden md:flex items-center gap-8">
               <button
                 onClick={() => setTab(AppTab.HOME)}
-                className={`flex items-center gap-2 font-bold transition-colors ${
-                  currentTab === AppTab.HOME ? "text-emerald-400" : "text-gray-400 hover:text-white"
-                }`}
+                className={`flex items-center gap-2 font-bold transition-colors ${currentTab === AppTab.HOME ? "text-emerald-400" : "text-gray-400 hover:text-white"
+                  }`}
               >
                 <Home size={18} /> {t.nav.home}
               </button>
               <button
                 onClick={() => setTab(AppTab.MINING)}
-                className={`flex items-center gap-2 font-bold transition-colors ${
-                  currentTab === AppTab.MINING ? "text-emerald-400" : "text-gray-400 hover:text-white"
-                }`}
+                className={`flex items-center gap-2 font-bold transition-colors ${currentTab === AppTab.MINING ? "text-emerald-400" : "text-gray-400 hover:text-white"
+                  }`}
               >
                 <Pickaxe size={18} /> {t.nav.mining}
               </button>
               <button
                 onClick={() => setTab(AppTab.TEAM)}
-                className={`flex items-center gap-2 font-bold transition-colors ${
-                  currentTab === AppTab.TEAM ? "text-emerald-400" : "text-gray-400 hover:text-white"
-                }`}
+                className={`flex items-center gap-2 font-bold transition-colors ${currentTab === AppTab.TEAM ? "text-emerald-400" : "text-gray-400 hover:text-white"
+                  }`}
               >
                 <Users size={18} /> {t.nav.team}
               </button>
               <button
                 onClick={() => setTab(AppTab.SWAP)}
-                className={`flex items-center gap-2 font-bold transition-colors ${
-                  currentTab === AppTab.SWAP ? "text-emerald-400" : "text-gray-400 hover:text-white"
-                }`}
+                className={`flex items-center gap-2 font-bold transition-colors ${currentTab === AppTab.SWAP ? "text-emerald-400" : "text-gray-400 hover:text-white"
+                  }`}
               >
                 <ArrowLeftRight size={18} /> Swap
               </button>
               <button
                 onClick={() => setTab(AppTab.HISTORY)}
-                className={`flex items-center gap-2 font-bold transition-colors ${
-                  currentTab === AppTab.HISTORY ? "text-emerald-400" : "text-gray-400 hover:text-white"
-                }`}
+                className={`flex items-center gap-2 font-bold transition-colors ${currentTab === AppTab.HISTORY ? "text-emerald-400" : "text-gray-400 hover:text-white"
+                  }`}
               >
                 <FileText size={18} /> {t.nav.history}
               </button>
               <button
                 onClick={() => setTab(AppTab.EARNINGS)}
-                className={`flex items-center gap-2 font-bold transition-colors ${
-                  currentTab === AppTab.EARNINGS ? "text-emerald-400" : "text-gray-400 hover:text-white"
-                }`}
+                className={`flex items-center gap-2 font-bold transition-colors ${currentTab === AppTab.EARNINGS ? "text-emerald-400" : "text-gray-400 hover:text-white"
+                  }`}
               >
                 <Gift size={18} /> {t.nav.earnings || "Earnings"}
               </button>
               {isOwner && (
                 <button
                   onClick={() => setTab(AppTab.ADMIN)}
-                  className={`flex items-center gap-2 font-bold transition-colors ${
-                    currentTab === AppTab.ADMIN ? "text-red-400" : "text-gray-400 hover:text-red-400"
-                  }`}
+                  className={`flex items-center gap-2 font-bold transition-colors ${currentTab === AppTab.ADMIN ? "text-red-400" : "text-gray-400 hover:text-red-400"
+                    }`}
                 >
                   <Settings size={18} /> Admin
                 </button>
@@ -207,9 +236,8 @@ const Navbar: React.FC<NavbarProps> = ({ currentTab, setTab }) => {
         <div className="flex justify-around items-center h-16">
           <button
             onClick={() => setTab(AppTab.HOME)}
-            className={`p-2 rounded-lg flex flex-col items-center gap-1 ${
-              currentTab === AppTab.HOME ? "bg-[#10b981]/10" : ""
-            }`}
+            className={`p-2 rounded-lg flex flex-col items-center gap-1 ${currentTab === AppTab.HOME ? "bg-[#10b981]/10" : ""
+              }`}
             style={{ color: currentTab === AppTab.HOME ? "#10b981" : "#6B7280" }}
           >
             <Home size={20} />
@@ -217,9 +245,8 @@ const Navbar: React.FC<NavbarProps> = ({ currentTab, setTab }) => {
           </button>
           <button
             onClick={() => setTab(AppTab.MINING)}
-            className={`p-2 rounded-lg flex flex-col items-center gap-1 ${
-              currentTab === AppTab.MINING ? "bg-[#10b981]/10" : ""
-            }`}
+            className={`p-2 rounded-lg flex flex-col items-center gap-1 ${currentTab === AppTab.MINING ? "bg-[#10b981]/10" : ""
+              }`}
             style={{ color: currentTab === AppTab.MINING ? "#10b981" : "#6B7280" }}
           >
             <Pickaxe size={20} />
@@ -227,9 +254,8 @@ const Navbar: React.FC<NavbarProps> = ({ currentTab, setTab }) => {
           </button>
           <button
             onClick={() => setTab(AppTab.SWAP)}
-            className={`p-2 rounded-lg flex flex-col items-center gap-1 ${
-              currentTab === AppTab.SWAP ? "bg-[#10b981]/10" : ""
-            }`}
+            className={`p-2 rounded-lg flex flex-col items-center gap-1 ${currentTab === AppTab.SWAP ? "bg-[#10b981]/10" : ""
+              }`}
             style={{ color: currentTab === AppTab.SWAP ? "#10b981" : "#6B7280" }}
           >
             <ArrowLeftRight size={20} />
@@ -237,9 +263,8 @@ const Navbar: React.FC<NavbarProps> = ({ currentTab, setTab }) => {
           </button>
           <button
             onClick={() => setTab(AppTab.HISTORY)}
-            className={`p-2 rounded-lg flex flex-col items-center gap-1 ${
-              currentTab === AppTab.HISTORY ? "bg-[#10b981]/10" : ""
-            }`}
+            className={`p-2 rounded-lg flex flex-col items-center gap-1 ${currentTab === AppTab.HISTORY ? "bg-[#10b981]/10" : ""
+              }`}
             style={{ color: currentTab === AppTab.HISTORY ? "#10b981" : "#6B7280" }}
           >
             <FileText size={20} />
@@ -247,9 +272,8 @@ const Navbar: React.FC<NavbarProps> = ({ currentTab, setTab }) => {
           </button>
           <button
             onClick={() => setTab(AppTab.EARNINGS)}
-            className={`p-2 rounded-lg flex flex-col items-center gap-1 ${
-              currentTab === AppTab.EARNINGS ? "bg-[#10b981]/10" : ""
-            }`}
+            className={`p-2 rounded-lg flex flex-col items-center gap-1 ${currentTab === AppTab.EARNINGS ? "bg-[#10b981]/10" : ""
+              }`}
             style={{ color: currentTab === AppTab.EARNINGS ? "#10b981" : "#6B7280" }}
           >
             <Gift size={20} />
@@ -257,9 +281,8 @@ const Navbar: React.FC<NavbarProps> = ({ currentTab, setTab }) => {
           </button>
           <button
             onClick={() => setTab(AppTab.TEAM)}
-            className={`p-2 rounded-lg flex flex-col items-center gap-1 ${
-              currentTab === AppTab.TEAM ? "bg-[#10b981]/10" : ""
-            }`}
+            className={`p-2 rounded-lg flex flex-col items-center gap-1 ${currentTab === AppTab.TEAM ? "bg-[#10b981]/10" : ""
+              }`}
             style={{ color: currentTab === AppTab.TEAM ? "#10b981" : "#6B7280" }}
           >
             <Users size={20} />
@@ -268,9 +291,8 @@ const Navbar: React.FC<NavbarProps> = ({ currentTab, setTab }) => {
           {isOwner && (
             <button
               onClick={() => setTab(AppTab.ADMIN)}
-              className={`p-2 rounded-lg flex flex-col items-center gap-1 ${
-                currentTab === AppTab.ADMIN ? "text-red-400 bg-red-500/10" : "text-gray-500"
-              }`}
+              className={`p-2 rounded-lg flex flex-col items-center gap-1 ${currentTab === AppTab.ADMIN ? "text-red-400 bg-red-500/10" : "text-gray-500"
+                }`}
             >
               <Settings size={20} />
               <span className="text-[10px] font-medium">Admin</span>

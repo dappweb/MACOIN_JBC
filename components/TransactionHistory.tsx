@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useWeb3 } from '../Web3Context';
 import { useLanguage } from '../LanguageContext';
-import { FileText,X,Copy, ExternalLink, Filter, RefreshCw, Clock, TrendingUp, TrendingDown,ChevronRight, Package, Lock, Gift, Unlock } from 'lucide-react';
+import { FileText, X, Copy, ExternalLink, Filter, RefreshCw, Clock, TrendingUp, TrendingDown, ChevronRight, Package, Lock, Gift, Unlock, Calendar, DollarSign, ChevronDown, CheckCircle } from 'lucide-react';
 import { ethers } from 'ethers';
 
 interface Transaction {
@@ -27,6 +27,13 @@ const TransactionHistory: React.FC = () => {
   const [viewMode, setViewMode] = useState<'self' | 'all'>('self');
   const [selectedTx, setSelectedTx] = useState<Transaction | null>(null);
   const [copied, setCopied] = useState(false);
+
+  // Advanced filters
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+  const [startDate, setStartDate] = useState<string>('');
+  const [endDate, setEndDate] = useState<string>('');
+  const [minAmount, setMinAmount] = useState<string>('');
+  const [maxAmount, setMaxAmount] = useState<string>('');
 
   const eventTypeMap = {
     'TicketPurchased': 'ticket_purchased',
@@ -199,8 +206,8 @@ const TransactionHistory: React.FC = () => {
           </p>
           {tx.amount3 && parseFloat(tx.amount3) > 0 && (
             <p className={`text-sm ${isCompact ? 'text-right' : 'text-gray-400'}`}>
-               {!isCompact && `${t.history.jbcQuantity || "JBC Quantity"}: `}
-               <span className="font-semibold text-amber-400">{parseFloat(tx.amount3).toFixed(2)} JBC</span>
+              {!isCompact && `${t.history.jbcQuantity || "JBC Quantity"}: `}
+              <span className="font-semibold text-amber-400">{parseFloat(tx.amount3).toFixed(2)} JBC</span>
             </p>
           )}
           {!isCompact && (
@@ -246,9 +253,27 @@ const TransactionHistory: React.FC = () => {
     }
   };
 
-  const filteredTransactions = filterType === 'all'
-    ? transactions
-    : transactions.filter(tx => tx.type === filterType);
+  const filteredTransactions = transactions.filter(tx => {
+    // Type filter
+    if (filterType !== 'all' && tx.type !== filterType) return false;
+
+    // Date range filter
+    if (startDate) {
+      const start = new Date(startDate).getTime() / 1000;
+      if (tx.timestamp < start) return false;
+    }
+    if (endDate) {
+      const end = new Date(endDate).getTime() / 1000 + 86400; // Include end date
+      if (tx.timestamp > end) return false;
+    }
+
+    // Amount filter
+    const txAmount = parseFloat(tx.amount);
+    if (minAmount && txAmount < parseFloat(minAmount)) return false;
+    if (maxAmount && txAmount > parseFloat(maxAmount)) return false;
+
+    return true;
+  });
 
   const explorerUrl = 'https://sepolia.etherscan.io'; // Change based on network
 
@@ -281,21 +306,19 @@ const TransactionHistory: React.FC = () => {
               <div className="flex items-center gap-2 mr-2">
                 <button
                   onClick={() => setViewMode('self')}
-                  className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                    viewMode === 'self'
-                      ? 'bg-black text-neon-400'
-                      : 'bg-black/20 text-black hover:bg-black/30'
-                  }`}
+                  className={`px-4 py-2 rounded-lg font-medium transition-colors ${viewMode === 'self'
+                    ? 'bg-black text-neon-400'
+                    : 'bg-black/20 text-black hover:bg-black/30'
+                    }`}
                 >
                   {t.history.mySelf || '我的记录'}
                 </button>
                 <button
                   onClick={() => setViewMode('all')}
-                  className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                    viewMode === 'all'
-                      ? 'bg-black text-neon-400'
-                      : 'bg-black/20 text-black hover:bg-black/30'
-                  }`}
+                  className={`px-4 py-2 rounded-lg font-medium transition-colors ${viewMode === 'all'
+                    ? 'bg-black text-neon-400'
+                    : 'bg-black/20 text-black hover:bg-black/30'
+                    }`}
                 >
                   {t.history.allUsers || '所有用户'}
                 </button>
@@ -319,11 +342,10 @@ const TransactionHistory: React.FC = () => {
           <Filter className="w-5 h-5 text-gray-500 flex-shrink-0" />
           <button
             onClick={() => setFilterType('all')}
-            className={`px-4 py-2 rounded-lg font-medium transition-colors whitespace-nowrap flex-shrink-0 ${
-              filterType === 'all'
-                ? 'bg-neon-500/20 text-neon-400 border border-neon-500/30'
-                : 'bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-gray-300 border border-gray-700'
-            }`}
+            className={`px-4 py-2 rounded-lg font-medium transition-colors whitespace-nowrap flex-shrink-0 ${filterType === 'all'
+              ? 'bg-neon-500/20 text-neon-400 border border-neon-500/30'
+              : 'bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-gray-300 border border-gray-700'
+              }`}
           >
             {t.history.all}
           </button>
@@ -331,16 +353,98 @@ const TransactionHistory: React.FC = () => {
             <button
               key={value}
               onClick={() => setFilterType(value)}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors whitespace-nowrap flex-shrink-0 ${
-                filterType === value
-                  ? 'bg-neon-500/20 text-neon-400 border border-neon-500/30'
-                  : 'bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-gray-300 border border-gray-700'
-              }`}
+              className={`px-4 py-2 rounded-lg font-medium transition-colors whitespace-nowrap flex-shrink-0 ${filterType === value
+                ? 'bg-neon-500/20 text-neon-400 border border-neon-500/30'
+                : 'bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-gray-300 border border-gray-700'
+                }`}
             >
               {t.history[value]}
             </button>
           ))}
+
+          {/* Advanced Filters Toggle */}
+          <button
+            onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+            className={`ml-auto px-4 py-2 rounded-lg font-medium transition-colors whitespace-nowrap flex-shrink-0 flex items-center gap-2 ${showAdvancedFilters || startDate || endDate || minAmount || maxAmount
+              ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
+              : 'bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-gray-300 border border-gray-700'
+              }`}
+          >
+            <Calendar size={14} />
+            {t.history.advancedFilters || '高级筛选'}
+            <ChevronDown size={14} className={`transition-transform ${showAdvancedFilters ? 'rotate-180' : ''}`} />
+          </button>
         </div>
+
+        {/* Advanced Filters Panel */}
+        {showAdvancedFilters && (
+          <div className="mt-4 pt-4 border-t border-gray-800 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* Date Range */}
+            <div>
+              <label className="block text-xs text-gray-400 mb-1 flex items-center gap-1">
+                <Calendar size={12} /> {t.history.startDate || '开始日期'}
+              </label>
+              <input
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-neon-500/50"
+              />
+            </div>
+            <div>
+              <label className="block text-xs text-gray-400 mb-1 flex items-center gap-1">
+                <Calendar size={12} /> {t.history.endDate || '结束日期'}
+              </label>
+              <input
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-neon-500/50"
+              />
+            </div>
+
+            {/* Amount Range */}
+            <div>
+              <label className="block text-xs text-gray-400 mb-1 flex items-center gap-1">
+                <DollarSign size={12} /> {t.history.minAmount || '最小金额'}
+              </label>
+              <input
+                type="number"
+                value={minAmount}
+                onChange={(e) => setMinAmount(e.target.value)}
+                placeholder="0"
+                className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-neon-500/50 placeholder-gray-600"
+              />
+            </div>
+            <div>
+              <label className="block text-xs text-gray-400 mb-1 flex items-center gap-1">
+                <DollarSign size={12} /> {t.history.maxAmount || '最大金额'}
+              </label>
+              <input
+                type="number"
+                value={maxAmount}
+                onChange={(e) => setMaxAmount(e.target.value)}
+                placeholder="999999"
+                className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-neon-500/50 placeholder-gray-600"
+              />
+            </div>
+
+            {/* Clear Filters */}
+            <div className="md:col-span-2 lg:col-span-4 flex justify-end">
+              <button
+                onClick={() => {
+                  setStartDate('');
+                  setEndDate('');
+                  setMinAmount('');
+                  setMaxAmount('');
+                }}
+                className="px-4 py-2 bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-white rounded-lg text-sm transition-colors border border-gray-700"
+              >
+                {t.history.clearFilters || '清除筛选'}
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Transactions List */}
@@ -373,11 +477,10 @@ const TransactionHistory: React.FC = () => {
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1 flex-wrap">
                         <h4 className="font-bold text-white">{getTypeName(tx.type)}</h4>
-                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                          tx.status === 'confirmed'
-                            ? 'bg-neon-500/20 text-neon-400 border border-neon-500/30'
-                            : 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
-                        }`}>
+                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${tx.status === 'confirmed'
+                          ? 'bg-neon-500/20 text-neon-400 border border-neon-500/30'
+                          : 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
+                          }`}>
                           {tx.status === 'confirmed' ? t.history.confirmed : t.history.pending}
                         </span>
                         {/* Show user address for admin viewing all */}
@@ -433,9 +536,8 @@ const TransactionHistory: React.FC = () => {
                       <h4 className="font-bold text-white text-sm">{getTypeName(tx.type)}</h4>
                       <div className="flex items-center gap-2 text-xs text-gray-500 mt-0.5">
                         <span>{formatDate(tx.timestamp).split(' ')[0]}</span>
-                        <span className={`px-1.5 py-0.5 rounded text-[10px] ${
-                          tx.status === 'confirmed' ? 'bg-neon-500/10 text-neon-400' : 'bg-amber-500/10 text-amber-400'
-                        }`}>
+                        <span className={`px-1.5 py-0.5 rounded text-[10px] ${tx.status === 'confirmed' ? 'bg-neon-500/10 text-neon-400' : 'bg-amber-500/10 text-amber-400'
+                          }`}>
                           {tx.status === 'confirmed' ? t.history.confirmed : t.history.pending}
                         </span>
                       </div>
@@ -478,11 +580,10 @@ const TransactionHistory: React.FC = () => {
                     <div className="text-xs text-gray-400">{formatDate(selectedTx.timestamp)}</div>
                   </div>
                 </div>
-                <span className={`px-2 py-1 rounded-lg text-xs font-bold ${
-                  selectedTx.status === 'confirmed'
-                    ? 'bg-neon-500/20 text-neon-400 border border-neon-500/30'
-                    : 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
-                }`}>
+                <span className={`px-2 py-1 rounded-lg text-xs font-bold ${selectedTx.status === 'confirmed'
+                  ? 'bg-neon-500/20 text-neon-400 border border-neon-500/30'
+                  : 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
+                  }`}>
                   {selectedTx.status === 'confirmed' ? t.history.confirmed : t.history.pending}
                 </span>
               </div>
@@ -520,12 +621,12 @@ const TransactionHistory: React.FC = () => {
                     </div>
                   </div>
                   {isOwner && viewMode === 'all' && (
-                     <div className="flex flex-col gap-1">
-                       <span className="text-gray-400 text-sm">User:</span>
-                       <span className="text-white font-mono text-xs break-all bg-black/30 p-2 rounded">
-                         {selectedTx.user}
-                       </span>
-                     </div>
+                    <div className="flex flex-col gap-1">
+                      <span className="text-gray-400 text-sm">User:</span>
+                      <span className="text-white font-mono text-xs break-all bg-black/30 p-2 rounded">
+                        {selectedTx.user}
+                      </span>
+                    </div>
                   )}
                 </div>
               </div>

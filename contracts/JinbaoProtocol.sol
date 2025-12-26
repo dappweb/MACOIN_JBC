@@ -113,6 +113,11 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, ReentrancyGuardUpg
     uint256 public lastBurnTime;
     mapping(uint256 => address) public ticketOwner;
     
+    // Storage gap for future upgrades
+    // This reserves 50 storage slots to allow adding new state variables
+    // without affecting the storage layout of derived contracts
+    uint256[50] private __gap;
+    
     // Events
     event BoundReferrer(address indexed user, address indexed referrer);
     event TicketPurchased(address indexed user, uint256 amount, uint256 ticketId);

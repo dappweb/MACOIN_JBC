@@ -15,23 +15,10 @@ interface DirectReferral {
 const TeamLevel: React.FC = () => {
   const { t } = useLanguage()
   const { protocolContract, account, isConnected } = useWeb3()
-  
-  // Helper to safely format ether
-  const safeFormatEther = (val: any) => {
-    try {
-      if (!val) return "0.0"
-      return ethers.formatEther(val)
-    } catch (e) {
-      return "0.0"
-    }
-  }
-
   const [userLevelInfo, setUserLevelInfo] = useState({
     activeDirects: 0,
     teamCount: 0,
     currentLevel: "V0",
-    teamTotalVolume: 0n,
-    teamTotalCap: 0n,
   })
   const [directReferrals, setDirectReferrals] = useState<DirectReferral[]>([])
   const [isLoadingDirects, setIsLoadingDirects] = useState(false)
@@ -79,39 +66,26 @@ const TeamLevel: React.FC = () => {
     const fetchTeamInfo = async () => {
       if (isConnected && account && protocolContract) {
         try {
-          // Fetch user info from contract
           const userInfo = await protocolContract.userInfo(account)
-          
-          // Debug log to inspect raw return values
-          console.log("Raw userInfo:", userInfo)
+          // userInfo: (referrer, activeDirects, teamCount, totalRevenue, currentCap, isActive)
 
-          // Calculate level based on activeDirects
-          // Level 1: 10 active directs
-          // ...
-          // Level 9: 100000 active directs ?? (Need check logic)
-          // For now using simple logic or if contract has getLevel function
-          
-          // Map contract data to state
-          // Ensure we access array by index if object keys fail, or vice versa depending on ethers version
-          const activeDirects = Number(userInfo[1] || 0)
-          
+          // Calc Level
+          const activeDirects = Number(userInfo[1])
           let level = "V0"
-          if (activeDirects >= 10) level = "V1"
-          if (activeDirects >= 30) level = "V2" 
-          if (activeDirects >= 100) level = "V3"
-          if (activeDirects >= 300) level = "V4"
-          if (activeDirects >= 1000) level = "V5"
-          if (activeDirects >= 3000) level = "V6"
-          if (activeDirects >= 10000) level = "V7"
-          if (activeDirects >= 30000) level = "V8"
           if (activeDirects >= 100000) level = "V9"
+          else if (activeDirects >= 30000) level = "V8"
+          else if (activeDirects >= 10000) level = "V7"
+          else if (activeDirects >= 3000) level = "V6"
+          else if (activeDirects >= 1000) level = "V5"
+          else if (activeDirects >= 300) level = "V4"
+          else if (activeDirects >= 100) level = "V3"
+          else if (activeDirects >= 30) level = "V2"
+          else if (activeDirects >= 10) level = "V1"
 
           setUserLevelInfo({
             activeDirects: activeDirects,
-            teamCount: Number(userInfo[2] || 0),
+            teamCount: Number(userInfo[2]),
             currentLevel: level,
-            teamTotalVolume: userInfo[7] || 0n,
-            teamTotalCap: userInfo[8] || 0n,
           })
 
           // Fetch Direct Referrals
@@ -283,7 +257,7 @@ const TeamLevel: React.FC = () => {
               </div>
               <p className="text-xs text-gray-400 uppercase font-bold tracking-wider mb-1">{t.team.netTotalAmount}</p>
               <p className="text-lg md:text-xl font-black text-purple-400 font-mono break-all">
-                {safeFormatEther(totalTicketAmount)} <span className="text-xs font-bold text-purple-300">MC</span>
+                {ethers.formatEther(totalTicketAmount)} <span className="text-xs font-bold text-purple-300">MC</span>
               </p>
             </div>
 
@@ -293,7 +267,7 @@ const TeamLevel: React.FC = () => {
               </div>
               <p className="text-xs text-gray-400 uppercase font-bold tracking-wider mb-1">{t.team.netTotalCap}</p>
               <p className="text-lg md:text-xl font-black text-blue-400 font-mono break-all">
-                {safeFormatEther(userLevelInfo.teamTotalCap)} <span className="text-xs font-bold text-blue-300">MC</span>
+                {ethers.formatEther(userLevelInfo.teamTotalCap)} <span className="text-xs font-bold text-blue-300">MC</span>
               </p>
             </div>
 
@@ -303,7 +277,7 @@ const TeamLevel: React.FC = () => {
               </div>
               <p className="text-xs text-gray-400 uppercase font-bold tracking-wider mb-1">{t.team.netTotalVolume}</p>
               <p className="text-lg md:text-xl font-black text-emerald-400 font-mono break-all">
-                {safeFormatEther(userLevelInfo.teamTotalVolume)} <span className="text-xs font-bold text-emerald-300">MC</span>
+                {ethers.formatEther(userLevelInfo.teamTotalVolume)} <span className="text-xs font-bold text-emerald-300">MC</span>
               </p>
             </div>
           </div>
@@ -340,7 +314,7 @@ const TeamLevel: React.FC = () => {
                       {item.user.substring(0, 6)}...{item.user.substring(38)}
                     </td>
                     <td className="p-2 md:p-4 text-white font-bold text-sm whitespace-nowrap">
-                      {safeFormatEther(item.ticketAmount)} MC
+                      {ethers.formatEther(item.ticketAmount)} MC
                     </td>
                     <td className="p-2 md:p-4">
                       <span

@@ -4,6 +4,15 @@ import { Clock, TrendingUp, AlertCircle, RefreshCw } from 'lucide-react';
 import { useWeb3 } from '../Web3Context';
 import { useLanguage } from '../LanguageContext';
 
+interface RawStakePosition {
+  id: string;
+  amount: bigint;
+  startTime: number;
+  cycleDays: number;
+  active: boolean;
+  paid: bigint;
+}
+
 interface StakePosition {
   id: string;
   amount: string;
@@ -20,9 +29,10 @@ interface StakePosition {
 const LiquidityPositions: React.FC = () => {
   const { protocolContract, account } = useWeb3();
   const { t } = useLanguage();
-  const [positions, setPositions] = useState<StakePosition[]>([]);
+  const [rawPositions, setRawPositions] = useState<RawStakePosition[]>([]);
   const [loading, setLoading] = useState(false);
   const [currentTime, setCurrentTime] = useState(Math.floor(Date.now() / 1000));
+  const [secondsInUnit, setSecondsInUnit] = useState(60);
 
   // Update current time every second for countdown/progress
   useEffect(() => {
@@ -32,113 +42,59 @@ const LiquidityPositions: React.FC = () => {
     return () => clearInterval(timer);
   }, []);
 
+  // Fetch SECONDS_IN_UNIT from contract
+  useEffect(() => {
+    const fetchConstants = async () => {
+      if (protocolContract) {
+        try {
+          // Check if function exists in ABI before calling (handled by try/catch or ensure ABI update)
+          const s = await protocolContract.SECONDS_IN_UNIT();
+          setSecondsInUnit(Number(s));
+        } catch (e) {
+          console.warn("Failed to fetch SECONDS_IN_UNIT, using default 60", e);
+        }
+      }
+    };
+    fetchConstants();
+  }, [protocolContract]);
+
   const fetchPositions = async () => {
     if (!protocolContract || !account) return;
     
     setLoading(true);
     try {
-      // Need to find how many stakes user has.
-      // Contract doesn't expose "getUserStakeCount" directly, but we can try fetching until error or use a large number if we had an event indexer.
-      // However, the contract `userStakes(address, index)` returns a struct.
-      // We don't know the length.
-      // Workaround: Try fetching index 0, 1, 2... until revert. 
-      // Optimized: Assuming a reasonable max cap or if the contract had a length getter.
-      // Looking at ABI in Web3Context: "function userStakes(address, uint256) view returns (...)"
-      // No length getter exposed in ABI.
-      // BUT, we can try to fetch a reasonable amount, e.g., 50. Or stop when it fails.
-      
-      const stakes: StakePosition[] = [];
+      const stakes: RawStakePosition[] = [];
       let index = 0;
-      let consecutiveFailures = 0;
 
       while (true) {
         try {
           const stakeData = await protocolContract.userStakes(account, index);
           // struct Stake { id, amount, startTime, cycleDays, active, paid }
-          // Returns: [id, amount, startTime, cycleDays, active, paid]
           
           const id = stakeData[0].toString();
-          const amount = ethers.formatEther(stakeData[1]);
+          const amount = stakeData[1];
           const startTime = Number(stakeData[2]);
           const cycleDays = Number(stakeData[3]);
           const active = stakeData[4];
-          const paid = ethers.formatEther(stakeData[5]);
+          const paid = stakeData[5];
           
-          // Calculate End Time (Minutes in Demo, Days in Prod - based on SECONDS_IN_UNIT)
-          // Contract constant SECONDS_IN_UNIT = 60 (from ABI check or assuming Demo mode as per previous context)
-          // Let's check contract code if possible, but assuming standard logic.
-          // In deployment it might be days. But earlier code showed 60.
-          // Let's assume 60 seconds per unit for now as per previous contract read.
-          const SECONDS_IN_UNIT = 60; 
-          const durationSeconds = cycleDays * SECONDS_IN_UNIT;
-          const endTime = startTime + durationSeconds;
-          
-          // Calculate Status
-          let status: StakePosition['status'] = 'redeemed';
-          if (active) {
-            status = currentTime >= endTime ? 'completed' : 'active';
-          }
-
-          // Calculate Pending Static Reward
-          // Rate: 7->2%, 15->2.5%, 30->3% (Per cycle? No, Rate per thousand? Let's re-read contract logic)
-          // Contract: 
-          // 7 days -> ratePerThousand = 20 (2%)
-          // 15 days -> ratePerThousand = 25 (2.5%)
-          // 30 days -> ratePerThousand = 30 (3.0%)
-          // Formula: (amount * rate * unitsPassed) / 1000
-          
-          let ratePerThousand = 0;
-          if (cycleDays === 7) ratePerThousand = 20;
-          else if (cycleDays === 15) ratePerThousand = 25;
-          else if (cycleDays === 30) ratePerThousand = 30;
-
-          const unitsPassed = Math.min(
-            cycleDays,
-            Math.floor((currentTime - startTime) / SECONDS_IN_UNIT)
-          );
-          
-          const totalStaticShouldBe = (BigInt(stakeData[1]) * BigInt(ratePerThousand) * BigInt(unitsPassed)) / 1000n;
-          const paidBigInt = stakeData[5];
-          const pendingBigInt = totalStaticShouldBe > paidBigInt ? totalStaticShouldBe - paidBigInt : 0n;
-          const staticReward = ethers.formatEther(pendingBigInt);
-
-          // Calculate Progress
-          const totalDuration = endTime - startTime;
-          const elapsed = currentTime - startTime;
-          let progress = Math.min(100, Math.max(0, (elapsed / totalDuration) * 100));
-          if (!active) progress = 100;
-
           stakes.push({
             id,
             amount,
             startTime,
             cycleDays,
             active,
-            paid,
-            staticReward,
-            endTime,
-            progress,
-            status
+            paid
           });
 
           index++;
-          // Safety break
           if (index > 50) break; 
         } catch (e) {
-            // Revert likely means index out of bounds
             break;
         }
       }
       
-      // Sort: Active first, then by Start Time desc
-      stakes.sort((a, b) => {
-        if (a.active === b.active) {
-            return b.startTime - a.startTime;
-        }
-        return a.active ? -1 : 1;
-      });
-
-      setPositions(stakes);
+      setRawPositions(stakes);
     } catch (err) {
       console.error("Failed to fetch stake positions", err);
     } finally {
@@ -148,14 +104,56 @@ const LiquidityPositions: React.FC = () => {
 
   useEffect(() => {
     fetchPositions();
-  }, [protocolContract, account, currentTime]); // Re-fetch or re-calc when time changes? Maybe just re-calc. 
-  // Optimization: Don't re-fetch from chain every second. Just re-calc locally.
-  // But for simplicity in V1, let's fetch on mount and account change, and maybe refresh button.
-  // The useEffect above with `currentTime` is too heavy. Let's remove `currentTime` from dep array.
-  
-  useEffect(() => {
-    fetchPositions();
   }, [protocolContract, account]);
+
+  const positions = useMemo(() => {
+    return rawPositions.map(pos => {
+        const durationSeconds = pos.cycleDays * secondsInUnit;
+        const endTime = pos.startTime + durationSeconds;
+        
+        let status: StakePosition['status'] = 'redeemed';
+        if (pos.active) {
+          status = currentTime >= endTime ? 'completed' : 'active';
+        }
+
+        let ratePerThousand = 0;
+        if (pos.cycleDays === 7) ratePerThousand = 20;
+        else if (pos.cycleDays === 15) ratePerThousand = 25;
+        else if (pos.cycleDays === 30) ratePerThousand = 30;
+
+        const unitsPassed = Math.min(
+          pos.cycleDays,
+          Math.floor((currentTime - pos.startTime) / secondsInUnit)
+        );
+        
+        const totalStaticShouldBe = (pos.amount * BigInt(ratePerThousand) * BigInt(unitsPassed)) / 1000n;
+        const pendingBigInt = totalStaticShouldBe > pos.paid ? totalStaticShouldBe - pos.paid : 0n;
+        const staticReward = ethers.formatEther(pendingBigInt);
+
+        const totalDuration = endTime - pos.startTime;
+        const elapsed = currentTime - pos.startTime;
+        let progress = Math.min(100, Math.max(0, (elapsed / totalDuration) * 100));
+        if (!pos.active) progress = 100;
+
+        return {
+            id: pos.id,
+            amount: ethers.formatEther(pos.amount),
+            startTime: pos.startTime,
+            cycleDays: pos.cycleDays,
+            active: pos.active,
+            paid: ethers.formatEther(pos.paid),
+            staticReward,
+            endTime,
+            progress,
+            status
+        } as StakePosition;
+    }).sort((a, b) => {
+      if (a.active === b.active) {
+          return b.startTime - a.startTime;
+      }
+      return a.active ? -1 : 1;
+    });
+  }, [rawPositions, currentTime, secondsInUnit]);
 
   const totalStaked = useMemo(() => {
     return positions.reduce((acc, p) => p.active ? acc + parseFloat(p.amount) : acc, 0);
@@ -190,7 +188,7 @@ const LiquidityPositions: React.FC = () => {
                 <p className="text-lg font-bold text-neon-400">{totalStaked.toFixed(2)} MC</p>
             </div>
             <div>
-                <p className="text-sm text-gray-400">Est. Pending Reward</p>
+                <p className="text-sm text-gray-400">{t.mining?.estPendingReward || "Est. Pending Reward"}</p>
                 <p className="text-lg font-bold text-amber-400">≈ {totalPending.toFixed(4)} Value</p>
             </div>
         </div>
@@ -223,7 +221,7 @@ const LiquidityPositions: React.FC = () => {
                     pos.status === 'completed' ? 'bg-green-500/10 text-green-400 border-green-500/30' :
                     'bg-gray-700 text-gray-400 border-gray-600'
                   }`}>
-                    {pos.status === 'active' ? 'Mining' : pos.status === 'completed' ? 'Completed' : 'Redeemed'}
+                    {pos.status === 'active' ? (t.mining?.mining || 'Mining') : pos.status === 'completed' ? (t.mining?.completed || 'Completed') : (t.mining?.redeemed || 'Redeemed')}
                   </span>
                 </div>
                 <div className="text-xs text-gray-400 mt-1 flex items-center gap-1">
@@ -236,17 +234,17 @@ const LiquidityPositions: React.FC = () => {
                 <div className="text-sm font-medium text-amber-400">
                   +{parseFloat(pos.staticReward).toFixed(4)}
                 </div>
-                <div className="text-xs text-gray-500">Pending</div>
+                <div className="text-xs text-gray-500">{t.mining?.pending || "Pending"}</div>
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-2 text-sm">
                <div className="bg-black/20 rounded p-2">
-                 <span className="text-gray-500 text-xs block">Cycle</span>
+                 <span className="text-gray-500 text-xs block">{t.mining?.cycle || "Cycle"}</span>
                  <span className="text-gray-300">{pos.cycleDays} {t.mining?.days || "Mins"}</span>
                </div>
                <div className="bg-black/20 rounded p-2">
-                 <span className="text-gray-500 text-xs block">End Time</span>
+                 <span className="text-gray-500 text-xs block">{t.mining?.endTime || "End Time"}</span>
                  <span className="text-gray-300">
                     {new Date(pos.endTime * 1000).toLocaleTimeString()}
                  </span>

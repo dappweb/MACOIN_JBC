@@ -1352,68 +1352,7 @@ const MiningPanel: React.FC = () => {
         </div>
       )}
 
-      {/* Mobile Sticky Footer */}
-      <div className={`fixed bottom-16 left-0 right-0 p-4 bg-gray-900/95 border-t border-gray-800 backdrop-blur-xl md:hidden z-40 shadow-[0_-4px_20px_-1px_rgba(0,0,0,0.5)] safe-area-bottom ${currentStep === 2 ? 'hidden' : ''}`}>
-        <div className="flex items-center gap-4">
-            {/* Status Summary */}
-            <div className="flex-1">
-                {currentStep === 1 && (
-                     <div className="flex flex-col">
-                        <span className="text-xs text-gray-400 uppercase font-bold">Ticket</span>
-                        <span className="text-white font-mono font-bold">{selectedTicket.amount} MC</span>
-                    </div>
-                )}
-                {currentStep === 2 && (
-                    <div className="flex flex-col">
-                        <span className="text-xs text-gray-400 uppercase font-bold">Staking</span>
-                        <span className="text-neon-400 font-mono font-bold">{liquidityAmountInput || 0} MC</span>
-                    </div>
-                )}
-                 {currentStep === 3 && (
-                    <div className="flex flex-col">
-                        <span className="text-xs text-gray-400 uppercase font-bold">Mining</span>
-                        <span className="text-green-400 font-bold text-xs">Active</span>
-                    </div>
-                )}
-            </div>
-
-            {/* Action Button */}
-            <div className="flex-[2]">
-                {currentStep === 1 && isConnected && (hasReferrer || isOwner) && (
-                    !isApproved ? (
-                    <button
-                        onClick={handleApprove}
-                        disabled={txPending}
-                        className="w-full py-3 bg-gray-700 hover:bg-gray-600 text-white font-bold rounded-xl transition-colors shadow-lg disabled:opacity-50"
-                    >
-                        {txPending ? t.mining.approving : t.mining.approve}
-                    </button>
-                    ) : (
-                    <button
-                        onClick={handleBuyTicket}
-                        disabled={txPending}
-                        className="w-full py-3 bg-gradient-to-r from-neon-500 to-neon-600 text-black font-extrabold text-lg rounded-xl shadow-lg shadow-neon-500/20 disabled:opacity-50"
-                    >
-                        {txPending ? t.mining.buying : `${t.mining.buyTicket}`}
-                    </button>
-                    )
-                )}
-
-                {/* Step 2 Button Removed from Sticky Footer as requested */}
-                
-                {currentStep === 3 && hasValidTicket && (
-                    <button
-                        onClick={handleRedeem}
-                        disabled={txPending}
-                        className="w-full py-3 bg-gradient-to-r from-red-500/20 to-red-600/20 text-red-300 font-bold rounded-xl border border-red-500/30 disabled:opacity-50 flex items-center justify-center gap-2"
-                    >
-                        <TrendingUp size={18} />
-                        {t.mining.redeem}
-                    </button>
-                )}
-            </div>
-        </div>
-      </div>
+      {/* Mobile Sticky Footer Removed */}
 
     </div>
   );

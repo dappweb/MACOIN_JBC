@@ -48,6 +48,7 @@ export const PROTOCOL_ABI = [
   "function liquidityEnabled() view returns (bool)",
   "function redeemEnabled() view returns (bool)",
   "function ticketFlexibilityDuration() view returns (uint256)",
+  "function SECONDS_IN_UNIT() view returns (uint256)",
   "event BoundReferrer(address indexed user, address indexed referrer)",
   "event TicketPurchased(address indexed user, uint256 amount, uint256 ticketId)",
   "event TicketExpired(address indexed user, uint256 ticketId, uint256 amount)",
@@ -64,7 +65,7 @@ export const PROTOCOL_ABI = [
 export const CONTRACT_ADDRESSES = {
   MC_TOKEN: "0xB2B8777BcBc7A8DEf49F022773d392a8787cf9EF",
   JBC_TOKEN: "0xA743cB357a9f59D349efB7985072779a094658dD",
-  PROTOCOL: "0xe4D97D48A2EE5Fb2aBAe282100d09BCd4C81a475"
+  PROTOCOL: "0x16fb6908f1b22048F4688B4D42A7d0729034F45D"
 };
 
 interface Web3ContextType {

@@ -21,7 +21,7 @@ export const PROTOCOL_ABI = [
   "function swapMCToJBC(uint256 mcAmount) external",
   "function swapJBCToMC(uint256 jbcAmount) external",
   "function dailyBurn() external",
-  "function userInfo(address) view returns (address referrer, uint256 activeDirects, uint256 teamCount, uint256 totalRevenue, uint256 currentCap, bool isActive, uint256 refundFeeAmount, uint256 teamTotalVolume, uint256 teamTotalCap)",
+  "function userInfo(address) view returns (address referrer, uint256 activeDirects, uint256 teamCount, uint256 totalRevenue, uint256 currentCap, bool isActive, uint256 refundFeeAmount, uint256 teamTotalVolume, uint256 teamTotalCap, uint256 maxTicketAmount)",
   "function userTicket(address) view returns (uint256 ticketId, uint256 amount, uint256 purchaseTime, bool exited)",
   "function userStakes(address, uint256) view returns (uint256 id, uint256 amount, uint256 startTime, uint256 cycleDays, bool active, uint256 paid)",
   "function getDirectReferrals(address) view returns (address[])",
@@ -67,9 +67,9 @@ export const PROTOCOL_ABI = [
 
 // Contract Addresses
 export const CONTRACT_ADDRESSES = {
-  MC_TOKEN: "0xB2B8777BcBc7A8DEf49F022773d392a8787cf9EF",
-  JBC_TOKEN: "0xA743cB357a9f59D349efB7985072779a094658dD",
-  PROTOCOL: "0x4CE50EF43487c48dA421B25C512bD7C3cE09C571"
+  MC_TOKEN: "0x2d764DF04FE2A086780ab3F1Edfb4b39E44C0c1B",
+  JBC_TOKEN: "0x02ED3072eB83e4E0654d30250102aA58cE977789",
+  PROTOCOL: "0x46f7729e2158Dd005DC6bdD28FaD457d6f036219"
 };
 
 interface Web3ContextType {

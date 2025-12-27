@@ -3,14 +3,29 @@ const hre = require("hardhat");
 const { ethers } = require("ethers");
 
 async function main() {
-  // 合约地址
-  const MC_TOKEN = "0xB2B8777BcBc7A8DEf49F022773d392a8787cf9EF";
-  const JBC_TOKEN = "0xA743cB357a9f59D349efB7985072779a094658dD";
-  const PROTOCOL = "0x0f4C066E48743A58361A237838EAfFF2A2c3f65f";
+  // 自动加载最新部署地址
+  const fs = require("fs");
+  const path = require("path");
+  const deploymentPath = path.join(__dirname, "../deployments/latest-mc.json");
+  
+  if (!fs.existsSync(deploymentPath)) {
+    console.error("❌ 找不到部署文件:", deploymentPath);
+    process.exit(1);
+  }
+  
+  const deployment = JSON.parse(fs.readFileSync(deploymentPath, "utf8"));
+  const MC_TOKEN = deployment.mcToken;
+  const JBC_TOKEN = deployment.jbcToken;
+  const PROTOCOL = deployment.protocolProxy || deployment.protocol;
+  
+  console.log("加载部署配置:");
+  console.log("Protocol:", PROTOCOL);
+  console.log("MC Token:", MC_TOKEN);
+  console.log("JBC Token:", JBC_TOKEN);
 
   // 初始流动性数量（根据需要调整）
-  const MC_AMOUNT = hre.ethers.parseEther("1000");  // 1,000 MC
-  const JBC_AMOUNT = hre.ethers.parseEther("1000"); // 1,000 JBC
+  const MC_AMOUNT = hre.ethers.parseEther("1");  // 1.0 MC
+  const JBC_AMOUNT = hre.ethers.parseEther("1"); // 1.0 JBC
 
   const [deployer] = await hre.ethers.getSigners();
   console.log("使用账户:", deployer.address);

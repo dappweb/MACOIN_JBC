@@ -52,10 +52,16 @@ async function main() {
   }
 
   // Wallets
-  const marketingWallet = deployer.address;
-  const treasuryWallet = deployer.address;
-  const lpInjectionWallet = deployer.address;
-  const buybackWallet = deployer.address;
+  const marketingWallet = process.env.MARKETING_WALLET || deployer.address;
+  const treasuryWallet = process.env.TREASURY_WALLET || deployer.address;
+  const lpInjectionWallet = process.env.LP_WALLET || deployer.address;
+  const buybackWallet = process.env.BUYBACK_WALLET || deployer.address;
+
+  console.log("\nWallet Configuration:");
+  console.log("  Marketing:", marketingWallet);
+  console.log("  Treasury:", treasuryWallet);
+  console.log("  LP:", lpInjectionWallet);
+  console.log("  Buyback:", buybackWallet);
 
   console.log("\n📦 Deploying JinbaoProtocol (Upgradeable Proxy)...");
   

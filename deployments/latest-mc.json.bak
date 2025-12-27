@@ -1,0 +1,9 @@
+{
+  "network": "mc",
+  "mcToken": "0xB2B8777BcBc7A8DEf49F022773d392a8787cf9EF",
+  "jbcToken": "0xA743cB357a9f59D349efB7985072779a094658dD",
+  "protocolProxy": "0x16fb6908f1b22048F4688B4D42A7d0729034F45D",
+  "protocolImplementation": "0xbc6fbe1c64560A777a00e2D973146c2c5833668D",
+  "timestamp": "2025-12-26T05:00:58.378Z",
+  "lastUpgrade": "2025-12-26T13:34:20.255Z"
+}

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useWeb3 } from '../Web3Context';
+import { useWeb3, CONTRACT_ADDRESSES } from '../Web3Context';
 import { Settings, Save, AlertTriangle, Megaphone, CheckCircle, XCircle } from 'lucide-react';
 import { useLanguage } from '../LanguageContext';
 import { ethers } from 'ethers';
@@ -373,7 +373,6 @@ const AdminPanel: React.FC = () => {
 
     setLoading(true);
     try {
-        const { CONTRACT_ADDRESSES } = await import('../Web3Context');
         const signer = await provider.getSigner();
 
         if (tokenType === 'MC' && mcLiquidityAmount) {
@@ -384,19 +383,25 @@ const AdminPanel: React.FC = () => {
                 return;
             }
 
-            // Step 1: Approve protocol contract to spend MC
+            // Step 1: Check current allowance
             const allowance = await mcContract.allowance(account, CONTRACT_ADDRESSES.PROTOCOL);
+            console.log('Current MC allowance:', ethers.formatEther(allowance));
+            console.log('Required amount:', ethers.formatEther(amount));
+            
             if (allowance < amount) {
+                toast.loading('Approving MC tokens...', { id: 'approve' });
                 const approveTx = await mcContract.connect(signer).approve(CONTRACT_ADDRESSES.PROTOCOL, amount);
                 await approveTx.wait();
-                toast.success("MC approved!");
+                toast.success("MC approved!", { id: 'approve' });
             }
 
             // Step 2: Call protocol's addLiquidity function
+            toast.loading('Adding MC liquidity...', { id: 'addLiq' });
             const tx = await protocolContract.connect(signer).addLiquidity(amount, 0);
             await tx.wait();
-            toast.success(`Added ${mcLiquidityAmount} MC to pool!`);
+            toast.success(`Added ${mcLiquidityAmount} MC to pool!`, { id: 'addLiq' });
             setMcLiquidityAmount('');
+            
         } else if (tokenType === 'JBC' && jbcLiquidityAmount) {
             const amount = ethers.parseEther(jbcLiquidityAmount);
 
@@ -405,23 +410,40 @@ const AdminPanel: React.FC = () => {
                 return;
             }
 
-            // Step 1: Approve protocol contract to spend JBC
+            // Step 1: Check current allowance
             const allowance = await jbcContract.allowance(account, CONTRACT_ADDRESSES.PROTOCOL);
+            console.log('Current JBC allowance:', ethers.formatEther(allowance));
+            console.log('Required amount:', ethers.formatEther(amount));
+            
             if (allowance < amount) {
+                toast.loading('Approving JBC tokens...', { id: 'approve' });
                 const approveTx = await jbcContract.connect(signer).approve(CONTRACT_ADDRESSES.PROTOCOL, amount);
                 await approveTx.wait();
-                toast.success("JBC approved!");
+                toast.success("JBC approved!", { id: 'approve' });
             }
 
             // Step 2: Call protocol's addLiquidity function
+            toast.loading('Adding JBC liquidity...', { id: 'addLiq' });
             const tx = await protocolContract.connect(signer).addLiquidity(0, amount);
             await tx.wait();
-            toast.success(`Added ${jbcLiquidityAmount} JBC to pool!`);
+            toast.success(`Added ${jbcLiquidityAmount} JBC to pool!`, { id: 'addLiq' });
             setJbcLiquidityAmount('');
         }
     } catch (err: any) {
-        console.error(err);
-        toast.error(formatContractError(err));
+        console.error('Add liquidity error:', err);
+        toast.dismiss('approve');
+        toast.dismiss('addLiq');
+        
+        // Enhanced error handling
+        if (err.message?.includes('Ownable: caller is not the owner')) {
+            toast.error('Only contract owner can add liquidity');
+        } else if (err.message?.includes('insufficient funds')) {
+            toast.error('Insufficient token balance');
+        } else if (err.message?.includes('InvalidAmount')) {
+            toast.error('Invalid amount - must be greater than 0');
+        } else {
+            toast.error(formatContractError(err));
+        }
     } finally {
         setLoading(false);
     }

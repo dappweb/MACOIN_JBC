@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { TICKET_TIERS, MINING_PLANS } from '../constants';
 import { MiningPlan, TicketTier } from '../types';
 import { Zap, Clock, TrendingUp, AlertCircle, ArrowRight, ShieldCheck, Lock, Package, History, ChevronDown, ChevronUp } from 'lucide-react';
@@ -9,6 +9,7 @@ import { ethers } from 'ethers';
 import toast from 'react-hot-toast';
 import { formatContractError } from '../utils/errorFormatter';
 import LiquidityPositions from './LiquidityPositions';
+import GoldenProgressBar from './GoldenProgressBar';
 
 type TicketInfo = {
   amount: bigint;
@@ -22,6 +23,7 @@ type TicketInfo = {
   currentCap: bigint;
   exited: boolean;
   maxTicketAmount: bigint; // Added field
+  maxSingleTicketAmount: bigint; // New field for single ticket max
 };
 
 type TicketHistoryItem = {
@@ -32,6 +34,24 @@ type TicketHistoryItem = {
     cycleDays?: number;
     startTime?: number;
     endTime?: number;
+};
+
+// Unified user mining state enum
+enum UserMiningState {
+  NOT_CONNECTED = 'not_connected',
+  NO_TICKET = 'no_ticket',
+  TICKET_EXPIRED = 'ticket_expired',
+  NEEDS_APPROVAL = 'needs_approval',
+  READY_TO_STAKE = 'ready_to_stake',
+  ALREADY_STAKED = 'already_staked',
+  MINING_COMPLETE = 'mining_complete'
+}
+
+type ButtonState = {
+  text: string;
+  action: (() => void) | null;
+  disabled: boolean;
+  className: string;
 };
 
 const MiningPanel: React.FC = () => {
@@ -93,18 +113,31 @@ const MiningPanel: React.FC = () => {
     }
   }, [ticketInfo]);
 
-  // Auto-set liquidity amount based on ticket (1.5x rule)
+  // Auto-set liquidity amount based on ticket (1.5x rule) - 修正为使用历史单张最高
   useEffect(() => {
-    if (ticketInfo && (ticketInfo.amount > 0n || ticketInfo.maxTicketAmount > 0n)) {
-        // Use max of current ticket amount and maxTicketAmount
+    if (ticketInfo && ticketInfo.amount > 0n) {
         const currentAmount = parseFloat(ethers.formatEther(ticketInfo.amount));
-        const maxAmount = parseFloat(ethers.formatEther(ticketInfo.maxTicketAmount));
-        const baseAmount = Math.max(currentAmount, maxAmount);
+        const contractMaxSingle = ticketInfo.maxSingleTicketAmount ? parseFloat(ethers.formatEther(ticketInfo.maxSingleTicketAmount)) : 0;
+        const historyMax = maxUnredeemedTicket;
         
-        const required = baseAmount * 1.5;
-        setLiquidityAmountInput(required.toString());
+        // 候选值：合约记录的单张最高，前端回溯的单张最高
+        const candidates = [contractMaxSingle, historyMax];
+        
+        // 如果当前持有金额是标准档位，也作为候选（兼容刚购买还没生成历史的情况）
+        if (TICKET_TIERS.some(t => Math.abs(t.amount - currentAmount) < 0.1)) {
+            candidates.push(currentAmount);
+        }
+        
+        // 取最大值作为计算基数
+        // 这样可以排除掉非标准档位的聚合金额（如400），确保只用单张最高（如300）
+        let baseAmount = Math.max(...candidates);
+        
+        if (baseAmount > 0) {
+            const required = baseAmount * 1.5;
+            setLiquidityAmountInput(required.toString());
+        }
     }
-  }, [ticketInfo]);
+  }, [ticketInfo, maxUnredeemedTicket]);
 
   // Handle liquidity amount change (Sync state)
   useEffect(() => {
@@ -160,34 +193,144 @@ const MiningPanel: React.FC = () => {
   // If ticketInfo.totalRevenue > 0, they definitely staked.
   // If not, we might need to check stakes count.
   // Let's assume 'liquidityProvided' in ticketInfo was meant for this but is deprecated.
-  // We can use ticketHistory to check if there is any 'Mining' status item for current ticketId.
+  // 检查用户是否已经质押流动性
+  // 使用更可靠的方法：检查是否有总收益或者历史记录中有挖矿状态
   const hasStakedLiquidity = useMemo(() => {
       if (hasStaked) return true;
       if (!ticketInfo) return false;
-      return ticketHistory.some(item => item.ticketId === ticketInfo.ticketId?.toString() && (item.status === 'Mining' || item.status === 'Redeemed'));
+      
+      // 如果有总收益，说明已经开始挖矿
+      if (ticketInfo.totalRevenue > 0n) return true;
+      
+      // 检查历史记录中是否有挖矿状态（不依赖ticketId匹配）
+      return ticketHistory.some(item => (item.status === 'Mining' || item.status === 'Redeemed'));
   }, [ticketHistory, ticketInfo, hasStaked]);
   
-  // Define isTicketExpired (assuming 72 hours expiration logic if not staked, but new logic might be different)
-  // For now, let's assume a ticket never expires in the new logic unless exited.
-  // Or if there was an expiration logic intended:
-  const isTicketExpired = hasTicket && !hasStakedLiquidity && ticketInfo ? now > (ticketInfo.purchaseTime + ticketFlexibilityDuration) : false;
+  // Define isTicketExpired - 门票过期只基于时间，不依赖质押状态
+  const isTicketExpired = hasTicket && ticketInfo ? now > (ticketInfo.purchaseTime + ticketFlexibilityDuration) : false;
 
   // Logic updated: Can stake if has active ticket (not exited)
   const canStakeLiquidity = hasTicket && !isExited && !isTicketExpired;
   const isTicketBought = hasTicket && !isExited;
   const hasValidTicket = hasTicket && !isExited; // Renamed from hasActiveTicket to avoid confusion
 
-  // 根据状态自动推进步骤
-  useEffect(() => {
-      if (hasStakedLiquidity) {
-          // If already staked, go to dashboard (step 3), but allow going back to 2
-          if (currentStep < 3) setCurrentStep(3);
-      } else if (canStakeLiquidity) {
-          if (currentStep === 1) setCurrentStep(2);
-      } else {
-          setCurrentStep(1); // 购买门票
-      }
-  }, [canStakeLiquidity, hasStakedLiquidity]);
+  // Unified state detection function
+  const getUserMiningState = (): UserMiningState => {
+    console.log('🔍 [State Detection] Current state check:', {
+      isConnected,
+      hasTicket,
+      ticketAmount: ticketInfo?.amount.toString(),
+      isExited,
+      isTicketExpired,
+      hasStakedLiquidity,
+      isApproved,
+      isCheckingAllowance
+    });
+
+    if (!isConnected) return UserMiningState.NOT_CONNECTED;
+    if (isCheckingAllowance) return UserMiningState.NOT_CONNECTED; // Treat as not ready
+    if (!ticketInfo || ticketInfo.amount === 0n) return UserMiningState.NO_TICKET;
+    if (ticketInfo.exited) return UserMiningState.MINING_COMPLETE;
+    if (isTicketExpired) return UserMiningState.TICKET_EXPIRED;
+    if (hasStakedLiquidity) return UserMiningState.ALREADY_STAKED;
+    if (!isApproved) return UserMiningState.NEEDS_APPROVAL;
+    return UserMiningState.READY_TO_STAKE;
+  };
+
+  // Unified button state function
+  const getStakingButtonState = (userState: UserMiningState): ButtonState => {
+    switch (userState) {
+      case UserMiningState.NOT_CONNECTED:
+        return {
+          text: t.mining.walletNotConnected || 'Connect Wallet',
+          action: null,
+          disabled: true,
+          className: 'w-full py-3 bg-gray-800 text-gray-500 font-bold rounded-lg cursor-not-allowed border border-gray-700'
+        };
+      case UserMiningState.NO_TICKET:
+        return {
+          text: `${t.mining.buyTicket} (Top)`,
+          action: handleScrollToBuy,
+          disabled: false,
+          className: 'w-full py-3 text-neon-400 font-semibold rounded-lg border border-neon-500/30 hover:bg-neon-500/10 transition-colors'
+        };
+      case UserMiningState.TICKET_EXPIRED:
+        return {
+          text: t.mining.buyTicket,
+          action: handleScrollToBuy,
+          disabled: false,
+          className: 'w-full py-3 text-red-400 font-semibold rounded-lg border border-red-500/30 hover:bg-red-500/10 transition-colors'
+        };
+      case UserMiningState.NEEDS_APPROVAL:
+        return {
+          text: txPending ? t.mining.approving : t.mining.approve,
+          action: handleApprove,
+          disabled: txPending,
+          className: 'w-full py-3 bg-gray-700 hover:bg-gray-600 text-white font-bold rounded-lg transition-colors border border-gray-600 disabled:opacity-50'
+        };
+      case UserMiningState.READY_TO_STAKE:
+        return {
+          text: txPending ? t.mining.staking : t.mining.stake,
+          action: handleStake,
+          disabled: txPending || stakeAmount <= 0n,
+          className: 'w-full py-4 bg-gradient-to-r from-neon-500 to-neon-600 hover:from-neon-400 hover:to-neon-500 text-black font-extrabold text-lg rounded-lg shadow-lg shadow-neon-500/40 transition-all transform hover:scale-[1.02] flex items-center justify-center gap-2 disabled:opacity-50'
+        };
+      case UserMiningState.ALREADY_STAKED:
+        return {
+          text: t.mining.alreadyStaked || 'Already Staking',
+          action: null,
+          disabled: true,
+          className: 'w-full py-3 bg-green-500/20 text-green-400 font-bold rounded-lg border border-green-500/30 cursor-not-allowed'
+        };
+      case UserMiningState.MINING_COMPLETE:
+        return {
+          text: t.mining.completed || 'Mining Complete',
+          action: null,
+          disabled: true,
+          className: 'w-full py-3 bg-purple-500/20 text-purple-400 font-bold rounded-lg border border-purple-500/30 cursor-not-allowed'
+        };
+      default:
+        return {
+          text: t.mining.unknownStatus || 'Unknown Status',
+          action: null,
+          disabled: true,
+          className: 'w-full py-4 bg-gray-800 text-gray-500 font-bold text-lg rounded-lg cursor-not-allowed border border-gray-700'
+        };
+    }
+  };
+
+  // 获取单张最大门票金额的辅助函数
+  const getMaxSingleTicketAmount = useCallback(() => {
+    // 优先使用合约记录的单张最大金额
+    if (ticketInfo?.maxSingleTicketAmount && ticketInfo.maxSingleTicketAmount > 0n) {
+      return parseFloat(ethers.formatEther(ticketInfo.maxSingleTicketAmount));
+    }
+    
+    // 备选：使用前端计算的历史单张最大
+    if (maxUnredeemedTicket > 0) {
+      return maxUnredeemedTicket;
+    }
+    
+    // 最后备选：如果当前金额是标准档位，使用当前金额
+    const currentAmount = ticketInfo ? parseFloat(ethers.formatEther(ticketInfo.amount)) : 0;
+    if (TICKET_TIERS.some(t => Math.abs(t.amount - currentAmount) < 0.1)) {
+      return currentAmount;
+    }
+    
+    return 0;
+  }, [ticketInfo, maxUnredeemedTicket]);
+
+  // 移除自动步骤推进逻辑，允许用户自由浏览所有步骤
+  // useEffect(() => {
+  //     if (hasStakedLiquidity) {
+  //         // If already staked, go to dashboard (step 3), but allow going back to 2
+  //         if (currentStep < 3) setCurrentStep(3);
+  //     } else if (canStakeLiquidity) {
+  //         if (currentStep === 1) setCurrentStep(2);
+  //     } else {
+  //         setCurrentStep(1); // 购买门票
+  //     }
+  // }, [canStakeLiquidity, hasStakedLiquidity]);
 
   // 格式化日期辅助函数
   const formatDate = (timestamp: number) => {
@@ -227,6 +370,17 @@ const MiningPanel: React.FC = () => {
       }
 
       try {
+          // Separate risky call from main data fetching
+          let maxSingleTicket = 0n;
+          try {
+              // Check if function exists in contract before calling (optional, but try-catch is safer)
+              if (protocolContract.getUserMaxSingleTicketAmount) {
+                  maxSingleTicket = await protocolContract.getUserMaxSingleTicketAmount(account);
+              }
+          } catch (e) {
+              console.warn("getUserMaxSingleTicketAmount failed or not available", e);
+          }
+
           const [ticket, userInfo] = await Promise.all([
               protocolContract.userTicket(account),
               protocolContract.userInfo(account)
@@ -238,7 +392,8 @@ const MiningPanel: React.FC = () => {
               purchaseTime: Number(ticket.purchaseTime),
               totalRevenue: userInfo.totalRevenue.toString(),
               currentCap: userInfo.currentCap.toString(),
-              maxTicketAmount: userInfo.maxTicketAmount.toString()
+              maxTicketAmount: userInfo.maxTicketAmount.toString(),
+              maxSingleTicketAmount: maxSingleTicket.toString()
           });
 
           setTicketInfo({
@@ -252,7 +407,8 @@ const MiningPanel: React.FC = () => {
               totalRevenue: userInfo.totalRevenue,
               currentCap: userInfo.currentCap,
               exited: ticket.exited,
-              maxTicketAmount: userInfo.maxTicketAmount
+              maxTicketAmount: userInfo.maxTicketAmount,
+              maxSingleTicketAmount: maxSingleTicket
           });
       } catch (err) {
           console.error('Failed to check ticket status', err);
@@ -712,10 +868,14 @@ const MiningPanel: React.FC = () => {
           { step: 2, label: t.mining.stake, icon: Lock },
           { step: 3, label: t.mining.mining, icon: Zap }
         ].map((s, idx) => {
-          // Determine if step is completed
-          const isCompleted = (s.step === 1 && isTicketBought) || (s.step === 2 && hasStakedLiquidity);
-          // Determine if step is accessible
-          const isAccessible = s.step === 1 || (s.step === 2 && isTicketBought) || (s.step === 3 && hasStakedLiquidity);
+          const userState = getUserMiningState();
+          
+          // Determine if step is completed based on unified state
+          const isCompleted = (s.step === 1 && userState !== UserMiningState.NOT_CONNECTED && userState !== UserMiningState.NO_TICKET) || 
+                             (s.step === 2 && (userState === UserMiningState.ALREADY_STAKED || userState === UserMiningState.MINING_COMPLETE));
+          
+          // All steps are accessible for browsing
+          const isAccessible = true;
           
           return (
           <div key={s.step} className="flex items-center">
@@ -804,7 +964,7 @@ const MiningPanel: React.FC = () => {
 
 
       {/* Ticket Selection UI Enhancement */}
-      {currentStep === 1 && isConnected && (hasReferrer || isOwner) && (
+      {currentStep === 1 && isConnected && (
         <div className="glass-panel p-6 md:p-8 rounded-2xl border-2 border-neon-500/50 shadow-xl shadow-neon-500/20 animate-fade-in bg-gray-900/50 relative overflow-hidden">
           {/* Background Decorative Elements */}
           <div className="absolute top-0 right-0 w-64 h-64 bg-neon-500/5 rounded-full blur-3xl -z-10"></div>
@@ -818,8 +978,21 @@ const MiningPanel: React.FC = () => {
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 md:gap-6 mb-8">
             {TICKET_TIERS.map((tier) => {
-              const isDisabled = tier.amount < maxUnredeemedTicket;
+              const maxSingleTicket = getMaxSingleTicketAmount();
+              const isDisabled = hasTicket && !isExited && tier.amount < maxSingleTicket;
               const isSelected = selectedTicket.amount === tier.amount;
+
+              // 调试信息
+              console.log('🎫 [Ticket Selection Logic]', {
+                tierAmount: tier.amount,
+                currentTotalAmount: ticketInfo ? parseFloat(ethers.formatEther(ticketInfo.amount)) : 0,
+                maxSingleFromContract: ticketInfo?.maxSingleTicketAmount ? parseFloat(ethers.formatEther(ticketInfo.maxSingleTicketAmount)) : 0,
+                maxSingleFromHistory: maxUnredeemedTicket,
+                finalMaxSingle: maxSingleTicket,
+                isDisabled: isDisabled,
+                hasTicket,
+                isExited
+              });
               return (
                 <button
                   key={tier.amount}
@@ -867,12 +1040,12 @@ const MiningPanel: React.FC = () => {
             })}
           </div>
 
-          {maxUnredeemedTicket > 0 && (
+          {hasTicket && !isExited && (
             <div className="mb-6 bg-amber-900/20 border border-amber-500/30 rounded-xl p-4 flex items-start gap-3 backdrop-blur-sm">
               <AlertCircle className="text-amber-400 shrink-0 mt-0.5" size={20} />
               <div className="text-sm text-amber-200/80">
-                 <span className="font-bold text-amber-300 block mb-1">Upgrade Required</span>
-                {t.mining.minTicketWarning || `您有未赎回的 ${maxUnredeemedTicket} MC 门票，只能购买 >= ${maxUnredeemedTicket} MC 的门票。赎回后可购买更小金额的门票。`}
+                 <span className="font-bold text-amber-300 block mb-1">升级限制</span>
+                 您已购买过最大单张 {getMaxSingleTicketAmount()}MC 的门票，只能购买更大金额的门票进行升级。
               </div>
             </div>
           )}
@@ -905,42 +1078,54 @@ const MiningPanel: React.FC = () => {
         </div>
       )}
 
-      {/* Ticket Status Warnings */}
-      {isTicketExpired && (
-        <div className="bg-red-900/20 border-2 border-red-500/50 rounded-xl p-4 flex items-start gap-3 animate-fade-in backdrop-blur-sm">
-          <AlertCircle className="text-red-400 shrink-0 mt-0.5" size={20} />
-          <div className="flex-1">
-            <p className="font-bold text-red-300 mb-1">{t.mining.ticketExpired}</p>
-            <p className="text-sm text-red-200/80">
-              {t.mining.ticketExpiredDesc}
-            </p>
-          </div>
-        </div>
-      )}
-      
-      {hasStakedLiquidity && !isTicketExpired && (
-        <div className="bg-neon-900/20 border-2 border-neon-500/50 rounded-xl p-4 flex items-start gap-3 animate-fade-in backdrop-blur-sm">
-          <AlertCircle className="text-neon-400 shrink-0 mt-0.5" size={20} />
-          <div className="flex-1">
-            <p className="font-bold text-neon-300 mb-1">{t.mining.alreadyStaked}</p>
-            <p className="text-sm text-neon-200/80">
-              {t.mining.alreadyStakedDesc}
-            </p>
-          </div>
-        </div>
-      )}
-      
-      {canStakeLiquidity && !hasStakedLiquidity && !isTicketExpired && (
-        <div className="bg-green-50 border-2 border-green-300 rounded-xl p-4 flex items-start gap-3 animate-fade-in">
-          <AlertCircle className="text-green-600 shrink-0 mt-0.5" size={20} />
-          <div className="flex-1">
-            <p className="font-bold text-green-900 mb-1">{t.mining.readyToStake}</p>
-            <p className="text-sm text-green-800">
-              {t.mining.readyToStakeDesc}
-            </p>
-          </div>
-        </div>
-      )}
+      {/* Ticket Status Warnings - Updated with unified state */}
+      {(() => {
+        const userState = getUserMiningState();
+        
+        if (userState === UserMiningState.TICKET_EXPIRED) {
+          return (
+            <div className="bg-red-900/20 border-2 border-red-500/50 rounded-xl p-4 flex items-start gap-3 animate-fade-in backdrop-blur-sm">
+              <AlertCircle className="text-red-400 shrink-0 mt-0.5" size={20} />
+              <div className="flex-1">
+                <p className="font-bold text-red-300 mb-1">{t.mining.ticketExpired}</p>
+                <p className="text-sm text-red-200/80">
+                  {t.mining.ticketExpiredDesc}
+                </p>
+              </div>
+            </div>
+          );
+        }
+        
+        if (userState === UserMiningState.ALREADY_STAKED) {
+          return (
+            <div className="bg-neon-900/20 border-2 border-neon-500/50 rounded-xl p-4 flex items-start gap-3 animate-fade-in backdrop-blur-sm">
+              <AlertCircle className="text-neon-400 shrink-0 mt-0.5" size={20} />
+              <div className="flex-1">
+                <p className="font-bold text-neon-300 mb-1">{t.mining.alreadyStaked}</p>
+                <p className="text-sm text-neon-200/80">
+                  {t.mining.alreadyStakedDesc}
+                </p>
+              </div>
+            </div>
+          );
+        }
+        
+        if (userState === UserMiningState.READY_TO_STAKE) {
+          return (
+            <div className="bg-green-900/20 border-2 border-green-500/50 rounded-xl p-4 flex items-start gap-3 animate-fade-in backdrop-blur-sm">
+              <AlertCircle className="text-green-400 shrink-0 mt-0.5" size={20} />
+              <div className="flex-1">
+                <p className="font-bold text-green-300 mb-1">{t.mining.readyToStake}</p>
+                <p className="text-sm text-green-200/80">
+                  {t.mining.readyToStakeDesc}
+                </p>
+              </div>
+            </div>
+          );
+        }
+        
+        return null;
+      })()}
 
       {currentStep === 2 && (
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6 lg:gap-8">
@@ -949,23 +1134,37 @@ const MiningPanel: React.FC = () => {
             <div className="lg:col-span-2 space-y-4 md:space-y-6">
 
             {/* Step 2: Cycle */}
-            <div id="staking-section" className={`glass-panel p-4 md:p-6 rounded-xl md:rounded-2xl relative overflow-hidden group transition-opacity bg-gray-900/50 border border-gray-800 ${(!isTicketBought || isTicketExpired || (!hasReferrer && !isOwner)) ? 'opacity-50 pointer-events-none' : ''}`}>
-                 {!isTicketBought && (
-                    <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/70 backdrop-blur-sm rounded-xl md:rounded-2xl">
-                        <div className="flex items-center gap-2 px-3 py-2 md:px-4 md:py-2 bg-gray-900 text-white rounded-lg shadow-xl border border-gray-700">
-                            <Lock size={14} className="md:w-4 md:h-4" />
-                            <span className="text-xs md:text-sm font-bold">{t.mining.purchaseFirst}</span>
-                        </div>
-                    </div>
-                )}
-                 {isTicketExpired && isTicketBought && (
-                    <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/50 backdrop-blur-sm rounded-xl md:rounded-2xl">
-                        <div className="flex items-center gap-2 px-3 py-2 md:px-4 md:py-2 bg-gray-900 border border-gray-700 text-white rounded-lg shadow-xl">
-                            <Lock size={14} className="md:w-4 md:h-4" />
-                            <span className="text-xs md:text-sm font-bold">{t.mining.ticketExpired}</span>
-                        </div>
-                    </div>
-                )}
+            <div id="staking-section" className={`glass-panel p-4 md:p-6 rounded-xl md:rounded-2xl relative overflow-hidden group transition-opacity bg-gray-900/50 border border-gray-800 ${(() => {
+                const userState = getUserMiningState();
+                return (userState === UserMiningState.NOT_CONNECTED || userState === UserMiningState.NO_TICKET || userState === UserMiningState.TICKET_EXPIRED) ? 'opacity-50 pointer-events-none' : '';
+            })()}`}>
+                 {(() => {
+                    const userState = getUserMiningState();
+                    
+                    if (userState === UserMiningState.NOT_CONNECTED || userState === UserMiningState.NO_TICKET) {
+                        return (
+                            <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/70 backdrop-blur-sm rounded-xl md:rounded-2xl">
+                                <div className="flex items-center gap-2 px-3 py-2 md:px-4 md:py-2 bg-gray-900 text-white rounded-lg shadow-xl border border-gray-700">
+                                    <Lock size={14} className="md:w-4 md:h-4" />
+                                    <span className="text-xs md:text-sm font-bold">{t.mining.purchaseFirst}</span>
+                                </div>
+                            </div>
+                        );
+                    }
+                    
+                    if (userState === UserMiningState.TICKET_EXPIRED) {
+                        return (
+                            <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/50 backdrop-blur-sm rounded-xl md:rounded-2xl">
+                                <div className="flex items-center gap-2 px-3 py-2 md:px-4 md:py-2 bg-gray-900 border border-gray-700 text-white rounded-lg shadow-xl">
+                                    <Lock size={14} className="md:w-4 md:h-4" />
+                                    <span className="text-xs md:text-sm font-bold">{t.mining.ticketExpired}</span>
+                                </div>
+                            </div>
+                        );
+                    }
+                    
+                    return null;
+                 })()}
                 <div className="absolute top-0 right-0 w-24 h-24 bg-neon-500/10 rounded-full blur-2xl group-hover:bg-neon-500/20 transition-all"></div>
                 <div className="flex items-center gap-2 md:gap-3 mb-3 md:mb-4">
                     <div className="p-1.5 md:p-2 bg-neon-500/20 rounded-lg text-neon-400 border border-neon-500/30">
@@ -1086,69 +1285,25 @@ const MiningPanel: React.FC = () => {
                 </div>
 
                 <div className="mt-8 space-y-3">
-                    {!isConnected ? (
-                        <button disabled className="w-full py-3 bg-gray-800 text-gray-500 font-bold rounded-lg cursor-not-allowed border border-gray-700">
-                            {t.mining.walletNotConnected}
-                        </button>
-                    ) : !hasReferrer && !isOwner ? (
-                        <button disabled className="w-full py-3 bg-amber-200 text-amber-700 font-bold rounded-lg cursor-not-allowed">
-                            {t.referrer.noReferrer}
-                        </button>
-                    ) : isCheckingAllowance ? (
-                        <button
-                            disabled
-                            className="w-full py-3 bg-gray-800 text-gray-500 font-bold rounded-lg cursor-wait animate-pulse border border-gray-700"
-                        >
-                            {t.mining.checkingAuth}
-                        </button>
-                    ) : !isApproved ? (
-                        <button
-                            onClick={handleApprove}
-                            disabled={txPending}
-                            className="w-full py-3 bg-gray-700 hover:bg-gray-600 text-white font-bold rounded-lg transition-colors border border-gray-600 disabled:opacity-50"
-                        >
-                            {txPending ? t.mining.approving : t.mining.approve}
-                        </button>
-                    ) : isTicketExpired ? (
-                        <button
-                            onClick={handleScrollToBuy}
-                            disabled={txPending}
-                            className="w-full py-3 text-red-400 font-semibold rounded-lg border border-red-500/30 hover:bg-red-500/10 transition-colors disabled:opacity-50"
-                        >
-                            {txPending ? t.mining.buying : t.mining.buyTicket}
-                        </button>
-                    ) : !isTicketBought ? (
-                        <button
-                            onClick={handleScrollToBuy}
-                            disabled={txPending}
-                            className="w-full py-3 text-neon-400 font-semibold rounded-lg border border-neon-500/30 hover:bg-neon-500/10 transition-colors disabled:opacity-50"
-                        >
-                            {txPending ? t.mining.buying : `${t.mining.buyTicket} (Top)`}
-                        </button>
-                    ) : canStakeLiquidity ? (
-                         <button
-                            onClick={handleStake}
-                            disabled={txPending || stakeAmount <= 0n}
-                            className="w-full py-4 bg-gradient-to-r from-neon-500 to-neon-600 hover:from-neon-400 hover:to-neon-500 text-black font-extrabold text-lg rounded-lg shadow-lg shadow-neon-500/40 transition-all transform hover:scale-[1.02] flex items-center justify-center gap-2 disabled:opacity-50"
-                         >
-                            {txPending ? t.mining.staking : t.mining.stake} <ArrowRight size={20} />
-                        </button>
-                    ) : hasValidTicket ? (
-                        <button
-                            onClick={handleScrollToBuy}
-                            disabled={txPending}
-                            className="w-full py-3 text-neon-400 font-semibold rounded-lg border border-neon-500/30 hover:bg-neon-500/10 transition-colors disabled:opacity-50"
-                        >
-                            {txPending ? t.mining.buying : `${t.mining.buyTicket} (Top)`}
-                        </button>
-                    ) : (
-                        <button
-                            disabled
-                            className="w-full py-4 bg-gray-800 text-gray-500 font-bold text-lg rounded-lg cursor-not-allowed border border-gray-700"
-                        >
-                            {t.mining.unknownStatus}
-                        </button>
-                    )}
+                    {(() => {
+                        const userState = getUserMiningState();
+                        const buttonState = getStakingButtonState(userState);
+                        
+                        console.log('🎯 [Button State] Current user state:', userState, 'Button:', buttonState.text);
+                        
+                        return (
+                            <button
+                                onClick={buttonState.action || undefined}
+                                disabled={buttonState.disabled}
+                                className={buttonState.className}
+                            >
+                                {buttonState.text}
+                                {userState === UserMiningState.READY_TO_STAKE && !buttonState.disabled && (
+                                    <ArrowRight size={20} />
+                                )}
+                            </button>
+                        );
+                    })()}
 
                     <p className="text-xs text-center text-slate-400">
                         {t.mining.agreement}
@@ -1341,11 +1496,16 @@ const MiningPanel: React.FC = () => {
               </div>
               <span className="text-xs text-amber-400 mb-1">{t.mining.maxCap}</span>
             </div>
-            <div className="w-full bg-gray-700 h-1.5 rounded-full mt-2">
-              <div
-                className="bg-neon-500 h-1.5 rounded-full transition-all duration-500"
-                style={{ width: `${progressPercent}%` }}
-              ></div>
+            <div className="w-full mt-2">
+              <GoldenProgressBar
+                progress={progressPercent}
+                height="md"
+                showAnimation={progressPercent > 0 && progressPercent < 100}
+                showSplashAnimation={progressPercent > 0 && progressPercent < 10} // 开屏动画在收益开始时显示
+                highContrast={true} // 启用高对比度模式
+                ariaLabel={`Revenue cap progress: ${progressPercent.toFixed(1)}%`}
+                className="w-full"
+              />
             </div>
           </div>
         </div>

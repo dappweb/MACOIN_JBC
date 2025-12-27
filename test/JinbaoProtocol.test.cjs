@@ -9,7 +9,7 @@ describe("Jinbao Protocol System", function () {
   let owner, user1, user2, referrer, marketing, treasury, lpInjection, buyback, lpPair;
 
   const TICKET_PRICE = ethers.parseEther("100");
-  const LIQUIDITY_AMOUNT = ethers.parseEther("160"); // 1.6x
+  const LIQUIDITY_AMOUNT = ethers.parseEther("150"); // 1.5x
 
   beforeEach(async function () {
     [owner, user1, user2, referrer, marketing, treasury, lpInjection, buyback, lpPair] = await ethers.getSigners();

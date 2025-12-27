@@ -72,7 +72,6 @@ const BuyTicketPanel: React.FC<BuyTicketPanelProps> = ({ onBack }) => {
   
   const requiredLiquidity = baseAmount * 1.5
   const isHigherLiquidity = baseAmount > selectedTier
-
   const handleBuyTicket = async () => {
     if (!protocolContract || !mcContract || !account) {
       toast.error("请先连接钱包")
@@ -190,8 +189,17 @@ const BuyTicketPanel: React.FC<BuyTicketPanelProps> = ({ onBack }) => {
               <p className="text-blue-300 text-sm">
                 您可以继续购买新门票，新门票将覆盖当前门票
               </p>
+            </div>          {isHigherLiquidity && (
+            <div className="mt-3 p-2 bg-amber-500/10 border border-amber-500/30 rounded text-xs text-amber-300">
+              <div className="font-bold flex items-center gap-1 mb-1">
+                <AlertCircle size={12} />
+                注意：流动性要求提高
+              </div>
+              检测到您历史购买过更高额度门票（{effectiveHistoryMax} MC）。根据协议规则，您需要按照历史最高门票金额的1.5倍提供流动性。
             </div>
-          </div>
+          )}
+
+        </div>
         </div>
       )}
 
@@ -248,28 +256,20 @@ const BuyTicketPanel: React.FC<BuyTicketPanelProps> = ({ onBack }) => {
             </div>
             <div className="flex justify-between">
               <span className="text-gray-400">有效期:</span>
-              <span className="text-white">72 小时</span>
+              <span className="text-white">{t.mining.buyTicketValidity}</span>
             </div>
           </div>
           
-          {isHigherLiquidity && (
-            <div className="mt-3 p-2 bg-amber-500/10 border border-amber-500/30 rounded text-xs text-amber-300">
-              <div className="font-bold flex items-center gap-1 mb-1">
-                <AlertCircle size={12} />
-                注意：流动性要求提高
-              </div>
-              检测到您历史购买过更高额度门票（{effectiveHistoryMax} MC）。根据协议规则，您需要按照历史最高门票金额的1.5倍提供流动性。
-            </div>
-          )}
+
         </div>
 
         {/* 重要提示 */}
         <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4 mb-6">
           <h3 className="font-bold text-blue-400 mb-2">重要提示</h3>
           <ul className="text-sm text-blue-300 space-y-1">
-            <li>• 门票购买后需在 72 小时内提供流动性</li>
-            <li>• 流动性金额为门票金额（或历史最高）的 1.5 倍</li>
-            <li>• 超时未提供流动性的门票将自动过期</li>
+            <li>{t.mining.buyTicketTip1}</li>
+            <li>{t.mining.buyTicketTip2}</li>
+            <li>{t.mining.buyTicketTip3}</li>
             <li>• 门票费用不可退还</li>
             <li>• 购买新门票将覆盖当前未完成的门票</li>
           </ul>
@@ -308,7 +308,7 @@ const BuyTicketPanel: React.FC<BuyTicketPanelProps> = ({ onBack }) => {
             <div>
               <h3 className="font-bold text-green-400">门票购买成功！</h3>
               <p className="text-green-300 text-sm">
-                请前往挖矿页面在 72 小时内完成流动性提供
+                {t.mining.buyTicketSuccessTip}
               </p>
             </div>
           </div>

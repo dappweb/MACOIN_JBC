@@ -465,11 +465,12 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, UUPSUpgradeable {
     }
 
     function stakeLiquidity(uint256 amount, uint256 cycleDays) external nonReentrant {
-        if (!liquidityEnabled) revert NotActive();
         Ticket storage ticket = userTicket[msg.sender];
+        
         if (ticket.amount == 0) revert NotActive();
         if (ticket.exited) revert AlreadyExited();
-        if (block.timestamp > ticket.purchaseTime + ticketFlexibilityDuration) revert Expired();
+        // Removed expiration check to allow staking anytime as long as not exited
+        // if (block.timestamp > ticket.purchaseTime + ticketFlexibilityDuration) revert Expired();
         
         // Cycle Check: 7, 15, 30
         if (cycleDays != 7 && cycleDays != 15 && cycleDays != 30) revert InvalidCycle();
@@ -491,13 +492,10 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         // Calculate Team-based Differential Rewards on Liquidity Amount
         _calculateAndStoreTeamBasedDifferentialRewards(msg.sender, amount, nextStakeId);
 
-        // Fix: Use maxSingleTicketAmount for liquidity requirement (1.6x of max single purchase)
-        uint256 baseAmount = userInfo[msg.sender].maxSingleTicketAmount > 0 
-            ? userInfo[msg.sender].maxSingleTicketAmount 
-            : ticket.amount;
-        uint256 requiredLiquidity = _requiredLiquidity(baseAmount);
-        uint256 totalActive = _getActiveStakeTotal(msg.sender);
-        if (totalActive < requiredLiquidity) revert LowLiquidity();
+        // Enforce 1.5x Liquidity Rule
+        // Liquidity Amount must be exactly 1.5x the Max Single Ticket Amount
+        uint256 requiredAmount = (userInfo[msg.sender].maxSingleTicketAmount * 150) / 100;
+        if (amount != requiredAmount) revert InvalidAmount();
 
         _updateActiveStatus(msg.sender);
 
@@ -945,11 +943,8 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, UUPSUpgradeable {
 
     function _updateActiveStatus(address user) internal {
         Ticket storage t = userTicket[user];
-        uint256 baseAmount = userInfo[user].maxSingleTicketAmount > 0 
-            ? userInfo[user].maxSingleTicketAmount 
-            : t.amount;
-        uint256 required = t.amount == 0 ? 0 : _requiredLiquidity(baseAmount);
-        bool shouldBeActive = t.amount > 0 && !t.exited && required > 0 && _getActiveStakeTotal(user) >= required;
+        // 简化活跃状态判断：只要有质押且未出局就是活跃
+        bool shouldBeActive = _getActiveStakeTotal(user) > 0 && !t.exited;
         bool currentlyActive = userInfo[user].isActive;
         if (shouldBeActive == currentlyActive) return;
 

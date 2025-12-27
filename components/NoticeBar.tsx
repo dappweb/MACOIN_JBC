@@ -14,12 +14,12 @@ const NoticeBar: React.FC = () => {
   const demoAnnouncements: Record<string, string[]> = {
     zh: [
       "🎉 金宝协议正式上线！DeFi 4.0 创新双币模型，开启财富新篇章。",
-      "⚠️ 请注意：购买门票后需在72小时内提供流动性，否则门票将失效。",
+      "⚠️ 请注意：购买门票后可随时提供流动性，无时间限制。",
       "📢 邀请好友加入可享丰厚极差奖励，最高可达 45%！"
     ],
     en: [
       "🎉 Jinbao Protocol is live! DeFi 4.0 Dual-Token Model.",
-      "⚠️ Notice: Liquidity must be provided within 72 hours after ticket purchase.",
+      "⚠️ Notice: Liquidity can be provided at any time after ticket purchase.",
       "📢 Invite friends to earn up to 45% differential rewards!"
     ]
   };

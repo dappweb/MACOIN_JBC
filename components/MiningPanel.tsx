@@ -26,11 +26,20 @@ type TicketInfo = {
   maxSingleTicketAmount: bigint; // New field for single ticket max
 };
 
+type StakeInfo = {
+  id: bigint;
+  amount: bigint;
+  startTime: number;
+  cycleDays: number;
+  active: boolean;
+  paid: bigint;
+};
+
 type TicketHistoryItem = {
     ticketId: string;
     amount: string;
     purchaseTime: number;
-    status: 'Pending' | 'Mining' | 'Redeemed' | 'Expired';
+    status: 'Pending' | 'Mining' | 'Completed' | 'Expired';
     cycleDays?: number;
     startTime?: number;
     endTime?: number;
@@ -114,29 +123,33 @@ const MiningPanel: React.FC = () => {
     }
   }, [ticketInfo]);
 
-  // Auto-set liquidity amount based on ticket (1.5x rule) - 修正为使用历史单张最高
+  // 移除自动设置流动性金额的逻辑 - 用户可以自由输入任意金额
+  // useEffect(() => {
+  //   if (ticketInfo && ticketInfo.amount > 0n) {
+  //       const contractMaxSingle = ticketInfo.maxSingleTicketAmount ? parseFloat(ethers.formatEther(ticketInfo.maxSingleTicketAmount)) : 0;
+  // Calculate 1.5x of max single ticket amount for liquidity input
   useEffect(() => {
-    if (ticketInfo && ticketInfo.amount > 0n) {
-        const contractMaxSingle = ticketInfo.maxSingleTicketAmount ? parseFloat(ethers.formatEther(ticketInfo.maxSingleTicketAmount)) : 0;
-        const historyMax = maxUnredeemedTicket;
-        
-        let baseAmount = 0;
+    if (ticketInfo) {
+      const contractMaxSingle = ticketInfo.maxSingleTicketAmount ? parseFloat(ethers.formatEther(ticketInfo.maxSingleTicketAmount)) : 0;
+      
+      // Use maxUnredeemedTicket as fallback if needed, but contractMaxSingle is best
+      const historyMax = maxUnredeemedTicket;
+      
+      let baseAmount = 0;
 
-        // 优先级 1: 合约记录的单张最大值 (最准确)
-        if (contractMaxSingle > 0) {
-            baseAmount = contractMaxSingle;
-        }
-        // 优先级 2: 前端回溯的历史单张最大值 (备选)
-        else if (historyMax > 0) {
-            baseAmount = historyMax;
-        }
-        // 注意：不再使用 currentAmount 作为兜底，因为它可能是多张门票的累加值（例如 500+500=1000），
-        // 导致误判为高等级门票。如果没有历史记录，宁可让用户手动输入或等待数据刷新。
-        
-        if (baseAmount > 0) {
-            const required = baseAmount * 1.5;
-            setLiquidityAmountInput(required.toString());
-        }
+      // 优先级 1: 合约记录的单张最大值 (最准确)
+      if (contractMaxSingle > 0) {
+          baseAmount = contractMaxSingle;
+      }
+      // 优先级 2: 前端回溯的历史单张最大值 (备选)
+      else if (historyMax > 0) {
+          baseAmount = historyMax;
+      }
+      
+      if (baseAmount > 0) {
+          const required = baseAmount * 1.5;
+          setLiquidityAmountInput(required.toString());
+      }
     }
   }, [ticketInfo, maxUnredeemedTicket]);
 
@@ -204,14 +217,11 @@ const MiningPanel: React.FC = () => {
       if (ticketInfo.totalRevenue > 0n) return true;
       
       // 检查历史记录中是否有挖矿状态（不依赖ticketId匹配）
-      return ticketHistory.some(item => (item.status === 'Mining' || item.status === 'Redeemed'));
+      return ticketHistory.some(item => (item.status === 'Mining' || item.status === 'Completed'));
   }, [ticketHistory, ticketInfo, hasStaked]);
   
-  // Define isTicketExpired - 门票过期只基于时间，不依赖质押状态
-  const isTicketExpired = hasTicket && ticketInfo ? now > (ticketInfo.purchaseTime + ticketFlexibilityDuration) : false;
-
-  // Logic updated: Can stake if has active ticket (not exited)
-  const canStakeLiquidity = hasTicket && !isExited && !isTicketExpired;
+  // 简化逻辑：只检查是否已达到3倍出局
+  const canStakeLiquidity = !isExited;
   const isTicketBought = hasTicket && !isExited;
   const hasValidTicket = hasTicket && !isExited; // Renamed from hasActiveTicket to avoid confusion
 
@@ -231,14 +241,10 @@ const MiningPanel: React.FC = () => {
     return hasExpiredMining || isActiveStakeExpired;
   }, [ticketHistory, activeStake, currentTime, secondsInUnit]);
 
-  // Unified state detection function
   const getUserMiningState = (): UserMiningState => {
     console.log('🔍 [State Detection] Current state check:', {
       isConnected,
-      hasTicket,
-      ticketAmount: ticketInfo?.amount.toString(),
       isExited,
-      isTicketExpired,
       hasStakedLiquidity,
       isApproved,
       isCheckingAllowance
@@ -246,9 +252,7 @@ const MiningPanel: React.FC = () => {
 
     if (!isConnected) return UserMiningState.NOT_CONNECTED;
     if (isCheckingAllowance) return UserMiningState.NOT_CONNECTED; // Treat as not ready
-    if (!ticketInfo || ticketInfo.amount === 0n) return UserMiningState.NO_TICKET;
-    if (ticketInfo.exited) return UserMiningState.MINING_COMPLETE;
-    if (isTicketExpired) return UserMiningState.TICKET_EXPIRED;
+    if (isExited) return UserMiningState.MINING_COMPLETE;
     if (hasStakedLiquidity) return UserMiningState.ALREADY_STAKED;
     if (!isApproved) return UserMiningState.NEEDS_APPROVAL;
     return UserMiningState.READY_TO_STAKE;
@@ -357,7 +361,7 @@ const MiningPanel: React.FC = () => {
   // 倒计时格式化函数
   const formatCountdown = (endTime: number): string => {
     const remaining = endTime - currentTime;
-    if (remaining <= 0) return t.mining?.redeemable || "可赎回";
+    if (remaining <= 0) return t.mining?.redeemable || "质押可赎回";
     
     const days = Math.floor(remaining / 86400);
     const hours = Math.floor((remaining % 86400) / 3600);
@@ -372,10 +376,10 @@ const MiningPanel: React.FC = () => {
 
   const getTicketStatus = () => {
     if (!ticketInfo) return null;
-    if (ticketInfo.redeemed) return { label: t.mining.redeemed, color: 'text-gray-400', bg: 'bg-gray-500/20', border: 'border-gray-500/30' };
-    if (isTicketExpired) return { label: t.mining.expired, color: 'text-red-400', bg: 'bg-red-500/20', border: 'border-red-500/30' };
+    if (ticketInfo.redeemed) return { label: '流动性已赎回', color: 'text-gray-400', bg: 'bg-gray-500/20', border: 'border-gray-500/30' };
+    if (isExited) return { label: t.mining.exited, color: 'text-red-400', bg: 'bg-red-500/20', border: 'border-red-500/30' };
     if (hasStakedLiquidity) return { label: t.mining.mining, color: 'text-green-400', bg: 'bg-green-500/20', border: 'border-green-500/30' };
-    return { label: t.mining.pendingLiquidity, color: 'text-amber-400', bg: 'bg-amber-500/20', border: 'border-amber-500/30' };
+    return { label: t.mining.canStake, color: 'text-blue-400', bg: 'bg-blue-500/20', border: 'border-blue-500/30' };
   };
 
   const statusInfo = getTicketStatus();
@@ -492,7 +496,7 @@ const MiningPanel: React.FC = () => {
                 }
             } else if (item.type === 'redeem') {
                 if (currentItem && currentItem.status === 'Mining') {
-                    currentItem.status = 'Redeemed';
+                    currentItem.status = 'Completed';
                 }
             }
         }
@@ -502,11 +506,12 @@ const MiningPanel: React.FC = () => {
         }
 
         const now = Math.floor(Date.now() / 1000);
-        historyItems.forEach(item => {
-            if (item.status === 'Pending' && now > item.purchaseTime + ticketFlexibilityDuration) {
-                item.status = 'Expired';
-            }
-        });
+        // Removed expiration check on frontend to match contract change
+        // historyItems.forEach(item => {
+        //    if (item.status === 'Pending' && now > item.purchaseTime + ticketFlexibilityDuration) {
+        //        item.status = 'Expired';
+        //    }
+        // });
 
         setTicketHistory(historyItems.reverse());
         
@@ -716,10 +721,8 @@ const MiningPanel: React.FC = () => {
           toast.error(t.mining.invalidAmount || "Invalid amount");
           return;
       }
-      if (isTicketExpired) {
-          toast.error(t.mining.ticketExpired || "Ticket expired");
-          return;
-      }
+      // 移除门票过期检查 - 允许任何时候质押
+      // 移除其他限制检查 - 只要未达到3倍出局即可质押
 
       setTxPending(true);
       try {
@@ -1395,16 +1398,15 @@ const MiningPanel: React.FC = () => {
                     <h3 className="text-xl font-bold text-gray-300 mb-2">{t.mining.unknownStatus || "No Mining Activity"}</h3>
                     <p className="text-gray-500 max-w-md mx-auto mb-6">
                         {canStakeLiquidity 
-                            ? t.mining.readyToStakeDesc 
-                            : isTicketBought 
-                                ? "You have a ticket but haven't staked liquidity yet."
-                                : "You haven't purchased a mining ticket yet."}
+                            ? "您可以随时提供流动性开始挖矿" 
+                            : "您已达到3倍出局，无法继续提供流动性"}
                     </p>
                     <button 
                         onClick={() => setCurrentStep(canStakeLiquidity ? 2 : 1)}
                         className="px-6 py-2 bg-gray-800 hover:bg-gray-700 text-white font-bold rounded-lg border border-gray-600 transition-colors"
+                        disabled={!canStakeLiquidity}
                     >
-                        {canStakeLiquidity ? t.mining.stake : t.mining.buyTicket}
+                        {canStakeLiquidity ? t.mining.stake : "已出局"}
                     </button>
                 </div>
             ) : (
@@ -1541,9 +1543,10 @@ const MiningPanel: React.FC = () => {
                         <div className="space-y-3">
                             {ticketHistory.map((item, idx) => {
                                 // Calculate expiration time for pending tickets
-                                const expireTime = item.purchaseTime + 72 * 3600;
-                                const isExpired = now > expireTime;
-                                const showStakeAction = item.status === 'Pending' && !isExpired && !hasStakedLiquidity && !isTicketExpired;
+                                // const expireTime = item.purchaseTime + 72 * 3600;
+                                // const isExpired = now > expireTime;
+                                const isExpired = false; // Tickets no longer expire by time
+                                const showStakeAction = item.status === 'Pending' && !isExpired && !hasStakedLiquidity && !isExited;
                                 
                                 // Check if this is an add-on (same ticket ID as the next/older item)
                                 const isAddOn = idx < ticketHistory.length - 1 && ticketHistory[idx + 1].ticketId === item.ticketId;
@@ -1564,12 +1567,12 @@ const MiningPanel: React.FC = () => {
                                         </div>
                                         <span className={`px-2 py-0.5 rounded text-xs font-bold border ${
                     item.status === 'Mining' ? 'bg-green-500/10 text-green-400 border-green-500/20' :
-                    item.status === 'Redeemed' ? 'bg-gray-500/10 text-gray-400 border-gray-500/20' :
+                    item.status === 'Completed' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' :
                     (item.status === 'Expired' || isExpired) ? 'bg-red-500/10 text-red-400 border-red-500/20' :
                     'hidden' // Hide Pending status
                 }`}>
                     {item.status === 'Mining' ? t.mining.mining : 
-                     item.status === 'Redeemed' ? t.mining.redeemed : 
+                     item.status === 'Completed' ? '挖矿完成' : 
                      (item.status === 'Expired' || isExpired) ? t.mining.expired : 
                      ''}
                 </span>
@@ -1594,17 +1597,17 @@ const MiningPanel: React.FC = () => {
                                         </div>
                                     )}
                                     
-                                    {item.status === 'Redeemed' && (
+                                    {item.status === 'Completed' && (
                                          <div className="flex flex-col text-right">
-                                            <span className="text-gray-500 mb-0.5">{t.mining.status}</span>
-                                            <span className="font-mono text-gray-300">{t.mining.redeemed}</span>
+                                            <span className="text-gray-500 mb-0.5">状态</span>
+                                            <span className="font-mono text-blue-300">挖矿完成</span>
                                         </div>
                                     )}
 
                                     {item.status === 'Pending' && !isExpired && (
                                         <div className="flex flex-col text-right">
                                             <span className="text-gray-500 mb-0.5">{t.mining.endTime || "Valid Until"}</span>
-                                            <span className="font-mono text-amber-400">{formatDate(expireTime)}</span>
+                                            <span className="font-mono text-amber-400">长期有效</span>
                                         </div>
                                     )}
                                 </div>

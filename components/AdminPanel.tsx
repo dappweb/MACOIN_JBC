@@ -101,7 +101,7 @@ const AdminPanel: React.FC = () => {
   const [levelRewardPool, setLevelRewardPool] = useState('0');
 
   // Feature Controls
-  const [ticketFlexibility, setTicketFlexibility] = useState('72');
+  const [ticketFlexibility, setTicketFlexibility] = useState('0');
   const [liquidityEnabled, setLiquidityEnabled] = useState(true);
   const [redeemEnabled, setRedeemEnabled] = useState(true);
 

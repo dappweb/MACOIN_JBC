@@ -28,7 +28,7 @@ All notable changes to this project will be documented in this file.
 - **Liquidity Calculation**:
   - Fixed frontend `MiningPanel.tsx` to prioritize contract-stored `maxSingleTicketAmount`.
   - Removed misleading logic that used current total holdings for liquidity baselines.
-  - Unified all documentation and tests to 1.5x standard (previously inconsistent 1.6x references).
+  - Unified all documentation and tests to 1.5x standard (removed incorrect 1.6x references).
 
 ### Changed
 - **Documentation**: Updated `ALIGNMENT_TABLE.md` and `PROJECT_REQUIREMENTS.md` to reflect the final 1.5x liquidity rule.

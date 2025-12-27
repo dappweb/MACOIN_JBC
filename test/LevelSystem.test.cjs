@@ -10,7 +10,7 @@ describe("JinbaoProtocol Level System", function () {
   let u1, u2, u3, u4, u5, u6;
 
   const TICKET_PRICE = ethers.parseEther("100"); // T1
-  const LIQUIDITY_AMOUNT = ethers.parseEther("160"); // 1.6x
+  const LIQUIDITY_AMOUNT = ethers.parseEther("150"); // 1.5x
 
   beforeEach(async function () {
     [owner, marketing, treasury, lpInjection, buyback, u1, u2, u3, u4, u5, u6] = await ethers.getSigners();
@@ -163,7 +163,7 @@ describe("JinbaoProtocol Level System", function () {
           const ticketId = ticket.ticketId;
           
           // 5. Release Rewards (u6 stakes and redeems)
-          await protocol.connect(u6).stakeLiquidity(ticketAmount * 160n / 100n, 7);
+          await protocol.connect(u6).stakeLiquidity(ticketAmount * 150n / 100n, 7);
           
           await time.increase(7 * 24 * 3600 + 1);
           

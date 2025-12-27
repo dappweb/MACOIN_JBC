@@ -49,14 +49,14 @@ async function main() {
   // Step 3: Deploy JinbaoProtocol
   console.log("📦 Step 3/3: Deploying JinbaoProtocol...");
   const JinbaoProtocol = await hre.ethers.getContractFactory("JinbaoProtocol");
-  const protocol = await JinbaoProtocol.deploy(
+  const protocol = await hre.upgrades.deployProxy(JinbaoProtocol, [
     mcAddress,
     jbcAddress,
     marketingWallet,
     treasuryWallet,
     lpWallet,
     buybackWallet
-  );
+  ], { kind: 'uups' });
   await protocol.waitForDeployment();
   const protocolAddress = await protocol.getAddress();
   console.log("✅ JinbaoProtocol deployed to:", protocolAddress);

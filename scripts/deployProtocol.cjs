@@ -20,13 +20,14 @@ async function main(mcAddress, jbcAddress) {
   console.log("");
 
   const JinbaoProtocol = await hre.ethers.getContractFactory("JinbaoProtocol");
-  const protocol = await JinbaoProtocol.deploy(
+  const protocol = await hre.upgrades.deployProxy(JinbaoProtocol, [
     mcAddress,
     jbcAddress,
     marketingWallet,
     treasuryWallet,
-    lpWallet
-  );
+    lpWallet,
+    buybackWallet
+  ], { kind: 'uups' });
   await protocol.waitForDeployment();
 
   const address = await protocol.getAddress();

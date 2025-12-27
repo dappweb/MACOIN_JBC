@@ -310,17 +310,23 @@ const EarningsDetail: React.FC = () => {
         <div className="bg-gray-900/50 border border-gray-800 rounded-xl shadow-md p-4 backdrop-blur-sm">
           <div className="text-sm text-gray-400 mb-2">{ui.dynamicReward || "Dynamic Reward"} (24h)</div>
           <div className="text-lg font-bold text-neon-400">{dailyStats.dynamic.mc.toFixed(2)} MC</div>
-          <div className="text-lg font-bold text-amber-400">{dailyStats.dynamic.jbc.toFixed(2)} JBC</div>
+          {dailyStats.dynamic.jbc > 0 && (
+            <div className="text-lg font-bold text-amber-400">{dailyStats.dynamic.jbc.toFixed(2)} JBC</div>
+          )}
         </div>
         <div className="bg-gray-900/50 border border-gray-800 rounded-xl shadow-md p-4 backdrop-blur-sm">
           <div className="text-sm text-gray-400 mb-2">{ui.directReward || "Direct Reward"} (24h)</div>
           <div className="text-lg font-bold text-neon-400">{dailyStats.direct.mc.toFixed(2)} MC</div>
-          <div className="text-lg font-bold text-amber-400">{dailyStats.direct.jbc.toFixed(2)} JBC</div>
+          {dailyStats.direct.jbc > 0 && (
+            <div className="text-lg font-bold text-amber-400">{dailyStats.direct.jbc.toFixed(2)} JBC</div>
+          )}
         </div>
         <div className="bg-gray-900/50 border border-gray-800 rounded-xl shadow-md p-4 backdrop-blur-sm">
           <div className="text-sm text-gray-400 mb-2">{ui.levelReward || "Level Reward"} (24h)</div>
           <div className="text-lg font-bold text-neon-400">{dailyStats.level.mc.toFixed(2)} MC</div>
-          <div className="text-lg font-bold text-amber-400">{dailyStats.level.jbc.toFixed(2)} JBC</div>
+          {dailyStats.level.jbc > 0 && (
+            <div className="text-lg font-bold text-amber-400">{dailyStats.level.jbc.toFixed(2)} JBC</div>
+          )}
         </div>
       </div>
 
@@ -363,14 +369,18 @@ const EarningsDetail: React.FC = () => {
                         )}
                       </div>
                       <div className="space-y-1 mb-2">
-                        <p className="text-sm text-gray-400">
-                          {ui.mcAmount || "MC Reward"}:{" "}
-                          <span className="font-semibold text-neon-400">{parseFloat(row.mcAmount).toFixed(4)} MC</span>
-                        </p>
-                        <p className="text-sm text-gray-400">
-                          {ui.jbcAmount || "JBC Reward"}:{" "}
-                          <span className="font-semibold text-amber-400">{parseFloat(row.jbcAmount).toFixed(4)} JBC</span>
-                        </p>
+                        {parseFloat(row.mcAmount) > 0 && (
+                          <p className="text-sm text-gray-400">
+                            {ui.mcAmount || "MC Reward"}:{" "}
+                            <span className="font-semibold text-neon-400">{parseFloat(row.mcAmount).toFixed(4)} MC</span>
+                          </p>
+                        )}
+                        {parseFloat(row.jbcAmount) > 0 && (
+                          <p className="text-sm text-gray-400">
+                            {ui.jbcAmount || "JBC Reward"}:{" "}
+                            <span className="font-semibold text-amber-400">{parseFloat(row.jbcAmount).toFixed(4)} JBC</span>
+                          </p>
+                        )}
                         {row.source && (
                           <p className="text-sm text-gray-600">
                             {ui.rewardFrom || "From"}:{" "}
@@ -435,8 +445,12 @@ const EarningsDetail: React.FC = () => {
                   </div>
                   <div className="text-right">
                     <div className="space-y-0.5">
-                      <p className="text-sm text-right font-semibold text-neon-400">+{parseFloat(row.mcAmount).toFixed(2)} MC</p>
-                      <p className="text-sm text-right font-semibold text-amber-400">+{parseFloat(row.jbcAmount).toFixed(2)} JBC</p>
+                      {parseFloat(row.mcAmount) > 0 && (
+                        <p className="text-sm text-right font-semibold text-neon-400">+{parseFloat(row.mcAmount).toFixed(2)} MC</p>
+                      )}
+                      {parseFloat(row.jbcAmount) > 0 && (
+                        <p className="text-sm text-right font-semibold text-amber-400">+{parseFloat(row.jbcAmount).toFixed(2)} JBC</p>
+                      )}
                     </div>
                     <ChevronRight className="w-4 h-4 text-gray-600 ml-auto mt-1" />
                   </div>
@@ -480,14 +494,18 @@ const EarningsDetail: React.FC = () => {
               <div className="space-y-3">
                 <div className="text-sm text-gray-400 uppercase font-mono tracking-wider">{ui.mcAmount || "MC Reward"}</div>
                 <div className="bg-gray-800/30 rounded-xl p-4 border border-gray-800">
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="text-gray-400">MC</span>
-                    <span className="font-bold text-neon-400 text-lg">{parseFloat(selectedRecord.mcAmount).toFixed(4)}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-400">JBC</span>
-                    <span className="font-bold text-amber-400 text-lg">{parseFloat(selectedRecord.jbcAmount).toFixed(4)}</span>
-                  </div>
+                  {parseFloat(selectedRecord.mcAmount) > 0 && (
+                    <div className={`flex justify-between items-center ${parseFloat(selectedRecord.jbcAmount) > 0 ? 'mb-2' : ''}`}>
+                      <span className="text-gray-400">MC</span>
+                      <span className="font-bold text-neon-400 text-lg">{parseFloat(selectedRecord.mcAmount).toFixed(4)}</span>
+                    </div>
+                  )}
+                  {parseFloat(selectedRecord.jbcAmount) > 0 && (
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-400">JBC</span>
+                      <span className="font-bold text-amber-400 text-lg">{parseFloat(selectedRecord.jbcAmount).toFixed(4)}</span>
+                    </div>
+                  )}
                 </div>
               </div>
 

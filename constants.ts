@@ -8,9 +8,9 @@ export const TICKET_TIERS: TicketTier[] = [
 ];
 
 export const MINING_PLANS: MiningPlan[] = [
-  { days: 7, dailyRate: 2.0 },
-  { days: 15, dailyRate: 2.5 },
-  { days: 30, dailyRate: 3.0 },
+  { days: 7, dailyRate: 1.3333334 },
+  { days: 15, dailyRate: 1.6666667 },
+  { days: 30, dailyRate: 2.0 },
 ];
 
 export const TEAM_LEVELS: TeamLevel[] = [

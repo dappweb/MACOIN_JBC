@@ -501,17 +501,17 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, ReentrancyGuardUpg
             if (!stakes[i].active) continue;
             
             // Calculate Static Reward for this stake
-            uint256 ratePerThousand = 0;
-            if (stakes[i].cycleDays == 7) ratePerThousand = 20;      // 2.0%
-            else if (stakes[i].cycleDays == 15) ratePerThousand = 25; // 2.5%
-            else if (stakes[i].cycleDays == 30) ratePerThousand = 30; // 3.0%
+            uint256 ratePerBillion = 0;
+            if (stakes[i].cycleDays == 7) ratePerBillion = 13333334;      // 1.3333334%
+            else if (stakes[i].cycleDays == 15) ratePerBillion = 16666667; // 1.6666667%
+            else if (stakes[i].cycleDays == 30) ratePerBillion = 20000000; // 2.0%
             
             uint256 unitsPassed = (block.timestamp - stakes[i].startTime) / SECONDS_IN_UNIT;
             if (unitsPassed > stakes[i].cycleDays) unitsPassed = stakes[i].cycleDays;
             
             if (unitsPassed == 0) continue;
 
-            uint256 totalStaticShouldBe = (stakes[i].amount * ratePerThousand * unitsPassed) / 1000;
+            uint256 totalStaticShouldBe = (stakes[i].amount * ratePerBillion * unitsPassed) / 1000000000;
             
             uint256 paid = stakes[i].paid;
             if (totalStaticShouldBe > paid) {
@@ -577,12 +577,12 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, ReentrancyGuardUpg
             uint256 endTime = stakes[i].startTime + (stakes[i].cycleDays * SECONDS_IN_UNIT);
             if (block.timestamp >= endTime) {
                 // 1. Calculate and Settle Static Yield
-                uint256 ratePerThousand = 0;
-                if (stakes[i].cycleDays == 7) ratePerThousand = 20;      // 2.0%
-                else if (stakes[i].cycleDays == 15) ratePerThousand = 25; // 2.5%
-                else if (stakes[i].cycleDays == 30) ratePerThousand = 30; // 3.0%
+                uint256 ratePerBillion = 0;
+                if (stakes[i].cycleDays == 7) ratePerBillion = 13333334;      // 1.3333334%
+                else if (stakes[i].cycleDays == 15) ratePerBillion = 16666667; // 1.6666667%
+                else if (stakes[i].cycleDays == 30) ratePerBillion = 20000000; // 2.0%
                 
-                uint256 totalStaticShouldBe = (stakes[i].amount * ratePerThousand * stakes[i].cycleDays) / 1000;
+                uint256 totalStaticShouldBe = (stakes[i].amount * ratePerBillion * stakes[i].cycleDays) / 1000000000;
                 uint256 pending = 0;
                 if (totalStaticShouldBe > stakes[i].paid) {
                     pending = totalStaticShouldBe - stakes[i].paid;

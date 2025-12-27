@@ -55,6 +55,17 @@ const MiningPanel: React.FC = () => {
   const { t, language } = useLanguage();
   const { protocolContract, mcContract, account, isConnected, hasReferrer, isOwner, referrerAddress, checkReferrerStatus, provider } = useWeb3();
 
+  // Auto-select ticket tier if user has bought one
+  useEffect(() => {
+    if (ticketInfo && ticketInfo.amount > 0n) {
+        const amount = parseFloat(ethers.formatEther(ticketInfo.amount));
+        const tier = TICKET_TIERS.find(t => t.amount === amount);
+        if (tier) {
+            setSelectedTicket(tier);
+        }
+    }
+  }, [ticketInfo]);
+
   // Auto-set liquidity amount based on ticket (1.5x rule)
   useEffect(() => {
     if (ticketInfo && ticketInfo.amount > 0n) {
@@ -85,7 +96,12 @@ const MiningPanel: React.FC = () => {
   const [currentStep, setCurrentStep] = useState(1);
 
   // 3倍上限计算
-  const maxCap = selectedTicket.amount * 3;
+  // Fix: Use bought ticket amount for max cap calculation if available, otherwise use selected ticket
+  const activeTicketAmount = ticketInfo && ticketInfo.amount > 0n 
+    ? parseFloat(ethers.formatEther(ticketInfo.amount)) 
+    : selectedTicket.amount;
+  
+  const maxCap = activeTicketAmount * 3;
 
   // Calculate total investment required for current step (for allowance check)
   const totalInvestment = useMemo(() => {
@@ -98,6 +114,7 @@ const MiningPanel: React.FC = () => {
   // Revenue & Progress
   const currentRevenueWei = ticketInfo?.totalRevenue || 0n;
   const currentRevenue = parseFloat(ethers.formatEther(currentRevenueWei));
+  // Use maxCap (calculated based on active ticket) as fallback
   const displayCap = ticketInfo && ticketInfo.currentCap > 0n ? parseFloat(ethers.formatEther(ticketInfo.currentCap)) : maxCap;
   const progressPercent = displayCap > 0 ? Math.min((currentRevenue / displayCap) * 100, 100) : 0;
 
@@ -958,7 +975,9 @@ const MiningPanel: React.FC = () => {
                     <div className="space-y-3 md:space-y-4">
                         <div className="flex justify-between items-center py-2 border-b border-gray-800">
                             <span className="text-gray-400">{t.mining.ticketInv}</span>
-                            <span className="font-mono text-white">{selectedTicket.amount} MC</span>
+                            <span className="font-mono text-white">
+                                {displayCap > 0 ? (displayCap / 3).toFixed(1) : selectedTicket.amount} MC
+                            </span>
                         </div>
                         <div className="flex justify-between items-center py-2 border-b border-gray-800">
                             <span className="text-gray-400">{t.mining.liqInv}</span>

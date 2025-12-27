@@ -18,23 +18,148 @@ interface StatsPanelProps {
 const generateMockPriceData = () => {
   const now = Date.now()
   const data = []
-  let price = 1.0
+  const price = 1.0
   for (let i = 0; i < 24; i++) {
     const time = now - (24 - i) * 3600 * 1000
-    // Random walk
-    price = price * (1 + (Math.random() - 0.5) * 0.05)
     data.push({
       name: new Date(time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       uv: price,
-      ema: price, // Simplified
-      high: price * 1.01,
-      low: price * 0.99
+      ema: price,
+      high: price,
+      low: price,
+      change: 0
     })
   }
   return data
 }
 
 // This will be replaced with real price history data from blockchain
+
+// Memoized Chart Component
+const MemoizedPriceChart = React.memo(({ priceHistory, t }: { priceHistory: any[], t: any }) => {
+  return (
+    <div className="h-[200px] sm:h-[300px] md:h-[400px] w-full overflow-x-auto">
+      <ResponsiveContainer width="100%" height="100%" minWidth={300}>
+        <AreaChart
+          data={priceHistory}
+          margin={{ top: 5, right: 10, left: 0, bottom: 5 }}
+        >
+          <defs>
+            <linearGradient id="colorUv" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%" stopColor="#01FEAE" stopOpacity={0.3} />
+              <stop offset="95%" stopColor="#01FEAE" stopOpacity={0} />
+            </linearGradient>
+            <linearGradient id="colorEma" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%" stopColor="#FBBF24" stopOpacity={0.3} />
+              <stop offset="95%" stopColor="#FBBF24" stopOpacity={0} />
+            </linearGradient>
+          </defs>
+          <CartesianGrid
+            strokeDasharray="4 4"
+            stroke="#4B5563"
+            vertical={true}
+            horizontalPoints={[]}
+          />
+          <YAxis
+            stroke="#9ca3af"
+            tickFormatter={(value) => value.toFixed(4)}
+            width={60}
+            tick={{ fontSize: 10 }}
+            domain={([dataMin, dataMax]) => {
+              const range = dataMax - dataMin
+              if (range <= 0.000001) {
+                const buffer = dataMin * 0.1 || 0.1
+                return [parseFloat((dataMin - buffer).toFixed(6)), parseFloat((dataMax + buffer).toFixed(6))]
+              }
+              const padding = range * 0.05
+              return [parseFloat((dataMin - padding).toFixed(6)), parseFloat((dataMax + padding).toFixed(6))]
+            }}
+            allowDecimals={true}
+            hide={false}
+          />
+          <XAxis
+            dataKey="name"
+            stroke="#9ca3af"
+            tick={{ fontSize: 9 }}
+            angle={-45}
+            textAnchor="end"
+            height={50}
+            interval={Math.ceil(priceHistory.length / 5) - 1}
+          />
+          <Tooltip
+            contentStyle={{
+              backgroundColor: "#1f2937",
+              border: "2px solid #01FEAE",
+              color: "#f3f4f6",
+              borderRadius: "8px",
+              boxShadow: "0 8px 16px -2px rgba(1, 254, 174, 0.2)",
+              padding: "8px",
+              fontSize: "12px",
+            }}
+            labelStyle={{ color: "#01FEAE", fontWeight: "bold", marginBottom: "4px", fontSize: "11px" }}
+            formatter={(value: any) => {
+              if (typeof value === "number") {
+                return value.toFixed(6)
+              }
+              return value
+            }}
+            labelFormatter={(label) => `${t.stats.time || "Time"}: ${label}`}
+            cursor={{
+              stroke: "#01FEAE",
+              strokeWidth: 2,
+              strokeDasharray: "5 5",
+            }}
+            content={(content: any) => {
+              if (!content.payload || content.payload.length === 0) return null
+              const payload = content.payload[0]?.payload as any
+              return (
+                <div className="bg-gray-900 border border-neon-500 rounded p-2 text-xs">
+                  <p className="text-neon-400 font-bold mb-1">{payload.name}</p>
+                  <p className="text-gray-300">
+                    {t.stats.price || "Price"}: <span className="text-neon-400 font-mono">${payload.uv.toFixed(6)}</span>
+                  </p>
+                  {payload.ema && (
+                    <p className="text-gray-300">
+                      EMA(7): <span className="text-amber-400 font-mono">${payload.ema.toFixed(6)}</span>
+                    </p>
+                  )}
+                  {payload.high && (
+                    <p className="text-gray-300">
+                      {t.stats.range || "Range"}: <span className="text-gray-400 font-mono">${payload.low.toFixed(6)}~${payload.high.toFixed(6)}</span>
+                    </p>
+                  )}
+                </div>
+              )
+            }}
+          />
+          <Area
+            type="monotone"
+            dataKey="uv"
+            stroke="#01FEAE"
+            strokeWidth={2}
+            fill="url(#colorUv)"
+            isAnimationActive={false}
+            dot={false}
+            name={t.stats.price || "Price"}
+          />
+          {priceHistory.length > 5 && (
+            <Area
+              type="monotone"
+              dataKey="ema"
+              stroke="#FBBF24"
+              strokeWidth={1.5}
+              strokeDasharray="5 5"
+              fill="url(#colorEma)"
+              isAnimationActive={false}
+              dot={false}
+              name="EMA(7)"
+            />
+          )}
+        </AreaChart>
+      </ResponsiveContainer>
+    </div>
+  )
+})
 
 const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClick, onWhitepaperClick }) => {
   const { t } = useLanguage()
@@ -796,132 +921,14 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
         </div>
 
         {loadingPriceHistory ? (
-          <div className="h-[200px] sm:h-[250px] md:h-[400px] w-full flex items-center justify-center">
+          <div className="h-[200px] sm:h-[300px] md:h-[400px] flex items-center justify-center bg-gray-900/30 rounded-lg border border-gray-800">
             <div className="text-center">
               <div className="w-8 h-8 border-4 border-neon-500 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
               <p className="text-xs sm:text-sm text-gray-300">Loading price history...</p>
             </div>
           </div>
         ) : (
-          <div className="h-[200px] sm:h-[300px] md:h-[400px] w-full overflow-x-auto">
-            <ResponsiveContainer width="100%" height="100%" minWidth={300}>
-              <AreaChart
-                data={priceHistory}
-                margin={{ top: 5, right: 10, left: 0, bottom: 5 }}
-              >
-                <defs>
-                  <linearGradient id="colorUv" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#01FEAE" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="#01FEAE" stopOpacity={0} />
-                  </linearGradient>
-                  <linearGradient id="colorEma" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#FBBF24" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="#FBBF24" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                {/* Enhanced Grid */}
-                <CartesianGrid
-                  strokeDasharray="4 4"
-                  stroke="#4B5563"
-                  vertical={true}
-                  horizontalPoints={[]}
-                />
-                {/* Y Axis with 6 decimal precision - adaptive */}
-                <YAxis
-                  stroke="#9ca3af"
-                  tickFormatter={(value) => value.toFixed(4)}
-                  width={60}
-                  tick={{ fontSize: 10 }}
-                  domain={["auto", "auto"]}
-                  hide={false}
-                />
-                {/* X Axis - adaptive for mobile */}
-                <XAxis
-                  dataKey="name"
-                  stroke="#9ca3af"
-                  tick={{ fontSize: 9 }}
-                  angle={-45}
-                  textAnchor="end"
-                  height={50}
-                  interval={Math.ceil(priceHistory.length / 5) - 1}
-                />
-                {/* Enhanced Tooltip */}
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: "#1f2937",
-                    border: "2px solid #01FEAE",
-                    color: "#f3f4f6",
-                    borderRadius: "8px",
-                    boxShadow: "0 8px 16px -2px rgba(1, 254, 174, 0.2)",
-                    padding: "8px",
-                    fontSize: "12px",
-                  }}
-                  labelStyle={{ color: "#01FEAE", fontWeight: "bold", marginBottom: "4px", fontSize: "11px" }}
-                  formatter={(value: any) => {
-                    if (typeof value === "number") {
-                      return value.toFixed(6)
-                    }
-                    return value
-                  }}
-                  labelFormatter={(label) => `${t.stats.time || "Time"}: ${label}`}
-                  cursor={{
-                    stroke: "#01FEAE",
-                    strokeWidth: 2,
-                    strokeDasharray: "5 5",
-                  }}
-                  content={(content: any) => {
-                    if (!content.payload || content.payload.length === 0) return null
-                    const payload = content.payload[0]?.payload as any
-                    return (
-                      <div className="bg-gray-900 border border-neon-500 rounded p-2 text-xs">
-                        <p className="text-neon-400 font-bold mb-1">{payload.name}</p>
-                        <p className="text-gray-300">
-                          {t.stats.price || "Price"}: <span className="text-neon-400 font-mono">${payload.uv.toFixed(6)}</span>
-                        </p>
-                        {payload.ema && (
-                          <p className="text-gray-300">
-                            EMA(7): <span className="text-amber-400 font-mono">${payload.ema.toFixed(6)}</span>
-                          </p>
-                        )}
-                        {payload.high && (
-                          <p className="text-gray-300">
-                            {t.stats.range || "Range"}: <span className="text-gray-400 font-mono">${payload.low.toFixed(6)}~${payload.high.toFixed(6)}</span>
-                          </p>
-                        )}
-                      </div>
-                    )
-                  }}
-                />
-                {/* Price Line */}
-                <Area
-                  type="monotone"
-                  dataKey="uv"
-                  stroke="#01FEAE"
-                  strokeWidth={2}
-                  fill="url(#colorUv)"
-                  isAnimationActive={true}
-                  animationDuration={300}
-                  dot={false}
-                  name={t.stats.price || "Price"}
-                />
-                {/* EMA Line */}
-                {priceHistory.length > 5 && (
-                  <Area
-                    type="monotone"
-                    dataKey="ema"
-                    stroke="#FBBF24"
-                    strokeWidth={1.5}
-                    strokeDasharray="5 5"
-                    fill="url(#colorEma)"
-                    isAnimationActive={true}
-                    animationDuration={300}
-                    dot={false}
-                    name="EMA(7)"
-                  />
-                )}
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
+          <MemoizedPriceChart priceHistory={priceHistory} t={t} />
         )}
 
         {/* Legend - responsive */}

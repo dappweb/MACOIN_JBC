@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react"
 import { ethers } from "ethers"
-import { Clock, ExternalLink, Gift, RefreshCw, Filter, X, ChevronRight, Copy, CheckCircle } from "lucide-react"
+import { Clock, ExternalLink, Gift, RefreshCw, Filter, X, ChevronRight, Copy, CheckCircle, Pickaxe, Zap, UserPlus, Layers } from "lucide-react"
 import { useWeb3 } from "../Web3Context"
 import { useLanguage } from "../LanguageContext"
 
@@ -203,6 +203,21 @@ const EarningsDetail: React.FC = () => {
     { value: 3, label: ui.levelReward || "Level Reward" },
   ]
 
+  const getRewardIcon = (type: number, className: string) => {
+    switch (type) {
+      case 0: // Static
+        return <Pickaxe className={className} />
+      case 1: // Dynamic
+        return <Zap className={className} />
+      case 2: // Direct
+        return <UserPlus className={className} />
+      case 3: // Level
+        return <Layers className={className} />
+      default:
+        return <Gift className={className} />
+    }
+  }
+
   const filteredRecords = filterType === 'all' 
     ? records 
     : records.filter(r => r.rewardType === filterType)
@@ -354,7 +369,7 @@ const EarningsDetail: React.FC = () => {
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex items-start gap-4 flex-1">
                     <div className="mt-1">
-                      <Gift className="w-5 h-5 text-neon-400" />
+                      {getRewardIcon(row.rewardType, "w-5 h-5 text-neon-400")}
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1 flex-wrap">
@@ -431,7 +446,7 @@ const EarningsDetail: React.FC = () => {
                 <div className="flex items-center justify-between gap-3">
                   <div className="flex items-center gap-3">
                     <div className="p-2 bg-gray-800 rounded-lg">
-                      <Gift className="w-5 h-5 text-neon-400" />
+                      {getRewardIcon(row.rewardType, "w-5 h-5 text-neon-400")}
                     </div>
                     <div>
                       <h4 className="font-bold text-white text-sm">{getRewardTypeLabel(row.rewardType)}</h4>
@@ -479,7 +494,7 @@ const EarningsDetail: React.FC = () => {
               {/* Type & Status */}
               <div className="flex items-center justify-between p-4 bg-gray-800/50 rounded-xl">
                 <div className="flex items-center gap-3">
-                  <Gift className="w-8 h-8 text-neon-400" />
+                  {getRewardIcon(selectedRecord.rewardType, "w-8 h-8 text-neon-400")}
                   <div>
                     <div className="font-bold text-white">{getRewardTypeLabel(selectedRecord.rewardType)}</div>
                     <div className="text-xs text-gray-400">{formatDate(selectedRecord.timestamp)}</div>

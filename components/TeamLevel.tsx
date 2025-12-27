@@ -157,11 +157,18 @@ const TeamLevel: React.FC = () => {
 
         {/* 移动端卡片布局 */}
         <div className="block md:hidden px-4 py-2 space-y-2">
+          {/* 表头 */}
+          <div className="grid grid-cols-3 gap-2 px-3 pb-1 text-xs text-gray-500 font-bold uppercase tracking-wider text-center">
+            <span>{t.team.colLevel}</span>
+            <span>{t.team.colCountShort || "社区地址"}</span>
+            <span>{t.team.colRewardShort || "奖励"}</span>
+          </div>
+
           {TEAM_LEVELS.map((level) => {
             const isCurrent = level.level === userLevelInfo.currentLevel
 
             let badgeStyle = isCurrent
-              ? "bg-neon-500 text-black"
+              ? "bg-neon-500 text-black shadow-[0_0_10px_rgba(34,197,94,0.4)]"
               : "bg-gray-800 text-gray-500 border border-gray-700"
             let icon = null
 
@@ -185,20 +192,37 @@ const TeamLevel: React.FC = () => {
             return (
               <div
                 key={level.level}
-                className={`flex items-center justify-between p-3 rounded-lg border ${
-                  isCurrent ? "bg-neon-900/20 border-neon-500/50" : "bg-gray-800/30 border-gray-700/50"
+                className={`grid grid-cols-3 gap-2 items-center p-3 rounded-lg border transition-all duration-300 text-center ${
+                  isCurrent 
+                    ? "bg-neon-900/20 border-neon-500/50 shadow-[inset_0_0_20px_rgba(34,197,94,0.1)] scale-[1.02]" 
+                    : "bg-gray-800/30 border-gray-700/50 hover:bg-gray-800/50"
                 }`}
               >
-                <div className="flex items-center gap-3">
-                  <div className={`h-7 px-2.5 rounded-lg flex items-center justify-center gap-1 text-sm font-bold ${badgeStyle}`}>
+                {/* 等级列 */}
+                <div className="flex justify-center">
+                  <div className={`h-7 w-14 rounded-lg flex items-center justify-center gap-1 text-sm font-bold ${badgeStyle}`}>
                     {icon}
                     {level.level}
                   </div>
-                  <span className="text-gray-400 font-mono text-sm">{level.countRequired.toLocaleString()}</span>
                 </div>
-                <span className="px-2.5 py-1 rounded-full bg-amber-500/20 text-amber-400 font-bold text-sm border border-amber-500/30">
-                  {level.reward}%
-                </span>
+
+                {/* 社区地址列 */}
+                <div className="flex justify-center">
+                  <span className={`font-mono text-sm ${isCurrent ? "text-white font-bold" : "text-gray-400"}`}>
+                    {level.countRequired.toLocaleString()}
+                  </span>
+                </div>
+
+                {/* 奖励列 */}
+                <div className="flex justify-center">
+                  <span className={`px-2.5 py-1 rounded-full font-bold text-sm border ${
+                    isCurrent
+                      ? "bg-amber-500 text-black border-amber-600 shadow-lg"
+                      : "bg-amber-500/20 text-amber-400 border-amber-500/30"
+                  }`}>
+                    {level.reward}%
+                  </span>
+                </div>
               </div>
             )
           })}

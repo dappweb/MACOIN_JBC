@@ -51,6 +51,9 @@ const MiningPanel: React.FC = () => {
   const [liquidityAmountInput, setLiquidityAmountInput] = useState('');
   const [stakeAmount, setStakeAmount] = useState<bigint>(0n);
   const [ticketFlexibilityDuration, setTicketFlexibilityDuration] = useState<number>(72 * 3600);
+  const [secondsInUnit, setSecondsInUnit] = useState<number>(60); // 从合约获取的时间单位
+  const [currentTime, setCurrentTime] = useState(Math.floor(Date.now() / 1000)); // 用于倒计时
+  const [jbcPrice, setJbcPrice] = useState<number>(1.0); // JBC 价格
   
   const { t, language } = useLanguage();
   const { protocolContract, mcContract, account, isConnected, hasReferrer, isOwner, referrerAddress, checkReferrerStatus, provider } = useWeb3();
@@ -163,6 +166,22 @@ const MiningPanel: React.FC = () => {
     return new Date(timestamp * 1000).toLocaleString();
   };
 
+  // 倒计时格式化函数
+  const formatCountdown = (endTime: number): string => {
+    const remaining = endTime - currentTime;
+    if (remaining <= 0) return t.mining?.redeemable || "可赎回";
+    
+    const days = Math.floor(remaining / 86400);
+    const hours = Math.floor((remaining % 86400) / 3600);
+    const minutes = Math.floor((remaining % 3600) / 60);
+    const seconds = remaining % 60;
+    
+    if (days > 0) {
+      return `${days}${t.mining?.dayUnit || '天'} ${hours}${t.mining?.hourUnit || '时'} ${minutes}${t.mining?.minUnit || '分'}`;
+    }
+    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+  };
+
   const getTicketStatus = () => {
     if (!ticketInfo) return null;
     if (ticketInfo.redeemed) return { label: t.mining.redeemed, color: 'text-gray-400', bg: 'bg-gray-500/20', border: 'border-gray-500/30' };
@@ -271,7 +290,7 @@ const MiningPanel: React.FC = () => {
                     currentItem.status = 'Mining';
                     currentItem.cycleDays = Number(args[2]);
                     currentItem.startTime = timestamp;
-                    currentItem.endTime = timestamp + (currentItem.cycleDays || 0) * 60; // 分钟
+                    currentItem.endTime = timestamp + (currentItem.cycleDays || 0) * secondsInUnit; // 使用合约时间单位
                 }
             } else if (item.type === 'redeem') {
                 if (currentItem && currentItem.status === 'Mining') {
@@ -327,6 +346,42 @@ const MiningPanel: React.FC = () => {
     }
     fetchFlexDuration()
   }, [protocolContract])
+
+  // 获取合约中的 SECONDS_IN_UNIT 常量
+  useEffect(() => {
+    const fetchSecondsInUnit = async () => {
+      if (!protocolContract) return;
+      try {
+        const s = await protocolContract.SECONDS_IN_UNIT();
+        setSecondsInUnit(Number(s));
+      } catch (e) {
+        console.warn("Failed to fetch SECONDS_IN_UNIT, using default 60", e);
+      }
+    };
+    fetchSecondsInUnit();
+  }, [protocolContract]);
+
+  // 每秒更新 currentTime 用于倒计时显示
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(Math.floor(Date.now() / 1000));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  // 获取 JBC 价格
+  useEffect(() => {
+    const fetchJbcPrice = async () => {
+      if (!protocolContract) return;
+      try {
+        const priceWei = await protocolContract.getJBCPrice();
+        setJbcPrice(parseFloat(ethers.formatEther(priceWei)));
+      } catch (e) {
+        console.warn("Failed to fetch JBC price, using default 1.0", e);
+      }
+    };
+    fetchJbcPrice();
+  }, [protocolContract]);
 
   // Check direct stakes from contract as fallback source of truth
   const checkDirectStakes = async () => {
@@ -913,10 +968,6 @@ const MiningPanel: React.FC = () => {
                             }`}
                         >
                             <div className="text-xl md:text-2xl font-bold mb-0.5 md:mb-1">{plan.days} <span className="text-xs md:text-sm font-normal opacity-80">{t.mining.days}</span></div>
-                            <div className={`flex items-center gap-1 text-xs md:text-sm ${selectedPlan.days === plan.days ? 'text-black/80' : 'text-gray-400'}`}>
-                                <TrendingUp size={12} className="md:w-3.5 md:h-3.5" />
-                                <span>{t.mining.daily} {plan.dailyRate}%</span>
-                            </div>
                         </button>
                     ))}
                 </div>
@@ -989,14 +1040,28 @@ const MiningPanel: React.FC = () => {
                         {/*</div>*/}
 
                          <div className="py-4 space-y-2 bg-gray-800/30 -mx-2 px-2 rounded-lg border border-gray-800">
-                            <div className="flex justify-between items-center">
-                                <span className="text-gray-400">{t.mining.dailyRev} ({selectedPlan.dailyRate}%)</span>
-                                <span className="font-mono text-neon-400 font-bold">~{dailyROI.toFixed(1)} MC</span>
-                            </div>
-                             <div className="flex justify-between items-center">
+                             <div className="flex justify-between items-center mb-1">
                                 <span className="text-gray-400">{t.mining.totalRev} ({selectedPlan.days} {t.mining.days})</span>
                                 <span className="font-mono text-neon-400 font-bold">~{totalROI.toFixed(1)} MC</span>
                             </div>
+                            
+                            <div className="grid grid-cols-2 gap-2 pt-2 border-t border-gray-700/50 mt-2">
+                                <div className="bg-gray-900/40 p-2 rounded border border-gray-700/50">
+                                    <div className="text-xs text-gray-500 mb-1">50% MC</div>
+                                    <div className="font-mono text-white text-sm">~{(totalROI / 2).toFixed(1)}</div>
+                                </div>
+                                <div className="bg-gray-900/40 p-2 rounded border border-gray-700/50">
+                                    <div className="text-xs text-gray-500 mb-1">50% JBC</div>
+                                    <div className="font-mono text-amber-400 text-sm">
+                                        ~{jbcPrice > 0 ? ((totalROI / 2) / jbcPrice).toFixed(2) : '0.00'}
+                                    </div>
+                                </div>
+                            </div>
+                            {jbcPrice > 0 && (
+                                <div className="text-xs text-gray-600 text-right mt-1 px-1">
+                                    1 JBC ≈ {jbcPrice.toFixed(4)} MC
+                                </div>
+                            )}
                          </div>
 
                     </div>
@@ -1336,8 +1401,10 @@ const MiningPanel: React.FC = () => {
                                     
                                     {item.status === 'Mining' && item.endTime && (
                                         <div className="flex flex-col text-right">
-                                            <span className="text-gray-500 mb-0.5">{t.mining.endTime}</span>
-                                            <span className="font-mono text-neon-400">{formatDate(item.endTime)}</span>
+                                            <span className="text-gray-500 mb-0.5">{t.mining?.countdown || "倒计时"}</span>
+                                            <span className={`font-mono ${item.endTime <= currentTime ? 'text-green-400' : 'text-neon-400'}`}>
+                                              {formatCountdown(item.endTime)}
+                                            </span>
                                         </div>
                                     )}
                                     

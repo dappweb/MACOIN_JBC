@@ -24,8 +24,8 @@ async function main() {
   console.log("JBC Token:", JBC_TOKEN);
 
   // 初始流动性数量（根据需要调整）
-  const MC_AMOUNT = hre.ethers.parseEther("1");  // 1.0 MC
-  const JBC_AMOUNT = hre.ethers.parseEther("1"); // 1.0 JBC
+  const MC_AMOUNT = hre.ethers.parseEther("100");  // 100.0 MC
+  const JBC_AMOUNT = hre.ethers.parseEther("100"); // 100.0 JBC
 
   const [deployer] = await hre.ethers.getSigners();
   console.log("使用账户:", deployer.address);

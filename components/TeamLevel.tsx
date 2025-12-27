@@ -147,32 +147,80 @@ const TeamLevel: React.FC = () => {
           </div>
         </div>
 
-        <div className="overflow-x-auto px-4 -mx-4 sm:mx-0 scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-900">
-          <table className="w-full text-left min-w-[600px]">
+        {/* 移动端卡片布局 */}
+        <div className="block md:hidden px-4 py-2 space-y-2">
+          {TEAM_LEVELS.map((level) => {
+            const isCurrent = level.level === userLevelInfo.currentLevel
+
+            let badgeStyle = isCurrent
+              ? "bg-neon-500 text-black"
+              : "bg-gray-800 text-gray-500 border border-gray-700"
+            let icon = null
+
+            if (level.level === "V7") {
+              badgeStyle = isCurrent
+                ? "bg-slate-300 text-black border border-slate-400 shadow-[0_0_15px_rgba(203,213,225,0.4)]"
+                : "bg-slate-300/20 text-slate-300 border border-slate-400/30"
+              icon = <Crown size={12} className={isCurrent ? "fill-black" : "fill-slate-300/20"} />
+            } else if (level.level === "V8") {
+              badgeStyle = isCurrent
+                ? "bg-cyan-300 text-black border border-cyan-400 shadow-[0_0_15px_rgba(103,232,249,0.4)]"
+                : "bg-cyan-300/20 text-cyan-300 border border-cyan-400/30"
+              icon = <Crown size={12} className={isCurrent ? "fill-black" : "fill-cyan-300/20"} />
+            } else if (level.level === "V9") {
+              badgeStyle = isCurrent
+                ? "bg-amber-400 text-black border border-amber-500 shadow-[0_0_15px_rgba(251,191,36,0.4)]"
+                : "bg-amber-400/20 text-amber-400 border border-amber-500/30"
+              icon = <Crown size={12} className={isCurrent ? "fill-black" : "fill-amber-400/20"} />
+            }
+
+            return (
+              <div
+                key={level.level}
+                className={`flex items-center justify-between p-3 rounded-lg border ${
+                  isCurrent ? "bg-neon-900/20 border-neon-500/50" : "bg-gray-800/30 border-gray-700/50"
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <div className={`h-7 px-2.5 rounded-lg flex items-center justify-center gap-1 text-sm font-bold ${badgeStyle}`}>
+                    {icon}
+                    {level.level}
+                  </div>
+                  <span className="text-gray-400 font-mono text-sm">{level.countRequired.toLocaleString()}</span>
+                </div>
+                <span className="px-2.5 py-1 rounded-full bg-amber-500/20 text-amber-400 font-bold text-sm border border-amber-500/30">
+                  {level.reward}%
+                </span>
+              </div>
+            )
+          })}
+        </div>
+
+        {/* 桌面端表格布局 */}
+        <div className="hidden md:block overflow-x-auto px-4 -mx-4 sm:mx-0 scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-900">
+          <table className="w-full text-left">
             <thead>
               <tr className="bg-gray-800/50 border-b border-gray-800">
-                <th className="p-2 md:p-4 text-gray-400 font-medium font-mono uppercase text-xs md:text-sm whitespace-nowrap">
+                <th className="p-4 text-gray-400 font-medium font-mono uppercase text-sm whitespace-nowrap">
                   {t.team.colLevel}
                 </th>
-                <th className="p-2 md:p-4 text-gray-400 font-medium font-mono uppercase text-xs md:text-sm whitespace-nowrap">
-                  <div className="flex items-center gap-1 md:gap-2">
-                    <Users size={14} className="md:w-4 md:h-4" />{" "}
-                    <span className="hidden sm:inline">{t.team.colCount}</span>
+                <th className="p-4 text-gray-400 font-medium font-mono uppercase text-sm whitespace-nowrap">
+                  <div className="flex items-center gap-2">
+                    <Users size={16} /> {t.team.colCount}
                   </div>
                 </th>
-                <th className="p-2 md:p-4 text-gray-400 font-medium font-mono uppercase text-xs md:text-sm whitespace-nowrap">
-                  <div className="flex items-center gap-1 md:gap-2">
-                    <Percent size={14} className="md:w-4 md:h-4" />{" "}
-                    <span className="hidden sm:inline">{t.team.colReward}</span>
+                <th className="p-4 text-gray-400 font-medium font-mono uppercase text-sm whitespace-nowrap">
+                  <div className="flex items-center gap-2">
+                    <Percent size={16} /> {t.team.colReward}
                   </div>
                 </th>
-                <th className="p-2 md:p-4 text-gray-400 font-medium font-mono uppercase text-xs md:text-sm text-right whitespace-nowrap">
+                <th className="p-4 text-gray-400 font-medium font-mono uppercase text-sm text-right whitespace-nowrap">
                   {t.team.colStatus}
                 </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-800">
-              {TEAM_LEVELS.map((level, index) => {
+              {TEAM_LEVELS.map((level) => {
                 const isCurrent = level.level === userLevelInfo.currentLevel
 
                 let badgeStyle = isCurrent
@@ -181,19 +229,16 @@ const TeamLevel: React.FC = () => {
                 let icon = null
 
                 if (level.level === "V7") {
-                  // Silver
                   badgeStyle = isCurrent
                     ? "bg-slate-300 text-black border border-slate-400 shadow-[0_0_15px_rgba(203,213,225,0.4)]"
                     : "bg-slate-300/20 text-slate-300 border border-slate-400/30 shadow-[0_0_10px_rgba(203,213,225,0.2)]"
                   icon = <Crown size={14} className={isCurrent ? "fill-black" : "fill-slate-300/20"} />
                 } else if (level.level === "V8") {
-                  // Platinum
                   badgeStyle = isCurrent
                     ? "bg-cyan-300 text-black border border-cyan-400 shadow-[0_0_15px_rgba(103,232,249,0.4)]"
                     : "bg-cyan-300/20 text-cyan-300 border border-cyan-400/30 shadow-[0_0_10px_rgba(103,232,249,0.2)]"
                   icon = <Crown size={14} className={isCurrent ? "fill-black" : "fill-cyan-300/20"} />
                 } else if (level.level === "V9") {
-                  // Gold
                   badgeStyle = isCurrent
                     ? "bg-amber-400 text-black border border-amber-500 shadow-[0_0_15px_rgba(251,191,36,0.4)]"
                     : "bg-amber-400/20 text-amber-400 border border-amber-500/30 shadow-[0_0_10px_rgba(251,191,36,0.2)]"
@@ -205,25 +250,21 @@ const TeamLevel: React.FC = () => {
                     key={level.level}
                     className={`group hover:bg-gray-800/50 transition-colors ${isCurrent ? "bg-neon-900/20" : ""}`}
                   >
-                    <td className="p-2 md:p-4 whitespace-nowrap">
-                      <div
-                        className={`flex items-center gap-2 font-bold ${isCurrent ? "text-neon-400" : "text-gray-300"}`}
-                      >
-                        <div
-                          className={`h-8 px-3 rounded-lg flex items-center justify-center gap-1.5 min-w-[3rem] ${badgeStyle}`}
-                        >
+                    <td className="p-4 whitespace-nowrap">
+                      <div className={`flex items-center gap-2 font-bold ${isCurrent ? "text-neon-400" : "text-gray-300"}`}>
+                        <div className={`h-8 px-3 rounded-lg flex items-center justify-center gap-1.5 min-w-[3rem] ${badgeStyle}`}>
                           {icon}
                           {level.level}
                         </div>
                       </div>
                     </td>
-                    <td className="p-2 md:p-4 text-gray-400 font-mono whitespace-nowrap">{level.countRequired.toLocaleString()}</td>
-                    <td className="p-2 md:p-4 whitespace-nowrap">
+                    <td className="p-4 text-gray-400 font-mono whitespace-nowrap">{level.countRequired.toLocaleString()}</td>
+                    <td className="p-4 whitespace-nowrap">
                       <span className="inline-block px-3 py-1 rounded-full bg-amber-500/20 text-amber-400 font-bold border border-amber-500/30">
                         {level.reward}%
                       </span>
                     </td>
-                    <td className="p-2 md:p-4 text-right whitespace-nowrap">
+                    <td className="p-4 text-right whitespace-nowrap">
                       {isCurrent ? (
                         <span className="text-neon-400 text-xs font-bold uppercase tracking-wider border border-neon-500 px-2 py-1 rounded bg-neon-900/20">
                           {t.team.current}
@@ -263,7 +304,7 @@ const TeamLevel: React.FC = () => {
             </button>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
             <div className="text-left p-4 bg-gray-800/30 rounded-xl border border-gray-700/30 relative overflow-hidden group hover:bg-gray-800/50 transition-colors">
               <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity">
                 <Users size={40} />
@@ -280,17 +321,7 @@ const TeamLevel: React.FC = () => {
               </div>
               <p className="text-xs text-gray-400 uppercase font-bold tracking-wider mb-1">{t.team.netTotalCap}</p>
               <p className="text-lg md:text-xl font-black text-blue-400 font-mono break-all">
-                {safeFormatEther(userLevelInfo.teamTotalCap)} <span className="text-xs font-bold text-blue-300">MC</span>
-              </p>
-            </div>
-
-            <div className="text-left p-4 bg-gray-800/30 rounded-xl border border-gray-700/30 relative overflow-hidden group hover:bg-gray-800/50 transition-colors">
-              <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity">
-                <Share2 size={40} />
-              </div>
-              <p className="text-xs text-gray-400 uppercase font-bold tracking-wider mb-1">{t.team.netTotalVolume}</p>
-              <p className="text-lg md:text-xl font-black text-emerald-400 font-mono break-all">
-                {safeFormatEther(userLevelInfo.teamTotalVolume)} <span className="text-xs font-bold text-emerald-300">MC</span>
+                {safeFormatEther(totalTicketAmount * 3n)} <span className="text-xs font-bold text-blue-300">MC</span>
               </p>
             </div>
           </div>

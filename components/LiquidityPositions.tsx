@@ -26,6 +26,22 @@ interface StakePosition {
   status: 'active' | 'completed' | 'redeemed';
 }
 
+// 倒计时格式化函数
+const formatCountdown = (endTime: number, currentTime: number, t: any): string => {
+  const remaining = endTime - currentTime;
+  if (remaining <= 0) return t?.mining?.redeemable || "可赎回";
+  
+  const days = Math.floor(remaining / 86400);
+  const hours = Math.floor((remaining % 86400) / 3600);
+  const minutes = Math.floor((remaining % 3600) / 60);
+  const seconds = remaining % 60;
+  
+  if (days > 0) {
+    return `${days}${t?.mining?.dayUnit || '天'} ${hours}${t?.mining?.hourUnit || '时'} ${minutes}${t?.mining?.minUnit || '分'}`;
+  }
+  return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+};
+
 const LiquidityPositions: React.FC = () => {
   const { protocolContract, account } = useWeb3();
   const { t } = useLanguage();
@@ -116,17 +132,18 @@ const LiquidityPositions: React.FC = () => {
           status = currentTime >= endTime ? 'completed' : 'active';
         }
 
-        let ratePerThousand = 0;
-        if (pos.cycleDays === 7) ratePerThousand = 20;
-        else if (pos.cycleDays === 15) ratePerThousand = 25;
-        else if (pos.cycleDays === 30) ratePerThousand = 30;
+        // 使用与合约一致的收益率 (ratePerBillion)
+        let ratePerBillion = 0n;
+        if (pos.cycleDays === 7) ratePerBillion = 13333334n;      // 1.3333334%
+        else if (pos.cycleDays === 15) ratePerBillion = 16666667n; // 1.6666667%
+        else if (pos.cycleDays === 30) ratePerBillion = 20000000n; // 2.0%
 
         const unitsPassed = Math.min(
           pos.cycleDays,
           Math.floor((currentTime - pos.startTime) / secondsInUnit)
         );
         
-        const totalStaticShouldBe = (pos.amount * BigInt(ratePerThousand) * BigInt(unitsPassed)) / 1000n;
+        const totalStaticShouldBe = (pos.amount * ratePerBillion * BigInt(unitsPassed)) / 1000000000n;
         const pendingBigInt = totalStaticShouldBe > pos.paid ? totalStaticShouldBe - pos.paid : 0n;
         const staticReward = ethers.formatEther(pendingBigInt);
 
@@ -244,9 +261,9 @@ const LiquidityPositions: React.FC = () => {
                  <span className="text-gray-300">{pos.cycleDays} {t.mining?.days || "Mins"}</span>
                </div>
                <div className="bg-black/20 rounded p-2">
-                 <span className="text-gray-500 text-xs block">{t.mining?.endTime || "End Time"}</span>
-                 <span className="text-gray-300">
-                    {new Date(pos.endTime * 1000).toLocaleTimeString()}
+                 <span className="text-gray-500 text-xs block">{t.mining?.countdown || "倒计时"}</span>
+                 <span className={`font-mono ${pos.status === 'completed' ? 'text-green-400' : 'text-neon-400'}`}>
+                    {formatCountdown(pos.endTime, currentTime, t)}
                  </span>
                </div>
             </div>

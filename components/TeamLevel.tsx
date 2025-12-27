@@ -137,13 +137,21 @@ const TeamLevel: React.FC = () => {
       <div className="glass-panel rounded-xl md:rounded-2xl overflow-hidden border border-gray-800 bg-gray-900/50 backdrop-blur-sm">
         <div className="p-4 md:p-6 border-b border-gray-800 flex flex-col sm:flex-row flex-wrap gap-3 md:gap-4 justify-between items-start sm:items-center bg-gray-800/50">
           <div>
-            <h3 className="text-lg md:text-xl font-bold text-white">
-              {t.team.current}: <span className="text-neon-400">{userLevelInfo.currentLevel}</span>
+            <h3 className="text-lg md:text-xl font-bold text-white mb-2">
+              {t.team.current}: <span className="text-neon-400 text-2xl ml-1">{userLevelInfo.currentLevel}</span>
             </h3>
-            <p className="text-xs md:text-sm text-gray-400">
-              {t.team.colCount}: {userLevelInfo.activeDirects} | {t.team.colReward}:{" "}
-              {TEAM_LEVELS.find((l) => l.level === userLevelInfo.currentLevel)?.reward || "0%"}
-            </p>
+            <div className="flex flex-wrap gap-2">
+              <div className="bg-black/30 px-3 py-1.5 rounded-lg border border-gray-700/50 flex items-center gap-2">
+                <span className="text-xs text-gray-400">{t.team.colCount}</span>
+                <span className="text-sm md:text-base font-bold text-white">{userLevelInfo.activeDirects}</span>
+              </div>
+              <div className="bg-black/30 px-3 py-1.5 rounded-lg border border-gray-700/50 flex items-center gap-2">
+                <span className="text-xs text-gray-400">{t.team.colReward}</span>
+                <span className="text-sm md:text-base font-bold text-amber-400">
+                  {TEAM_LEVELS.find((l) => l.level === userLevelInfo.currentLevel)?.reward || "0"}%
+                </span>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -309,9 +317,9 @@ const TeamLevel: React.FC = () => {
               <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity">
                 <Users size={40} />
               </div>
-              <p className="text-xs text-gray-400 uppercase font-bold tracking-wider mb-1">{t.team.netTotalAmount}</p>
-              <p className="text-lg md:text-xl font-black text-purple-400 font-mono break-all">
-                {safeFormatEther(totalTicketAmount)} <span className="text-xs font-bold text-purple-300">MC</span>
+              <p className="text-sm font-bold text-gray-400 mb-2">{t.team.netTotalAmount}</p>
+              <p className="text-2xl md:text-3xl font-black text-purple-400 font-mono break-all tracking-tight">
+                {safeFormatEther(totalTicketAmount)} <span className="text-sm font-bold text-purple-300 ml-1">MC</span>
               </p>
             </div>
 
@@ -319,9 +327,9 @@ const TeamLevel: React.FC = () => {
               <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity">
                 <Crown size={40} />
               </div>
-              <p className="text-xs text-gray-400 uppercase font-bold tracking-wider mb-1">{t.team.netTotalCap}</p>
-              <p className="text-lg md:text-xl font-black text-blue-400 font-mono break-all">
-                {safeFormatEther(totalTicketAmount * 3n)} <span className="text-xs font-bold text-blue-300">MC</span>
+              <p className="text-sm font-bold text-gray-400 mb-2">{t.team.netTotalCap}</p>
+              <p className="text-2xl md:text-3xl font-black text-blue-400 font-mono break-all tracking-tight">
+                {safeFormatEther(totalTicketAmount * 3n)} <span className="text-sm font-bold text-blue-300 ml-1">MC</span>
               </p>
             </div>
           </div>

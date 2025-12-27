@@ -29,6 +29,13 @@ const SwapPanel: React.FC = () => {
   const [validationResult, setValidationResult] = useState<SwapValidationResult>({ isValid: true });
   const [showErrorModal, setShowErrorModal] = useState(false);
   const [errorDetails, setErrorDetails] = useState({ title: '', message: '', suggestion: '' });
+  
+  // 授权相关状态
+  const [approvalStatus, setApprovalStatus] = useState<{
+    isApproved: boolean;
+    isChecking: boolean;
+    isApproving: boolean;
+  }>({ isApproved: false, isChecking: false, isApproving: false });
 
   // 从全局状态获取余额
   const balanceMC = balances.mc;
@@ -94,6 +101,7 @@ const SwapPanel: React.FC = () => {
     const timer = setTimeout(() => {
       calculateEstimate(payAmount);
       validateSwap(payAmount);
+      checkApprovalStatus(payAmount);
     }, 1000);
 
     return () => clearTimeout(timer);
@@ -120,6 +128,69 @@ const SwapPanel: React.FC = () => {
     );
 
     setValidationResult(result);
+  };
+
+  // 检查授权状态
+  const checkApprovalStatus = async (amount: string) => {
+    if (!amount || !protocolContract || !account) {
+      setApprovalStatus({ isApproved: false, isChecking: false, isApproving: false });
+      return;
+    }
+
+    setApprovalStatus(prev => ({ ...prev, isChecking: true }));
+
+    try {
+      const contract = isSelling ? jbcContract : mcContract;
+      if (contract) {
+        const allowance = await contract.allowance(account, CONTRACT_ADDRESSES.PROTOCOL);
+        const requiredAmount = ethers.parseEther(amount);
+        const isApproved = allowance >= requiredAmount;
+        
+        setApprovalStatus({ 
+          isApproved, 
+          isChecking: false, 
+          isApproving: false 
+        });
+      }
+    } catch (error) {
+      console.error('检查授权状态失败:', error);
+      setApprovalStatus({ isApproved: false, isChecking: false, isApproving: false });
+    }
+  };
+
+  // 单独的授权函数
+  const handleApproval = async () => {
+    if (!protocolContract || !payAmount) return;
+
+    setApprovalStatus(prev => ({ ...prev, isApproving: true }));
+
+    try {
+      const contract = isSelling ? jbcContract : mcContract;
+      const tokenName = isSelling ? 'JBC' : 'MC';
+      
+      if (contract) {
+        toast.loading(`正在授权${tokenName}代币...`, { id: 'approve' });
+        const approveTx = await contract.approve(CONTRACT_ADDRESSES.PROTOCOL, ethers.MaxUint256);
+        await approveTx.wait();
+        toast.success(`${tokenName}授权成功！`, { id: 'approve' });
+        
+        // 重新检查授权状态
+        await checkApprovalStatus(payAmount);
+      }
+    } catch (error: any) {
+      console.error('授权失败:', error);
+      toast.error('授权失败，请重试', { id: 'approve' });
+      
+      const errorDetails = SwapErrorHandler.formatSwapError(error);
+      setErrorDetails({
+        title: '授权失败',
+        message: errorDetails.message,
+        suggestion: errorDetails.suggestion
+      });
+      setShowErrorModal(true);
+    } finally {
+      setApprovalStatus(prev => ({ ...prev, isApproving: false }));
+    }
   };
 
   const handleSwap = async () => {
@@ -150,35 +221,23 @@ const SwapPanel: React.FC = () => {
         return;
       }
 
+      // 检查授权状态
+      if (!approvalStatus.isApproved) {
+        toast.error('请先授权代币使用权限');
+        return;
+      }
+
       setIsLoading(true);
       try {
           const amount = ethers.parseEther(payAmount);
           let tx;
 
           if (isSelling) {
-              // Sell JBC: Approve JBC -> SwapJBCToMC
-              if (jbcContract) {
-                  const allowance = await jbcContract.allowance(account, CONTRACT_ADDRESSES.PROTOCOL);
-                  if (allowance < amount) {
-                      toast.loading('正在授权JBC代币...', { id: 'approve' });
-                      const approveTx = await jbcContract.approve(CONTRACT_ADDRESSES.PROTOCOL, ethers.MaxUint256);
-                      await approveTx.wait();
-                      toast.success('JBC授权成功', { id: 'approve' });
-                  }
-              }
+              // Sell JBC -> SwapJBCToMC
               toast.loading('正在执行JBC兑换...', { id: 'swap' });
               tx = await protocolContract.swapJBCToMC(amount);
           } else {
-              // Buy JBC: Approve MC -> SwapMCToJBC
-              if (mcContract) {
-                  const allowance = await mcContract.allowance(account, CONTRACT_ADDRESSES.PROTOCOL);
-                  if (allowance < amount) {
-                      toast.loading('正在授权MC代币...', { id: 'approve' });
-                      const approveTx = await mcContract.approve(CONTRACT_ADDRESSES.PROTOCOL, ethers.MaxUint256);
-                      await approveTx.wait();
-                      toast.success('MC授权成功', { id: 'approve' });
-                  }
-              }
+              // Buy JBC -> SwapMCToJBC
               toast.loading('正在执行MC兑换...', { id: 'swap' });
               tx = await protocolContract.swapMCToJBC(amount);
           }
@@ -188,13 +247,13 @@ const SwapPanel: React.FC = () => {
           setPayAmount('');
           setGetAmount('');
           setValidationResult({ isValid: true });
+          setApprovalStatus({ isApproved: false, isChecking: false, isApproving: false });
           
           // 使用全局刷新机制
           await onTransactionSuccess('swap');
       } catch (err: any) {
           console.error('兑换失败:', err);
           toast.dismiss('swap');
-          toast.dismiss('approve');
           
           const errorDetails = SwapErrorHandler.formatSwapError(err);
           setErrorDetails(errorDetails);
@@ -394,6 +453,55 @@ const SwapPanel: React.FC = () => {
               />
             )}
 
+            {/* Authorization Status */}
+            {payAmount && parseFloat(payAmount) > 0 && (
+              <div className={`p-3 rounded-lg border text-sm ${
+                approvalStatus.isChecking 
+                  ? 'bg-blue-900/20 border-blue-500/30 text-blue-300'
+                  : approvalStatus.isApproved 
+                    ? 'bg-green-900/20 border-green-500/30 text-green-300'
+                    : 'bg-amber-900/20 border-amber-500/30 text-amber-300'
+              }`}>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    {approvalStatus.isChecking ? (
+                      <>
+                        <RotateCw className="animate-spin w-4 h-4" />
+                        <span>检查授权状态...</span>
+                      </>
+                    ) : approvalStatus.isApproved ? (
+                      <>
+                        <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                        <span>✅ {isSelling ? 'JBC' : 'MC'} 代币已授权</span>
+                      </>
+                    ) : (
+                      <>
+                        <div className="w-2 h-2 rounded-full bg-amber-500"></div>
+                        <span>⚠️ 需要授权 {isSelling ? 'JBC' : 'MC'} 代币</span>
+                      </>
+                    )}
+                  </div>
+                  
+                  {!approvalStatus.isApproved && !approvalStatus.isChecking && (
+                    <button
+                      onClick={handleApproval}
+                      disabled={approvalStatus.isApproving}
+                      className="px-3 py-1 bg-amber-600 hover:bg-amber-500 text-white text-xs rounded-lg transition-colors disabled:opacity-50 flex items-center gap-1"
+                    >
+                      {approvalStatus.isApproving && <RotateCw className="animate-spin w-3 h-3" />}
+                      {approvalStatus.isApproving ? '授权中...' : '立即授权'}
+                    </button>
+                  )}
+                </div>
+                
+                {!approvalStatus.isApproved && !approvalStatus.isChecking && (
+                  <div className="mt-2 text-xs opacity-80">
+                    💡 授权后可以使用 {isSelling ? 'JBC' : 'MC'} 代币进行兑换，这是一次性操作
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Action Button */}
             {!isConnected ? (
                  <button disabled className="w-full py-4 bg-gray-800 text-gray-500 font-bold text-lg rounded-xl cursor-not-allowed border border-gray-700">
@@ -403,10 +511,27 @@ const SwapPanel: React.FC = () => {
                 <button disabled className="w-full py-4 bg-amber-900/30 text-amber-400 font-bold text-lg rounded-xl cursor-not-allowed border border-amber-500/50">
                     ⚠️ {t.referrer.noReferrer}
                 </button>
+            ) : !payAmount || parseFloat(payAmount) <= 0 ? (
+                <button disabled className="w-full py-4 bg-gray-800 text-gray-500 font-bold text-lg rounded-xl cursor-not-allowed border border-gray-700">
+                    请输入兑换数量
+                </button>
+            ) : !validationResult.isValid ? (
+                <button disabled className="w-full py-4 bg-red-900/30 text-red-400 font-bold text-lg rounded-xl cursor-not-allowed border border-red-500/50">
+                    {validationResult.error}
+                </button>
+            ) : !approvalStatus.isApproved && !approvalStatus.isChecking ? (
+                <button 
+                    onClick={handleApproval}
+                    disabled={approvalStatus.isApproving}
+                    className="w-full py-4 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black font-bold text-lg rounded-xl transition-colors shadow-lg shadow-amber-500/40 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                    {approvalStatus.isApproving && <RotateCw className="animate-spin" size={20} />}
+                    {approvalStatus.isApproving ? '授权中...' : `授权 ${isSelling ? 'JBC' : 'MC'} 代币`}
+                </button>
             ) : (
                 <button 
                     onClick={handleSwap}
-                    disabled={isLoading || !payAmount || !validationResult.isValid}
+                    disabled={isLoading || !approvalStatus.isApproved}
                     className="w-full py-4 bg-gradient-to-r from-neon-500 to-neon-600 hover:from-neon-400 hover:to-neon-500 text-black font-bold text-lg rounded-xl transition-colors shadow-lg shadow-neon-500/40 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                     {isLoading && <RotateCw className="animate-spin" size={20} />}

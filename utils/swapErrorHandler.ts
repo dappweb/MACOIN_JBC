@@ -46,24 +46,8 @@ export class SwapErrorHandler {
         };
       }
 
-      // 3. 授权检查
-      const contract = isSelling ? jbcContract : mcContract;
-      if (contract && protocolContract) {
-        try {
-          const allowance = await contract.allowance(account, protocolContract.target);
-          const requiredAmount = ethers.parseEther(payAmount);
-          
-          if (allowance < requiredAmount) {
-            return {
-              isValid: false,
-              error: '代币授权不足',
-              suggestion: '系统将自动为您授权代币使用权限'
-            };
-          }
-        } catch (e) {
-          console.warn('授权检查失败:', e);
-        }
-      }
+      // 3. 授权检查 - 移除此检查，因为现在由UI层面处理
+      // 授权状态现在在SwapPanel中单独管理
 
       // 4. 流动性检查
       const poolMCNum = parseFloat(poolMC);
@@ -180,6 +164,12 @@ export class SwapErrorHandler {
         title: '余额不足',
         message: '您的代币余额不足以完成此次兑换',
         suggestion: '请检查余额或减少兑换数量'
+      },
+      {
+        patterns: ['insufficient allowance', 'allowance', 'ERC20: transfer amount exceeds allowance'],
+        title: '授权不足',
+        message: '代币授权额度不足，无法完成兑换',
+        suggestion: '请点击"授权"按钮为代币授权使用权限'
       },
       {
         patterns: ['user rejected', 'User denied', 'ACTION_REJECTED'],

@@ -443,12 +443,12 @@ const EarningsDetail: React.FC = () => {
       {/* Total Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
         <div className="bg-gray-900/80 border border-gray-700 rounded-xl shadow-md p-5 backdrop-blur-sm">
-          <div className="text-sm text-gray-200 mb-2">{ui.totalJbc || "Total JBC Rewards"}</div>
-          <div className="text-2xl font-bold text-amber-400 drop-shadow-lg">{totals.jbc.toFixed(4)} JBC</div>
-        </div>
-        <div className="bg-gray-900/80 border border-gray-700 rounded-xl shadow-md p-5 backdrop-blur-sm">
           <div className="text-sm text-gray-200 mb-2">{ui.totalMc || "Total MC Rewards"}</div>
           <div className="text-2xl font-bold text-neon-400 drop-shadow-lg">{totals.mc.toFixed(4)} MC</div>
+        </div>
+        <div className="bg-gray-900/80 border border-gray-700 rounded-xl shadow-md p-5 backdrop-blur-sm">
+          <div className="text-sm text-gray-200 mb-2">{ui.totalJbc || "Total JBC Rewards"}</div>
+          <div className="text-2xl font-bold text-amber-400 drop-shadow-lg">{totals.jbc.toFixed(4)} JBC</div>
         </div>
       </div>
 

@@ -103,19 +103,17 @@ async function main() {
 
   console.log("Deploying JinbaoProtocol...");
   const Protocol = await hre.ethers.getContractFactory("JinbaoProtocol");
-  const protocol = await Protocol.deploy(
+  
+  // Use deployProxy for upgradeable contract
+  const protocol = await hre.upgrades.deployProxy(Protocol, [
     mcAddress,
     jbcAddress,
     marketingWallet,
     treasuryWallet,
     lpInjectionWallet,
-    buybackWallet,
-    deployOverrides
-  );
-  const protocolDeployTx = protocol.deploymentTransaction();
-  if (protocolDeployTx) {
-    console.log("JinbaoProtocol tx hash:", protocolDeployTx.hash);
-  }
+    buybackWallet
+  ], { initializer: 'initialize' });
+
   await protocol.waitForDeployment();
   const protocolAddress = await protocol.getAddress();
   console.log("JinbaoProtocol deployed to:", protocolAddress);

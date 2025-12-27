@@ -494,7 +494,16 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, UUPSUpgradeable {
 
         // Enforce 1.5x Liquidity Rule
         // Liquidity Amount must be exactly 1.5x the Max Single Ticket Amount
-        uint256 requiredAmount = (userInfo[msg.sender].maxSingleTicketAmount * 150) / 100;
+        uint256 baseMaxAmount = userInfo[msg.sender].maxSingleTicketAmount;
+        
+        // Fallback for legacy users: if maxSingleTicketAmount is 0, use current ticket amount
+        if (baseMaxAmount == 0) {
+            baseMaxAmount = ticket.amount;
+            // Update state to fix for future
+            userInfo[msg.sender].maxSingleTicketAmount = baseMaxAmount;
+        }
+
+        uint256 requiredAmount = (baseMaxAmount * 150) / 100;
         if (amount != requiredAmount) revert InvalidAmount();
 
         _updateActiveStatus(msg.sender);

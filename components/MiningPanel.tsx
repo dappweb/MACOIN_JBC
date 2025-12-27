@@ -253,7 +253,8 @@ const MiningPanel: React.FC = () => {
     if (!isConnected) return UserMiningState.NOT_CONNECTED;
     if (isCheckingAllowance) return UserMiningState.NOT_CONNECTED; // Treat as not ready
     if (isExited) return UserMiningState.MINING_COMPLETE;
-    if (hasStakedLiquidity) return UserMiningState.ALREADY_STAKED;
+    // Allow continuous staking unless exited
+    // if (hasStakedLiquidity) return UserMiningState.ALREADY_STAKED;
     if (!isApproved) return UserMiningState.NEEDS_APPROVAL;
     return UserMiningState.READY_TO_STAKE;
   };
@@ -327,7 +328,14 @@ const MiningPanel: React.FC = () => {
       return parseFloat(ethers.formatEther(ticketInfo.maxSingleTicketAmount));
     }
     
-    // 备选：使用前端计算的历史单张最大
+    // 如果合约没有记录（老用户），则必须使用当前门票金额作为基准，
+    // 而不是使用前端的历史记录，因为合约会回退到 ticket.amount。
+    // 如果前端使用历史记录（可能大于当前），会导致计算出的流动性大于合约预期的（当前*1.5），从而导致 InvalidAmount 错误。
+    if (ticketInfo && ticketInfo.amount > 0n) {
+        return parseFloat(ethers.formatEther(ticketInfo.amount));
+    }
+
+    // 备选：使用前端计算的历史单张最大 (仅在没有ticketInfo时使用，实际上很少走到这里)
     if (maxUnredeemedTicket > 0) {
       return maxUnredeemedTicket;
     }

@@ -4,11 +4,11 @@
   "chainId": 88813,
   "explorer": "https://mcerscan.com",
   "deployer": "0x4C10831CBcF9884ba72051b5287b6c87E4F74A48",
-  "timestamp": "2025-12-27T23:41:42.308Z",
+  "timestamp": "2025-12-27T23:33:45.490Z",
   "contracts": {
     "MockMC": "0xB2B8777BcBc7A8DEf49F022773d392a8787cf9EF",
     "JBC": "0xA743cB357a9f59D349efB7985072779a094658dD",
-    "JinbaoProtocol": "0xAe774b6f3B08bC77134A0911de5e6f33e99e55D4"
+    "JinbaoProtocol": "0x9Ba2c3E37a526F69e00DEB1a6bD6A71c19C0c51E"
   },
   "wallets": {
     "marketing": "0x4C10831CBcF9884ba72051b5287b6c87E4F74A48",

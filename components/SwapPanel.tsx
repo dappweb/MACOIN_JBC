@@ -6,6 +6,9 @@ import { ArrowLeftRight, RotateCw } from 'lucide-react';
 import { ethers } from 'ethers';
 import toast from 'react-hot-toast';
 import { formatContractError } from '../utils/errorFormatter';
+import { SwapErrorHandler, SwapValidationResult } from '../utils/swapErrorHandler';
+import SwapErrorModal from './SwapErrorModal';
+import SwapValidationAlert from './SwapValidationAlert';
 
 const SwapPanel: React.FC = () => {
   const { t } = useLanguage();
@@ -21,6 +24,11 @@ const SwapPanel: React.FC = () => {
   const [poolJBC, setPoolJBC] = useState<string>('0.0');
   const [isLoading, setIsLoading] = useState(false);
   const [isRotated, setIsRotated] = useState(false);
+  
+  // 新增状态：错误处理和验证
+  const [validationResult, setValidationResult] = useState<SwapValidationResult>({ isValid: true });
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [errorDetails, setErrorDetails] = useState({ title: '', message: '', suggestion: '' });
 
   // 从全局状态获取余额
   const balanceMC = balances.mc;
@@ -81,17 +89,67 @@ const SwapPanel: React.FC = () => {
     return () => clearInterval(interval);
   }, [isConnected, account, mcContract, jbcContract, protocolContract, provider]);
 
-  // Debounce effect for calculating estimate
+  // Debounce effect for calculating estimate and validation
   useEffect(() => {
     const timer = setTimeout(() => {
       calculateEstimate(payAmount);
+      validateSwap(payAmount);
     }, 1000);
 
     return () => clearTimeout(timer);
-  }, [payAmount, isSelling, poolMC, poolJBC]);
+  }, [payAmount, isSelling, poolMC, poolJBC, balanceMC, balanceJBC]);
+
+  // 验证兑换条件
+  const validateSwap = async (amount: string) => {
+    if (!amount || !protocolContract || !account) {
+      setValidationResult({ isValid: true });
+      return;
+    }
+
+    const result = await SwapErrorHandler.validateSwapConditions(
+      amount,
+      isSelling,
+      balanceMC,
+      balanceJBC,
+      poolMC,
+      poolJBC,
+      mcContract,
+      jbcContract,
+      protocolContract,
+      account
+    );
+
+    setValidationResult(result);
+  };
 
   const handleSwap = async () => {
       if (!protocolContract || !payAmount) return;
+      
+      // 预验证
+      const validation = await SwapErrorHandler.validateSwapConditions(
+        payAmount,
+        isSelling,
+        balanceMC,
+        balanceJBC,
+        poolMC,
+        poolJBC,
+        mcContract,
+        jbcContract,
+        protocolContract,
+        account
+      );
+
+      if (!validation.isValid) {
+        const errorDetails = SwapErrorHandler.formatSwapError({ message: validation.error });
+        setErrorDetails({
+          title: errorDetails.title,
+          message: validation.error || errorDetails.message,
+          suggestion: validation.suggestion || errorDetails.suggestion
+        });
+        setShowErrorModal(true);
+        return;
+      }
+
       setIsLoading(true);
       try {
           const amount = ethers.parseEther(payAmount);
@@ -102,32 +160,45 @@ const SwapPanel: React.FC = () => {
               if (jbcContract) {
                   const allowance = await jbcContract.allowance(account, CONTRACT_ADDRESSES.PROTOCOL);
                   if (allowance < amount) {
+                      toast.loading('正在授权JBC代币...', { id: 'approve' });
                       const approveTx = await jbcContract.approve(CONTRACT_ADDRESSES.PROTOCOL, ethers.MaxUint256);
                       await approveTx.wait();
+                      toast.success('JBC授权成功', { id: 'approve' });
                   }
               }
+              toast.loading('正在执行JBC兑换...', { id: 'swap' });
               tx = await protocolContract.swapJBCToMC(amount);
           } else {
               // Buy JBC: Approve MC -> SwapMCToJBC
               if (mcContract) {
                   const allowance = await mcContract.allowance(account, CONTRACT_ADDRESSES.PROTOCOL);
                   if (allowance < amount) {
+                      toast.loading('正在授权MC代币...', { id: 'approve' });
                       const approveTx = await mcContract.approve(CONTRACT_ADDRESSES.PROTOCOL, ethers.MaxUint256);
                       await approveTx.wait();
+                      toast.success('MC授权成功', { id: 'approve' });
                   }
               }
+              toast.loading('正在执行MC兑换...', { id: 'swap' });
               tx = await protocolContract.swapMCToJBC(amount);
           }
           
           await tx.wait();
-          toast.success("Swap Successful!");
+          toast.success("兑换成功！", { id: 'swap' });
           setPayAmount('');
           setGetAmount('');
+          setValidationResult({ isValid: true });
           
           // 使用全局刷新机制
           await onTransactionSuccess('swap');
       } catch (err: any) {
-          toast.error(formatContractError(err));
+          console.error('兑换失败:', err);
+          toast.dismiss('swap');
+          toast.dismiss('approve');
+          
+          const errorDetails = SwapErrorHandler.formatSwapError(err);
+          setErrorDetails(errorDetails);
+          setShowErrorModal(true);
       } finally {
           setIsLoading(false);
       }
@@ -313,6 +384,16 @@ const SwapPanel: React.FC = () => {
                 </div>
             </div>
 
+            {/* Validation Alert */}
+            {!validationResult.isValid && (
+              <SwapValidationAlert
+                type="error"
+                message={validationResult.error || '兑换验证失败'}
+                suggestion={validationResult.suggestion}
+                className="mb-4"
+              />
+            )}
+
             {/* Action Button */}
             {!isConnected ? (
                  <button disabled className="w-full py-4 bg-gray-800 text-gray-500 font-bold text-lg rounded-xl cursor-not-allowed border border-gray-700">
@@ -325,14 +406,25 @@ const SwapPanel: React.FC = () => {
             ) : (
                 <button 
                     onClick={handleSwap}
-                    disabled={isLoading || !payAmount}
-                    className="w-full py-4 bg-gradient-to-r from-neon-500 to-neon-600 hover:from-neon-400 hover:to-neon-500 text-black font-bold text-lg rounded-xl transition-colors shadow-lg shadow-neon-500/40 disabled:opacity-50 flex items-center justify-center gap-2"
+                    disabled={isLoading || !payAmount || !validationResult.isValid}
+                    className="w-full py-4 bg-gradient-to-r from-neon-500 to-neon-600 hover:from-neon-400 hover:to-neon-500 text-black font-bold text-lg rounded-xl transition-colors shadow-lg shadow-neon-500/40 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                     {isLoading && <RotateCw className="animate-spin" size={20} />}
-                    {t.swap.confirm}
+                    {isLoading ? '兑换中...' : t.swap.confirm}
                 </button>
             )}
         </div>
+
+        {/* Error Modal */}
+        <SwapErrorModal
+          isOpen={showErrorModal}
+          onClose={() => setShowErrorModal(false)}
+          title={errorDetails.title}
+          message={errorDetails.message}
+          suggestion={errorDetails.suggestion}
+          onRetry={() => handleSwap()}
+          showContactSupport={true}
+        />
     </div>
   );
 };

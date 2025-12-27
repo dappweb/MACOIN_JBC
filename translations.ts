@@ -182,6 +182,28 @@ export const translations = {
       slipBuy: "买入滑点 50% (50% 销毁)",
       confirm: "确认兑换",
       poolLiquidity: "  LP流动池",
+      // 新增错误提示相关翻译
+      errors: {
+        insufficientBalance: "余额不足",
+        lowLiquidity: "流动性不足",
+        invalidAmount: "无效数量",
+        authorizationNeeded: "需要授权",
+        transactionFailed: "交易失败",
+        networkError: "网络错误",
+        gasInsufficient: "Gas费不足",
+        userRejected: "用户取消",
+        priceImpactHigh: "价格影响过大",
+        validationFailed: "验证失败"
+      },
+      suggestions: {
+        reduceAmount: "请减少兑换数量",
+        checkBalance: "请检查余额",
+        waitForLiquidity: "请等待流动性补充",
+        increaseGas: "请增加Gas费用",
+        checkNetwork: "请检查网络连接",
+        contactSupport: "请联系技术支持",
+        retryLater: "请稍后重试"
+      }
     },
     admin: {
       title: "管理员控制面板",

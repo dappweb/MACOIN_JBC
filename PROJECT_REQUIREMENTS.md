@@ -1,8 +1,8 @@
 # 金宝 RWA · DeFi 4.0 项目整体需求清单
 
-**最后更新**: 2025-12-24  
-**版本**: v1.0  
-**项目阶段**: 开发中 (Smart Contract v3.2 Final + Frontend Aligned)
+**最后更新**: 2025-12-28  
+**版本**: v1.0.0-stable  
+**项目阶段**: 已发布 (Released)
 
 ---
 

@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react"
 import { ethers } from "ethers"
-import { useAccount, useChainId } from "wagmi"
+import { useAccount, useChainId, useDisconnect } from "wagmi"
 import { useEthersProvider, useEthersSigner } from "./wagmi-adapters"
 import { useConnectModal } from "@rainbow-me/rainbowkit"
 
@@ -91,6 +91,7 @@ const Web3Context = createContext<Web3ContextType | undefined>(undefined)
 
 export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const { address, isConnected } = useAccount()
+  const { disconnect } = useDisconnect()
   const chainId = useChainId()
   const provider = useEthersProvider({ chainId })
   const signer = useEthersSigner({ chainId })
@@ -234,6 +235,13 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   }
 
+  const disconnectWallet = () => {
+    disconnect()
+    setHasReferrer(false)
+    setIsOwner(false)
+    setReferrerAddress(null)
+  }
+
   return (
     <Web3Context.Provider
       value={{
@@ -241,6 +249,7 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
         signer: signer || null,
         account: address || null,
         connectWallet,
+        disconnectWallet,
         isConnected,
         mcContract,
         jbcContract,

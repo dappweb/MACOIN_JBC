@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react"
 import { AppTab } from "../types"
-import { Diamond, Home, Pickaxe, Users, ArrowLeftRight, Settings, PlusCircle, Globe, FileText, Gift, AlertTriangle } from "lucide-react"
+import { Diamond, Home, Pickaxe, Users, ArrowLeftRight, Settings, PlusCircle, Globe, FileText, Gift, AlertTriangle, LogOut, Copy, Check, ChevronDown, Wallet } from "lucide-react"
 import { useLanguage } from "../LanguageContext"
 import { ConnectButton } from "@rainbow-me/rainbowkit"
 import { useWeb3 } from "../Web3Context"
@@ -15,8 +15,10 @@ interface NavbarProps {
 
 const Navbar: React.FC<NavbarProps> = ({ currentTab, setTab }) => {
   const { t, language, setLanguage } = useLanguage()
-  const { protocolContract, account, isConnected } = useWeb3()
+  const { protocolContract, account, isConnected, disconnectWallet } = useWeb3()
   const [isOwner, setIsOwner] = useState(false)
+  const [showWalletMenu, setShowWalletMenu] = useState(false)
+  const [copied, setCopied] = useState(false)
 
   const chainId = useChainId()
   const { switchChain } = useSwitchChain()
@@ -219,12 +221,120 @@ const Navbar: React.FC<NavbarProps> = ({ currentTab, setTab }) => {
                 </span>
               </button>
               {/* Button removed as requested for auto-logic */}
-              <div className="scale-90 md:scale-100 origin-right">
-                <ConnectButton
-                  showBalance={false}
-                  chainStatus="icon"
-                  accountStatus="avatar"
-                />
+              <div className="scale-90 md:scale-100 origin-right relative">
+                <ConnectButton.Custom>
+                  {({
+                    account,
+                    chain,
+                    openAccountModal,
+                    openChainModal,
+                    openConnectModal,
+                    authenticationStatus,
+                    mounted,
+                  }) => {
+                    const ready = mounted && authenticationStatus !== 'loading';
+                    const connected =
+                      ready &&
+                      authenticationStatus !== 'unauthenticated' &&
+                      authenticationStatus !== 'reconnecting' &&
+                      account; // Ensure account exists before considering connected
+
+                    return (
+                      <div
+                        {...(!ready && {
+                          'aria-hidden': true,
+                          'style': {
+                            opacity: 0,
+                            pointerEvents: 'none',
+                            userSelect: 'none',
+                          },
+                        })}
+                      >
+                        {(() => {
+                          if (!connected) {
+                            return (
+                              <button 
+                                onClick={openConnectModal} 
+                                className="bg-emerald-500 hover:bg-emerald-600 text-black font-bold py-2 px-4 rounded-xl transition-colors flex items-center gap-2"
+                              >
+                                <Wallet size={18} />
+                                <span>{t.nav.connect}</span>
+                              </button>
+                            );
+                          }
+
+                          if (chain && chain.unsupported) {
+                            return (
+                              <button onClick={openChainModal} className="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-xl transition-colors">
+                                Wrong network
+                              </button>
+                            );
+                          }
+
+                          return (
+                            <div className="relative">
+                              <button 
+                                onClick={() => setShowWalletMenu(!showWalletMenu)}
+                                className="bg-gray-800 hover:bg-gray-700 border border-gray-700 text-white font-bold py-2 px-4 rounded-xl transition-colors flex items-center gap-2"
+                              >
+                                {chain && chain.hasIcon && (
+                                  <div
+                                    style={{
+                                      background: chain.iconBackground,
+                                      width: 18,
+                                      height: 18,
+                                      borderRadius: 999,
+                                      overflow: 'hidden',
+                                      marginRight: 4,
+                                    }}
+                                  >
+                                    {chain.iconUrl && (
+                                      <img
+                                        alt={chain.name ?? 'Chain icon'}
+                                        src={chain.iconUrl}
+                                        style={{ width: 18, height: 18 }}
+                                      />
+                                    )}
+                                  </div>
+                                )}
+                                <span>{account ? account.displayName : ''}</span>
+                                <ChevronDown size={16} />
+                              </button>
+
+                              {showWalletMenu && account && (
+                                <>
+                                  <div 
+                                    className="fixed inset-0 z-10" 
+                                    onClick={() => setShowWalletMenu(false)}
+                                  />
+                                  <div className="absolute right-0 mt-2 w-56 bg-gray-900 border border-gray-700 rounded-xl shadow-xl z-20 overflow-hidden">
+                                    <button
+                                      onClick={() => copyAddress(account.address)}
+                                      className="w-full px-4 py-3 text-left text-gray-300 hover:bg-gray-800 hover:text-white transition-colors flex items-center gap-3"
+                                    >
+                                      {copied ? <Check size={16} className="text-emerald-500" /> : <Copy size={16} />}
+                                      {language === 'zh' ? '复制地址' : 'Copy Address'}
+                                    </button>
+                                    <button
+                                      onClick={() => {
+                                        disconnectWallet()
+                                        setShowWalletMenu(false)
+                                      }}
+                                      className="w-full px-4 py-3 text-left text-red-400 hover:bg-gray-800 hover:text-red-300 transition-colors flex items-center gap-3 border-t border-gray-800"
+                                    >
+                                      <LogOut size={16} />
+                                      {language === 'zh' ? '断开连接' : 'Disconnect'}
+                                    </button>
+                                  </div>
+                                </>
+                              )}
+                            </div>
+                          );
+                        })()}
+                      </div>
+                    );
+                  }}
+                </ConnectButton.Custom>
               </div>
             </div>
           </div>

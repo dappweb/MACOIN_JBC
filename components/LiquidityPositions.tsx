@@ -262,8 +262,8 @@ const LiquidityPositions: React.FC = () => {
                </div>
                <div className="bg-black/20 rounded p-2">
                  <span className="text-gray-500 text-xs block">{t.mining?.countdown || "倒计时"}</span>
-                 <span className={`font-mono ${pos.status === 'completed' ? 'text-green-400' : 'text-neon-400'}`}>
-                    {formatCountdown(pos.endTime, currentTime, t)}
+                 <span className={`font-mono ${pos.status === 'completed' ? 'text-green-400' : pos.status === 'redeemed' ? 'text-gray-400' : 'text-neon-400'}`}>
+                    {pos.status === 'redeemed' ? (t.mining?.redeemed || "已赎回") : formatCountdown(pos.endTime, currentTime, t)}
                  </span>
                </div>
             </div>

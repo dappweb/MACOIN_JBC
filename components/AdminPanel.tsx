@@ -104,17 +104,6 @@ const AdminPanel: React.FC = () => {
   const [ticketFlexibility, setTicketFlexibility] = useState('72');
   const [liquidityEnabled, setLiquidityEnabled] = useState(true);
   const [redeemEnabled, setRedeemEnabled] = useState(true);
-  const [levelConfigJson, setLevelConfigJson] = useState(JSON.stringify([
-      {minDirects: 100000, level: 9, percent: 45},
-      {minDirects: 30000, level: 8, percent: 40},
-      {minDirects: 10000, level: 7, percent: 35},
-      {minDirects: 3000, level: 6, percent: 30},
-      {minDirects: 1000, level: 5, percent: 25},
-      {minDirects: 300, level: 4, percent: 20},
-      {minDirects: 100, level: 3, percent: 15},
-      {minDirects: 30, level: 2, percent: 10},
-      {minDirects: 10, level: 1, percent: 5}
-  ], null, 2));
 
   useEffect(() => {
     if (protocolContract) {
@@ -137,21 +126,6 @@ const AdminPanel: React.FC = () => {
     }
   }, [protocolContract]);
 
-  const updateLevelConfigs = async () => {
-    if (!protocolContract) return;
-    setLoading(true);
-    try {
-      const configs = JSON.parse(levelConfigJson);
-      const tx = await protocolContract.setLevelConfigs(configs);
-      await tx.wait();
-      toast.success(t.admin.success);
-    } catch (err: any) {
-      toast.error(formatContractError(err));
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const updateTicketFlexibility = async () => {
     if (!protocolContract) return;
     setLoading(true);
@@ -171,7 +145,7 @@ const AdminPanel: React.FC = () => {
     if (!protocolContract) return;
     setLoading(true);
     try {
-      const tx = await protocolContract.setLiquidityEnabled(!liquidityEnabled);
+      const tx = await protocolContract.setOperationalStatus(!liquidityEnabled, redeemEnabled);
       await tx.wait();
       setLiquidityEnabled(!liquidityEnabled);
       toast.success(t.admin.success);
@@ -186,7 +160,7 @@ const AdminPanel: React.FC = () => {
     if (!protocolContract) return;
     setLoading(true);
     try {
-      const tx = await protocolContract.setRedeemEnabled(!redeemEnabled);
+      const tx = await protocolContract.setOperationalStatus(liquidityEnabled, !redeemEnabled);
       await tx.wait();
       setRedeemEnabled(!redeemEnabled);
       toast.success(t.admin.success);
@@ -194,21 +168,6 @@ const AdminPanel: React.FC = () => {
       toast.error(formatContractError(err));
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleDailyBurn = async () => {
-    if (!protocolContract) return;
-    setLoading(true);
-    try {
-        const tx = await protocolContract.dailyBurn();
-        await tx.wait();
-        toast.success("Daily burn executed successfully!");
-    } catch (err: any) {
-        console.error(err);
-        toast.error(formatContractError(err));
-    } finally {
-        setLoading(false);
     }
   };
 
@@ -301,7 +260,7 @@ const AdminPanel: React.FC = () => {
     if (!protocolContract) return;
     setLoading(true);
     try {
-      const tx = await protocolContract.setRedemptionFee(redeemFee);
+      const tx = await protocolContract.setRedemptionFeePercent(redeemFee);
       await tx.wait();
       toast.success(t.admin.success);
     } catch (err: any) {
@@ -612,20 +571,6 @@ const AdminPanel: React.FC = () => {
       <div className="glass-panel p-4 md:p-6 rounded-xl md:rounded-2xl bg-gray-900/50 border border-gray-800">
           <h3 className="text-lg md:text-xl font-bold mb-3 md:mb-4 text-white">{t.admin.featureSettings}</h3>
           
-          {/* Level Configs */}
-          <div className="space-y-2 mb-6">
-              <label className="text-sm md:text-base text-gray-300 block mb-1">{t.admin.levelConfig}</label>
-              <textarea 
-                  value={levelConfigJson} 
-                  onChange={e => setLevelConfigJson(e.target.value)} 
-                  rows={6}
-                  className="w-full p-2 border border-gray-700 bg-gray-900/50 rounded text-white text-xs font-mono"
-              />
-              <button onClick={updateLevelConfigs} disabled={loading} className="w-full py-2 bg-gray-700 hover:bg-gray-600 text-white rounded disabled:opacity-50 text-sm">
-                  {t.admin.updateLevel}
-              </button>
-          </div>
-
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Ticket Flexibility */}
               <div className="space-y-2">
@@ -714,26 +659,6 @@ const AdminPanel: React.FC = () => {
               <button onClick={updateWallets} disabled={loading} className="w-full py-2 md:py-2.5 bg-gradient-to-r from-neon-500 to-neon-600 hover:from-neon-400 hover:to-neon-500 text-black font-bold rounded-lg mt-2 disabled:opacity-50 text-sm md:text-base shadow-lg shadow-neon-500/30">
                   {t.admin.updateWallets}
               </button>
-          </div>
-      </div>
-
-      {/* Protocol Maintenance */}
-      <div className="glass-panel p-4 md:p-6 rounded-xl md:rounded-2xl bg-gray-900/50 border border-gray-800">
-          <h3 className="text-lg md:text-xl font-bold mb-3 md:mb-4 text-white">Protocol Maintenance</h3>
-          <div className="space-y-3">
-               <div className="flex items-center justify-between p-3 border border-gray-700 rounded bg-gray-900/30">
-                  <div>
-                      <span className="text-gray-300 text-sm font-bold block">Daily Burn</span>
-                      <span className="text-gray-500 text-xs">Burn 1% of JBC in LP Pool (Once per 24h)</span>
-                  </div>
-                  <button 
-                      onClick={handleDailyBurn}
-                      disabled={loading}
-                      className="px-4 py-2 bg-red-500/20 text-red-400 border border-red-500/30 hover:bg-red-500/30 rounded-lg text-sm font-bold transition-all"
-                  >
-                      Execute Burn
-                  </button>
-              </div>
           </div>
       </div>
 

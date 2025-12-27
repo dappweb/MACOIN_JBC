@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useLanguage } from '../LanguageContext';
 import { useWeb3, CONTRACT_ADDRESSES } from '../Web3Context';
+import { useGlobalRefresh, useEventRefresh } from '../hooks/useGlobalRefresh';
 import { ArrowLeftRight, RotateCw } from 'lucide-react';
 import { ethers } from 'ethers';
 import toast from 'react-hot-toast';
@@ -10,39 +11,42 @@ const SwapPanel: React.FC = () => {
   const { t } = useLanguage();
   const { mcContract, jbcContract, protocolContract, account, isConnected, provider, hasReferrer, isOwner } = useWeb3();
   
+  // 使用全局刷新机制
+  const { balances, onTransactionSuccess } = useGlobalRefresh();
+  
   const [payAmount, setPayAmount] = useState('');
   const [getAmount, setGetAmount] = useState('');
   const [isSelling, setIsSelling] = useState(false); // false = Buy JBC (Pay MC), true = Sell JBC (Pay JBC)
-  const [balanceMC, setBalanceMC] = useState<string>('0.0');
-  const [balanceJBC, setBalanceJBC] = useState<string>('0.0');
   const [poolMC, setPoolMC] = useState<string>('0.0');
   const [poolJBC, setPoolJBC] = useState<string>('0.0');
   const [isLoading, setIsLoading] = useState(false);
   const [isRotated, setIsRotated] = useState(false);
 
-  // 提取余额获取逻辑为独立函数，方便在交易后刷新
-  const fetchBalances = async () => {
-    // 1. Fetch Pool Liquidity (Public Data)
-    // 只要有合约实例即可获取，不需要连接钱包
+  // 从全局状态获取余额
+  const balanceMC = balances.mc;
+  const balanceJBC = balances.jbc;
+
+  // 监听池子数据变化事件
+  useEventRefresh('poolDataChanged', () => {
+    console.log('🏊 [SwapPanel] 池子数据变化，刷新池子储备');
+    fetchPoolData();
+  });
+
+  // 提取池子数据获取逻辑
+  const fetchPoolData = async () => {
     if (protocolContract) {
         try {
-            // Pool Liquidity should be fetched from Protocol Contract state variables
-            // swapReserveMC and swapReserveJBC
-            
             console.log('💰 [SwapPanel] 正在获取池子储备量...')
             
-            // Note: If contract instance is created with provider, these calls are read-only
             const poolMcBal = await protocolContract.swapReserveMC();
             const poolMcFormatted = ethers.formatEther(poolMcBal);
             setPoolMC(poolMcFormatted);
             console.log('💰 [SwapPanel] MC 池子储备:', poolMcFormatted, 'MC')
-            console.log('💰 [SwapPanel] MC 池子储备 (原始):', poolMcBal.toString(), 'wei')
 
             const poolJbcBal = await protocolContract.swapReserveJBC();
             const poolJbcFormatted = ethers.formatEther(poolJbcBal);
             setPoolJBC(poolJbcFormatted);
             console.log('💰 [SwapPanel] JBC 池子储备:', poolJbcFormatted, 'JBC')
-            console.log('💰 [SwapPanel] JBC 池子储备 (原始):', poolJbcBal.toString(), 'wei')
             
             // 计算 LP 总量
             const mcAmount = parseFloat(poolMcFormatted);
@@ -60,35 +64,20 @@ const SwapPanel: React.FC = () => {
     } else {
          console.log('⚠️ [SwapPanel] protocolContract 未初始化')
     }
+  };
 
-    // 2. Fetch User Balances (Private Data)
-    if (isConnected && account) {
-        try {
-            if (mcContract) {
-                // Fetch ERC20 MC Balance (Contract uses ERC20)
-                const mcBal = await mcContract.balanceOf(account);
-                setBalanceMC(ethers.formatEther(mcBal));
-            }
+  // 提取余额获取逻辑为独立函数，方便在交易后刷新
+  const fetchBalances = async () => {
+    // 池子数据获取
+    await fetchPoolData();
 
-            if (jbcContract) {
-                const jbcBal = await jbcContract.balanceOf(account);
-                setBalanceJBC(ethers.formatEther(jbcBal));
-            }
-
-            // Optional: Log native balance for debugging
-            if (provider) {
-                const native = await provider.getBalance(account);
-            }
-
-        } catch (err) {
-            console.error("Failed to fetch user balances", err);
-        }
-    }
+    // 用户余额现在从全局状态获取，无需单独获取
+    console.log('✅ [SwapPanel] 余额数据已从全局状态获取');
   };
 
   useEffect(() => {
     fetchBalances();
-    const interval = setInterval(fetchBalances, 10000);
+    const interval = setInterval(fetchPoolData, 30000); // 只刷新池子数据，余额由全局状态管理
     return () => clearInterval(interval);
   }, [isConnected, account, mcContract, jbcContract, protocolContract, provider]);
 
@@ -134,8 +123,9 @@ const SwapPanel: React.FC = () => {
           toast.success("Swap Successful!");
           setPayAmount('');
           setGetAmount('');
-          // 刷新余额和池子数据
-          await fetchBalances();
+          
+          // 使用全局刷新机制
+          await onTransactionSuccess('swap');
       } catch (err: any) {
           toast.error(formatContractError(err));
       } finally {

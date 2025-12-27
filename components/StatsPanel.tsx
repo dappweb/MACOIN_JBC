@@ -1,12 +1,24 @@
-import React, { useEffect, useState } from "react"
+import React, { useEffect, useState, useMemo } from "react"
 import { UserStats } from "../types"
 import { Wallet, TrendingUp, Users, Coins, ArrowUpRight, Link } from "lucide-react"
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"
 import { useLanguage } from "../LanguageContext"
 import { useWeb3 } from "../Web3Context"
+import { useGlobalRefresh, useEventRefresh } from "../hooks/useGlobalRefresh"
+import { useRealTimePrice } from "../hooks/useRealTimePrice"
 import { ethers } from "ethers"
 import toast from "react-hot-toast"
 import { formatContractError } from "../utils/errorFormatter"
+
+// 价格数据点类型定义
+interface PriceDataPoint {
+  name: string;
+  uv: number;
+  ema?: number;
+  high: number;
+  low: number;
+  change: number;
+}
 
 interface StatsPanelProps {
   stats: UserStats
@@ -15,9 +27,9 @@ interface StatsPanelProps {
 }
 
 // Mock data generator for fallback
-const generateMockPriceData = () => {
+const generateMockPriceData = (): PriceDataPoint[] => {
   const now = Date.now()
-  const data = []
+  const data: PriceDataPoint[] = []
   const price = 1.0
   for (let i = 0; i < 24; i++) {
     const time = now - (24 - i) * 3600 * 1000
@@ -36,7 +48,7 @@ const generateMockPriceData = () => {
 // This will be replaced with real price history data from blockchain
 
 // Memoized Chart Component
-const MemoizedPriceChart = React.memo(({ priceHistory, t }: { priceHistory: any[], t: any }) => {
+const MemoizedPriceChart = React.memo(({ priceHistory, t }: { priceHistory: PriceDataPoint[], t: any }) => {
   return (
     <div className="h-[200px] sm:h-[300px] md:h-[400px] w-full overflow-x-auto">
       <ResponsiveContainer width="100%" height="100%" minWidth={300}>
@@ -164,450 +176,65 @@ const MemoizedPriceChart = React.memo(({ priceHistory, t }: { priceHistory: any[
 const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClick, onWhitepaperClick }) => {
   const { t } = useLanguage()
   const { mcContract, jbcContract, protocolContract, account, isConnected, provider } = useWeb3()
+  
+  // 使用全局刷新机制
+  const { balances, priceData, refreshAll } = useGlobalRefresh()
+  
+  // 使用实时价格更新
+  const { priceHistory: rawPriceHistory, priceStats, currentPrice } = useRealTimePrice()
+  
   const [displayStats, setDisplayStats] = useState<UserStats>(initialStats)
-  const [jbcPrice, setJbcPrice] = useState<string>("1.0")
   const [rewardTotals, setRewardTotals] = useState({ mc: 0, jbc: 0 })
-  const [mcUsdtPrice, setMcUsdtPrice] = useState<number>(0)
 
-  // Fetch MC/USDT Price
-  useEffect(() => {
-    const fetchMcPrice = async () => {
-      try {
-        const response = await fetch('https://api.macoin.ai/market/symbol-thumb')
-        const data = await response.json()
-        const mcData = data.find((item: any) => item.symbol === 'MC/USDT')
-        if (mcData) {
-          setMcUsdtPrice(parseFloat(mcData.close))
-        }
-      } catch (error) {
-        console.error("Failed to fetch MC price:", error)
-      }
+  // 从全局状态获取价格数据
+  const jbcPrice = priceData.jbcPrice.toString()
+  const mcUsdtPrice = priceData.mcUsdtPrice
+
+  // 格式化价格历史数据用于图表显示
+  const priceHistory: PriceDataPoint[] = useMemo(() => {
+    if (rawPriceHistory.length === 0) {
+      return generateMockPriceData()
     }
-    
-    fetchMcPrice()
-    const interval = setInterval(fetchMcPrice, 60000) // Update every minute
-    return () => clearInterval(interval)
-  }, [])
+
+    // 转换实时价格数据为图表格式
+    return rawPriceHistory.map((point, index) => {
+      const date = new Date(point.timestamp * 1000)
+      const timeStr = `${date.getHours().toString().padStart(2, "0")}:${date.getMinutes().toString().padStart(2, "0")}`
+      
+      return {
+        name: timeStr,
+        uv: point.price,
+        ema: point.price, // EMA 计算已在 hook 中处理
+        high: point.price,
+        low: point.price,
+        change: 0
+      }
+    })
+  }, [rawPriceHistory])
+
+  // 监听余额变化事件
+  useEventRefresh('balanceUpdated', () => {
+    console.log('💰 [StatsPanel] 余额更新，刷新显示数据');
+    // 余额数据已通过全局状态自动更新
+  });
+
+  // 监听价格变化事件
+  useEventRefresh('priceUpdated', () => {
+    console.log('📈 [StatsPanel] 价格更新');
+    // 价格数据已通过全局状态和实时价格Hook自动更新
+  });
 
   // Bind Referrer State
   const [referrer, setReferrer] = useState("")
   const [isBound, setIsBound] = useState(false)
   const [isBinding, setIsBinding] = useState(false)
 
-  // Price History State
-  interface PriceDataPoint {
-    name: string
-    uv: number
-    ema?: number
-    high?: number
-    low?: number
-    change?: number
-  }
-
-  const [priceHistory, setPriceHistory] = useState<PriceDataPoint[]>([])
-  const [loadingPriceHistory, setLoadingPriceHistory] = useState(true)
-  const [realtimePrices, setRealtimePrices] = useState<Array<{ timestamp: number; price: number }>>([])
-  const [priceStats, setPriceStats] = useState({ high: 0, low: 0, change: 0, avgPrice: 0 })
-
-  // Calculate EMA (Exponential Moving Average)
-  const calculateEMA = (prices: number[], period: number = 7): number[] => {
-    if (prices.length === 0) return []
-    
-    const emaValues: number[] = []
-    const multiplier = 2 / (period + 1)
-    
-    // Start EMA with SMA
-    let sma = prices.slice(0, Math.min(period, prices.length)).reduce((a, b) => a + b, 0) / Math.min(period, prices.length)
-    emaValues.push(sma)
-    
-    // Calculate EMA for remaining values
-    for (let i = 1; i < prices.length; i++) {
-      const ema = (prices[i] - emaValues[i - 1]) * multiplier + emaValues[i - 1]
-      emaValues.push(ema)
-    }
-    
-    return emaValues
-  }
-
-  // Helper function to format price data for chart
-  const formatPriceHistory = (pricePoints: Array<{ timestamp: number; price: number }>) => {
-    if (pricePoints.length === 0) {
-      return generateMockPriceData()
-    }
-
-    // Sort by timestamp
-    const sorted = [...pricePoints].sort((a, b) => a.timestamp - b.timestamp)
-
-    // Dynamic aggregation based on data count - keep more data points for better granularity
-    let aggregatedData: Array<{ name: string; prices: number[]; high: number; low: number }> = []
-
-    if (sorted.length < 15) {
-      // Few data points: aggregate by 30 minutes
-      const period30mPrices = new Map<number, number[]>()
-      for (const point of sorted) {
-        const period = Math.floor(point.timestamp / 1800) * 1800 // 30 minutes
-        if (!period30mPrices.has(period)) {
-          period30mPrices.set(period, [])
-        }
-        period30mPrices.get(period)!.push(point.price)
-      }
-
-      aggregatedData = Array.from(period30mPrices.entries())
-        .map(([period, prices]) => {
-          const date = new Date(period * 1000)
-          const timeStr = `${date.getHours().toString().padStart(2, "0")}:${date.getMinutes().toString().padStart(2, "0")}`
-          return {
-            name: timeStr,
-            prices,
-            high: Math.max(...prices),
-            low: Math.min(...prices),
-          }
-        })
-        .slice(-50)
-    } else if (sorted.length < 100) {
-      // Medium data points: aggregate by hour
-      const hourlyPrices = new Map<number, number[]>()
-      for (const point of sorted) {
-        const hour = Math.floor(point.timestamp / 3600) * 3600
-        if (!hourlyPrices.has(hour)) {
-          hourlyPrices.set(hour, [])
-        }
-        hourlyPrices.get(hour)!.push(point.price)
-      }
-
-      aggregatedData = Array.from(hourlyPrices.entries())
-        .map(([hour, prices]) => {
-          const date = new Date(hour * 1000)
-          const timeStr = `${date.getMonth() + 1}/${date.getDate()} ${date.getHours().toString().padStart(2, "0")}:00`
-          return {
-            name: timeStr,
-            prices,
-            high: Math.max(...prices),
-            low: Math.min(...prices),
-          }
-        })
-        .slice(-50)
-    } else {
-      // Many data points: aggregate by 4 hours
-      const period4hPrices = new Map<number, number[]>()
-      for (const point of sorted) {
-        const period = Math.floor(point.timestamp / 14400) * 14400 // 4 hours
-        if (!period4hPrices.has(period)) {
-          period4hPrices.set(period, [])
-        }
-        period4hPrices.get(period)!.push(point.price)
-      }
-
-      aggregatedData = Array.from(period4hPrices.entries())
-        .map(([period, prices]) => {
-          const date = new Date(period * 1000)
-          const timeStr = `${date.getMonth() + 1}/${date.getDate()}`
-          return {
-            name: timeStr,
-            prices,
-            high: Math.max(...prices),
-            low: Math.min(...prices),
-          }
-        })
-        .slice(-50)
-    }
-
-    // Convert to chart format with EMA and stats
-    const allPrices = aggregatedData.flatMap(d => d.prices)
-    const emaValues = calculateEMA(allPrices, 7)
-    
-    const chartData: PriceDataPoint[] = aggregatedData.map((data, idx) => {
-      const avgPrice = data.prices.reduce((a, b) => a + b, 0) / data.prices.length
-      const change = idx === 0 ? 0 : ((avgPrice - aggregatedData[idx - 1].prices[0]) / aggregatedData[idx - 1].prices[0]) * 100
-      
-      return {
-        name: data.name,
-        uv: avgPrice,
-        ema: emaValues[idx] || avgPrice,
-        high: data.high,
-        low: data.low,
-        change: parseFloat(change.toFixed(2)),
-      }
-    })
-
-    // Calculate overall stats
-    if (chartData.length > 0) {
-      const prices = chartData.map(d => d.uv)
-      const high = Math.max(...prices)
-      const low = Math.min(...prices)
-      const change = ((prices[prices.length - 1] - prices[0]) / prices[0]) * 100
-      const avgPrice = prices.reduce((a, b) => a + b, 0) / prices.length
-      
-      setPriceStats({
-        high: parseFloat(high.toFixed(6)),
-        low: parseFloat(low.toFixed(6)),
-        change: parseFloat(change.toFixed(2)),
-        avgPrice: parseFloat(avgPrice.toFixed(6)),
-      })
-    }
-
-    return chartData.length > 0 ? chartData : generateMockPriceData()
-  }
-
-  // Generate interpolated data to ensure minimum 10 points
-  const generateInterpolatedData = (aggregatedData: Array<any>, allPrices: number[]): PriceDataPoint[] => {
-    if (aggregatedData.length === 0) return generateMockPriceData()
-
-    const result: PriceDataPoint[] = []
-    const basePrice = allPrices[0]
-
-    // Generate 15 interpolated points based on existing data
-    for (let i = 0; i < 15; i++) {
-      const progress = i / 14
-      const baseIdx = Math.floor((aggregatedData.length - 1) * progress)
-      const nextIdx = Math.min(baseIdx + 1, aggregatedData.length - 1)
-      
-      const current = aggregatedData[baseIdx]
-      const next = aggregatedData[nextIdx]
-      
-      const currentPrice = current.prices.reduce((a: number, b: number) => a + b, 0) / current.prices.length
-      const nextPrice = next.prices.reduce((a: number, b: number) => a + b, 0) / next.prices.length
-      
-      const localProgress = (aggregatedData.length - 1) * progress - baseIdx
-      const interpolatedPrice = currentPrice + (nextPrice - currentPrice) * localProgress
-      
-      result.push({
-        name: current.name,
-        uv: parseFloat(interpolatedPrice.toFixed(6)),
-        ema: parseFloat(interpolatedPrice.toFixed(6)),
-        high: current.high,
-        low: current.low,
-        change: 0,
-      })
-    }
-
-    return result
-  }
-
-  // Generate fallback data (flat line based on current price)
-  const generateFallbackData = (currentPriceStr: string = "1.0"): PriceDataPoint[] => {
-    const now = Math.floor(Date.now() / 1000)
-    const price = parseFloat(currentPriceStr) || 1.0
-    const data: PriceDataPoint[] = []
-
-    // Generate 15 points (flat line)
-    for (let i = 0; i < 15; i++) {
-      const timestamp = now - (14 - i) * 3600
-      const date = new Date(timestamp * 1000)
-      const timeStr = `${date.getMonth() + 1}/${date.getDate()} ${date.getHours().toString().padStart(2, "0")}:00`
-      
-      data.push({
-        name: timeStr,
-        uv: price,
-        ema: price,
-        high: price,
-        low: price,
-        change: 0,
-      })
-    }
-
-    // Calculate stats
-    setPriceStats({
-      high: price,
-      low: price,
-      change: 0,
-      avgPrice: price,
-    })
-
-    return data
-  }
-
-  // Fetch Initial Price History from Swap Events
-  useEffect(() => {
-    const fetchPriceHistory = async () => {
-      if (!protocolContract || !provider) {
-        setLoadingPriceHistory(false)
-        return
-      }
-
-      try {
-        setLoadingPriceHistory(true)
-        const currentBlock = await provider.getBlockNumber()
-        const fromBlock = Math.max(0, currentBlock - 100000) // Last ~100k blocks
-
-        // Query both swap events
-        const [mcToJbcEvents, jbcToMcEvents] = await Promise.all([
-          protocolContract.queryFilter(protocolContract.filters.SwappedMCToJBC(), fromBlock),
-          protocolContract.queryFilter(protocolContract.filters.SwappedJBCToMC(), fromBlock),
-        ])
-
-        interface PricePoint {
-          timestamp: number
-          price: number
-        }
-
-        const pricePoints: PricePoint[] = []
-
-        // Parse MC->JBC swaps: price = mcAmount / (jbcAmount + tax)
-        for (const event of mcToJbcEvents) {
-          try {
-            const block = await provider.getBlock(event.blockNumber)
-            if (event.args && block) {
-              const mcAmount = parseFloat(ethers.formatEther(event.args[1]))
-              const jbcAmount = parseFloat(ethers.formatEther(event.args[2]))
-              const tax = parseFloat(ethers.formatEther(event.args[3]))
-              const totalJbcOut = jbcAmount + tax
-              
-              if (totalJbcOut > 0) {
-                const price = mcAmount / totalJbcOut
-                pricePoints.push({
-                  timestamp: block.timestamp,
-                  price: price,
-                })
-              }
-            }
-          } catch (err) {
-            console.error("Error parsing MC->JBC event:", err)
-          }
-        }
-
-        // Parse JBC->MC swaps: price = mcAmount / (jbcAmount - tax)
-        for (const event of jbcToMcEvents) {
-          try {
-            const block = await provider.getBlock(event.blockNumber)
-            if (event.args && block) {
-              const jbcAmount = parseFloat(ethers.formatEther(event.args[1]))
-              const mcAmount = parseFloat(ethers.formatEther(event.args[2]))
-              const tax = parseFloat(ethers.formatEther(event.args[3]))
-              const actualSwappedJbc = jbcAmount - tax
-              
-              if (actualSwappedJbc > 0) {
-                const price = mcAmount / actualSwappedJbc
-                pricePoints.push({
-                  timestamp: block.timestamp,
-                  price: price,
-                })
-              }
-            }
-          } catch (err) {
-            console.error("Error parsing JBC->MC event:", err)
-          }
-        }
-
-        // If data points are sparse (less than 10), fill with mock/interpolated data to prevent chart jitter
-        let finalPricePoints = pricePoints;
-        if (pricePoints.length < 10) {
-             const now = Math.floor(Date.now() / 1000);
-             const basePrice = pricePoints.length > 0 ? pricePoints[pricePoints.length - 1].price : 1.0;
-             const mockPoints: PricePoint[] = [];
-             
-             // Generate padding points leading up to the real data or current time
-             // If we have some data, pad before it. If no data, generate full mock set.
-             const targetCount = 20;
-             const existingCount = pricePoints.length;
-             
-             for(let i = 0; i < targetCount - existingCount; i++) {
-                 // Create points every hour going backwards
-                 const timeOffset = (targetCount - existingCount - i) * 3600; 
-                 // Use flat price for padding (no random variation)
-                 const variation = 0; 
-                 mockPoints.push({
-                     timestamp: now - timeOffset,
-                     price: basePrice
-                 });
-             }
-             finalPricePoints = [...mockPoints, ...pricePoints].sort((a, b) => a.timestamp - b.timestamp);
-        }
-
-        // Store price points and format for chart
-        setRealtimePrices(finalPricePoints)
-        setPriceHistory(formatPriceHistory(finalPricePoints))
-      } catch (error) {
-        console.error("Failed to fetch price history:", error)
-        setPriceHistory([{ name: "Now", uv: 1.0 }])
-      } finally {
-        setLoadingPriceHistory(false)
-      }
-    }
-
-    fetchPriceHistory()
-  }, [protocolContract, provider])
-
-  // Real-time event listener for price updates
-  useEffect(() => {
-    if (!protocolContract || !provider) return
-
-    const handleSwapMCToJBC = (user: string, mcAmount: any, jbcAmount: any, tax: any, event: any) => {
-      try {
-        const mcAmountNum = parseFloat(ethers.formatEther(mcAmount))
-        const jbcAmountNum = parseFloat(ethers.formatEther(jbcAmount))
-        const taxNum = parseFloat(ethers.formatEther(tax))
-        const totalJbcOut = jbcAmountNum + taxNum
-
-        if (totalJbcOut > 0) {
-          const price = mcAmountNum / totalJbcOut
-          const timestamp = Math.floor(Date.now() / 1000)
-
-          setRealtimePrices((prev) => {
-            const updated = [...prev, { timestamp, price }]
-            // Keep only last 500 points to avoid memory issues
-            const limited = updated.slice(-500)
-            setPriceHistory(formatPriceHistory(limited))
-            return limited
-          })
-        }
-      } catch (err) {
-        console.error("Error processing SwappedMCToJBC event:", err)
-      }
-    }
-
-    const handleSwapJBCToMC = (user: string, jbcAmount: any, mcAmount: any, tax: any, event: any) => {
-      try {
-        const jbcAmountNum = parseFloat(ethers.formatEther(jbcAmount))
-        const mcAmountNum = parseFloat(ethers.formatEther(mcAmount))
-        const taxNum = parseFloat(ethers.formatEther(tax))
-        const actualSwappedJbc = jbcAmountNum - taxNum
-
-        if (actualSwappedJbc > 0) {
-          const price = mcAmountNum / actualSwappedJbc
-          const timestamp = Math.floor(Date.now() / 1000)
-
-          setRealtimePrices((prev) => {
-            const updated = [...prev, { timestamp, price }]
-            // Keep only last 500 points to avoid memory issues
-            const limited = updated.slice(-500)
-            setPriceHistory(formatPriceHistory(limited))
-            return limited
-          })
-        }
-      } catch (err) {
-        console.error("Error processing SwappedJBCToMC event:", err)
-      }
-    }
-
-    // Set up event listeners
-    protocolContract.on("SwappedMCToJBC", handleSwapMCToJBC)
-    protocolContract.on("SwappedJBCToMC", handleSwapJBCToMC)
-
-    // Cleanup listeners on unmount
-    return () => {
-      protocolContract.removeListener("SwappedMCToJBC", handleSwapMCToJBC)
-      protocolContract.removeListener("SwappedJBCToMC", handleSwapJBCToMC)
-    }
-  }, [protocolContract, provider])
-
+  // 获取用户数据的useEffect
   useEffect(() => {
     const fetchData = async () => {
       if (isConnected && account && mcContract && jbcContract && protocolContract) {
         try {
-          // Fetch MC Balance
-          const mcBal = await mcContract.balanceOf(account)
-
-          // Fetch JBC Balance
-          const jbcBal = await jbcContract.balanceOf(account)
-
-          // Fetch JBC Price from Contract (Spot Price)
-          try {
-            const priceWei = await protocolContract.getJBCPrice()
-            setJbcPrice(ethers.formatEther(priceWei))
-          } catch (e) {
-            console.log("Price fetch failed (maybe old contract)", e)
-          }
+          // 余额数据现在从全局状态获取，不需要重复获取
 
           // Fetch Protocol Info
           const userInfo = await protocolContract.userInfo(account)
@@ -676,8 +303,8 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
 
           setDisplayStats((prev) => ({
             ...prev,
-            balanceMC: parseFloat(ethers.formatEther(mcBal)),
-            balanceJBC: parseFloat(ethers.formatEther(jbcBal)),
+            balanceMC: parseFloat(balances.mc), // 使用全局状态的余额
+            balanceJBC: parseFloat(balances.jbc), // 使用全局状态的余额
             totalRevenue: combinedRevenue,
             teamCount: Number(userInfo[2]),
             currentLevel: level,
@@ -690,7 +317,7 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
     const timer = setInterval(fetchData, 5000) // Refresh every 5s
     fetchData()
     return () => clearInterval(timer)
-  }, [isConnected, account, mcContract, jbcContract, protocolContract])
+  }, [isConnected, account, mcContract, jbcContract, protocolContract, balances.mc, balances.jbc]) // 添加余额依赖
 
   const handleBind = async () => {
     if (referrer.trim() && protocolContract) {
@@ -908,7 +535,7 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
           <h3 className="text-sm sm:text-base md:text-lg font-bold text-white border-l-4 border-neon-500 pl-3">
             {t.stats.chartTitle}
           </h3>
-          {!loadingPriceHistory && priceHistory.length > 1 && (
+          {priceHistory.length > 1 && (
             <div className="grid grid-cols-2 sm:flex sm:gap-2 md:gap-4 text-xs md:text-sm gap-2">
               <div className="text-center bg-gray-900/70 p-2 sm:p-3 rounded border border-gray-700">
                 <div className="text-gray-300 text-[10px] sm:text-xs font-medium">{t.stats.high}</div>
@@ -932,16 +559,7 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
           )}
         </div>
 
-        {loadingPriceHistory ? (
-          <div className="h-[200px] sm:h-[300px] md:h-[400px] flex items-center justify-center bg-gray-900/30 rounded-lg border border-gray-800">
-            <div className="text-center">
-              <div className="w-8 h-8 border-4 border-neon-500 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
-              <p className="text-xs sm:text-sm text-gray-300">Loading price history...</p>
-            </div>
-          </div>
-        ) : (
-          <MemoizedPriceChart priceHistory={priceHistory} t={t} />
-        )}
+        <MemoizedPriceChart priceHistory={priceHistory} t={t} />
 
         {/* Legend - responsive */}
         <div className="mt-3 sm:mt-4 flex flex-wrap gap-2 sm:gap-4 text-[10px] sm:text-xs text-gray-300">

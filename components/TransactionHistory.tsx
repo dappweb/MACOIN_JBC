@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useWeb3 } from '../Web3Context';
 import { useLanguage } from '../LanguageContext';
+import { useEventRefresh } from '../hooks/useGlobalRefresh';
 import { FileText, X, Copy, ExternalLink, Filter, RefreshCw, Clock, TrendingUp, TrendingDown, ChevronRight, Package, Lock, Gift, Unlock, Calendar, DollarSign, ChevronDown, CheckCircle } from 'lucide-react';
 import { ethers } from 'ethers';
 
@@ -64,6 +65,27 @@ const TransactionHistory: React.FC = () => {
     };
     checkOwner();
   }, [protocolContract, account]);
+
+  // 监听交易相关事件，自动刷新交易历史
+  useEventRefresh('ticketStatusChanged', () => {
+    console.log('🎫 [TransactionHistory] 门票状态变化，刷新交易历史');
+    fetchTransactions();
+  });
+
+  useEventRefresh('stakingStatusChanged', () => {
+    console.log('💰 [TransactionHistory] 质押状态变化，刷新交易历史');
+    fetchTransactions();
+  });
+
+  useEventRefresh('rewardsChanged', () => {
+    console.log('🎁 [TransactionHistory] 收益变化，刷新交易历史');
+    fetchTransactions();
+  });
+
+  useEventRefresh('poolDataChanged', () => {
+    console.log('🏊 [TransactionHistory] 池子数据变化，刷新交易历史');
+    fetchTransactions();
+  });
 
   const fetchTransactions = async () => {
     if (!protocolContract || !account || !provider) {

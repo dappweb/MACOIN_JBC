@@ -1,8 +1,9 @@
 import React, { useEffect, useMemo, useState } from "react"
 import { ethers } from "ethers"
-import { Clock, ExternalLink, Gift, RefreshCw, Filter, X, ChevronRight, Copy, CheckCircle, Pickaxe, Zap, UserPlus, Layers } from "lucide-react"
+import { Clock, ExternalLink, Gift, RefreshCw, Filter, X, ChevronRight, Copy, CheckCircle, Pickaxe, Zap, UserPlus, Layers, TrendingUp } from "lucide-react"
 import { useWeb3 } from "../Web3Context"
 import { useLanguage } from "../LanguageContext"
+import { useEventRefresh } from "../hooks/useGlobalRefresh"
 
 interface RewardRecord {
   hash: string
@@ -47,6 +48,17 @@ const EarningsDetail: React.FC = () => {
     }
     checkOwner()
   }, [protocolContract, account])
+
+  // 监听收益相关事件，自动刷新收益记录
+  useEventRefresh('rewardsChanged', () => {
+    console.log('🎁 [EarningsDetail] 收益变化，刷新收益记录');
+    fetchRecords();
+  });
+
+  useEventRefresh('ticketStatusChanged', () => {
+    console.log('🎫 [EarningsDetail] 门票状态变化，刷新收益记录');
+    fetchRecords();
+  });
 
   const fetchRecords = async () => {
     if (!protocolContract || !account || !provider) {
@@ -193,6 +205,7 @@ const EarningsDetail: React.FC = () => {
     if (value === 1) return ui.dynamicReward || "Dynamic Reward"
     if (value === 2) return ui.directReward || "Direct Reward"
     if (value === 3) return ui.levelReward || "Level Reward"
+    if (value === 4) return ui.differentialReward || "Differential Reward"
     return ui.unknownType || "Unknown"
   }
 
@@ -201,6 +214,7 @@ const EarningsDetail: React.FC = () => {
     { value: 1, label: ui.dynamicReward || "Dynamic Reward" },
     { value: 2, label: ui.directReward || "Direct Reward" },
     { value: 3, label: ui.levelReward || "Level Reward" },
+    { value: 4, label: ui.differentialReward || "Differential Reward" },
   ]
 
   const getRewardIcon = (type: number, className: string) => {
@@ -213,6 +227,8 @@ const EarningsDetail: React.FC = () => {
         return <UserPlus className={className} />
       case 3: // Level
         return <Layers className={className} />
+      case 4: // Differential
+        return <TrendingUp className={className} />
       default:
         return <Gift className={className} />
     }

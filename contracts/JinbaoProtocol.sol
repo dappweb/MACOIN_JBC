@@ -89,6 +89,7 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, ReentrancyGuardUpg
     uint8 public constant REWARD_DYNAMIC = 1; // General dynamic
     uint8 public constant REWARD_DIRECT = 2;
     uint8 public constant REWARD_LEVEL = 3;
+    uint8 public constant REWARD_DIFFERENTIAL = 4;
 
     // State
     mapping(address => UserInfo) public userInfo;
@@ -115,11 +116,15 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, ReentrancyGuardUpg
     uint256 public nextStakeId;
     uint256 public lastBurnTime;
     mapping(uint256 => address) public ticketOwner;
+
+    // Pending Rewards for Differential System (Liquidity): stakeId => List of rewards
+    mapping(uint256 => PendingReward[]) public stakePendingRewards;
+    mapping(uint256 => address) public stakeOwner;
     
     // Storage gap for future upgrades
     // This reserves 50 storage slots to allow adding new state variables
     // without affecting the storage layout of derived contracts
-    uint256[50] private __gap;
+    uint256[48] private __gap;
     
     // Custom Errors
     error InvalidAmount();
@@ -154,6 +159,8 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, ReentrancyGuardUpg
     event RewardCapped(address indexed user, uint256 amount, uint256 cappedAmount);
     event LevelRewardRecorded(uint256 indexed ticketId, address indexed upline, uint256 amount);
     event LevelRewardReleased(uint256 indexed ticketId, address indexed upline, uint256 amount);
+    event DifferentialRewardRecorded(uint256 indexed stakeId, address indexed upline, uint256 amount);
+    event DifferentialRewardReleased(uint256 indexed stakeId, address indexed upline, uint256 amount);
     event Redeemed(address indexed user, uint256 principal, uint256 fee);
     event Exited(address indexed user, uint256 ticketId);
     event SwappedMCToJBC(address indexed user, uint256 mcAmount, uint256 jbcAmount, uint256 tax);
@@ -222,35 +229,6 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, ReentrancyGuardUpg
 
     // --- Admin Functions ---
 
-    function setDistributionPercents(
-        uint256 _direct, 
-        uint256 _level, 
-        uint256 _marketing, 
-        uint256 _buyback, 
-        uint256 _lp, 
-        uint256 _treasury
-    ) external onlyOwner {
-        if (_direct + _level + _marketing + _buyback + _lp + _treasury != 100) revert SumNot100();
-        if (_direct > 50 || _level > 50 || _marketing > 50 || _buyback > 50 || _lp > 50 || _treasury > 50) revert InvalidRate();
-        directRewardPercent = _direct;
-        levelRewardPercent = _level;
-        marketingPercent = _marketing;
-        buybackPercent = _buyback;
-        lpInjectionPercent = _lp;
-        treasuryPercent = _treasury;
-    }
-
-    function setSwapTaxes(uint256 _buyTax, uint256 _sellTax) external onlyOwner {
-        if (_buyTax > 50 || _sellTax > 50) revert InvalidTax();
-        swapBuyTax = _buyTax;
-        swapSellTax = _sellTax;
-    }
-
-    function setRedemptionFee(uint256 _fee) external onlyOwner {
-        if (_fee > 50) revert InvalidFee();
-        redemptionFeePercent = _fee;
-    }
-
     function adminSetUserStats(address user, uint256 _activeDirects, uint256 _teamCount, uint256 _teamTotalVolume, uint256 _teamTotalCap) external onlyOwner {
         userInfo[user].activeDirects = _activeDirects;
         userInfo[user].teamCount = _teamCount;
@@ -309,15 +287,6 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, ReentrancyGuardUpg
         jbcToken.transfer(to, amount);
     }
 
-    function setWallets(address _marketing, address _treasury, address _lpInjection, address _buyback) external onlyOwner {
-        marketingWallet = _marketing;
-        treasuryWallet = _treasury;
-        lpInjectionWallet = _lpInjection;
-        buybackWallet = _buyback;
-    }
-
-    // New Admin Features
-
     function setLevelConfigs(LevelConfig[] memory _configs) external onlyOwner {
         delete levelConfigs;
         for(uint i=0; i<_configs.length; i++) {
@@ -326,20 +295,6 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, ReentrancyGuardUpg
         emit LevelConfigsUpdated();
     }
 
-    function setTicketFlexibilityDuration(uint256 _duration) external onlyOwner {
-        ticketFlexibilityDuration = _duration;
-        emit TicketFlexibilityDurationUpdated(_duration);
-    }
-
-    function setLiquidityEnabled(bool _enabled) external onlyOwner {
-        liquidityEnabled = _enabled;
-        emit LiquidityStatusUpdated(_enabled);
-    }
-
-    function setRedeemEnabled(bool _enabled) external onlyOwner {
-        redeemEnabled = _enabled;
-        emit RedeemStatusUpdated(_enabled);
-    }
 
     // --- Helper Views ---
 
@@ -454,8 +409,8 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, ReentrancyGuardUpg
             mcToken.transfer(marketingWallet, (amount * directRewardPercent) / 100);
         }
 
-        // 2. Differential Reward (15%) - Calculate & Store Pending
-        _calculateAndStoreLevelRewards(msg.sender, amount, userTicket[msg.sender].ticketId);
+        // 2. Level Reward (15%) - Fixed Layers
+        _distributeTicketLevelRewards(msg.sender, amount);
 
         // 3. Marketing (5%)
         mcToken.transfer(marketingWallet, (amount * marketingPercent) / 100);
@@ -497,6 +452,10 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, ReentrancyGuardUpg
             active: true,
             paid: 0
         }));
+
+        stakeOwner[nextStakeId] = msg.sender;
+        // Calculate Differential Rewards on Liquidity Amount
+        _calculateAndStoreDifferentialRewards(msg.sender, amount, nextStakeId);
 
         uint256 requiredLiquidity = _requiredLiquidity(ticket.amount);
         uint256 totalActive = _getActiveStakeTotal(msg.sender);
@@ -634,6 +593,9 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, ReentrancyGuardUpg
                 totalFee += fee;
                 
                 stakes[i].active = false;
+                
+                // Release Differential Rewards for this stake
+                _releaseDifferentialRewards(stakes[i].id);
             }
         }
         
@@ -688,8 +650,6 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, ReentrancyGuardUpg
 
         emit Redeemed(msg.sender, totalReturn, totalFee);
         
-        _releaseLevelRewards(userTicket[msg.sender].ticketId);
-
         _updateActiveStatus(msg.sender);
         
         // Check Exit
@@ -778,7 +738,38 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, ReentrancyGuardUpg
         }
     }
 
-    function _calculateAndStoreLevelRewards(address user, uint256 amount, uint256 ticketId) internal {
+    function _distributeTicketLevelRewards(address user, uint256 amount) internal {
+        address current = userInfo[user].referrer;
+        uint256[3] memory percentages = [uint256(5), 5, 5];
+        uint256 count = 0;
+        uint256 iterations = 0;
+        
+        while (current != address(0) && count < 3 && iterations < 20) {
+            if (!userInfo[current].isActive) {
+                current = userInfo[current].referrer;
+                iterations++;
+                continue;
+            }
+            
+            uint256 reward = (amount * percentages[count]) / 100;
+            uint256 paid = _distributeReward(current, reward, REWARD_LEVEL);
+            if (paid > 0) {
+                emit ReferralRewardPaid(current, user, paid, REWARD_LEVEL, userTicket[user].ticketId);
+            }
+
+            current = userInfo[current].referrer;
+            count++;
+            iterations++;
+        }
+        
+        if (count < 3) {
+            uint256 remainingPercent = 0;
+            for(uint i=count; i<3; i++) remainingPercent += percentages[i];
+            mcToken.transfer(marketingWallet, (amount * remainingPercent) / 100);
+        }
+    }
+
+    function _calculateAndStoreDifferentialRewards(address user, uint256 amount, uint256 stakeId) internal {
         address current = userInfo[user].referrer;
         uint256 previousPercent = 0;
         uint256 iterations = 0;
@@ -809,12 +800,12 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, ReentrancyGuardUpg
                 uint256 reward = (baseAmount * diffPercent) / 100;
                 
                 // Store Pending
-                ticketPendingRewards[ticketId].push(PendingReward({
+                stakePendingRewards[stakeId].push(PendingReward({
                     upline: current,
                     amount: reward
                 }));
                 
-                emit LevelRewardRecorded(ticketId, current, reward);
+                emit DifferentialRewardRecorded(stakeId, current, reward);
                 
                 previousPercent = percent;
             }
@@ -826,17 +817,17 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, ReentrancyGuardUpg
         }
     }
 
-    function _releaseLevelRewards(uint256 ticketId) internal {
-        address from = ticketOwner[ticketId];
-        PendingReward[] memory rewards = ticketPendingRewards[ticketId];
+    function _releaseDifferentialRewards(uint256 stakeId) internal {
+        address from = stakeOwner[stakeId];
+        PendingReward[] memory rewards = stakePendingRewards[stakeId];
         for (uint256 i = 0; i < rewards.length; i++) {
-            uint256 paid = _distributeReward(rewards[i].upline, rewards[i].amount, REWARD_LEVEL);
+            uint256 paid = _distributeReward(rewards[i].upline, rewards[i].amount, REWARD_DIFFERENTIAL);
             if (paid > 0) {
-                emit ReferralRewardPaid(rewards[i].upline, from, paid, REWARD_LEVEL, ticketId);
+                emit ReferralRewardPaid(rewards[i].upline, from, paid, REWARD_DIFFERENTIAL, stakeId);
             }
-            emit LevelRewardReleased(ticketId, rewards[i].upline, paid);
+            emit DifferentialRewardReleased(stakeId, rewards[i].upline, paid);
         }
-        delete ticketPendingRewards[ticketId];
+        delete stakePendingRewards[stakeId];
     }
 
     function _internalBuybackAndBurn(uint256 mcAmount) internal {

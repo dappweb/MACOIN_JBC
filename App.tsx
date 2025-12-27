@@ -15,6 +15,7 @@ import { MOCK_USER_STATS } from "./constants"
 import { ArrowLeftRight } from "lucide-react"
 import { LanguageProvider, useLanguage } from "./LanguageContext"
 import { Web3Provider, useWeb3 } from "./Web3Context"
+import { GlobalRefreshProvider } from "./hooks/useGlobalRefresh"
 
 import { WagmiProvider } from "wagmi"
 import { RainbowKitProvider } from "@rainbow-me/rainbowkit"
@@ -147,8 +148,10 @@ const App: React.FC = () => {
         <RainbowKitProvider>
           <LanguageProvider>
             <Web3Provider>
-              <AppContent />
-              <Toaster position="top-center" />
+              <GlobalRefreshProvider>
+                <AppContent />
+                <Toaster position="top-center" />
+              </GlobalRefreshProvider>
             </Web3Provider>
           </LanguageProvider>
         </RainbowKitProvider>

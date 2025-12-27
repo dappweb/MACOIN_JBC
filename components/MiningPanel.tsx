@@ -4,6 +4,7 @@ import { MiningPlan, TicketTier } from '../types';
 import { Zap, Clock, TrendingUp, AlertCircle, ArrowRight, ShieldCheck, Lock, Package, History, ChevronDown, ChevronUp } from 'lucide-react';
 import { useLanguage } from '../LanguageContext';
 import { useWeb3 } from '../Web3Context';
+import { useGlobalRefresh, useEventRefresh } from '../hooks/useGlobalRefresh';
 import { ethers } from 'ethers';
 import toast from 'react-hot-toast';
 import { formatContractError } from '../utils/errorFormatter';
@@ -53,11 +54,33 @@ const MiningPanel: React.FC = () => {
   const [ticketFlexibilityDuration, setTicketFlexibilityDuration] = useState<number>(72 * 3600);
   const [secondsInUnit, setSecondsInUnit] = useState<number>(60); // 从合约获取的时间单位
   const [currentTime, setCurrentTime] = useState(Math.floor(Date.now() / 1000)); // 用于倒计时
-  const [jbcPrice, setJbcPrice] = useState<number>(1.0); // JBC 价格
   
   const { t, language } = useLanguage();
   const { protocolContract, mcContract, account, isConnected, hasReferrer, isOwner, referrerAddress, checkReferrerStatus, provider } = useWeb3();
+  
+  // 使用全局刷新机制
+  const { balances, priceData, onTransactionSuccess, refreshAll } = useGlobalRefresh();
+  
+  // 从全局状态获取JBC价格
+  const jbcPrice = priceData.jbcPrice;
 
+  // 监听事件刷新
+  useEventRefresh('ticketStatusChanged', () => {
+    console.log('🎫 [MiningPanel] 门票状态变化，刷新数据');
+    checkTicketStatus();
+    fetchHistory();
+  });
+
+  useEventRefresh('stakingStatusChanged', () => {
+    console.log('💰 [MiningPanel] 质押状态变化，刷新数据');
+    checkTicketStatus();
+    fetchHistory();
+  });
+
+  useEventRefresh('rewardsChanged', () => {
+    console.log('🎁 [MiningPanel] 收益变化，刷新数据');
+    checkTicketStatus();
+  });
   // Auto-select ticket tier if user has bought one
   useEffect(() => {
     if (ticketInfo && ticketInfo.amount > 0n) {
@@ -369,20 +392,6 @@ const MiningPanel: React.FC = () => {
     return () => clearInterval(timer);
   }, []);
 
-  // 获取 JBC 价格
-  useEffect(() => {
-    const fetchJbcPrice = async () => {
-      if (!protocolContract) return;
-      try {
-        const priceWei = await protocolContract.getJBCPrice();
-        setJbcPrice(parseFloat(ethers.formatEther(priceWei)));
-      } catch (e) {
-        console.warn("Failed to fetch JBC price, using default 1.0", e);
-      }
-    };
-    fetchJbcPrice();
-  }, [protocolContract]);
-
   // Check direct stakes from contract as fallback source of truth
   const checkDirectStakes = async () => {
     if (!protocolContract || !account || !ticketInfo) return;
@@ -498,10 +507,9 @@ const MiningPanel: React.FC = () => {
           const tx = await protocolContract.buyTicket(amountWei);
           await tx.wait();
           toast.success(t.mining.ticketBuySuccess);
-          // 刷新票据状态
-          await checkTicketStatus();
-          // 刷新历史记录
-          await fetchHistory();
+          
+          // 使用全局刷新机制
+          await onTransactionSuccess('ticket_purchase');
       } catch (err: any) {
           console.error(err);
           // Special handling for active ticket using the new formatter context if needed, 
@@ -558,10 +566,10 @@ const MiningPanel: React.FC = () => {
           await tx.wait();
 
           toast.success(t.mining.stakeSuccess);
-          // 刷新票据状态
-          await checkTicketStatus();
-          // 刷新历史记录
-          await fetchHistory();
+          
+          // 使用全局刷新机制
+          await onTransactionSuccess('liquidity_stake');
+          
           // Clear input
           setLiquidityAmountInput('');
       } catch (err: any) {
@@ -579,6 +587,9 @@ const MiningPanel: React.FC = () => {
           const tx = await protocolContract.claimRewards();
           await tx.wait();
           toast.success(t.mining.claimSuccess);
+          
+          // 使用全局刷新机制
+          await onTransactionSuccess('claim');
       } catch (err: any) {
           console.error(err);
           toast.error(formatContractError(err));
@@ -594,9 +605,9 @@ const MiningPanel: React.FC = () => {
           const tx = await protocolContract.redeem();
           await tx.wait();
           toast.success(t.mining.redeemSuccess);
-          await checkTicketStatus();
-          // 刷新历史记录
-          await fetchHistory();
+          
+          // 使用全局刷新机制
+          await onTransactionSuccess('redeem');
       } catch (err: any) {
           console.error(err);
           toast.error(formatContractError(err));

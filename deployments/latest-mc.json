@@ -3,6 +3,7 @@
   "mcToken": "0xB2B8777BcBc7A8DEf49F022773d392a8787cf9EF",
   "jbcToken": "0xA743cB357a9f59D349efB7985072779a094658dD",
   "protocolProxy": "0x7a216BeA62eF7629904E0d30b24F6842c9b0d660",
-  "protocolImplementation": "0x8BA3072F4F43434862120116d49787B96A0A3bcc",
-  "timestamp": "2025-12-27T09:19:34.282Z"
+  "protocolImplementation": "0x687111E43D417c99F993FB6D26F4b06E465c7A94",
+  "timestamp": "2025-12-27T09:19:34.282Z",
+  "lastUpgrade": "2025-12-27T12:21:16.974Z"
 }

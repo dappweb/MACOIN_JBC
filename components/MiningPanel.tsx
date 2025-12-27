@@ -21,6 +21,7 @@ type TicketInfo = {
   totalRevenue: bigint;
   currentCap: bigint;
   exited: boolean;
+  maxTicketAmount: bigint; // Added field
 };
 
 type TicketHistoryItem = {
@@ -94,9 +95,13 @@ const MiningPanel: React.FC = () => {
 
   // Auto-set liquidity amount based on ticket (1.5x rule)
   useEffect(() => {
-    if (ticketInfo && ticketInfo.amount > 0n) {
-        const amount = parseFloat(ethers.formatEther(ticketInfo.amount));
-        const required = amount * 1.5;
+    if (ticketInfo && (ticketInfo.amount > 0n || ticketInfo.maxTicketAmount > 0n)) {
+        // Use max of current ticket amount and maxTicketAmount
+        const currentAmount = parseFloat(ethers.formatEther(ticketInfo.amount));
+        const maxAmount = parseFloat(ethers.formatEther(ticketInfo.maxTicketAmount));
+        const baseAmount = Math.max(currentAmount, maxAmount);
+        
+        const required = baseAmount * 1.5;
         setLiquidityAmountInput(required.toString());
     }
   }, [ticketInfo]);
@@ -233,6 +238,7 @@ const MiningPanel: React.FC = () => {
               purchaseTime: Number(ticket.purchaseTime),
               totalRevenue: userInfo.totalRevenue.toString(),
               currentCap: userInfo.currentCap.toString(),
+              maxTicketAmount: userInfo.maxTicketAmount.toString()
           });
 
           setTicketInfo({
@@ -245,7 +251,8 @@ const MiningPanel: React.FC = () => {
               cycleDays: 0, // Deprecated
               totalRevenue: userInfo.totalRevenue,
               currentCap: userInfo.currentCap,
-              exited: ticket.exited
+              exited: ticket.exited,
+              maxTicketAmount: userInfo.maxTicketAmount
           });
       } catch (err) {
           console.error('Failed to check ticket status', err);

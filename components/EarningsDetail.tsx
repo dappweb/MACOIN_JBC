@@ -41,6 +41,9 @@ const EarningsDetail: React.FC = () => {
   // 缓存键
   const getCacheKey = (account: string, viewMode: string) => 
     `earnings_cache_${account}_${viewMode}`
+  
+  // 缓存状态
+  const [cacheStatus, setCacheStatus] = useState<'none' | 'loading' | 'loaded'>('none')
 
   useEffect(() => {
     const checkOwner = async () => {
@@ -76,12 +79,14 @@ const EarningsDetail: React.FC = () => {
         if (cacheAge < 5 * 60 * 1000) {
           setRecords(data)
           setLoading(false)
+          setCacheStatus('loaded')
           return true
         }
       }
     } catch (err) {
       console.warn("Failed to load from cache:", err)
     }
+    setCacheStatus('none')
     return false
   }
 
@@ -96,20 +101,36 @@ const EarningsDetail: React.FC = () => {
         timestamp: Date.now()
       }
       localStorage.setItem(cacheKey, JSON.stringify(cacheData))
+      setCacheStatus('loaded')
     } catch (err) {
       console.warn("Failed to save to cache:", err)
+    }
+  }
+
+  // 清除缓存
+  const clearCache = () => {
+    if (!account) return
+    
+    try {
+      const cacheKey = getCacheKey(account, viewMode)
+      localStorage.removeItem(cacheKey)
+      setCacheStatus('none')
+      toast.success("Cache cleared successfully")
+    } catch (err) {
+      console.warn("Failed to clear cache:", err)
+      toast.error("Failed to clear cache")
     }
   }
 
   // 监听收益相关事件，自动刷新收益记录
   useEventRefresh('rewardsChanged', () => {
     console.log('🎁 [EarningsDetail] 收益变化，刷新收益记录');
-    fetchRecords();
+    fetchRecords(false); // 强制刷新，不使用缓存
   });
 
   useEventRefresh('ticketStatusChanged', () => {
     console.log('🎫 [EarningsDetail] 门票状态变化，刷新收益记录');
-    fetchRecords();
+    fetchRecords(false); // 强制刷新，不使用缓存
   });
 
   const fetchRecords = async (useCache = true) => {
@@ -374,7 +395,14 @@ const EarningsDetail: React.FC = () => {
             <Gift className="w-8 h-8 text-black" />
             <div>
               <h2 className="text-2xl font-bold text-black">{ui.title || "Earnings Details"}</h2>
-              <p className="text-black/80">{ui.subtitle || "View your on-chain reward history"}</p>
+              <div className="flex items-center gap-2">
+                <p className="text-black/80">{ui.subtitle || "View your on-chain reward history"}</p>
+                {cacheStatus === 'loaded' && (
+                  <span className="px-2 py-1 bg-black/20 text-black text-xs rounded-full">
+                    Cached
+                  </span>
+                )}
+              </div>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -398,14 +426,24 @@ const EarningsDetail: React.FC = () => {
                 </button>
               </div>
             )}
-            <button
-              onClick={() => fetchRecords(false)} // 强制刷新，不使用缓存
-              disabled={refreshing}
-              className="flex items-center gap-2 px-4 py-2 bg-black/20 hover:bg-black/30 rounded-lg text-black transition-colors disabled:opacity-50"
-            >
-              <RefreshCw className={`w-4 h-4 ${refreshing ? "animate-spin" : ""}`} />
-              {ui.refresh || "Refresh"}
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => fetchRecords(false)} // 强制刷新，不使用缓存
+                disabled={refreshing}
+                className="flex items-center gap-2 px-4 py-2 bg-black/20 hover:bg-black/30 rounded-lg text-black transition-colors disabled:opacity-50"
+              >
+                <RefreshCw className={`w-4 h-4 ${refreshing ? "animate-spin" : ""}`} />
+                {ui.refresh || "Refresh"}
+              </button>
+              
+              <button
+                onClick={clearCache}
+                className="px-3 py-2 bg-black/10 hover:bg-black/20 rounded-lg text-black text-sm transition-colors"
+                title="Clear cache"
+              >
+                Clear Cache
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -651,6 +689,61 @@ const EarningsDetail: React.FC = () => {
             </div>
           ))}
         </div>
+
+        {/* 分页控件 */}
+        {totalPages > 1 && (
+          <div className="bg-gray-900/50 border border-gray-800 rounded-xl p-4 mt-6 backdrop-blur-sm">
+            <div className="flex items-center justify-between">
+              <button
+                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                disabled={currentPage === 1}
+                className="flex items-center gap-2 px-4 py-2 bg-gray-800 hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg text-white transition-colors"
+              >
+                <ChevronLeft className="w-4 h-4" />
+                Previous
+              </button>
+
+              <div className="flex items-center gap-2">
+                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                  let pageNum
+                  if (totalPages <= 5) {
+                    pageNum = i + 1
+                  } else if (currentPage <= 3) {
+                    pageNum = i + 1
+                  } else if (currentPage >= totalPages - 2) {
+                    pageNum = totalPages - 4 + i
+                  } else {
+                    pageNum = currentPage - 2 + i
+                  }
+
+                  return (
+                    <button
+                      key={pageNum}
+                      onClick={() => setCurrentPage(pageNum)}
+                      className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                        currentPage === pageNum
+                          ? 'bg-neon-500 text-black'
+                          : 'bg-gray-800 hover:bg-gray-700 text-white'
+                      }`}
+                    >
+                      {pageNum}
+                    </button>
+                  )
+                })}
+              </div>
+
+              <button
+                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                disabled={currentPage === totalPages}
+                className="flex items-center gap-2 px-4 py-2 bg-gray-800 hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg text-white transition-colors"
+              >
+                Next
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        )}
+      </>
       )}
 
       {/* Detail Modal */}

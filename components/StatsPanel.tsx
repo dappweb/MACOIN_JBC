@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from "react"
 import { UserStats } from "../types"
-import { Wallet, TrendingUp, Users, Coins, ArrowUpRight, Link } from "lucide-react"
+import { Wallet, TrendingUp, Users, Coins, ArrowUpRight, Link, Ticket } from "lucide-react"
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"
 import { useLanguage } from "../LanguageContext"
 import { useWeb3 } from "../Web3Context"
@@ -23,7 +23,7 @@ interface PriceDataPoint {
 interface StatsPanelProps {
   stats: UserStats
   onJoinClick: () => void
-  onWhitepaperClick: () => void
+  onBuyTicketClick?: () => void
 }
 
 // Mock data generator for fallback
@@ -173,7 +173,7 @@ const MemoizedPriceChart = React.memo(({ priceHistory, t }: { priceHistory: Pric
   )
 })
 
-const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClick, onWhitepaperClick }) => {
+const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClick, onBuyTicketClick }) => {
   const { t } = useLanguage()
   const { mcContract, jbcContract, protocolContract, account, isConnected, provider } = useWeb3()
   
@@ -350,6 +350,13 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
     }
   }
 
+  const handleBuyTicketClick = () => {
+    // Navigate to dedicated buy ticket page
+    if (onBuyTicketClick) {
+      onBuyTicketClick()
+    }
+  }
+
   return (
     <div className="max-w-7xl mx-auto space-y-8 animate-fade-in">
       {/* Hero Section - Neon Green & Gold Theme */}
@@ -379,10 +386,11 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
               {t.stats.join}
             </button>
             <button
-              onClick={onWhitepaperClick}
-              className="px-5 py-2.5 md:px-6 md:py-3 bg-black/20 hover:bg-black/30 text-black border border-black/40 font-bold rounded-lg backdrop-blur-md transition-all text-sm md:text-base"
+              onClick={handleBuyTicketClick}
+              className="px-5 py-2.5 md:px-6 md:py-3 bg-gradient-to-r from-neon-500 to-neon-600 hover:from-neon-400 hover:to-neon-500 text-black font-bold rounded-lg shadow-xl transition-all transform hover:-translate-y-1 text-sm md:text-base flex items-center gap-2"
             >
-              {t.stats.whitepaper}
+              <Ticket size={16} className="md:w-5 md:h-5" />
+              {t.stats.buyTicket}
             </button>
           </div>
         </div>

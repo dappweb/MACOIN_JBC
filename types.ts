@@ -1,6 +1,7 @@
 ﻿export enum AppTab {
   HOME = 'HOME',
   MINING = 'MINING',
+  BUY_TICKET = 'BUY_TICKET',
   TEAM = 'TEAM',
   SWAP = 'SWAP',
   HISTORY = 'HISTORY',

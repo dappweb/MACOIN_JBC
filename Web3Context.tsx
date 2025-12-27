@@ -52,6 +52,8 @@ export const PROTOCOL_ABI = [
   "function liquidityEnabled() view returns (bool)",
   "function redeemEnabled() view returns (bool)",
   "function ticketFlexibilityDuration() view returns (uint256)",
+  "function levelRewardPool() view returns (uint256)",
+  "function transferOwnership(address newOwner) external",
   "function SECONDS_IN_UNIT() view returns (uint256)",
   "event BoundReferrer(address indexed user, address indexed referrer)",
   "event TicketPurchased(address indexed user, uint256 amount, uint256 ticketId)",

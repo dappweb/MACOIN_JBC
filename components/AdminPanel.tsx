@@ -39,12 +39,6 @@ const AdminPanel: React.FC = () => {
   const [currentLp, setCurrentLp] = useState('');
   const [currentBuyback, setCurrentBuyback] = useState('');
 
-  // User Management
-  const [targetUser, setTargetUser] = useState('');
-  const [newReferrer, setNewReferrer] = useState('');
-  const [activeDirects, setActiveDirects] = useState('');
-  const [teamCount, setTeamCount] = useState('');
-
   // Announcement Management
   const [announceZh, setAnnounceZh] = useState('');
   const [announceEn, setAnnounceEn] = useState('');
@@ -102,8 +96,9 @@ const AdminPanel: React.FC = () => {
   // Liquidity Management
   const [mcLiquidityAmount, setMcLiquidityAmount] = useState('');
   const [jbcLiquidityAmount, setJbcLiquidityAmount] = useState('');
-  const [mcLiquidityRemoveAmount, setMcLiquidityRemoveAmount] = useState('');
-  const [jbcLiquidityRemoveAmount, setJbcLiquidityRemoveAmount] = useState('');
+
+  // Level Reward Pool Management
+  const [levelRewardPool, setLevelRewardPool] = useState('0');
 
   // Feature Controls
   const [ticketFlexibility, setTicketFlexibility] = useState('72');
@@ -134,6 +129,11 @@ const AdminPanel: React.FC = () => {
       protocolContract.treasuryWallet().then(setCurrentTreasury).catch(console.error);
       protocolContract.lpInjectionWallet().then(setCurrentLp).catch(console.error);
       protocolContract.buybackWallet().then(setCurrentBuyback).catch(console.error);
+
+      // Fetch level reward pool balance
+      protocolContract.levelRewardPool().then((balance: any) => {
+        setLevelRewardPool(ethers.formatEther(balance));
+      }).catch(console.error);
     }
   }, [protocolContract]);
 
@@ -337,33 +337,7 @@ const AdminPanel: React.FC = () => {
     }
   };
 
-  const updateUserStats = async () => {
-    if (!protocolContract || !targetUser) return;
-    setLoading(true);
-    try {
-        const tx = await protocolContract.adminSetUserStats(targetUser, activeDirects, teamCount);
-        await tx.wait();
-        toast.success(t.admin.success);
-    } catch (err: any) {
-        toast.error(formatContractError(err));
-    } finally {
-        setLoading(false);
-    }
-  };
 
-  const updateReferrer = async () => {
-    if (!protocolContract || !targetUser || !newReferrer) return;
-    setLoading(true);
-    try {
-        const tx = await protocolContract.adminSetReferrer(targetUser, newReferrer);
-        await tx.wait();
-        toast.success(t.admin.success);
-    } catch (err: any) {
-        toast.error(formatContractError(err));
-    } finally {
-        setLoading(false);
-    }
-  };
 
   const addLiquidity = async (tokenType: 'MC' | 'JBC') => {
     if (!isConnected || !provider || !protocolContract) {
@@ -763,42 +737,6 @@ const AdminPanel: React.FC = () => {
           </div>
       </div>
 
-      {/* User Management */}
-      <div className="glass-panel p-4 md:p-6 rounded-xl md:rounded-2xl bg-gray-900/50 border border-gray-800">
-          <h3 className="text-lg md:text-xl font-bold mb-3 md:mb-4 text-white">{t.admin.userMgmt}</h3>
-          <div className="space-y-3 md:space-y-4">
-              <div>
-                  <label className="block text-xs md:text-sm text-gray-400 mb-1">{t.admin.userAddr}</label>
-                  <input type="text" value={targetUser} onChange={e => setTargetUser(e.target.value)} className="w-full p-2 md:p-2.5 border border-gray-700 bg-gray-900/50 rounded text-white text-xs md:text-sm font-mono placeholder-gray-600" placeholder="0x..." />
-              </div>
-
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 md:gap-4 border-t border-gray-800 pt-3 md:pt-4">
-                  <div>
-                      <label className="block text-xs md:text-sm text-gray-400 mb-1">{t.admin.newReferrer}</label>
-                      <div className="flex flex-col sm:flex-row gap-2">
-                          <input type="text" value={newReferrer} onChange={e => setNewReferrer(e.target.value)} className="w-full p-2 md:p-2.5 border border-gray-700 bg-gray-900/50 rounded text-white text-xs md:text-sm font-mono placeholder-gray-600" placeholder="0x..." />
-                          <button onClick={updateReferrer} disabled={loading} className="px-3 md:px-4 py-2 md:py-2.5 bg-gray-700 hover:bg-gray-600 text-white rounded disabled:opacity-50 text-xs md:text-sm whitespace-nowrap border border-gray-600">
-                              {t.admin.updateReferrer}
-                          </button>
-                      </div>
-                  </div>
-                  <div className="space-y-2">
-                      <div className="flex gap-2 items-center">
-                          <label className="text-xs md:text-sm text-gray-400 w-20 md:w-24">{t.admin.activeDirects}</label>
-                          <input type="number" value={activeDirects} onChange={e => setActiveDirects(e.target.value)} className="w-full p-2 md:p-2.5 border border-gray-700 bg-gray-900/50 rounded text-white text-xs md:text-sm" />
-                      </div>
-                      <div className="flex gap-2 items-center">
-                          <label className="text-xs md:text-sm text-gray-400 w-20 md:w-24">{t.admin.teamCount}</label>
-                          <input type="number" value={teamCount} onChange={e => setTeamCount(e.target.value)} className="w-full p-2 md:p-2.5 border border-gray-700 bg-gray-900/50 rounded text-white text-xs md:text-sm" />
-                      </div>
-                      <button onClick={updateUserStats} disabled={loading} className="w-full py-2 md:py-2.5 bg-gray-700 hover:bg-gray-600 text-white rounded disabled:opacity-50 text-xs md:text-sm border border-gray-600">
-                          {t.admin.updateUser}
-                      </button>
-                  </div>
-              </div>
-          </div>
-      </div>
-
       {/* Liquidity Management */}
       <div className="glass-panel p-4 md:p-6 rounded-xl md:rounded-2xl bg-gray-900/50 border border-red-500/30 backdrop-blur-sm">
           <div className="flex items-center gap-2 mb-3 md:mb-4">
@@ -824,21 +762,6 @@ const AdminPanel: React.FC = () => {
                   >
                       {t.admin.addMcToPool || 'Add MC to Pool'}
                   </button>
-                  <label className="block text-sm font-medium text-gray-300">{t.admin.removeMcLiquidity || 'Remove MC Liquidity'}</label>
-                  <input 
-                      type="number" 
-                      value={mcLiquidityRemoveAmount} 
-                      onChange={e => setMcLiquidityRemoveAmount(e.target.value)} 
-                      className="w-full p-2 md:p-2.5 border border-gray-700 rounded bg-gray-900/50 text-white placeholder-gray-500 text-sm focus:outline-none focus:ring-2 focus:ring-red-500/50"
-                      placeholder={t.admin.amountInMc || 'Amount in MC'}
-                  />
-                  <button 
-                      onClick={() => removeLiquidity('MC')} 
-                      disabled={loading || !mcLiquidityRemoveAmount}
-                      className="w-full py-2 md:py-2.5 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-lg hover:from-red-400 hover:to-red-500 disabled:opacity-50 text-sm md:text-base font-bold shadow-lg shadow-red-500/30"
-                  >
-                      {t.admin.removeMcFromPool || 'Remove MC from Pool'}
-                  </button>
               </div>
               
               <div className="space-y-3">
@@ -857,22 +780,27 @@ const AdminPanel: React.FC = () => {
                   >
                       {t.admin.addJbcToPool || 'Add JBC to Pool'}
                   </button>
-                  <label className="block text-sm font-medium text-gray-300">{t.admin.removeJbcLiquidity || 'Remove JBC Liquidity'}</label>
-                  <input 
-                      type="number" 
-                      value={jbcLiquidityRemoveAmount} 
-                      onChange={e => setJbcLiquidityRemoveAmount(e.target.value)} 
-                      className="w-full p-2 md:p-2.5 border border-gray-700 rounded bg-gray-900/50 text-white placeholder-gray-500 text-sm focus:outline-none focus:ring-2 focus:ring-red-500/50"
-                      placeholder={t.admin.amountInJbc || 'Amount in JBC'}
-                  />
-                  <button 
-                      onClick={() => removeLiquidity('JBC')} 
-                      disabled={loading || !jbcLiquidityRemoveAmount}
-                      className="w-full py-2 md:py-2.5 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-lg hover:from-red-400 hover:to-red-500 disabled:opacity-50 text-sm md:text-base font-bold shadow-lg shadow-red-500/30"
-                  >
-                      {t.admin.removeJbcFromPool || 'Remove JBC from Pool'}
-                  </button>
               </div>
+          </div>
+      </div>
+
+      {/* Level Reward Pool Management */}
+      <div className="glass-panel p-4 md:p-6 rounded-xl md:rounded-2xl bg-gray-900/50 border border-yellow-500/30 backdrop-blur-sm">
+          <div className="flex items-center gap-2 mb-3 md:mb-4">
+              <Settings className="text-yellow-400" size={20} />
+              <h3 className="text-lg md:text-xl font-bold text-white">Level Reward Pool Management</h3>
+          </div>
+          <p className="text-xs md:text-sm text-gray-400 mb-4">Manage the level reward pool that accumulates unclaimed layer rewards.</p>
+          
+          <div className="space-y-4">
+              {/* Pool Balance Display */}
+              <div className="bg-gray-800/50 rounded-lg p-4 border border-yellow-500/20">
+                  <div className="flex justify-between items-center">
+                      <span className="text-sm text-gray-300">Current Pool Balance:</span>
+                      <span className="text-lg font-bold text-yellow-400">{parseFloat(levelRewardPool).toFixed(4)} MC</span>
+                  </div>
+              </div>
+
           </div>
       </div>
 

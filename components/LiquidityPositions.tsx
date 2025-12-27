@@ -3,6 +3,7 @@ import { ethers } from 'ethers';
 import { Clock, TrendingUp, AlertCircle, RefreshCw } from 'lucide-react';
 import { useWeb3 } from '../Web3Context';
 import { useLanguage } from '../LanguageContext';
+import GoldenProgressBar from './GoldenProgressBar';
 
 interface RawStakePosition {
   id: string;
@@ -215,18 +216,25 @@ const LiquidityPositions: React.FC = () => {
         {positions.map((pos) => (
           <div 
             key={pos.id} 
-            className={`relative overflow-hidden bg-gray-900/50 border rounded-xl p-4 transition-all ${
+            className={`relative overflow-hidden bg-gray-900/50 border rounded-xl p-4 pb-8 transition-all ${
               pos.active 
                 ? 'border-gray-700 hover:border-neon-500/50' 
                 : 'border-gray-800 opacity-60'
             }`}
           >
-            {/* Progress Bar Background */}
+            {/* Enhanced Golden Progress Bar */}
             {pos.active && (
-              <div 
-                className="absolute bottom-0 left-0 h-1 bg-neon-500/20" 
-                style={{ width: `${pos.progress}%` }} 
-              />
+              <div className="absolute bottom-0 left-0 right-0 px-4 pb-2">
+                <GoldenProgressBar
+                  progress={pos.progress}
+                  height="sm"
+                  showAnimation={pos.status === 'active'}
+                  showSplashAnimation={pos.status === 'active' && pos.progress < 5} // 开屏动画仅在开始时显示
+                  highContrast={true} // 启用高对比度模式
+                  ariaLabel={`Mining progress: ${pos.progress.toFixed(1)}%`}
+                  className="w-full"
+                />
+              </div>
             )}
 
             <div className="flex justify-between items-start mb-3">
@@ -235,10 +243,12 @@ const LiquidityPositions: React.FC = () => {
                   <span className="font-bold text-white text-lg">{parseFloat(pos.amount).toFixed(0)} MC</span>
                   <span className={`text-xs px-2 py-0.5 rounded border ${
                     pos.status === 'active' ? 'bg-neon-500/10 text-neon-400 border-neon-500/30' :
-                    pos.status === 'completed' ? 'bg-green-500/10 text-green-400 border-green-500/30' :
+                    pos.status === 'completed' ? 'bg-gray-700 text-gray-400 border-gray-600' :
                     'bg-gray-700 text-gray-400 border-gray-600'
                   }`}>
-                    {pos.status === 'active' ? (t.mining?.mining || 'Mining') : pos.status === 'completed' ? (t.mining?.completed || 'Completed') : (t.mining?.redeemed || 'Redeemed')}
+                    {pos.status === 'active' ? (t.mining?.mining || 'Mining') : 
+                     pos.status === 'completed' ? (t.mining?.redeemed || 'Redeemed') : 
+                     (t.mining?.redeemed || 'Redeemed')}
                   </span>
                 </div>
                 <div className="text-xs text-gray-400 mt-1 flex items-center gap-1">
@@ -271,7 +281,9 @@ const LiquidityPositions: React.FC = () => {
                <div className="bg-black/20 rounded p-2">
                  <span className="text-gray-500 text-xs block">{t.mining?.countdown || "倒计时"}</span>
                  <span className={`font-mono ${pos.status === 'completed' ? 'text-green-400' : pos.status === 'redeemed' ? 'text-gray-400' : 'text-neon-400'}`}>
-                    {pos.status === 'redeemed' ? (t.mining?.redeemed || "已赎回") : formatCountdown(pos.endTime, currentTime, t)}
+                    {pos.status === 'redeemed' ? (t.mining?.redeemed || "已赎回") : 
+                     pos.status === 'completed' ? (t.mining?.redeemed || "已赎回") : 
+                     formatCountdown(pos.endTime, currentTime, t)}
                  </span>
                </div>
             </div>

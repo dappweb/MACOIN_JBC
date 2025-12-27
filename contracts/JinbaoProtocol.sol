@@ -24,6 +24,7 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, ReentrancyGuardUpg
         uint256 teamTotalVolume; // Community Ticket Total Volume
         uint256 teamTotalCap;    // Community Ticket Total Cap
         uint256 maxTicketAmount; // Max ticket amount held by user (for redemption fee)
+        uint256 maxSingleTicketAmount; // Max single ticket amount in history (for liquidity calculation)
     }
 
     struct Stake {
@@ -121,10 +122,14 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, ReentrancyGuardUpg
     mapping(uint256 => PendingReward[]) public stakePendingRewards;
     mapping(uint256 => address) public stakeOwner;
     
+    // Level Reward Pool for unclaimed rewards (added in upgrade)
+    uint256 public levelRewardPool;
+    
     // Storage gap for future upgrades
-    // This reserves 50 storage slots to allow adding new state variables
+    // This reserves storage slots to allow adding new state variables
     // without affecting the storage layout of derived contracts
-    uint256[48] private __gap;
+    // Reduced by 1 due to levelRewardPool addition
+    uint256[47] private __gap;
     
     // Custom Errors
     error InvalidAmount();
@@ -147,7 +152,12 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, ReentrancyGuardUpg
     error TransferFailed();
     error SumNot100();
     
-    // Events
+    // Team-based differential reward errors
+    error TeamCountOverflow();
+    error RecursionDepthExceeded();
+    error InvalidTeamCountUpdate();
+    error TeamCountMismatch(address user, uint256 expected, uint256 actual);
+    error BatchUpdateSizeMismatch();
     event BoundReferrer(address indexed user, address indexed referrer);
     event TicketPurchased(address indexed user, uint256 amount, uint256 ticketId);
     event TicketExpired(address indexed user, uint256 ticketId, uint256 amount);
@@ -159,8 +169,18 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, ReentrancyGuardUpg
     event RewardCapped(address indexed user, uint256 amount, uint256 cappedAmount);
     event LevelRewardRecorded(uint256 indexed ticketId, address indexed upline, uint256 amount);
     event LevelRewardReleased(uint256 indexed ticketId, address indexed upline, uint256 amount);
+    event LevelRewardPoolUpdated(uint256 amount, uint256 newTotal);
+    event LevelRewardPoolWithdrawn(address indexed to, uint256 amount);
     event DifferentialRewardRecorded(uint256 indexed stakeId, address indexed upline, uint256 amount);
     event DifferentialRewardReleased(uint256 indexed stakeId, address indexed upline, uint256 amount);
+    
+    // Events
+    
+    // Team-based differential reward events
+    event TeamCountUpdated(address indexed user, uint256 oldCount, uint256 newCount);
+    event TeamBasedRewardCalculated(uint256 indexed stakeId, address indexed upline, uint256 amount, uint256 teamCount);
+    event BatchTeamCountsUpdated(uint256 usersUpdated);
+    event TeamCountValidationFailed(address indexed user, uint256 expected, uint256 actual);
     event Redeemed(address indexed user, uint256 principal, uint256 fee);
     event Exited(address indexed user, uint256 ticketId);
     event SwappedMCToJBC(address indexed user, uint256 mcAmount, uint256 jbcAmount, uint256 tax);
@@ -213,52 +233,26 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, ReentrancyGuardUpg
         redeemEnabled = true;
         lastBurnTime = block.timestamp;
 
-        // Init Levels
-        levelConfigs.push(LevelConfig(100000, 9, 45));
-        levelConfigs.push(LevelConfig(30000, 8, 40));
-        levelConfigs.push(LevelConfig(10000, 7, 35));
-        levelConfigs.push(LevelConfig(3000, 6, 30));
-        levelConfigs.push(LevelConfig(1000, 5, 25));
-        levelConfigs.push(LevelConfig(300, 4, 20));
-        levelConfigs.push(LevelConfig(100, 3, 15));
-        levelConfigs.push(LevelConfig(30, 2, 10));
-        levelConfigs.push(LevelConfig(10, 1, 5));
+        // Init Levels - Updated for team-based differential rewards
+        // Using more reasonable team size requirements
+        levelConfigs.push(LevelConfig(10000, 9, 45));  // 10K team
+        levelConfigs.push(LevelConfig(5000, 8, 40));   // 5K team
+        levelConfigs.push(LevelConfig(2000, 7, 35));   // 2K team
+        levelConfigs.push(LevelConfig(1000, 6, 30));   // 1K team
+        levelConfigs.push(LevelConfig(500, 5, 25));    // 500 team
+        levelConfigs.push(LevelConfig(200, 4, 20));    // 200 team
+        levelConfigs.push(LevelConfig(100, 3, 15));    // 100 team
+        levelConfigs.push(LevelConfig(50, 2, 10));     // 50 team
+        levelConfigs.push(LevelConfig(20, 1, 5));      // 20 team
     }
 
     function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
 
     // --- Admin Functions ---
 
-    function adminSetUserStats(address user, uint256 _activeDirects, uint256 _teamCount, uint256 _teamTotalVolume, uint256 _teamTotalCap) external onlyOwner {
-        userInfo[user].activeDirects = _activeDirects;
-        userInfo[user].teamCount = _teamCount;
-        userInfo[user].teamTotalVolume = _teamTotalVolume;
-        userInfo[user].teamTotalCap = _teamTotalCap;
-    }
+    // Removed adminSetUserStats to reduce contract size
 
-    function adminSetReferrer(address user, address newReferrer) external onlyOwner {
-        if (user == newReferrer) revert SelfReference();
-        address oldReferrer = userInfo[user].referrer;
-        
-        userInfo[user].referrer = newReferrer;
-        
-        // Remove from old
-        if (oldReferrer != address(0)) {
-            address[] storage oldList = directReferrals[oldReferrer];
-            for (uint256 i = 0; i < oldList.length; i++) {
-                if (oldList[i] == user) {
-                    oldList[i] = oldList[oldList.length - 1];
-                    oldList.pop();
-                    break;
-                }
-            }
-        }
-        
-        // Add to new
-        if (newReferrer != address(0)) {
-            directReferrals[newReferrer].push(user);
-        }
-    }
+    // Removed adminSetReferrer to reduce contract size
 
     function addLiquidity(uint256 mcAmount, uint256 jbcAmount) external onlyOwner {
         if (mcAmount == 0 && jbcAmount == 0) revert InvalidAmount();
@@ -273,19 +267,11 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, ReentrancyGuardUpg
         emit LiquidityAdded(mcAmount, jbcAmount);
     }
 
-    function adminWithdrawMC(uint256 amount, address to) external onlyOwner {
-        if (amount == 0) revert InvalidAmount();
-        if (amount > swapReserveMC) revert InsufficientBalance();
-        swapReserveMC -= amount;
-        mcToken.transfer(to, amount);
-    }
+    // Removed adminWithdrawMC to reduce contract size
 
-    function adminWithdrawJBC(uint256 amount, address to) external onlyOwner {
-        if (amount == 0) revert InvalidAmount();
-        if (amount > swapReserveJBC) revert InsufficientBalance();
-        swapReserveJBC -= amount;
-        jbcToken.transfer(to, amount);
-    }
+    // Removed adminWithdrawJBC to reduce contract size
+
+    // Removed adminWithdrawLevelRewardPool to reduce contract size
 
     function setLevelConfigs(LevelConfig[] memory _configs) external onlyOwner {
         delete levelConfigs;
@@ -307,6 +293,22 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, ReentrancyGuardUpg
         return (0, 0);
     }
 
+    function getLevelByTeamCount(uint256 teamCount) public view returns (uint256 level, uint256 percent) {
+        for(uint i = 0; i < levelConfigs.length; i++) {
+            if (teamCount >= levelConfigs[i].minDirects) {
+                return (levelConfigs[i].level, levelConfigs[i].percent);
+            }
+        }
+        return (0, 0);
+    }
+
+    function getLevelRewardLayers(uint256 activeDirects) public pure returns (uint256) {
+        if (activeDirects >= 3) return 15;  // 3+ active directs = 15 layers
+        if (activeDirects >= 2) return 10;  // 2 active directs = 10 layers  
+        if (activeDirects >= 1) return 5;   // 1 active direct = 5 layers
+        return 0;                           // 0 active directs = 0 layers
+    }
+
     function getJBCPrice() public view returns (uint256) {
         if (swapReserveJBC == 0) return 1 ether;
         return (swapReserveMC * 1e18) / swapReserveJBC;
@@ -314,6 +316,19 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, ReentrancyGuardUpg
 
     function getDirectReferrals(address user) external view returns (address[] memory) {
         return directReferrals[user];
+    }
+
+    function getUserMaxSingleTicketAmount(address user) external view returns (uint256) {
+        return userInfo[user].maxSingleTicketAmount;
+    }
+
+    function getTeamCount(address user) external view returns (uint256) {
+        return userInfo[user].teamCount;
+    }
+
+    function validateTeamCount(address user) external view returns (bool) {
+        uint256 actualCount = _calculateTeamCountRecursive(user, 0);
+        return actualCount == userInfo[user].teamCount;
     }
 
     function getDirectReferralsData(address user) external view returns (DirectReferralData[] memory) {
@@ -327,9 +342,7 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, ReentrancyGuardUpg
         return rows;
     }
 
-    function expireMyTicket() external {
-        _expireTicketIfNeeded(msg.sender);
-    }
+    // Removed expireMyTicket to reduce contract size
 
     // --- Core Functions ---
 
@@ -387,9 +400,14 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, ReentrancyGuardUpg
             }
         }
 
-        // Update Max Ticket Amount
+        // Update Max Ticket Amount (累积值，用于赎回费用计算)
         if (t.amount > userInfo[msg.sender].maxTicketAmount) {
             userInfo[msg.sender].maxTicketAmount = t.amount;
+        }
+
+        // Update Max Single Ticket Amount (单张最大值，用于流动性计算)
+        if (amount > userInfo[msg.sender].maxSingleTicketAmount) {
+            userInfo[msg.sender].maxSingleTicketAmount = amount;
         }
 
         ticketOwner[t.ticketId] = msg.sender;
@@ -454,8 +472,8 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, ReentrancyGuardUpg
         }));
 
         stakeOwner[nextStakeId] = msg.sender;
-        // Calculate Differential Rewards on Liquidity Amount
-        _calculateAndStoreDifferentialRewards(msg.sender, amount, nextStakeId);
+        // Calculate Team-based Differential Rewards on Liquidity Amount
+        _calculateAndStoreTeamBasedDifferentialRewards(msg.sender, amount, nextStakeId);
 
         uint256 requiredLiquidity = _requiredLiquidity(ticket.amount);
         uint256 totalActive = _getActiveStakeTotal(msg.sender);
@@ -740,32 +758,41 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, ReentrancyGuardUpg
 
     function _distributeTicketLevelRewards(address user, uint256 amount) internal {
         address current = userInfo[user].referrer;
-        uint256[3] memory percentages = [uint256(5), 5, 5];
-        uint256 count = 0;
+        uint256 totalDistributed = 0;
+        uint256 layerCount = 0;
         uint256 iterations = 0;
+        uint256 rewardPerLayer = (amount * 1) / 100; // 1% per layer
         
-        while (current != address(0) && count < 3 && iterations < 20) {
+        while (current != address(0) && layerCount < 15 && iterations < 20) {
             if (!userInfo[current].isActive) {
                 current = userInfo[current].referrer;
                 iterations++;
                 continue;
             }
             
-            uint256 reward = (amount * percentages[count]) / 100;
-            uint256 paid = _distributeReward(current, reward, REWARD_LEVEL);
-            if (paid > 0) {
-                emit ReferralRewardPaid(current, user, paid, REWARD_LEVEL, userTicket[user].ticketId);
+            // Check how many layers this user can receive based on their active directs
+            uint256 maxLayers = getLevelRewardLayers(userInfo[current].activeDirects);
+            
+            if (maxLayers > layerCount) {
+                // This user can receive reward for this layer
+                uint256 paid = _distributeReward(current, rewardPerLayer, REWARD_LEVEL);
+                if (paid > 0) {
+                    totalDistributed += paid;
+                    emit ReferralRewardPaid(current, user, paid, REWARD_LEVEL, userTicket[user].ticketId);
+                }
             }
-
+            
             current = userInfo[current].referrer;
-            count++;
+            layerCount++;
             iterations++;
         }
         
-        if (count < 3) {
-            uint256 remainingPercent = 0;
-            for(uint i=count; i<3; i++) remainingPercent += percentages[i];
-            mcToken.transfer(marketingWallet, (amount * remainingPercent) / 100);
+        // Store remaining amount in level reward pool
+        uint256 totalLevelRewardAmount = (amount * levelRewardPercent) / 100;
+        uint256 remaining = totalLevelRewardAmount - totalDistributed;
+        if (remaining > 0) {
+            levelRewardPool += remaining;
+            emit LevelRewardPoolUpdated(remaining, levelRewardPool);
         }
     }
 
@@ -877,20 +904,7 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, ReentrancyGuardUpg
         emit TicketExpired(user, ticketId, ticketAmount);
     }
 
-    function dailyBurn() external {
-        require(block.timestamp >= lastBurnTime + 1 days, "Early");
-        require(swapReserveJBC > 0, "No res");
-        
-        uint256 burnAmount = swapReserveJBC / 100; // 1%
-        if (burnAmount > 0) {
-            require(jbcToken.balanceOf(address(this)) >= burnAmount, "Low JBC");
-            swapReserveJBC -= burnAmount;
-            jbcToken.burn(burnAmount);
-            emit BuybackAndBurn(0, burnAmount); // Reusing event with 0 MC input
-        }
-        
-        lastBurnTime = block.timestamp;
-    }
+    // Removed dailyBurn to reduce contract size
 
     function _requiredLiquidity(uint256 ticketAmount) internal pure returns (uint256) {
         return (ticketAmount * 3) / 2;
@@ -919,8 +933,12 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, ReentrancyGuardUpg
 
         if (shouldBeActive) {
             userInfo[referrer].activeDirects++;
+            // Update team counts recursively
+            _updateTeamCountRecursive(user, 1);
         } else if (userInfo[referrer].activeDirects > 0) {
             userInfo[referrer].activeDirects--;
+            // Update team counts recursively
+            _updateTeamCountRecursive(user, -1);
         }
     }
 
@@ -974,4 +992,135 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, ReentrancyGuardUpg
         
         emit SwappedJBCToMC(msg.sender, jbcAmount, mcOutput, tax);
     }
+
+    // --- Team-based Differential Reward Functions ---
+
+    function _updateTeamCountRecursive(address user, int256 delta) internal {
+        if (user == address(0) || delta == 0) return;
+        
+        address current = userInfo[user].referrer;
+        uint256 iterations = 0;
+        
+        while (current != address(0) && iterations < 20) {
+            uint256 oldCount = userInfo[current].teamCount;
+            uint256 newCount;
+            
+            if (delta > 0) {
+                newCount = oldCount + uint256(delta);
+                if (newCount < oldCount) revert TeamCountOverflow();
+            } else {
+                uint256 decrease = uint256(-delta);
+                if (decrease > oldCount) {
+                    newCount = 0;
+                } else {
+                    newCount = oldCount - decrease;
+                }
+            }
+            
+            userInfo[current].teamCount = newCount;
+            emit TeamCountUpdated(current, oldCount, newCount);
+            
+            current = userInfo[current].referrer;
+            iterations++;
+        }
+        
+        if (iterations >= 20) {
+            emit TeamCountValidationFailed(user, 0, iterations);
+        }
+    }
+
+    function _calculateTeamCountRecursive(address user, uint256 depth) internal view returns (uint256) {
+        if (user == address(0) || depth >= 20) return 0;
+        
+        uint256 count = 0;
+        address[] storage directs = directReferrals[user];
+        
+        for (uint256 i = 0; i < directs.length; i++) {
+            address direct = directs[i];
+            if (userInfo[direct].isActive) {
+                count += 1; // Count the direct referral
+                count += _calculateTeamCountRecursive(direct, depth + 1); // Count their team
+            }
+        }
+        
+        return count;
+    }
+
+    function _calculateAndStoreTeamBasedDifferentialRewards(address user, uint256 amount, uint256 stakeId) internal {
+        address current = userInfo[user].referrer;
+        uint256 previousPercent = 0;
+        uint256 iterations = 0;
+
+        while (current != address(0) && iterations < 20) {
+            if (!userInfo[current].isActive) {
+                current = userInfo[current].referrer;
+                iterations++;
+                continue;
+            }
+
+            Ticket storage uplineTicket = userTicket[current];
+            if (uplineTicket.amount == 0 || uplineTicket.exited) {
+                current = userInfo[current].referrer;
+                iterations++;
+                continue;
+            }
+
+            // Get Upline Level based on team count
+            (, uint256 percent) = getLevelByTeamCount(userInfo[current].teamCount);
+            
+            if (percent > previousPercent) {
+                uint256 diffPercent = percent - previousPercent;
+                uint256 baseAmount = amount;
+                if (baseAmount > uplineTicket.amount) {
+                    baseAmount = uplineTicket.amount;
+                }
+                uint256 reward = (baseAmount * diffPercent) / 100;
+                
+                // Store Pending
+                stakePendingRewards[stakeId].push(PendingReward({
+                    upline: current,
+                    amount: reward
+                }));
+                
+                emit TeamBasedRewardCalculated(stakeId, current, reward, userInfo[current].teamCount);
+                
+                previousPercent = percent;
+            }
+            
+            if (percent >= 45) break; // Max V9
+            
+            current = userInfo[current].referrer;
+            iterations++;
+        }
+    }
+
+    function recalculateTeamCount(address user) external onlyOwner returns (uint256) {
+        uint256 actualCount = _calculateTeamCountRecursive(user, 0);
+        uint256 oldCount = userInfo[user].teamCount;
+        
+        if (actualCount != oldCount) {
+            userInfo[user].teamCount = actualCount;
+            emit TeamCountUpdated(user, oldCount, actualCount);
+        }
+        
+        return actualCount;
+    }
+
+    function batchUpdateTeamCounts(address[] calldata users, uint256[] calldata newCounts) external onlyOwner {
+        if (users.length != newCounts.length) revert BatchUpdateSizeMismatch();
+        
+        for (uint256 i = 0; i < users.length; i++) {
+            uint256 oldCount = userInfo[users[i]].teamCount;
+            userInfo[users[i]].teamCount = newCounts[i];
+            emit TeamCountUpdated(users[i], oldCount, newCounts[i]);
+        }
+        
+        emit BatchTeamCountsUpdated(users.length);
+    }
+
+    // Removed getTeamLevelDistribution to reduce contract size
+
+    // Removed migrateTeamCounts to reduce contract size - use batchUpdateTeamCounts instead
+
+    // Removed initializeTeamCountsForAllUsers to reduce contract size - use migrateTeamCounts instead
 }

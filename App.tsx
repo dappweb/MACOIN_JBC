@@ -3,8 +3,8 @@ import Navbar from "./components/Navbar"
 import NoticeBar from "./components/NoticeBar"
 import StatsPanel from "./components/StatsPanel"
 import MiningPanel from "./components/MiningPanel"
+import BuyTicketPanel from "./components/BuyTicketPanel"
 import TeamLevel from "./components/TeamLevel"
-import WhitepaperModal from "./components/WhitepaperModal"
 import SwapPanel from "./components/SwapPanel"
 import AdminPanel from "./components/AdminPanel"
 import TransactionHistory from "./components/TransactionHistory"
@@ -29,7 +29,6 @@ const queryClient = new QueryClient()
 const AppContent: React.FC = () => {
   const [currentTab, setCurrentTab] = useState<AppTab>(AppTab.HOME)
   const [loading, setLoading] = useState(true)
-  const [showWhitepaper, setShowWhitepaper] = useState(false)
   const { t } = useLanguage()
 
   const handleRefresh = async () => {
@@ -69,6 +68,8 @@ const AppContent: React.FC = () => {
         return '/bg-3.png'
       case AppTab.MINING:
         return '/bg-16.png'
+      case AppTab.BUY_TICKET:
+        return '/bg-16.png'
       case AppTab.TEAM:
         return '/bg-11.png'
       case AppTab.SWAP:
@@ -84,7 +85,7 @@ const AppContent: React.FC = () => {
 
   return (
     <div 
-      className="min-h-screen bg-black text-white selection:bg-neon-500 selection:text-black font-sans pb-20 md:pb-8 relative"
+      className="min-h-screen bg-black text-white selection:bg-neon-500 selection:text-black font-sans pb-20 md:pb-8 relative overflow-x-hidden"
       style={{
         backgroundImage: `url(${getBackgroundImage()})`,
         backgroundSize:'cover',
@@ -94,13 +95,11 @@ const AppContent: React.FC = () => {
       }}
     >
       {/* 添加半透明遮罩层以确保内容可读性 */}
-      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm -z-10"></div>
+      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-0"></div>
       
       <Navbar currentTab={currentTab} setTab={setCurrentTab} />
 
-      <WhitepaperModal isOpen={showWhitepaper} onClose={() => setShowWhitepaper(false)} />
-
-      <PullToRefresh onRefresh={handleRefresh} className="pt-20 md:pt-24">
+      <PullToRefresh onRefresh={handleRefresh} className="pt-20 md:pt-24 relative z-10">
         <main className="px-3 sm:px-4 md:px-6 lg:px-8 mb-16 md:mb-0">
           <NoticeBar />
           {/* Render Tab Content */}
@@ -108,11 +107,15 @@ const AppContent: React.FC = () => {
             <StatsPanel
               stats={MOCK_USER_STATS}
               onJoinClick={() => setCurrentTab(AppTab.MINING)}
-              onWhitepaperClick={() => setShowWhitepaper(true)}
+              onBuyTicketClick={() => setCurrentTab(AppTab.BUY_TICKET)}
             />
           )}
 
           {currentTab === AppTab.MINING && <MiningPanel />}
+
+          {currentTab === AppTab.BUY_TICKET && (
+            <BuyTicketPanel onBack={() => setCurrentTab(AppTab.HOME)} />
+          )}
 
           {currentTab === AppTab.TEAM && <TeamLevel />}
 
@@ -127,7 +130,7 @@ const AppContent: React.FC = () => {
       </PullToRefresh>
 
       {/* Footer */}
-      <footer className="mt-20 border-t border-gray-800 py-8 bg-black">
+      <footer className="mt-20 border-t border-gray-800 py-8 bg-black relative z-10">
         <div className="max-w-7xl mx-auto px-4 text-center text-gray-400 text-sm">
           <p className="mb-2">{t.footer.rights}</p>
           <p>{t.footer.audit}</p>

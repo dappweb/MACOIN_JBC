@@ -453,7 +453,7 @@ const EarningsDetail: React.FC = () => {
       </div>
 
       {/* 24h Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <div className="bg-gray-900/80 border border-gray-700 rounded-xl shadow-md p-4 backdrop-blur-sm">
           <div className="text-sm text-gray-200 mb-2">{ui.staticReward || "Static Reward"} (24h)</div>
           <div className="text-lg font-bold text-neon-400 drop-shadow-md">{dailyStats.static.mc.toFixed(2)} MC</div>
@@ -473,18 +473,10 @@ const EarningsDetail: React.FC = () => {
             <div className="text-lg font-bold text-amber-400 drop-shadow-md">{dailyStats.level.jbc.toFixed(2)} JBC</div>
           )}
         </div>
-      </div>
-
-      {/* Differential Reward - Highlighted */}
-      <div className="mb-6">
-        <div className="bg-gray-900/80 border-2 border-red-500 rounded-xl shadow-lg p-6 backdrop-blur-sm max-w-md mx-auto">
-          <div className="text-center">
-            <div className="text-sm text-gray-200 mb-2">{ui.differentialReward || "Differential Reward"} (24h)</div>
-            <div className="text-2xl font-bold text-neon-400 mb-1 drop-shadow-lg">{dailyStats.differential.mc.toFixed(4)} MC</div>
-            {dailyStats.differential.jbc > 0 && (
-              <div className="text-2xl font-bold text-amber-400 drop-shadow-lg">{dailyStats.differential.jbc.toFixed(4)} JBC</div>
-            )}
-          </div>
+        <div className="bg-gray-900/80 border border-gray-700 rounded-xl shadow-md p-4 backdrop-blur-sm">
+          <div className="text-sm text-gray-200 mb-2">{ui.differentialReward || "Differential Reward"} (24h)</div>
+          <div className="text-lg font-bold text-neon-400 drop-shadow-md">{dailyStats.differential.mc.toFixed(4)} MC</div>
+          <div className="text-lg font-bold text-amber-400 drop-shadow-md">{dailyStats.differential.jbc.toFixed(4)} JBC</div>
         </div>
       </div>
 

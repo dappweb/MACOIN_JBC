@@ -69,6 +69,7 @@ const MiningPanel: React.FC = () => {
   const [showHistory, setShowHistory] = useState(false);
   const [loadingHistory, setLoadingHistory] = useState(false);
   const [maxUnredeemedTicket, setMaxUnredeemedTicket] = useState<number>(0); // 未赎回的最大门票金额
+  const [activeStake, setActiveStake] = useState<StakeInfo | null>(null);
   
   const [liquidityAmountInput, setLiquidityAmountInput] = useState('');
   const [stakeAmount, setStakeAmount] = useState<bigint>(0n);
@@ -213,6 +214,22 @@ const MiningPanel: React.FC = () => {
   const canStakeLiquidity = hasTicket && !isExited && !isTicketExpired;
   const isTicketBought = hasTicket && !isExited;
   const hasValidTicket = hasTicket && !isExited; // Renamed from hasActiveTicket to avoid confusion
+
+  // Check if any mining stake is expired and redeemable
+  const isRedeemable = useMemo(() => {
+    // 1. Check ticket history for any 'Mining' status items that have passed their endTime
+    const hasExpiredMining = ticketHistory.some(item => 
+      item.status === 'Mining' && 
+      item.endTime && 
+      item.endTime <= currentTime
+    );
+    
+    // 2. Check activeStake from direct contract check
+    const isActiveStakeExpired = !!(activeStake && activeStake.active && 
+      (activeStake.startTime + activeStake.cycleDays * secondsInUnit) <= currentTime);
+      
+    return hasExpiredMining || isActiveStakeExpired;
+  }, [ticketHistory, activeStake, currentTime, secondsInUnit]);
 
   // Unified state detection function
   const getUserMiningState = (): UserMiningState => {
@@ -573,6 +590,14 @@ const MiningPanel: React.FC = () => {
                 // If stake is active and started after or at ticket purchase time (with small buffer)
                 if (active && startTime >= (ticketInfo.purchaseTime - 60)) {
                     found = true;
+                    setActiveStake({
+                        id: stake.id,
+                        amount: stake.amount,
+                        startTime: Number(stake.startTime),
+                        cycleDays: Number(stake.cycleDays),
+                        active: stake.active,
+                        paid: stake.paid
+                    });
                     break;
                 }
             } catch (e) {
@@ -1315,10 +1340,10 @@ const MiningPanel: React.FC = () => {
                     <div className="mt-4 pt-4 border-t border-slate-100 flex gap-2">
                          <button
                             onClick={handleRedeem}
-                            disabled={txPending}
-                            className="flex-1 py-2 bg-red-500/20 text-red-300 font-bold rounded-lg hover:bg-red-500/30 transition-colors disabled:opacity-50 border border-red-500/30"
+                            disabled={txPending || !isRedeemable}
+                            className="flex-1 py-2 bg-red-500/20 text-red-300 font-bold rounded-lg hover:bg-red-500/30 transition-colors disabled:opacity-50 border border-red-500/30 cursor-pointer disabled:cursor-not-allowed"
                          >
-                            {t.mining.redeem}
+                            {isRedeemable ? t.mining.redeem : t.mining.mining}
                          </button>
                     </div>
                 )}
@@ -1417,7 +1442,7 @@ const MiningPanel: React.FC = () => {
                 </div>
             )}
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                 <div className="bg-gray-800/50 p-3 rounded-lg border border-gray-700">
                     <div className="text-gray-400 mb-1">{t.mining.ticketAmount}</div>
                     <div className="text-lg font-bold text-white font-mono">{ethers.formatEther(ticketInfo.amount)} MC</div>
@@ -1426,7 +1451,7 @@ const MiningPanel: React.FC = () => {
                     <div className="text-gray-400 mb-1">{t.mining.purchaseTime}</div>
                     <div className="text-white font-mono">{formatDate(ticketInfo.purchaseTime)}</div>
                 </div>
-                {ticketInfo.liquidityProvided ? (
+                {ticketInfo.liquidityProvided && (
                     <>
                         <div className="bg-gray-800/50 p-3 rounded-lg border border-gray-700">
                             <div className="text-gray-400 mb-1">{t.mining.startTime}</div>
@@ -1439,28 +1464,6 @@ const MiningPanel: React.FC = () => {
                             </div>
                         </div>
                     </>
-                ) : !ticketInfo.redeemed && (
-                    <div className="bg-gray-800/50 p-3 rounded-lg border border-gray-700 col-span-1 md:col-span-2">
-                        <div className="text-gray-400 mb-1">{t.mining.timeLeft}</div>
-                        <div className="text-white font-mono">
-                             {isTicketExpired 
-                                ? "00:00:00" 
-                                : (() => {
-                                    const expiry = ticketInfo.purchaseTime + 72 * 3600;
-                                    const diff = expiry - now;
-                                    if (diff <= 0) return "00:00:00";
-                                    const h = Math.floor(diff / 3600);
-                                    const m = Math.floor((diff % 3600) / 60);
-                                    
-                                    // Bilingual format
-                                    if (language === 'zh') {
-                                        return `${h}小时 ${m}分钟`;
-                                    }
-                                    return `${h}h ${m}m`;
-                                })()
-                             }
-                        </div>
-                    </div>
                 )}
             </div>
 
@@ -1469,11 +1472,11 @@ const MiningPanel: React.FC = () => {
                  <div className="mt-6 pt-6 border-t border-gray-700 flex flex-col md:flex-row gap-4">
                      <button
                         onClick={handleRedeem}
-                        disabled={txPending}
-                        className="flex-1 py-3 md:py-4 bg-gradient-to-r from-red-500/20 to-red-600/20 hover:from-red-500/30 hover:to-red-600/30 text-red-300 font-bold rounded-xl border border-red-500/30 transition-all flex items-center justify-center gap-2 shadow-lg shadow-red-500/10"
+                        disabled={txPending || !isRedeemable}
+                        className="flex-1 py-3 md:py-4 bg-gradient-to-r from-red-500/20 to-red-600/20 hover:from-red-500/30 hover:to-red-600/30 text-red-300 font-bold rounded-xl border border-red-500/30 transition-all flex items-center justify-center gap-2 shadow-lg shadow-red-500/10 disabled:opacity-50 disabled:cursor-not-allowed"
                      >
                         <TrendingUp size={20} />
-                        {t.mining.redeem}
+                        {isRedeemable ? t.mining.redeem : t.mining.mining}
                      </button>
                 </div>
             )}
@@ -1546,13 +1549,23 @@ const MiningPanel: React.FC = () => {
                                 const expireTime = item.purchaseTime + 72 * 3600;
                                 const isExpired = now > expireTime;
                                 const showStakeAction = item.status === 'Pending' && !isExpired && !hasStakedLiquidity && !isTicketExpired;
+                                
+                                // Check if this is an add-on (same ticket ID as the next/older item)
+                                const isAddOn = idx < ticketHistory.length - 1 && ticketHistory[idx + 1].ticketId === item.ticketId;
 
                                 return (
                                 <div key={idx} className="bg-gray-800/30 rounded-lg p-4 border border-gray-700/50 hover:border-neon-500/30 transition-colors">
                                 <div className="flex justify-between items-start mb-3">
                                     <div className="flex items-center gap-3">
-                                        <div className="bg-gray-900/50 px-2 py-1 rounded text-xs font-mono text-gray-400 border border-gray-700">
-                                            #{item.ticketId}
+                                        <div className="flex flex-col items-start gap-1">
+                                            <div className="bg-gray-900/50 px-2 py-1 rounded text-xs font-mono text-gray-400 border border-gray-700">
+                                                #{item.ticketId}
+                                            </div>
+                                            {isAddOn && (
+                                                <span className="text-[10px] bg-blue-500/20 text-blue-300 px-1.5 py-0.5 rounded border border-blue-500/30 whitespace-nowrap">
+                                                    {language === 'zh' ? '追加' : 'Add-on'}
+                                                </span>
+                                            )}
                                         </div>
                                         <span className={`px-2 py-0.5 rounded text-xs font-bold border ${
                     item.status === 'Mining' ? 'bg-green-500/10 text-green-400 border-green-500/20' :

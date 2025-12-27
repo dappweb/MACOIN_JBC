@@ -6,6 +6,15 @@ import { useWeb3 } from "../Web3Context"
 import { ethers } from "ethers"
 import toast from "react-hot-toast"
 
+const safeFormatEther = (val: any) => {
+  if (val === undefined || val === null) return "0"
+  try {
+    return ethers.formatEther(val)
+  } catch (e) {
+    return "0"
+  }
+}
+
 interface DirectReferral {
   user: string
   ticketAmount: bigint
@@ -19,6 +28,8 @@ const TeamLevel: React.FC = () => {
     activeDirects: 0,
     teamCount: 0,
     currentLevel: "V0",
+    teamTotalVolume: 0n,
+    teamTotalCap: 0n,
   })
   const [directReferrals, setDirectReferrals] = useState<DirectReferral[]>([])
   const [isLoadingDirects, setIsLoadingDirects] = useState(false)
@@ -86,6 +97,8 @@ const TeamLevel: React.FC = () => {
             activeDirects: activeDirects,
             teamCount: Number(userInfo[2]),
             currentLevel: level,
+            teamTotalVolume: userInfo[7],
+            teamTotalCap: userInfo[8],
           })
 
           // Fetch Direct Referrals
@@ -257,7 +270,7 @@ const TeamLevel: React.FC = () => {
               </div>
               <p className="text-xs text-gray-400 uppercase font-bold tracking-wider mb-1">{t.team.netTotalAmount}</p>
               <p className="text-lg md:text-xl font-black text-purple-400 font-mono break-all">
-                {ethers.formatEther(totalTicketAmount)} <span className="text-xs font-bold text-purple-300">MC</span>
+                {safeFormatEther(totalTicketAmount)} <span className="text-xs font-bold text-purple-300">MC</span>
               </p>
             </div>
 
@@ -267,7 +280,7 @@ const TeamLevel: React.FC = () => {
               </div>
               <p className="text-xs text-gray-400 uppercase font-bold tracking-wider mb-1">{t.team.netTotalCap}</p>
               <p className="text-lg md:text-xl font-black text-blue-400 font-mono break-all">
-                {ethers.formatEther(userLevelInfo.teamTotalCap)} <span className="text-xs font-bold text-blue-300">MC</span>
+                {safeFormatEther(userLevelInfo.teamTotalCap)} <span className="text-xs font-bold text-blue-300">MC</span>
               </p>
             </div>
 
@@ -277,7 +290,7 @@ const TeamLevel: React.FC = () => {
               </div>
               <p className="text-xs text-gray-400 uppercase font-bold tracking-wider mb-1">{t.team.netTotalVolume}</p>
               <p className="text-lg md:text-xl font-black text-emerald-400 font-mono break-all">
-                {ethers.formatEther(userLevelInfo.teamTotalVolume)} <span className="text-xs font-bold text-emerald-300">MC</span>
+                {safeFormatEther(userLevelInfo.teamTotalVolume)} <span className="text-xs font-bold text-emerald-300">MC</span>
               </p>
             </div>
           </div>
@@ -314,7 +327,7 @@ const TeamLevel: React.FC = () => {
                       {item.user.substring(0, 6)}...{item.user.substring(38)}
                     </td>
                     <td className="p-2 md:p-4 text-white font-bold text-sm whitespace-nowrap">
-                      {ethers.formatEther(item.ticketAmount)} MC
+                      {safeFormatEther(item.ticketAmount)} MC
                     </td>
                     <td className="p-2 md:p-4">
                       <span

@@ -52,7 +52,7 @@ const MiningPanel: React.FC = () => {
   const [stakeAmount, setStakeAmount] = useState<bigint>(0n);
   const [ticketFlexibilityDuration, setTicketFlexibilityDuration] = useState<number>(72 * 3600);
   
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const { protocolContract, mcContract, account, isConnected, hasReferrer, isOwner, referrerAddress, checkReferrerStatus, provider } = useWeb3();
 
   // Auto-set liquidity amount based on ticket (1.5x rule)

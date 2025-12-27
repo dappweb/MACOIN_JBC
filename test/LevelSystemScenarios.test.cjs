@@ -61,8 +61,8 @@ describe("JinbaoProtocol Level System Scenarios", function () {
   // Helper to activate user
   const activate = async (user, ticketAmount) => {
       await protocol.connect(user).buyTicket(ticketAmount);
-      // Stake 1.5x
-      await protocol.connect(user).stakeLiquidity(ticketAmount * 150n / 100n, 7);
+      // Stake 1.6x
+      await protocol.connect(user).stakeLiquidity(ticketAmount * 160n / 100n, 7);
   };
 
   // Helper to trigger release
@@ -70,7 +70,7 @@ describe("JinbaoProtocol Level System Scenarios", function () {
       // Buyer needs to stake and then we simulate time and redeem
       const t = await protocol.userTicket(buyer.address);
       if (t.amount > 0) {
-           await protocol.connect(buyer).stakeLiquidity(t.amount * 150n / 100n, 7);
+           await protocol.connect(buyer).stakeLiquidity(t.amount * 160n / 100n, 7);
       }
       await time.increase(8 * 24 * 3600);
       await protocol.connect(buyer).claimRewards(); // static

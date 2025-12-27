@@ -9,7 +9,7 @@ describe("Jinbao Protocol System", function () {
   let owner, user1, user2, referrer, marketing, treasury, lpInjection, buyback, lpPair;
 
   const TICKET_PRICE = ethers.parseEther("100");
-  const LIQUIDITY_AMOUNT = ethers.parseEther("150");
+  const LIQUIDITY_AMOUNT = ethers.parseEther("160"); // 1.6x
 
   beforeEach(async function () {
     [owner, user1, user2, referrer, marketing, treasury, lpInjection, buyback, lpPair] = await ethers.getSigners();
@@ -121,16 +121,16 @@ describe("Jinbao Protocol System", function () {
       await mc.connect(user1).approve(await protocol.getAddress(), ethers.MaxUint256);
       await protocol.connect(user1).buyTicket(TICKET_PRICE);
 
-      // Stake Liquidity (150 MC)
+      // Stake Liquidity (160 MC)
       await protocol.connect(user1).stakeLiquidity(LIQUIDITY_AMOUNT, 7);
 
       // Fast forward 7 units (demo units are minutes)
       await time.increase(7 * 60 + 1);
 
       // Claim Rewards
-      // Rate: 2.0% per unit * 7 units = 14% of Liquidity (150)
-      // 14% of 150 = 21 Total
-      // Split: 10.5 MC + 10.5 JBC (if price is 1:1)
+      // Rate: 1.3333334% per unit * 7 units = 9.3333338% of Liquidity (160)
+      // 9.3333338% of 160 = 14.9333341 Total
+      // Split: 7.4666670 MC + 7.4666670 JBC (if price is 1:1)
       
       const initialMc = await mc.balanceOf(user1.address);
       const initialJbc = await jbc.balanceOf(user1.address);
@@ -141,8 +141,8 @@ describe("Jinbao Protocol System", function () {
       const finalJbc = await jbc.balanceOf(user1.address);
 
       // Allow for small rounding errors
-      expect(finalMc - initialMc).to.be.closeTo(ethers.parseEther("10.5"), ethers.parseEther("0.1"));
-      expect(finalJbc - initialJbc).to.be.closeTo(ethers.parseEther("10.5"), ethers.parseEther("0.1"));
+      expect(finalMc - initialMc).to.be.closeTo(ethers.parseEther("7.4666670"), ethers.parseEther("0.1"));
+      expect(finalJbc - initialJbc).to.be.closeTo(ethers.parseEther("7.4666670"), ethers.parseEther("0.1"));
     });
 
     it("Should handle redemption", async function () {
@@ -157,9 +157,9 @@ describe("Jinbao Protocol System", function () {
 
        // Redeem
        // 1% Fee = 1 MC
-       // Return = 150 MC Principal
-       // Protocol sends 149 MC -> User
-       // Net change for user: +149 MC
+       // Return = 160 MC Principal
+       // Protocol sends 159 MC -> User
+       // Net change for user: +159 MC
        
        const initialMc = await mc.balanceOf(user1.address);
        

@@ -14,9 +14,10 @@ async function main() {
   }
   
   const deployment = JSON.parse(fs.readFileSync(deploymentPath, "utf8"));
-  const MC_TOKEN = deployment.mcToken;
-  const JBC_TOKEN = deployment.jbcToken;
-  const PROTOCOL = deployment.protocolProxy || deployment.protocol;
+  // Override with specific addresses if needed, or rely on deployment file
+  const MC_TOKEN = "0xB2B8777BcBc7A8DEf49F022773d392a8787cf9EF";
+  const JBC_TOKEN = "0xA743cB357a9f59D349efB7985072779a094658dD";
+  const PROTOCOL = "0x498068346562685F3c7b89D9eC71683fb1752DF7";
   
   console.log("加载部署配置:");
   console.log("Protocol:", PROTOCOL);
@@ -24,14 +25,17 @@ async function main() {
   console.log("JBC Token:", JBC_TOKEN);
 
   // 初始流动性数量（根据需要调整）
-  const MC_AMOUNT = hre.ethers.parseEther("100");  // 100.0 MC
-  const JBC_AMOUNT = hre.ethers.parseEther("100"); // 100.0 JBC
+  // User requested 1,000,000 each. 
+  // Wallet has ~999,900 JBC. We will use 990,000 to be safe and keep 1:1 ratio.
+  const AMOUNT_TO_ADD = hre.ethers.parseEther("990000"); 
+  const MC_AMOUNT = AMOUNT_TO_ADD;
+  const JBC_AMOUNT = AMOUNT_TO_ADD;
 
   const [deployer] = await hre.ethers.getSigners();
   console.log("使用账户:", deployer.address);
 
   // 获取合约实例
-  const mcContract = await hre.ethers.getContractAt("IERC20", MC_TOKEN);
+  const mcContract = await hre.ethers.getContractAt("MockMC", MC_TOKEN); // Use MockMC interface for minting
   const jbcContract = await hre.ethers.getContractAt("IERC20", JBC_TOKEN);
   const protocol = await hre.ethers.getContractAt("JinbaoProtocol", PROTOCOL);
 
@@ -42,13 +46,15 @@ async function main() {
   console.log("JBC 余额:", hre.ethers.formatEther(jbcBalance));
 
   if (mcBalance < MC_AMOUNT) {
-    console.error("❌ MC 余额不足！需要:", hre.ethers.formatEther(MC_AMOUNT));
-    // return; 
+    console.log("⚠️ MC 余额不足，正在铸造...");
+    const mintTx = await mcContract.mint(deployer.address, MC_AMOUNT);
+    await mintTx.wait();
+    console.log("✅ MC 铸造完成");
   }
 
   if (jbcBalance < JBC_AMOUNT) {
     console.error("❌ JBC 余额不足！需要:", hre.ethers.formatEther(JBC_AMOUNT));
-    // return;
+    process.exit(1);
   }
 
   console.log("\n=== 授权 Protocol ===");

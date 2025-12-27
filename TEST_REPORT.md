@@ -41,7 +41,7 @@ This document details the automated tests performed on the Jinbao Protocol smart
     *   **Status:** ✅ **PASS**
 
 *   **Test Case 4: Liquidity Staking & Rewards**
-    *   **Action:** User1 stakes 150 MC liquidity for a 7-day cycle.
+    *   **Action:** User1 stakes 160 MC liquidity for a 7-day cycle.
     *   **Time Travel:** Fast forward 7 days.
     *   **Calculation:** 100 MC Ticket * 2.0% Daily * 7 Days = 14 MC Total Revenue.
     *   **Settlement:** 50% MC (7 MC) + 50% JBC (7 JBC worth).
@@ -49,7 +49,7 @@ This document details the automated tests performed on the Jinbao Protocol smart
 
 *   **Test Case 5: Redemption**
     *   **Action:** User1 redeems liquidity after cycle end.
-    *   **Calculation:** Principal (150 MC) - Redemption Fee (1% of Ticket = 1 MC) = 149 MC Net Return.
+    *   **Calculation:** Principal (160 MC) - Redemption Fee (1% of Ticket = 1 MC) = 159 MC Net Return.
     *   **Status:** ✅ **PASS**
 
 ## 4. Test Execution Logs

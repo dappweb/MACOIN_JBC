@@ -117,21 +117,21 @@ const MiningPanel: React.FC = () => {
   // Auto-set liquidity amount based on ticket (1.5x rule) - 修正为使用历史单张最高
   useEffect(() => {
     if (ticketInfo && ticketInfo.amount > 0n) {
-        const currentAmount = parseFloat(ethers.formatEther(ticketInfo.amount));
         const contractMaxSingle = ticketInfo.maxSingleTicketAmount ? parseFloat(ethers.formatEther(ticketInfo.maxSingleTicketAmount)) : 0;
         const historyMax = maxUnredeemedTicket;
         
-        // 候选值：合约记录的单张最高，前端回溯的单张最高
-        const candidates = [contractMaxSingle, historyMax];
-        
-        // 如果当前持有金额是标准档位，也作为候选（兼容刚购买还没生成历史的情况）
-        if (TICKET_TIERS.some(t => Math.abs(t.amount - currentAmount) < 0.1)) {
-            candidates.push(currentAmount);
+        let baseAmount = 0;
+
+        // 优先级 1: 合约记录的单张最大值 (最准确)
+        if (contractMaxSingle > 0) {
+            baseAmount = contractMaxSingle;
         }
-        
-        // 取最大值作为计算基数
-        // 这样可以排除掉非标准档位的聚合金额（如400），确保只用单张最高（如300）
-        let baseAmount = Math.max(...candidates);
+        // 优先级 2: 前端回溯的历史单张最大值 (备选)
+        else if (historyMax > 0) {
+            baseAmount = historyMax;
+        }
+        // 注意：不再使用 currentAmount 作为兜底，因为它可能是多张门票的累加值（例如 500+500=1000），
+        // 导致误判为高等级门票。如果没有历史记录，宁可让用户手动输入或等待数据刷新。
         
         if (baseAmount > 0) {
             const required = baseAmount * 1.5;
@@ -387,21 +387,16 @@ const MiningPanel: React.FC = () => {
       }
 
       try {
-          // Separate risky call from main data fetching
-          let maxSingleTicket = 0n;
-          try {
-              // Check if function exists in contract before calling (optional, but try-catch is safer)
-              if (protocolContract.getUserMaxSingleTicketAmount) {
-                  maxSingleTicket = await protocolContract.getUserMaxSingleTicketAmount(account);
-              }
-          } catch (e) {
-              console.warn("getUserMaxSingleTicketAmount failed or not available", e);
-          }
-
           const [ticket, userInfo] = await Promise.all([
               protocolContract.userTicket(account),
               protocolContract.userInfo(account)
           ]);
+
+          // 从 userInfo 中获取 maxSingleTicketAmount (新合约结构)
+          let maxSingleTicket = 0n;
+          if (userInfo.maxSingleTicketAmount) {
+              maxSingleTicket = userInfo.maxSingleTicketAmount;
+          }
 
           console.log('ticket info:', {
               amount: ticket.amount.toString(),

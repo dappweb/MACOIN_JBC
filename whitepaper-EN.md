@@ -28,10 +28,10 @@ Ticket Tiers: 100 MC, 300 MC, 500 MC, 1000 MC
 - **25%** - Treasury Fund (Gold-Backed Reserve)
 
 ### 2. Liquidity Requirements
-- **100 MC Ticket:** Requires 150 MC Liquidity
-- **300 MC Ticket:** Requires 450 MC Liquidity
-- **500 MC Ticket:** Requires 750 MC Liquidity
-- **1000 MC Ticket:** Requires 1500 MC Liquidity
+- **100 MC Ticket:** Requires 160 MC Liquidity
+- **300 MC Ticket:** Requires 480 MC Liquidity
+- **500 MC Ticket:** Requires 800 MC Liquidity
+- **1000 MC Ticket:** Requires 1600 MC Liquidity
 
 ### 3. Liquidity Mining Rewards (Based on Ticket Amount)
 - **7-Day Cycle:** 2.0% Daily
@@ -48,16 +48,16 @@ Ticket Tiers: 100 MC, 300 MC, 500 MC, 1000 MC
 ## III. Ticket Purchase and Participation Rules
 
 ### 1. Ticket Purchase Rule
-Taking 100 MC Ticket + 150 MC Liquidity as an example:
+Taking 100 MC Ticket + 160 MC Liquidity as an example:
 - User transfers 100 MC to the contract address to buy a ticket.
 - **3x Cap:** Enjoy 3x dynamic and static coin-based revenue limit (based on ticket amount).
-- **Time Limit:** Liquidity (150 MC) must be provided within **72 hours** after ticket purchase; otherwise, the ticket automatically expires.
+- **Time Limit:** Liquidity (160 MC) must be provided within **72 hours** after ticket purchase; otherwise, the ticket automatically expires.
 
 ### 2. Liquidity Mining & Redemption
-- User provides 150 MC liquidity to the contract.
+- User provides 160 MC liquidity to the contract.
 - **Cycle End:** After 30 days (720 hours), earnings stop.
 - **Redemption:** User must pay a **Redemption Fee** (e.g., 1% of Ticket Amount, 10 MC in original text context seems high for 1%, likely 1% of total or fixed fee, assuming 1% based on UI text) to the contract.
-- **Payout:** Contract automatically returns: `Principal Liquidity (150 MC)` + `Interest (MC & JBC)` + `Redemption Fee Return (10 MC)`.
+- **Payout:** Contract automatically returns: `Principal Liquidity (160 MC)` + `Interest (MC & JBC)` + `Redemption Fee Return (10 MC)`.
 - **Out Rule:** Once total dynamic/static revenue reaches **3x** the ticket amount, the user is "Out" and must purchase a new ticket to continue earning.
 
 ## IV. V-Series Differential Fission Mechanism (Team Rewards)

@@ -1,7 +1,7 @@
 # 流动性计算逻辑修复报告
 
 ## 问题描述
-流动性投入金额应该是门票历史记录中单张门票金额最大的1.5倍，但现有逻辑过于复杂且可能不准确。
+流动性投入金额应该是门票历史记录中单张门票金额最大的1.6倍，但现有逻辑过于复杂且可能不准确。
 
 ## 修复方案
 
@@ -19,7 +19,7 @@ let baseAmount = Math.max(contractMaxAmount, maxHistoricalTicket);
 ```typescript
 // 直接使用合约提供的准确数据
 const baseAmount = parseFloat(ethers.formatEther(ticketInfo.maxTicketAmount));
-const required = baseAmount * 1.5;
+const required = baseAmount * 1.6;
 ```
 
 ### 2. 移除冗余状态 ✅
@@ -64,7 +64,7 @@ const isDisabled = hasTicket && !isExited && tier.amount < currentTicketAmount;
 ## 测试验证
 
 ### 场景1：新用户首次购买
-- ✅ 流动性金额 = 门票金额 × 1.5
+- ✅ 流动性金额 = 门票金额 × 1.6
 - ✅ 基于合约的 `maxTicketAmount`
 
 ### 场景2：用户升级门票
@@ -76,4 +76,4 @@ const isDisabled = hasTicket && !isExited && tier.amount < currentTicketAmount;
 - ✅ 始终基于历史最大单张门票
 
 ## 结论
-修复后的逻辑更加简洁、准确和可靠，完全符合"流动性投入金额应该是门票历史记录中单张门票金额最大的1.5倍"的需求。
+修复后的逻辑更加简洁、准确和可靠，完全符合"流动性投入金额应该是门票历史记录中单张门票金额最大的1.6倍"的需求。

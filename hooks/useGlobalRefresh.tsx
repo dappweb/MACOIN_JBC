@@ -87,9 +87,17 @@ export const GlobalRefreshProvider = ({ children }: { children: ReactNode }) => 
       // 获取JBC价格
       if (protocolContract) {
         promises.push(
-          protocolContract.getJBCPrice()
-            .then((priceWei: any) => parseFloat(ethers.formatEther(priceWei)))
-            .catch(() => 1.0)
+          Promise.all([
+             protocolContract.swapReserveMC(),
+             protocolContract.swapReserveJBC()
+          ]).then(([reserveMC, reserveJBC]) => {
+              const rMC = parseFloat(ethers.formatEther(reserveMC));
+              const rJBC = parseFloat(ethers.formatEther(reserveJBC));
+              return rJBC > 0 ? rMC / rJBC : 1.0;
+          }).catch((err) => {
+              console.warn("Failed to fetch reserves for price", err);
+              return 1.0;
+          })
         );
       } else {
         promises.push(Promise.resolve(1.0));

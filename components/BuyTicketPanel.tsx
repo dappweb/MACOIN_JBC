@@ -31,22 +31,17 @@ const BuyTicketPanel: React.FC<BuyTicketPanelProps> = ({ onBack }) => {
     const checkTicketStatus = async () => {
       if (protocolContract && account) {
         try {
-          // 获取单张最高记录 (尝试调用，失败则忽略)
-          let maxSingle = 0
-          try {
-            if (protocolContract.getUserMaxSingleTicketAmount) {
-                const val = await protocolContract.getUserMaxSingleTicketAmount(account)
-                maxSingle = parseFloat(ethers.formatEther(val))
-            }
-          } catch (e) {
-            console.warn("Failed to get max single ticket", e)
-          }
-          setMaxSingleTicketAmount(maxSingle)
-
           const [ticket, userInfo] = await Promise.all([
             protocolContract.userTicket(account),
             protocolContract.userInfo(account)
           ])
+
+          // 获取单张最高记录 (从userInfo获取)
+          let maxSingle = 0
+          if (userInfo.maxSingleTicketAmount) {
+             maxSingle = parseFloat(ethers.formatEther(userInfo.maxSingleTicketAmount))
+          }
+          setMaxSingleTicketAmount(maxSingle)
           
           setUserTicket(ticket)
           

@@ -271,7 +271,7 @@ const AdminPanel: React.FC = () => {
     if (!protocolContract) return;
     setLoading(true);
     try {
-      const tx = await protocolContract.setDistributionPercents(
+      const tx = await protocolContract.setDistributionConfig(
         direct, level, marketing, buyback, lp, treasury
       );
       await tx.wait();

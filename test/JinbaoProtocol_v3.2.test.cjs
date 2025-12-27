@@ -9,7 +9,7 @@ describe("Jinbao Protocol System v3.2", function () {
   let owner, user1, user2, referrer, marketing, treasury, lpInjection, buyback, lpPair, upline2;
 
   const TICKET_PRICE = ethers.parseEther("100"); // T1
-  const LIQUIDITY_AMOUNT = ethers.parseEther("150"); // 1.5x
+  const LIQUIDITY_AMOUNT = ethers.parseEther("160"); // 1.6x
 
   beforeEach(async function () {
     [owner, user1, user2, referrer, marketing, treasury, lpInjection, buyback, lpPair, upline2] = await ethers.getSigners();
@@ -124,8 +124,8 @@ describe("Jinbao Protocol System v3.2", function () {
           
           // Redeem
           // Fee = 1% of Ticket (100) = 1 MC.
-          // Principal = 150 MC.
-          // Return = 149 MC.
+          // Principal = 160 MC.
+          // Return = 159 MC.
           
           const balBefore = await mc.balanceOf(user1.address);
           await protocol.connect(user1).redeem();
@@ -144,8 +144,8 @@ describe("Jinbao Protocol System v3.2", function () {
           await protocol.connect(user1).stakeLiquidity(LIQUIDITY_AMOUNT * 2n, 7);
           const balAfterStake = await mc.balanceOf(user1.address);
           
-          // Stake costs 150 MC. Refund +1 MC. Net = -149 MC.
-          expect(balBeforeStake - balAfterStake).to.equal(ethers.parseEther("299"));
+          // Stake costs 160 MC. Refund +1 MC. Net = -159 MC.
+          expect(balBeforeStake - balAfterStake).to.equal(ethers.parseEther("359"));
       });
   });
 });

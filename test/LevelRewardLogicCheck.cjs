@@ -59,8 +59,8 @@ describe("JinbaoProtocol Level Reward Logic Check", function () {
   // Helper to activate user
   const activate = async (user, ticketAmount) => {
       await protocol.connect(user).buyTicket(ticketAmount);
-      // Stake 1.5x
-      await protocol.connect(user).stakeLiquidity(ticketAmount * 150n / 100n, 7);
+      // Stake 1.6x
+      await protocol.connect(user).stakeLiquidity(ticketAmount * 160n / 100n, 7);
   };
 
   it("Test 1: Standard Differential Calculation (Normal Case)", async function () {
@@ -100,7 +100,7 @@ describe("JinbaoProtocol Level Reward Logic Check", function () {
     expect(await mc.balanceOf(u4.address)).to.equal(b4_start + ethers.parseEther("250"));
 
     // u5 stakes and redeems to trigger release
-    await protocol.connect(u5).stakeLiquidity(T1000 * 150n / 100n, 7);
+    await protocol.connect(u5).stakeLiquidity(T1000 * 160n / 100n, 7);
     await time.increase(8 * 24 * 3600); // Wait 8 days
     await protocol.connect(u5).claimRewards();
     await protocol.connect(u5).redeem();
@@ -132,7 +132,7 @@ describe("JinbaoProtocol Level Reward Logic Check", function () {
 
     // u3 buys 1000 MC
     await protocol.connect(u3).buyTicket(T1000);
-    await protocol.connect(u3).stakeLiquidity(T1000 * 150n / 100n, 7);
+    await protocol.connect(u3).stakeLiquidity(T1000 * 160n / 100n, 7);
     await time.increase(8 * 24 * 3600);
     await protocol.connect(u3).claimRewards();
     await protocol.connect(u3).redeem();
@@ -165,7 +165,7 @@ describe("JinbaoProtocol Level Reward Logic Check", function () {
     const b3_start = await mc.balanceOf(u3.address);
 
     await protocol.connect(u4).buyTicket(T1000);
-    await protocol.connect(u4).stakeLiquidity(T1000 * 150n / 100n, 7);
+    await protocol.connect(u4).stakeLiquidity(T1000 * 160n / 100n, 7);
     await time.increase(8 * 24 * 3600);
     await protocol.connect(u4).claimRewards();
     await protocol.connect(u4).redeem();

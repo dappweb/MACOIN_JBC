@@ -47,42 +47,41 @@ describe("MaxSingleTicketAmount 功能测试", function () {
         // 用户1先购买100MC门票
         await protocol.connect(user1).buyTicket(ethers.parseEther("100"));
         
-        let maxSingle = await protocol.getUserMaxSingleTicketAmount(user1.address);
-        expect(maxSingle).to.equal(ethers.parseEther("100"));
+        let userInfo = await protocol.userInfo(user1.address);
+        expect(userInfo.maxSingleTicketAmount).to.equal(ethers.parseEther("100"));
         
         // 用户1再购买300MC门票（累积）
         await protocol.connect(user1).buyTicket(ethers.parseEther("300"));
         
         // 检查累积门票金额
-        const userInfo = await protocol.userInfo(user1.address);
+        userInfo = await protocol.userInfo(user1.address);
         expect(userInfo.maxTicketAmount).to.equal(ethers.parseEther("400")); // 累积值
         
         // 检查单张门票最大值
-        maxSingle = await protocol.getUserMaxSingleTicketAmount(user1.address);
-        expect(maxSingle).to.equal(ethers.parseEther("300")); // 单张最大值
+        expect(userInfo.maxSingleTicketAmount).to.equal(ethers.parseEther("300")); // 单张最大值
     });
     
     it("应该在购买更大单张门票时更新最大值", async function () {
         // 先购买300MC
         await protocol.connect(user1).buyTicket(ethers.parseEther("300"));
-        let maxSingle = await protocol.getUserMaxSingleTicketAmount(user1.address);
-        expect(maxSingle).to.equal(ethers.parseEther("300"));
+        let userInfo = await protocol.userInfo(user1.address);
+        expect(userInfo.maxSingleTicketAmount).to.equal(ethers.parseEther("300"));
         
         // 再购买500MC
         await protocol.connect(user1).buyTicket(ethers.parseEther("500"));
-        maxSingle = await protocol.getUserMaxSingleTicketAmount(user1.address);
-        expect(maxSingle).to.equal(ethers.parseEther("500")); // 更新为更大值
+        userInfo = await protocol.userInfo(user1.address);
+        expect(userInfo.maxSingleTicketAmount).to.equal(ethers.parseEther("500")); // 更新为更大值
     });
     
     it("购买较小门票时不应该更新最大值", async function () {
         // 先购买500MC
         await protocol.connect(user1).buyTicket(ethers.parseEther("500"));
-        let maxSingle = await protocol.getUserMaxSingleTicketAmount(user1.address);
-        expect(maxSingle).to.equal(ethers.parseEther("500"));
+        let userInfo = await protocol.userInfo(user1.address);
+        expect(userInfo.maxSingleTicketAmount).to.equal(ethers.parseEther("500"));
         
         // 再购买100MC（较小）
         await protocol.connect(user1).buyTicket(ethers.parseEther("100"));
-        maxSingle = await protocol.getUserMaxSingleTicketAmount(user1.address);
-        expect(maxSingle).to.equal(ethers.parseEther("500")); // 保持不变
+        userInfo = await protocol.userInfo(user1.address);
+        expect(userInfo.maxSingleTicketAmount).to.equal(ethers.parseEther("500")); // 保持不变
     });
 });

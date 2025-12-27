@@ -63,24 +63,24 @@ const AppContent: React.FC = () => {
 
   // 根据当前标签页设置背景图
   const getBackgroundImage = () => {
-    switch (currentTab) {
-      case AppTab.HOME:
-        return '/bg-3.png'
-      case AppTab.MINING:
-        return '/bg-16.png'
-      case AppTab.BUY_TICKET:
-        return '/bg-16.png'
-      case AppTab.TEAM:
-        return '/bg-11.png'
-      case AppTab.SWAP:
-        return '/bg-2.png'
-      case AppTab.HISTORY:
-        return '/bg-14.png'
-      case AppTab.EARNINGS:
-        return '/bg-14.png'
-      default:
-        return '/bg-11.png'
+    const bgMap = {
+      [AppTab.HOME]: '/bg-3.png',
+      [AppTab.MINING]: '/bg-16.png',
+      [AppTab.BUY_TICKET]: '/bg-16.png',
+      [AppTab.TEAM]: '/bg-11.png',
+      [AppTab.SWAP]: '/bg-2.png',
+      [AppTab.HISTORY]: '/bg-14.png',
+      [AppTab.EARNINGS]: '/bg-14.png'
+    };
+    
+    const bgPath = bgMap[currentTab] || '/bg-11.png';
+    
+    // 开发环境下输出背景图信息
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`🖼️ Background image for ${currentTab}:`, bgPath);
     }
+    
+    return bgPath;
   }
 
   return (
@@ -90,12 +90,12 @@ const AppContent: React.FC = () => {
         backgroundImage: `url(${getBackgroundImage()})`,
         backgroundSize:'cover',
         backgroundPosition:currentTab === AppTab.TEAM ? '26% 100%' : currentTab ===AppTab.HISTORY ? '24% 100%' : 'center',
-        backgroundAttachment: 'fixed',
+        backgroundAttachment: 'scroll', // 改为scroll以提高移动端兼容性
         backgroundRepeat: 'no-repeat'
       }}
     >
-      {/* 添加半透明遮罩层以确保内容可读性 */}
-      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-0"></div>
+      {/* 调整遮罩层透明度以显示背景图 */}
+      <div className="fixed inset-0 bg-black/30 z-0"></div>
       
       <Navbar currentTab={currentTab} setTab={setCurrentTab} />
 

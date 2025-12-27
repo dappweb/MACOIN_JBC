@@ -61,7 +61,7 @@ describe("JinbaoProtocol Logic Update Check", function () {
     // Activate U1, U2, U3 (Buy Ticket + Stake)
     const activate = async (user) => {
         await protocol.connect(user).buyTicket(T1000);
-        await protocol.connect(user).stakeLiquidity(T1000 * 150n / 100n, 7);
+        await protocol.connect(user).stakeLiquidity(T1000 * 160n / 100n, 7);
     };
     await activate(u1);
     await activate(u2);

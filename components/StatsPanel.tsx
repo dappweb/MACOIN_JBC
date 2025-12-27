@@ -899,21 +899,21 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
           {!loadingPriceHistory && priceHistory.length > 1 && (
             <div className="grid grid-cols-2 sm:flex sm:gap-2 md:gap-4 text-xs md:text-sm gap-2">
               <div className="text-center bg-gray-900/70 p-2 sm:p-3 rounded border border-gray-700">
-                <div className="text-gray-300 text-[10px] sm:text-xs font-medium">Highest</div>
+                <div className="text-gray-300 text-[10px] sm:text-xs font-medium">{t.stats.high}</div>
                 <div className="text-amber-400 font-bold text-xs sm:text-sm">${priceStats.high.toFixed(6)}</div>
               </div>
               <div className="text-center bg-gray-900/70 p-2 sm:p-3 rounded border border-gray-700">
-                <div className="text-gray-300 text-[10px] sm:text-xs font-medium">Lowest</div>
+                <div className="text-gray-300 text-[10px] sm:text-xs font-medium">{t.stats.low}</div>
                 <div className="text-amber-400 font-bold text-xs sm:text-sm">${priceStats.low.toFixed(6)}</div>
               </div>
               <div className="text-center bg-gray-900/70 p-2 sm:p-3 rounded border border-gray-700">
-                <div className="text-gray-300 text-[10px] sm:text-xs font-medium">Change</div>
+                <div className="text-gray-300 text-[10px] sm:text-xs font-medium">{t.stats.change}</div>
                 <div className={`font-bold text-xs sm:text-sm ${priceStats.change >= 0 ? "text-neon-400" : "text-red-400"}`}>
                   {priceStats.change >= 0 ? "+" : ""}{priceStats.change.toFixed(2)}%
                 </div>
               </div>
               <div className="text-center bg-gray-900/70 p-2 sm:p-3 rounded border border-gray-700">
-                <div className="text-gray-300 text-[10px] sm:text-xs font-medium">Average</div>
+                <div className="text-gray-300 text-[10px] sm:text-xs font-medium">{t.stats.avg}</div>
                 <div className="text-neon-400 font-bold text-xs sm:text-sm">${priceStats.avgPrice.toFixed(6)}</div>
               </div>
             </div>

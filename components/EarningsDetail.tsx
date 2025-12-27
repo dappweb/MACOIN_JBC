@@ -1,9 +1,10 @@
 import React, { useEffect, useMemo, useState } from "react"
 import { ethers } from "ethers"
-import { Clock, ExternalLink, Gift, RefreshCw, Filter, X, ChevronRight, Copy, CheckCircle, Pickaxe, Zap, UserPlus, Layers, TrendingUp } from "lucide-react"
+import { Clock, ExternalLink, Gift, RefreshCw, Filter, X, ChevronRight, Copy, CheckCircle, Pickaxe, Zap, UserPlus, Layers, TrendingUp, ChevronLeft, AlertCircle } from "lucide-react"
 import { useWeb3 } from "../Web3Context"
 import { useLanguage } from "../LanguageContext"
 import { useEventRefresh } from "../hooks/useGlobalRefresh"
+import toast from "react-hot-toast"
 
 interface RewardRecord {
   hash: string
@@ -29,6 +30,17 @@ const EarningsDetail: React.FC = () => {
   const [filterType, setFilterType] = useState<number | 'all'>('all')
   const [selectedRecord, setSelectedRecord] = useState<RewardRecord | null>(null)
   const [copied, setCopied] = useState(false)
+  
+  // 分页状态
+  const [currentPage, setCurrentPage] = useState(1)
+  const [recordsPerPage] = useState(20)
+  
+  // 错误状态
+  const [error, setError] = useState<string | null>(null)
+  
+  // 缓存键
+  const getCacheKey = (account: string, viewMode: string) => 
+    `earnings_cache_${account}_${viewMode}`
 
   useEffect(() => {
     const checkOwner = async () => {
@@ -43,11 +55,51 @@ const EarningsDetail: React.FC = () => {
         } catch (err) {
           console.error("Failed to check owner", err)
           setIsOwner(false)
+          setError("Failed to verify admin permissions")
         }
       }
     }
     checkOwner()
   }, [protocolContract, account])
+
+  // 从缓存加载数据
+  const loadFromCache = () => {
+    if (!account) return false
+    
+    try {
+      const cacheKey = getCacheKey(account, viewMode)
+      const cached = localStorage.getItem(cacheKey)
+      if (cached) {
+        const { data, timestamp } = JSON.parse(cached)
+        // 缓存有效期：5分钟
+        const cacheAge = Date.now() - timestamp
+        if (cacheAge < 5 * 60 * 1000) {
+          setRecords(data)
+          setLoading(false)
+          return true
+        }
+      }
+    } catch (err) {
+      console.warn("Failed to load from cache:", err)
+    }
+    return false
+  }
+
+  // 保存到缓存
+  const saveToCache = (data: RewardRecord[]) => {
+    if (!account) return
+    
+    try {
+      const cacheKey = getCacheKey(account, viewMode)
+      const cacheData = {
+        data,
+        timestamp: Date.now()
+      }
+      localStorage.setItem(cacheKey, JSON.stringify(cacheData))
+    } catch (err) {
+      console.warn("Failed to save to cache:", err)
+    }
+  }
 
   // 监听收益相关事件，自动刷新收益记录
   useEventRefresh('rewardsChanged', () => {
@@ -60,25 +112,56 @@ const EarningsDetail: React.FC = () => {
     fetchRecords();
   });
 
-  const fetchRecords = async () => {
+  const fetchRecords = async (useCache = true) => {
     if (!protocolContract || !account || !provider) {
       setLoading(false)
+      setError("Wallet not connected or contracts not loaded")
+      return
+    }
+
+    // 尝试从缓存加载
+    if (useCache && loadFromCache()) {
       return
     }
 
     try {
       setRefreshing(true)
+      setError(null)
+      
       const currentBlock = await provider.getBlockNumber()
       const fromBlock = Math.max(0, currentBlock - 100000)
 
       const targetUser = isOwner && viewMode === "all" ? null : account
-      const [rewardEvents, referralEvents] = await Promise.all([
-        protocolContract.queryFilter(protocolContract.filters.RewardClaimed(targetUser), fromBlock),
-        protocolContract.queryFilter(protocolContract.filters.ReferralRewardPaid(targetUser), fromBlock),
-      ])
+      
+      // 分别处理两种事件，提供更详细的错误信息
+      let rewardEvents: any[] = []
+      let referralEvents: any[] = []
+      
+      try {
+        rewardEvents = await protocolContract.queryFilter(
+          protocolContract.filters.RewardClaimed(targetUser), 
+          fromBlock
+        )
+      } catch (err) {
+        console.error("Failed to fetch reward events:", err)
+        toast.error("Failed to load reward events")
+      }
+
+      try {
+        referralEvents = await protocolContract.queryFilter(
+          protocolContract.filters.ReferralRewardPaid(targetUser), 
+          fromBlock
+        )
+      } catch (err) {
+        console.error("Failed to fetch referral events:", err)
+        toast.error("Failed to load referral events")
+      }
 
       const rows: RewardRecord[] = []
+      let processedEvents = 0
+      let failedEvents = 0
 
+      // 处理奖励事件
       for (const event of rewardEvents) {
         try {
           const block = await provider.getBlock(event.blockNumber)
@@ -98,11 +181,14 @@ const EarningsDetail: React.FC = () => {
             timestamp: block ? block.timestamp : 0,
             status: "confirmed",
           })
+          processedEvents++
         } catch (err) {
           console.error("Error parsing reward event:", err, event)
+          failedEvents++
         }
       }
 
+      // 处理推荐奖励事件
       for (const event of referralEvents) {
         try {
           const block = await provider.getBlock(event.blockNumber)
@@ -122,15 +208,30 @@ const EarningsDetail: React.FC = () => {
             timestamp: block ? block.timestamp : 0,
             status: "confirmed",
           })
+          processedEvents++
         } catch (err) {
           console.error("Error parsing referral reward event:", err, event)
+          failedEvents++
         }
       }
 
+      // 按时间戳排序
       rows.sort((a, b) => b.timestamp - a.timestamp)
+      
       setRecords(rows)
-    } catch (err) {
+      saveToCache(rows)
+      
+      // 显示处理结果
+      if (failedEvents > 0) {
+        toast.error(`Loaded ${processedEvents} records, ${failedEvents} failed to parse`)
+      } else if (processedEvents > 0) {
+        toast.success(`Loaded ${processedEvents} earnings records`)
+      }
+      
+    } catch (err: any) {
       console.error("Failed to fetch earnings records:", err)
+      setError(`Failed to load earnings data: ${err.message || 'Unknown error'}`)
+      toast.error("Failed to load earnings data")
     } finally {
       setLoading(false)
       setRefreshing(false)
@@ -140,6 +241,21 @@ const EarningsDetail: React.FC = () => {
   useEffect(() => {
     fetchRecords()
   }, [protocolContract, account, viewMode, isOwner])
+
+  // 添加分页逻辑
+  const filteredRecords = filterType === 'all' 
+    ? records 
+    : records.filter(r => r.rewardType === filterType)
+
+  const totalPages = Math.ceil(filteredRecords.length / recordsPerPage)
+  const startIndex = (currentPage - 1) * recordsPerPage
+  const endIndex = startIndex + recordsPerPage
+  const currentRecords = filteredRecords.slice(startIndex, endIndex)
+
+  // 重置分页当过滤器改变时
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [filterType])
 
   const totals = useMemo(() => {
     return records.reduce(
@@ -158,6 +274,7 @@ const EarningsDetail: React.FC = () => {
       dynamic: { mc: 0, jbc: 0 },
       direct: { mc: 0, jbc: 0 },
       level: { mc: 0, jbc: 0 },
+      differential: { mc: 0, jbc: 0 },
     }
 
     const now = Math.floor(Date.now() / 1000)
@@ -180,6 +297,9 @@ const EarningsDetail: React.FC = () => {
         } else if (row.rewardType === 3) {
           stats.level.mc += mc
           stats.level.jbc += jbc
+        } else if (row.rewardType === 4) {
+          stats.differential.mc += mc
+          stats.differential.jbc += jbc
         }
       }
     })
@@ -234,10 +354,6 @@ const EarningsDetail: React.FC = () => {
     }
   }
 
-  const filteredRecords = filterType === 'all' 
-    ? records 
-    : records.filter(r => r.rewardType === filterType)
-
   if (!account) {
     return (
       <div className="max-w-6xl mx-auto mt-8">
@@ -283,7 +399,7 @@ const EarningsDetail: React.FC = () => {
               </div>
             )}
             <button
-              onClick={fetchRecords}
+              onClick={() => fetchRecords(false)} // 强制刷新，不使用缓存
               disabled={refreshing}
               className="flex items-center gap-2 px-4 py-2 bg-black/20 hover:bg-black/30 rounded-lg text-black transition-colors disabled:opacity-50"
             >
@@ -324,7 +440,8 @@ const EarningsDetail: React.FC = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      {/* Total Stats */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
         <div className="bg-gray-900/50 border border-gray-800 rounded-xl shadow-md p-5 backdrop-blur-sm">
           <div className="text-sm text-gray-400 mb-2">{ui.totalJbc || "Total JBC Rewards"}</div>
           <div className="text-2xl font-bold text-amber-400">{totals.jbc.toFixed(4)} JBC</div>
@@ -333,6 +450,10 @@ const EarningsDetail: React.FC = () => {
           <div className="text-sm text-gray-400 mb-2">{ui.totalMc || "Total MC Rewards"}</div>
           <div className="text-2xl font-bold text-neon-400">{totals.mc.toFixed(4)} MC</div>
         </div>
+      </div>
+
+      {/* 24h Stats */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <div className="bg-gray-900/50 border border-gray-800 rounded-xl shadow-md p-4 backdrop-blur-sm">
           <div className="text-sm text-gray-400 mb-2">{ui.staticReward || "Static Reward"} (24h)</div>
           <div className="text-lg font-bold text-neon-400">{dailyStats.static.mc.toFixed(2)} MC</div>
@@ -361,6 +482,19 @@ const EarningsDetail: React.FC = () => {
         </div>
       </div>
 
+      {/* Differential Reward - Highlighted */}
+      <div className="mb-6">
+        <div className="bg-gray-900/50 border-2 border-red-500 rounded-xl shadow-lg p-6 backdrop-blur-sm max-w-md mx-auto">
+          <div className="text-center">
+            <div className="text-sm text-gray-400 mb-2">{ui.differentialReward || "Differential Reward"} (24h)</div>
+            <div className="text-2xl font-bold text-neon-400 mb-1">{dailyStats.differential.mc.toFixed(4)} MC</div>
+            {dailyStats.differential.jbc > 0 && (
+              <div className="text-2xl font-bold text-amber-400">{dailyStats.differential.jbc.toFixed(4)} JBC</div>
+            )}
+          </div>
+        </div>
+      </div>
+
       {loading ? (
         <div className="bg-gray-900/50 border border-gray-800 rounded-xl shadow-md p-12 text-center backdrop-blur-sm">
           <div className="w-12 h-12 border-4 border-neon-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
@@ -373,8 +507,35 @@ const EarningsDetail: React.FC = () => {
           <p className="text-gray-400">{ui.noRecordsDesc || "No reward claims yet."}</p>
         </div>
       ) : (
-        <div className="space-y-3">
-          {filteredRecords.map((row, index) => (
+        <>
+          {/* 错误提示 */}
+          {error && (
+            <div className="bg-red-900/50 border border-red-500 rounded-xl p-4 mb-6 backdrop-blur-sm">
+              <div className="flex items-center gap-3">
+                <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0" />
+                <div>
+                  <h4 className="text-red-400 font-semibold">Error Loading Data</h4>
+                  <p className="text-red-300 text-sm mt-1">{error}</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* 分页信息 */}
+          {totalPages > 1 && (
+            <div className="bg-gray-900/50 border border-gray-800 rounded-xl p-4 mb-4 backdrop-blur-sm">
+              <div className="flex items-center justify-between text-sm text-gray-400">
+                <span>
+                  Showing {startIndex + 1}-{Math.min(endIndex, filteredRecords.length)} of {filteredRecords.length} records
+                </span>
+                <span>Page {currentPage} of {totalPages}</span>
+              </div>
+            </div>
+          )}
+
+          {/* 记录列表 */}
+          <div className="space-y-3">
+            {currentRecords.map((row, index) => (
             <div
               key={`${row.hash}-${index}`}
               onClick={() => setSelectedRecord(row)}

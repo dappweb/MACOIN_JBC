@@ -249,9 +249,17 @@ const LiquidityPositions: React.FC = () => {
               
               <div className="text-right">
                 <div className="text-sm font-medium text-amber-400">
-                  +{parseFloat(pos.staticReward).toFixed(4)}
+                  {pos.status === 'redeemed' 
+                    ? `+${parseFloat(pos.paid).toFixed(4)}`
+                    : `+${parseFloat(pos.staticReward).toFixed(4)}`
+                  }
                 </div>
-                <div className="text-xs text-gray-500">{t.mining?.pending || "Pending"}</div>
+                <div className="text-xs text-gray-500">
+                  {pos.status === 'redeemed' 
+                    ? (t.mining?.totalPaid || "Total Paid")
+                    : (t.mining?.pending || "Pending")
+                  }
+                </div>
               </div>
             </div>
 

@@ -118,6 +118,17 @@ const Navbar: React.FC<NavbarProps> = ({ currentTab, setTab }) => {
     }
   };
 
+  const copyAddress = async (address: string | undefined) => {
+    if (!address) return
+    try {
+      await navigator.clipboard.writeText(address)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch (err) {
+      console.error("Failed to copy address", err)
+    }
+  }
+
   return (
     <>
       {/* Network Warning Banner */}

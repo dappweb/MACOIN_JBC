@@ -443,15 +443,18 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
 
         const pricePoints: PricePoint[] = []
 
-        // Parse MC->JBC swaps: price = mcAmount / jbcAmount
+        // Parse MC->JBC swaps: price = mcAmount / (jbcAmount + tax)
         for (const event of mcToJbcEvents) {
           try {
             const block = await provider.getBlock(event.blockNumber)
             if (event.args && block) {
               const mcAmount = parseFloat(ethers.formatEther(event.args[1]))
               const jbcAmount = parseFloat(ethers.formatEther(event.args[2]))
-              if (jbcAmount > 0) {
-                const price = mcAmount / jbcAmount
+              const tax = parseFloat(ethers.formatEther(event.args[3]))
+              const totalJbcOut = jbcAmount + tax
+              
+              if (totalJbcOut > 0) {
+                const price = mcAmount / totalJbcOut
                 pricePoints.push({
                   timestamp: block.timestamp,
                   price: price,
@@ -463,15 +466,18 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
           }
         }
 
-        // Parse JBC->MC swaps: price = mcAmount / jbcAmount
+        // Parse JBC->MC swaps: price = mcAmount / (jbcAmount - tax)
         for (const event of jbcToMcEvents) {
           try {
             const block = await provider.getBlock(event.blockNumber)
             if (event.args && block) {
               const jbcAmount = parseFloat(ethers.formatEther(event.args[1]))
               const mcAmount = parseFloat(ethers.formatEther(event.args[2]))
-              if (jbcAmount > 0) {
-                const price = mcAmount / jbcAmount
+              const tax = parseFloat(ethers.formatEther(event.args[3]))
+              const actualSwappedJbc = jbcAmount - tax
+              
+              if (actualSwappedJbc > 0) {
+                const price = mcAmount / actualSwappedJbc
                 pricePoints.push({
                   timestamp: block.timestamp,
                   price: price,
@@ -526,12 +532,15 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
   useEffect(() => {
     if (!protocolContract || !provider) return
 
-    const handleSwapMCToJBC = (user: string, mcAmount: any, jbcAmount: any, event: any) => {
+    const handleSwapMCToJBC = (user: string, mcAmount: any, jbcAmount: any, tax: any, event: any) => {
       try {
         const mcAmountNum = parseFloat(ethers.formatEther(mcAmount))
         const jbcAmountNum = parseFloat(ethers.formatEther(jbcAmount))
-        if (jbcAmountNum > 0) {
-          const price = mcAmountNum / jbcAmountNum
+        const taxNum = parseFloat(ethers.formatEther(tax))
+        const totalJbcOut = jbcAmountNum + taxNum
+
+        if (totalJbcOut > 0) {
+          const price = mcAmountNum / totalJbcOut
           const timestamp = Math.floor(Date.now() / 1000)
 
           setRealtimePrices((prev) => {
@@ -547,12 +556,15 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
       }
     }
 
-    const handleSwapJBCToMC = (user: string, jbcAmount: any, mcAmount: any, event: any) => {
+    const handleSwapJBCToMC = (user: string, jbcAmount: any, mcAmount: any, tax: any, event: any) => {
       try {
         const jbcAmountNum = parseFloat(ethers.formatEther(jbcAmount))
         const mcAmountNum = parseFloat(ethers.formatEther(mcAmount))
-        if (jbcAmountNum > 0) {
-          const price = mcAmountNum / jbcAmountNum
+        const taxNum = parseFloat(ethers.formatEther(tax))
+        const actualSwappedJbc = jbcAmountNum - taxNum
+
+        if (actualSwappedJbc > 0) {
+          const price = mcAmountNum / actualSwappedJbc
           const timestamp = Math.floor(Date.now() / 1000)
 
           setRealtimePrices((prev) => {

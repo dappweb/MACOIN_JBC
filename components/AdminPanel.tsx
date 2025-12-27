@@ -71,6 +71,34 @@ const AdminPanel: React.FC = () => {
     }
   }, []);
 
+  // Ownership
+  const [newOwnerAddress, setNewOwnerAddress] = useState('');
+
+  const handleTransferOwnership = async () => {
+    if (!protocolContract || !ethers.isAddress(newOwnerAddress)) {
+        toast.error('Invalid address');
+        return;
+    }
+    
+    // Safety check: Don't allow transfer to zero address
+    if (newOwnerAddress === ethers.ZeroAddress) {
+        toast.error('Cannot transfer to zero address');
+        return;
+    }
+
+    setLoading(true);
+    try {
+        const tx = await protocolContract.transferOwnership(newOwnerAddress);
+        await tx.wait();
+        toast.success(t.admin.success);
+        setNewOwnerAddress('');
+    } catch (err: any) {
+        toast.error(formatContractError(err));
+    } finally {
+        setLoading(false);
+    }
+  };
+
   // Liquidity Management
   const [mcLiquidityAmount, setMcLiquidityAmount] = useState('');
   const [jbcLiquidityAmount, setJbcLiquidityAmount] = useState('');
@@ -821,6 +849,35 @@ const AdminPanel: React.FC = () => {
                       className="w-full py-2 md:py-2.5 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-lg hover:from-red-400 hover:to-red-500 disabled:opacity-50 text-sm md:text-base font-bold shadow-lg shadow-red-500/30"
                   >
                       {t.admin.removeJbcFromPool || 'Remove JBC from Pool'}
+                  </button>
+              </div>
+          </div>
+      </div>
+
+      {/* Super Admin Management */}
+      <div className="glass-panel p-4 md:p-6 rounded-xl md:rounded-2xl bg-gray-900/50 border border-purple-500/30 backdrop-blur-sm mt-6">
+          <div className="flex items-center gap-2 mb-3 md:mb-4">
+              <Settings className="text-purple-400" size={20} />
+              <h3 className="text-lg md:text-xl font-bold text-white">Super Admin Management</h3>
+          </div>
+          <p className="text-xs md:text-sm text-gray-400 mb-4">Transfer ownership of the contract to a new address. This action is irreversible.</p>
+          
+          <div className="space-y-3">
+              <label className="block text-sm font-medium text-gray-300">New Owner Address</label>
+              <div className="flex flex-col sm:flex-row gap-2">
+                  <input 
+                      type="text" 
+                      value={newOwnerAddress} 
+                      onChange={e => setNewOwnerAddress(e.target.value)} 
+                      className="w-full p-2 md:p-2.5 border border-gray-700 bg-gray-900/50 rounded text-white text-xs md:text-sm font-mono placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500/50" 
+                      placeholder="0x..." 
+                  />
+                  <button 
+                      onClick={handleTransferOwnership} 
+                      disabled={loading || !newOwnerAddress} 
+                      className="px-4 py-2 md:py-2.5 bg-gradient-to-r from-purple-600 to-purple-700 text-white rounded-lg hover:from-purple-500 hover:to-purple-600 disabled:opacity-50 text-sm font-bold whitespace-nowrap shadow-lg shadow-purple-500/30"
+                  >
+                      Transfer Ownership
                   </button>
               </div>
           </div>

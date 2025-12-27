@@ -174,7 +174,7 @@ export const translations = {
       netTotalVolume: "社区总业绩",
     },
     swap: {
-      title: "JBC 闪兑 (Swap)",
+      title: "闪兑 (Swap)",
       pay: "支付",
       balance: "余额",
       get: "获得 (预估)",
@@ -500,7 +500,7 @@ export const translations = {
       netTotalCap: "Community Total Quota",
     },
     swap: {
-      title: "JBC Swap",
+      title: "Swap",
       pay: "Pay",
       balance: "Balance",
       get: "Receive (Est.)",

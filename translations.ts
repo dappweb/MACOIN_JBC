@@ -136,9 +136,7 @@ export const translations = {
       cycle: "周期",
       totalPaid: "已获收益",
       pending: "待领取",
-      totalLock: "总质押",
       estPendingReward: "预计待领取奖励",
-      liquidity: "流动性仓位",
     },
     team: {
       title: "V系列 极差裂变机制",
@@ -489,8 +487,6 @@ export const translations = {
       expiredTicketWarning:
         "You have an expired ticket and cannot buy a new one! Please contact admin to handle expired tickets",
       totalPaid: "Total Paid",
-      totalLock: "Total Staked",
-      liquidity: "Liquidity Positions",
     },
     team: {
       title: "V-Series Differential Mechanism",

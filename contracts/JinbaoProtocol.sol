@@ -21,6 +21,8 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, ReentrancyGuardUpg
         uint256 currentCap;    // Current max cap (3x ticket)
         bool isActive;         // Has active ticket with liquidity
         uint256 refundFeeAmount; // Amount of fee to refund on next stake
+        uint256 teamTotalVolume; // Community Ticket Total Volume
+        uint256 teamTotalCap;    // Community Ticket Total Cap
     }
 
     struct Stake {
@@ -227,9 +229,11 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, ReentrancyGuardUpg
         redemptionFeePercent = _fee;
     }
 
-    function adminSetUserStats(address user, uint256 _activeDirects, uint256 _teamCount) external onlyOwner {
+    function adminSetUserStats(address user, uint256 _activeDirects, uint256 _teamCount, uint256 _teamTotalVolume, uint256 _teamTotalCap) external onlyOwner {
         userInfo[user].activeDirects = _activeDirects;
         userInfo[user].teamCount = _teamCount;
+        userInfo[user].teamTotalVolume = _teamTotalVolume;
+        userInfo[user].teamTotalCap = _teamTotalCap;
     }
 
     function adminSetReferrer(address user, address newReferrer) external onlyOwner {

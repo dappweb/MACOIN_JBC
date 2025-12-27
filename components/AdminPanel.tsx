@@ -32,6 +32,12 @@ const AdminPanel: React.FC = () => {
   const [treasuryWallet, setTreasuryWallet] = useState('');
   const [lpWallet, setLpWallet] = useState('');
   const [buybackWallet, setBuybackWallet] = useState('');
+  
+  // Current Wallets (Displayed)
+  const [currentMarketing, setCurrentMarketing] = useState('');
+  const [currentTreasury, setCurrentTreasury] = useState('');
+  const [currentLp, setCurrentLp] = useState('');
+  const [currentBuyback, setCurrentBuyback] = useState('');
 
   // User Management
   const [targetUser, setTargetUser] = useState('');
@@ -94,6 +100,12 @@ const AdminPanel: React.FC = () => {
       protocolContract.liquidityEnabled().then(setLiquidityEnabled).catch(console.error);
       protocolContract.redeemEnabled().then(setRedeemEnabled).catch(console.error);
       protocolContract.ticketFlexibilityDuration().then((d: any) => setTicketFlexibility((Number(d) / 3600).toString())).catch(console.error);
+
+      // Fetch current wallet addresses
+      protocolContract.marketingWallet().then(setCurrentMarketing).catch(console.error);
+      protocolContract.treasuryWallet().then(setCurrentTreasury).catch(console.error);
+      protocolContract.lpInjectionWallet().then(setCurrentLp).catch(console.error);
+      protocolContract.buybackWallet().then(setCurrentBuyback).catch(console.error);
     }
   }, [protocolContract]);
 
@@ -282,6 +294,13 @@ const AdminPanel: React.FC = () => {
         }
       const tx = await protocolContract.setWallets(marketingWallet, treasuryWallet, lpWallet, buybackWallet);
       await tx.wait();
+      
+      // Update displayed current values
+      setCurrentMarketing(marketingWallet);
+      setCurrentTreasury(treasuryWallet);
+      setCurrentLp(lpWallet);
+      setCurrentBuyback(buybackWallet);
+      
       toast.success(t.admin.success);
     } catch (err: any) {
       toast.error(formatContractError(err));
@@ -633,19 +652,39 @@ const AdminPanel: React.FC = () => {
           <h3 className="text-lg md:text-xl font-bold mb-3 md:mb-4 text-white">{t.admin.wallets}</h3>
           <div className="space-y-3 md:space-y-4">
               <div>
-                  <label className="block text-xs md:text-sm text-gray-400 mb-1">{t.admin.marketingWallet}</label>
+                  <div className="flex justify-between items-center mb-1">
+                    <label className="block text-xs md:text-sm text-gray-400">{t.admin.marketingWallet}</label>
+                    <span className="text-xs font-mono text-gray-500" title={currentMarketing}>
+                        {currentMarketing ? `${currentMarketing.substring(0,6)}...${currentMarketing.substring(currentMarketing.length-4)}` : '...'}
+                    </span>
+                  </div>
                   <input type="text" value={marketingWallet} onChange={e => setMarketingWallet(e.target.value)} className="w-full p-2 md:p-2.5 border border-gray-700 bg-gray-900/50 rounded text-white text-xs md:text-sm font-mono placeholder-gray-600" placeholder="0x..." />
               </div>
               <div>
-                  <label className="block text-xs md:text-sm text-gray-400 mb-1">{t.admin.treasuryWallet}</label>
+                  <div className="flex justify-between items-center mb-1">
+                    <label className="block text-xs md:text-sm text-gray-400">{t.admin.treasuryWallet}</label>
+                    <span className="text-xs font-mono text-gray-500" title={currentTreasury}>
+                        {currentTreasury ? `${currentTreasury.substring(0,6)}...${currentTreasury.substring(currentTreasury.length-4)}` : '...'}
+                    </span>
+                  </div>
                   <input type="text" value={treasuryWallet} onChange={e => setTreasuryWallet(e.target.value)} className="w-full p-2 md:p-2.5 border border-gray-700 bg-gray-900/50 rounded text-white text-xs md:text-sm font-mono placeholder-gray-600" placeholder="0x..." />
               </div>
               <div>
-                  <label className="block text-xs md:text-sm text-gray-400 mb-1">{t.admin.lpWallet}</label>
+                  <div className="flex justify-between items-center mb-1">
+                    <label className="block text-xs md:text-sm text-gray-400">{t.admin.lpWallet}</label>
+                    <span className="text-xs font-mono text-gray-500" title={currentLp}>
+                        {currentLp ? `${currentLp.substring(0,6)}...${currentLp.substring(currentLp.length-4)}` : '...'}
+                    </span>
+                  </div>
                   <input type="text" value={lpWallet} onChange={e => setLpWallet(e.target.value)} className="w-full p-2 md:p-2.5 border border-gray-700 bg-gray-900/50 rounded text-white text-xs md:text-sm font-mono placeholder-gray-600" placeholder="0x..." />
               </div>
               <div>
-                  <label className="block text-xs md:text-sm text-gray-400 mb-1">{t.admin.buybackWallet}</label>
+                  <div className="flex justify-between items-center mb-1">
+                    <label className="block text-xs md:text-sm text-gray-400">{t.admin.buybackWallet}</label>
+                    <span className="text-xs font-mono text-gray-500" title={currentBuyback}>
+                        {currentBuyback ? `${currentBuyback.substring(0,6)}...${currentBuyback.substring(currentBuyback.length-4)}` : '...'}
+                    </span>
+                  </div>
                   <input type="text" value={buybackWallet} onChange={e => setBuybackWallet(e.target.value)} className="w-full p-2 md:p-2.5 border border-gray-700 bg-gray-900/50 rounded text-white text-xs md:text-sm font-mono placeholder-gray-600" placeholder="0x..." />
               </div>
               <button onClick={updateWallets} disabled={loading} className="w-full py-2 md:py-2.5 bg-gradient-to-r from-neon-500 to-neon-600 hover:from-neon-400 hover:to-neon-500 text-black font-bold rounded-lg mt-2 disabled:opacity-50 text-sm md:text-base shadow-lg shadow-neon-500/30">

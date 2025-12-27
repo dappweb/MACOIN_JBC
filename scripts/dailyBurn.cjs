@@ -8,8 +8,8 @@
  *   npx hardhat run scripts/dailyBurn.cjs --network mc
  * 
  * Recommended cron schedule (run every 6 hours to ensure daily execution):
- *   0 */6 * * * cd / path / to / project && npx hardhat run scripts / dailyBurn.cjs--network mc >> /var/log / dailyBurn.log 2 >& 1
-    */
+ *   0 *\/6 * * * cd /path/to/project && npx hardhat run scripts/dailyBurn.cjs --network mc >> /var/log/dailyBurn.log 2>&1
+ */
 
 const { ethers } = require("hardhat");
 

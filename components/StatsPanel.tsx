@@ -14,6 +14,26 @@ interface StatsPanelProps {
   onWhitepaperClick: () => void
 }
 
+// Mock data generator for fallback
+const generateMockPriceData = () => {
+  const now = Date.now()
+  const data = []
+  let price = 1.0
+  for (let i = 0; i < 24; i++) {
+    const time = now - (24 - i) * 3600 * 1000
+    // Random walk
+    price = price * (1 + (Math.random() - 0.5) * 0.05)
+    data.push({
+      name: new Date(time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      uv: price,
+      ema: price, // Simplified
+      high: price * 1.01,
+      low: price * 0.99
+    })
+  }
+  return data
+}
+
 // This will be replaced with real price history data from blockchain
 
 const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClick, onWhitepaperClick }) => {
@@ -454,7 +474,7 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
 
           // Fetch Protocol Info
           const userInfo = await protocolContract.userInfo(account)
-          // userInfo returns: (referrer, activeDirects, teamCount, totalRevenue, currentCap, isActive)
+          // userInfo returns: (referrer, activeDirects, teamCount, totalRevenue, currentCap, isActive, refundFeeAmount, teamTotalVolume, teamTotalCap)
 
           // Check referrer binding
           const currentReferrer = userInfo[0]
@@ -849,7 +869,7 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
                     strokeWidth: 2,
                     strokeDasharray: "5 5",
                   }}
-                  contentFormatter={(content: any) => {
+                  content={(content: any) => {
                     if (!content.payload || content.payload.length === 0) return null
                     const payload = content.payload[0]?.payload as any
                     return (

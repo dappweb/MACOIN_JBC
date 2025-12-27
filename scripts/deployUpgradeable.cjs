@@ -52,10 +52,10 @@ async function main() {
   }
 
   // Wallets
-  const marketingWallet = "0x785B079596397390977E3932737D7377D3739777";
-  const treasuryWallet = "0x785B079596397390977E3932737D7377D3739777";
-  const lpInjectionWallet = "0x785B079596397390977E3932737D7377D3739777";
-  const buybackWallet = "0x785B079596397390977E3932737D7377D3739777";
+  const marketingWallet = deployer.address;
+  const treasuryWallet = deployer.address;
+  const lpInjectionWallet = deployer.address;
+  const buybackWallet = deployer.address;
 
   console.log("\n📦 Deploying JinbaoProtocol (Upgradeable Proxy)...");
   

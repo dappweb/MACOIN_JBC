@@ -21,7 +21,7 @@ export const PROTOCOL_ABI = [
   "function swapMCToJBC(uint256 mcAmount) external",
   "function swapJBCToMC(uint256 jbcAmount) external",
   "function dailyBurn() external",
-  "function userInfo(address) view returns (address referrer, uint256 activeDirects, uint256 teamCount, uint256 totalRevenue, uint256 currentCap, bool isActive, uint256 refundFeeAmount)",
+  "function userInfo(address) view returns (address referrer, uint256 activeDirects, uint256 teamCount, uint256 totalRevenue, uint256 currentCap, bool isActive, uint256 refundFeeAmount, uint256 teamTotalVolume, uint256 teamTotalCap)",
   "function userTicket(address) view returns (uint256 ticketId, uint256 amount, uint256 purchaseTime, bool exited)",
   "function userStakes(address, uint256) view returns (uint256 id, uint256 amount, uint256 startTime, uint256 cycleDays, bool active, uint256 paid)",
   "function getDirectReferrals(address) view returns (address[])",
@@ -34,13 +34,17 @@ export const PROTOCOL_ABI = [
   "function addLiquidity(uint256 mcAmount, uint256 jbcAmount) external",
   "function adminWithdrawMC(uint256 amount, address to) external",
   "function adminWithdrawJBC(uint256 amount, address to) external",
-  "function adminSetUserStats(address, uint256, uint256) external",
+  "function adminSetUserStats(address, uint256, uint256, uint256, uint256) external",
   "function adminSetReferrer(address, address) external",
   "function getJBCPrice() view returns (uint256)",
   "function getAmountOut(uint256, uint256, uint256) pure returns (uint256)",
   "function swapReserveMC() view returns (uint256)",
   "function swapReserveJBC() view returns (uint256)",
   "function lastBurnTime() view returns (uint256)",
+  "function marketingWallet() view returns (address)",
+  "function treasuryWallet() view returns (address)",
+  "function lpInjectionWallet() view returns (address)",
+  "function buybackWallet() view returns (address)",
   "function setLevelConfigs(tuple(uint256 minDirects, uint256 level, uint256 percent)[]) external",
   "function setTicketFlexibilityDuration(uint256) external",
   "function setLiquidityEnabled(bool) external",
@@ -65,7 +69,7 @@ export const PROTOCOL_ABI = [
 export const CONTRACT_ADDRESSES = {
   MC_TOKEN: "0xB2B8777BcBc7A8DEf49F022773d392a8787cf9EF",
   JBC_TOKEN: "0xA743cB357a9f59D349efB7985072779a094658dD",
-  PROTOCOL: "0x16fb6908f1b22048F4688B4D42A7d0729034F45D"
+  PROTOCOL: "0x4CE50EF43487c48dA421B25C512bD7C3cE09C571"
 };
 
 interface Web3ContextType {

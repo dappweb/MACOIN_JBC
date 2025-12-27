@@ -816,6 +816,7 @@ const MiningPanel: React.FC = () => {
                 </div>
             )}
 
+
             {/* Ticket Status Warnings */}
             {isTicketExpired && (
                 <div className="bg-red-900/20 border-2 border-red-500/50 rounded-xl p-4 flex items-start gap-3 animate-fade-in backdrop-blur-sm">
@@ -947,7 +948,32 @@ const MiningPanel: React.FC = () => {
                     {/* Right Col: Summary */}
                     <div className="space-y-4 md:space-y-6">
                         <div className="glass-panel p-4 md:p-6 rounded-xl md:rounded-2xl h-full border-t-4 border-t-neon-500 flex flex-col justify-between relative bg-gray-900/50 border border-gray-800">
-
+                            
+                            {/* Time Left Display */}
+                            {currentStep === 2 && !ticketInfo?.redeemed && (
+                                <div className="absolute top-4 right-4 bg-gray-800/50 px-3 py-1.5 rounded-lg border border-gray-700 backdrop-blur-sm z-10">
+                                    <div className="text-[10px] text-gray-400 uppercase font-bold tracking-wider mb-0.5">{t.mining.timeLeft}</div>
+                                    <div className="text-sm text-white font-mono font-bold flex items-center gap-1.5">
+                                        <Clock size={14} className={isTicketExpired ? "text-red-400" : "text-neon-400"} />
+                                        {isTicketExpired 
+                                            ? "00:00:00" 
+                                            : (() => {
+                                                const expiry = (ticketInfo?.purchaseTime || 0) + ticketFlexibilityDuration;
+                                                const diff = expiry - now;
+                                                if (diff <= 0) return "00:00:00";
+                                                const h = Math.floor(diff / 3600);
+                                                const m = Math.floor((diff % 3600) / 60);
+                                                
+                                                // Bilingual format
+                                                if (t.mining.timeLeft.includes('剩余')) {
+                                                    return `${h}小时 ${m}分钟`;
+                                                }
+                                                return `${h}h ${m}m`;
+                                            })()
+                                         }
+                                    </div>
+                                </div>
+                            )}
 
                             <div>
                                 <h3 className="text-lg md:text-xl font-bold mb-4 md:mb-6 flex items-center gap-2 text-white">
@@ -1180,7 +1206,7 @@ const MiningPanel: React.FC = () => {
                                     <div className="text-gray-400 mb-1">{t.mining.purchaseTime}</div>
                                     <div className="text-white font-mono">{formatDate(ticketInfo.purchaseTime)}</div>
                                 </div>
-                                {ticketInfo.liquidityProvided ? (
+                                {hasStakedLiquidity ? (
                                     <>
                                         <div className="bg-gray-800/50 p-3 rounded-lg border border-gray-700">
                                             <div className="text-gray-400 mb-1">{t.mining.startTime}</div>
@@ -1200,11 +1226,16 @@ const MiningPanel: React.FC = () => {
                                             {isTicketExpired
                                                 ? "00:00:00"
                                                 : (() => {
-                                                    const expiry = ticketInfo.purchaseTime + 72 * 3600;
+                                                    const expiry = (ticketInfo?.purchaseTime || 0) + ticketFlexibilityDuration;
                                                     const diff = expiry - now;
                                                     if (diff <= 0) return "00:00:00";
                                                     const h = Math.floor(diff / 3600);
                                                     const m = Math.floor((diff % 3600) / 60);
+                                                    
+                                                    // Bilingual format
+                                                    if (t.mining.timeLeft.includes('剩余')) {
+                                                        return `${h}小时 ${m}分钟`;
+                                                    }
                                                     return `${h}h ${m}m`;
                                                 })()
                                             }

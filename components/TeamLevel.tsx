@@ -414,7 +414,18 @@ const TeamLevel: React.FC = () => {
         ) : (
           <div className="text-center py-12 bg-gray-800/30 rounded-xl border border-dashed border-gray-700">
             <Users className="mx-auto text-gray-600 mb-2" size={32} />
-            <p className="text-gray-400 font-medium">{t.team.netNone}</p>
+            <p className="text-gray-400 font-medium">
+              {userLevelInfo.activeDirects > 0 ? (
+                <span className="flex flex-col items-center gap-1">
+                  <span>{t.team.netNone}</span>
+                  <span className="text-xs text-gray-500">
+                    ({t.team.colCount}: <span className="text-gray-300">{userLevelInfo.activeDirects}</span>)
+                  </span>
+                </span>
+              ) : (
+                t.team.netNone
+              )}
+            </p>
             <button
               onClick={copyReferralLink}
               className="mt-3 flex items-center gap-2 mx-auto px-4 py-2 bg-neon-500/20 text-neon-400 rounded-lg hover:bg-neon-500/30 transition-colors font-bold text-sm border border-neon-500/30"

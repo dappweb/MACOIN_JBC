@@ -143,7 +143,8 @@ const LiquidityPositions: React.FC = () => {
     if (!protocolContract) return;
     setRedeemingId(id);
     try {
-      const tx = await protocolContract.redeem(id);
+      // 合约的redeem()函数会自动赎回所有到期的质押，不需要传递ID
+      const tx = await protocolContract.redeem();
       await tx.wait();
       toast.success(t.mining?.redeemSuccess || "Redemption Successful");
       fetchPositions(); // Refresh list

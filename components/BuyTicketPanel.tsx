@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from "react"
 import { Ticket, ArrowLeft, Wallet, AlertCircle, CheckCircle } from "lucide-react"
-import { useLanguage } from "../LanguageContext"
-import { useWeb3 } from "../Web3Context"
+import { useLanguage } from "../src/LanguageContext"
+import { useWeb3 } from "../src/Web3Context"
 import { ethers } from "ethers"
 import toast from "react-hot-toast"
 import { formatContractError } from "../utils/errorFormatter"
 import { useGlobalRefresh } from "../hooks/useGlobalRefresh"
-import { TICKET_TIERS as CONST_TIERS } from "../constants"
+import { TICKET_TIERS as CONST_TIERS } from "../src/constants"
 
 interface BuyTicketPanelProps {
   onBack: () => void
@@ -189,7 +189,8 @@ const BuyTicketPanel: React.FC<BuyTicketPanelProps> = ({ onBack }) => {
               <p className="text-blue-300 text-sm">
                 您可以继续购买新门票，新门票将覆盖当前门票
               </p>
-            </div>          {isHigherLiquidity && (
+            </div>
+          {isHigherLiquidity && (
             <div className="mt-3 p-2 bg-amber-500/10 border border-amber-500/30 rounded text-xs text-amber-300">
               <div className="font-bold flex items-center gap-1 mb-1">
                 <AlertCircle size={12} />

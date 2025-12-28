@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useLanguage } from '../LanguageContext';
-import { useWeb3, CONTRACT_ADDRESSES } from '../Web3Context';
+import { useLanguage } from '../src/LanguageContext';
+import { useWeb3, CONTRACT_ADDRESSES } from '../src/Web3Context';
 import { useGlobalRefresh, useEventRefresh } from '../hooks/useGlobalRefresh';
 import { ArrowLeftRight, RotateCw } from 'lucide-react';
 import { ethers } from 'ethers';

@@ -1,5 +1,5 @@
 import { useCallback, useContext, createContext, ReactNode, useState, useEffect } from 'react';
-import { useWeb3 } from '../Web3Context';
+import { useWeb3 } from '../src/Web3Context';
 import { ethers } from 'ethers';
 
 interface GlobalRefreshContextType {

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useWeb3 } from '../Web3Context';
+import { useWeb3 } from '../src/Web3Context';
 import { ethers } from 'ethers';
 
 interface PricePoint {

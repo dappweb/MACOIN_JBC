@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from "react"
-import { AppTab } from "../types"
+import { AppTab } from "../src/types"
 import { Diamond, Home, Pickaxe, Users, ArrowLeftRight, Settings, PlusCircle, Globe, FileText, Gift, AlertTriangle, LogOut, Copy, Check, ChevronDown, Wallet } from "lucide-react"
-import { useLanguage } from "../LanguageContext"
+import { useLanguage } from "../src/LanguageContext"
 import { ConnectButton } from "@rainbow-me/rainbowkit"
-import { useWeb3 } from "../Web3Context"
+import { useWeb3 } from "../src/Web3Context"
 import { useChainId, useSwitchChain } from "wagmi"
 
 interface NavbarProps {

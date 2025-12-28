@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { useWeb3, CONTRACT_ADDRESSES } from '../Web3Context';
+import { useWeb3, CONTRACT_ADDRESSES } from '../src/Web3Context';
 import { Settings, Save, AlertTriangle, Megaphone, CheckCircle, XCircle } from 'lucide-react';
-import { useLanguage } from '../LanguageContext';
+import { useLanguage } from '../src/LanguageContext';
 import { ethers } from 'ethers';
 import toast from 'react-hot-toast';
-import { API_BASE_URL } from '../constants';
+import { API_BASE_URL } from '../src/constants';
 import { formatContractError } from '../utils/errorFormatter';
 
 const AdminPanel: React.FC = () => {
@@ -70,13 +70,13 @@ const AdminPanel: React.FC = () => {
 
   const handleTransferOwnership = async () => {
     if (!protocolContract || !ethers.isAddress(newOwnerAddress)) {
-        toast.error('Invalid address');
+        toast.error(t.admin.invalidAddress);
         return;
     }
     
     // Safety check: Don't allow transfer to zero address
     if (newOwnerAddress === ethers.ZeroAddress) {
-        toast.error('Cannot transfer to zero address');
+        toast.error(t.admin.zeroAddressError);
         return;
     }
 
@@ -96,6 +96,25 @@ const AdminPanel: React.FC = () => {
   // Liquidity Management
   const [mcLiquidityAmount, setMcLiquidityAmount] = useState('');
   const [jbcLiquidityAmount, setJbcLiquidityAmount] = useState('');
+  const [mcLiquidityRemoveAmount, setMcLiquidityRemoveAmount] = useState('');
+  const [jbcLiquidityRemoveAmount, setJbcLiquidityRemoveAmount] = useState('');
+  const [swapReserveMC, setSwapReserveMC] = useState('0');
+  const [swapReserveJBC, setSwapReserveJBC] = useState('0');
+
+  // User Management
+  const [searchUserAddress, setSearchUserAddress] = useState('');
+  const [searchedUserInfo, setSearchedUserInfo] = useState<any>(null);
+  const [newTeamCount, setNewTeamCount] = useState('');
+  const [fundAmount, setFundAmount] = useState('');
+  const [fundToken, setFundToken] = useState<'MC' | 'JBC'>('MC');
+
+  // Fetch Swap Reserves
+  useEffect(() => {
+    if (protocolContract) {
+        protocolContract.swapReserveMC().then((res: any) => setSwapReserveMC(ethers.formatEther(res))).catch(console.error);
+        protocolContract.swapReserveJBC().then((res: any) => setSwapReserveJBC(ethers.formatEther(res))).catch(console.error);
+    }
+  }, [protocolContract, loading]); // Refresh on loading change (after tx)
 
   // Level Reward Pool Management
   const [levelRewardPool, setLevelRewardPool] = useState('0');
@@ -192,7 +211,7 @@ const AdminPanel: React.FC = () => {
       window.dispatchEvent(new Event('storage'));
     } catch (err) {
       console.error('Failed to publish announcement', err);
-      toast.error('Failed to publish announcement');
+      toast.error(t.admin.publishFail);
     }
   };
 
@@ -206,7 +225,7 @@ const AdminPanel: React.FC = () => {
       window.dispatchEvent(new Event('storage'));
     } catch (err) {
       console.error('Failed to delete announcement', err);
-      toast.error('Failed to delete announcement');
+      toast.error(t.admin.deleteFail);
     }
   };
 
@@ -222,7 +241,7 @@ const AdminPanel: React.FC = () => {
       window.dispatchEvent(new Event('storage'));
     } catch (err) {
       console.error('Failed to clear announcement', err);
-      toast.error('Failed to clear announcement');
+      toast.error(t.admin.clearFail);
     }
   };
 
@@ -300,7 +319,7 @@ const AdminPanel: React.FC = () => {
 
   const addLiquidity = async (tokenType: 'MC' | 'JBC') => {
     if (!isConnected || !provider || !protocolContract) {
-        toast.error("Connect wallet first");
+        toast.error(t.admin.connectFirst);
         return;
     }
 
@@ -312,7 +331,7 @@ const AdminPanel: React.FC = () => {
             const amount = ethers.parseEther(mcLiquidityAmount);
 
             if (!mcContract) {
-                toast.error("MC contract not found");
+                toast.error(t.admin.mcContractNotFound);
                 return;
             }
 
@@ -322,24 +341,24 @@ const AdminPanel: React.FC = () => {
             console.log('Required amount:', ethers.formatEther(amount));
             
             if (allowance < amount) {
-                toast.loading('Approving MC tokens...', { id: 'approve' });
+                toast.loading(t.admin.approvingMc, { id: 'approve' });
                 const approveTx = await mcContract.connect(signer).approve(CONTRACT_ADDRESSES.PROTOCOL, amount);
                 await approveTx.wait();
-                toast.success("MC approved!", { id: 'approve' });
+                toast.success(t.admin.mcApproved, { id: 'approve' });
             }
 
             // Step 2: Call protocol's addLiquidity function
-            toast.loading('Adding MC liquidity...', { id: 'addLiq' });
+            toast.loading(t.admin.addingMc, { id: 'addLiq' });
             const tx = await protocolContract.connect(signer).addLiquidity(amount, 0);
             await tx.wait();
-            toast.success(`Added ${mcLiquidityAmount} MC to pool!`, { id: 'addLiq' });
+            toast.success(`${t.admin.addedMc} (${mcLiquidityAmount} MC)`, { id: 'addLiq' });
             setMcLiquidityAmount('');
             
         } else if (tokenType === 'JBC' && jbcLiquidityAmount) {
             const amount = ethers.parseEther(jbcLiquidityAmount);
 
             if (!jbcContract) {
-                toast.error("JBC contract not found");
+                toast.error(t.admin.jbcContractNotFound);
                 return;
             }
 
@@ -349,17 +368,17 @@ const AdminPanel: React.FC = () => {
             console.log('Required amount:', ethers.formatEther(amount));
             
             if (allowance < amount) {
-                toast.loading('Approving JBC tokens...', { id: 'approve' });
+                toast.loading(t.admin.approvingJbc, { id: 'approve' });
                 const approveTx = await jbcContract.connect(signer).approve(CONTRACT_ADDRESSES.PROTOCOL, amount);
                 await approveTx.wait();
-                toast.success("JBC approved!", { id: 'approve' });
+                toast.success(t.admin.jbcApproved, { id: 'approve' });
             }
 
             // Step 2: Call protocol's addLiquidity function
-            toast.loading('Adding JBC liquidity...', { id: 'addLiq' });
+            toast.loading(t.admin.addingJbc, { id: 'addLiq' });
             const tx = await protocolContract.connect(signer).addLiquidity(0, amount);
             await tx.wait();
-            toast.success(`Added ${jbcLiquidityAmount} JBC to pool!`, { id: 'addLiq' });
+            toast.success(`${t.admin.addedJbc} (${jbcLiquidityAmount} JBC)`, { id: 'addLiq' });
             setJbcLiquidityAmount('');
         }
     } catch (err: any) {
@@ -369,11 +388,11 @@ const AdminPanel: React.FC = () => {
         
         // Enhanced error handling
         if (err.message?.includes('Ownable: caller is not the owner')) {
-            toast.error('Only contract owner can add liquidity');
+            toast.error(t.admin.onlyOwner);
         } else if (err.message?.includes('insufficient funds')) {
-            toast.error('Insufficient token balance');
+            toast.error(t.admin.insufficientFunds);
         } else if (err.message?.includes('InvalidAmount')) {
-            toast.error('Invalid amount - must be greater than 0');
+            toast.error(t.admin.invalidAmount);
         } else {
             toast.error(formatContractError(err));
         }
@@ -390,17 +409,17 @@ const AdminPanel: React.FC = () => {
 
     setLoading(true);
     try {
-        const signer = await provider.getSigner();
-
         if (tokenType === 'MC' && mcLiquidityRemoveAmount) {
             const amount = ethers.parseEther(mcLiquidityRemoveAmount);
-            const tx = await protocolContract.connect(signer).adminWithdrawMC(amount, account);
+            // withdrawSwapReserves(toMC, amountMC, toJBC, amountJBC)
+            const tx = await protocolContract.withdrawSwapReserves(account, amount, ethers.ZeroAddress, 0);
             await tx.wait();
             toast.success(t.admin.success);
             setMcLiquidityRemoveAmount('');
         } else if (tokenType === 'JBC' && jbcLiquidityRemoveAmount) {
             const amount = ethers.parseEther(jbcLiquidityRemoveAmount);
-            const tx = await protocolContract.connect(signer).adminWithdrawJBC(amount, account);
+            // withdrawSwapReserves(toMC, amountMC, toJBC, amountJBC)
+            const tx = await protocolContract.withdrawSwapReserves(ethers.ZeroAddress, 0, account, amount);
             await tx.wait();
             toast.success(t.admin.success);
             setJbcLiquidityRemoveAmount('');
@@ -411,6 +430,114 @@ const AdminPanel: React.FC = () => {
     } finally {
         setLoading(false);
     }
+  };
+
+  const fetchUserInfo = async () => {
+    if (!protocolContract || !ethers.isAddress(searchUserAddress)) {
+        toast.error(t.admin.invalidAddress);
+        return;
+    }
+    setLoading(true);
+    try {
+        const info = await protocolContract.userInfo(searchUserAddress);
+        // Get level
+        let level = '0';
+        try {
+            // Try getLevelByTeamCount first as it's more relevant for admin updates
+            const levelInfo = await protocolContract.getLevelByTeamCount(info.teamCount);
+            level = levelInfo[0].toString();
+        } catch (e) {
+            console.warn('Failed to fetch level', e);
+        }
+
+        setSearchedUserInfo({
+            referrer: info.referrer,
+            activeDirects: info.activeDirects.toString(),
+            teamCount: info.teamCount.toString(),
+            totalRevenue: ethers.formatEther(info.totalRevenue),
+            isActive: info.isActive,
+            maxTicketAmount: ethers.formatEther(info.maxTicketAmount),
+            currentCap: ethers.formatEther(info.currentCap),
+            level: level
+        });
+        setNewTeamCount(info.teamCount.toString());
+    } catch (err: any) {
+        console.error(err);
+        toast.error(formatContractError(err));
+    } finally {
+        setLoading(false);
+    }
+  };
+
+  const updateTeamCount = async () => {
+    if (!protocolContract || !searchUserAddress) return;
+    setLoading(true);
+    try {
+        const tx = await protocolContract.batchUpdateTeamCounts([searchUserAddress], [newTeamCount]);
+        await tx.wait();
+        toast.success(t.admin.success);
+        fetchUserInfo(); // Refresh
+    } catch (err: any) {
+        console.error(err);
+        toast.error(formatContractError(err));
+    } finally {
+        setLoading(false);
+    }
+  };
+
+  const fundUser = async () => {
+      if (!protocolContract || !searchUserAddress || !fundAmount) return;
+      if (!window.confirm(t.admin.confirmFund)) return;
+
+      setLoading(true);
+      try {
+          const tokenAddress = fundToken === 'MC' ? CONTRACT_ADDRESSES.MC : CONTRACT_ADDRESSES.JBC;
+          const amount = ethers.parseEther(fundAmount);
+          
+          const tx = await protocolContract.rescueTokens(tokenAddress, searchUserAddress, amount);
+          await tx.wait();
+          
+          toast.success(t.admin.success);
+          setFundAmount('');
+      } catch (err: any) {
+          console.error(err);
+          toast.error(formatContractError(err));
+      } finally {
+          setLoading(false);
+      }
+  };
+
+  const withdrawAll = async (tokenType: 'MC' | 'JBC') => {
+      if (!protocolContract || !mcContract || !jbcContract) return;
+      if (!window.confirm(t.admin.confirmWithdraw)) return;
+      
+      setLoading(true);
+      try {
+          // 1. Withdraw Swap Reserves first (for accounting)
+          const reserveMC = await protocolContract.swapReserveMC();
+          const reserveJBC = await protocolContract.swapReserveJBC();
+          
+          if (reserveMC > 0 || reserveJBC > 0) {
+             const tx1 = await protocolContract.withdrawSwapReserves(account, reserveMC, account, reserveJBC);
+             await tx1.wait();
+          }
+          
+          // 2. Rescue remaining tokens
+          const tokenContract = tokenType === 'MC' ? mcContract : jbcContract;
+          const balance = await tokenContract.balanceOf(CONTRACT_ADDRESSES.PROTOCOL);
+          
+          if (balance > 0) {
+              const tx2 = await protocolContract.rescueTokens(await tokenContract.getAddress(), account, balance);
+              await tx2.wait();
+          }
+          
+          toast.success(t.admin.withdrawSuccess);
+      } catch (err: any) {
+          console.error(err);
+          toast.error(formatContractError(err));
+      } finally {
+          setLoading(false);
+      }
   };
 
   return (
@@ -451,51 +578,159 @@ const AdminPanel: React.FC = () => {
             <textarea
               value={announceEn}
               onChange={(e) => setAnnounceEn(e.target.value)}
-              placeholder={t.admin.announcementPlaceholder}
+              placeholder="Enter announcement content..."
               rows={3}
               className="w-full px-4 py-3 border-2 border-gray-700 bg-gray-900/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-white placeholder-gray-500 text-sm resize-none"
             />
           </div>
 
-          <div className="flex gap-3">
-            <button
-              onClick={publishAnnouncement}
-              disabled={!announceZh && !announceEn}
-              className="flex-1 py-3 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black font-bold rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-amber-500/30"
-            >
-              {t.admin.publishAnnouncement || "Add Announcement"}
-            </button>
-            <button
-              onClick={clearAnnouncement}
-              className="px-6 py-3 bg-red-900/50 hover:bg-red-800/50 text-red-200 font-bold rounded-lg transition-colors border border-red-800"
-            >
-              {t.admin.clearAnnouncement || "Clear All"}
-            </button>
+          <div className="flex justify-end gap-3">
+             <button 
+               onClick={() => {
+                   setAnnouncementList([]);
+                   localStorage.removeItem('announcements');
+                   window.dispatchEvent(new Event('storage'));
+                   toast.success(t.admin.announcementCleared);
+               }}
+               className="px-4 py-2 bg-red-500/10 text-red-400 rounded-lg hover:bg-red-500/20 text-sm font-bold border border-red-500/30"
+             >
+               {t.admin.clearAnnouncement}
+             </button>
+             <button 
+               onClick={publishAnnouncement}
+               disabled={!announceZh && !announceEn}
+               className="px-6 py-2 bg-gradient-to-r from-amber-500 to-orange-600 text-white rounded-lg hover:from-amber-400 hover:to-orange-500 disabled:opacity-50 text-sm font-bold shadow-lg shadow-amber-500/30"
+             >
+               {t.admin.publishAnnouncement}
+             </button>
           </div>
 
-          {/* Announcement List */}
+          {/* Current Announcements List */}
           {announcementList.length > 0 && (
-            <div className="mt-6 space-y-3">
-                <h4 className="text-sm font-bold text-gray-400 uppercase tracking-wider">Current Announcements ({announcementList.length})</h4>
-                <div className="space-y-2 max-h-60 overflow-y-auto pr-1 custom-scrollbar">
-                    {announcementList.map((item) => (
-                        <div key={item.id} className="bg-gray-900/50 border border-amber-900/30 rounded-lg p-3 flex justify-between items-start gap-3 group">
-                            <div className="flex-1 space-y-1">
-                                {item.zh && <p className="text-sm text-gray-200"><span className="text-amber-500 text-xs font-bold mr-1">ZH</span> {item.zh}</p>}
-                                {item.en && <p className="text-sm text-gray-400"><span className="text-blue-500 text-xs font-bold mr-1">EN</span> {item.en}</p>}
+            <div className="mt-6 pt-6 border-t border-gray-700/50">
+                <h4 className="text-sm font-bold text-gray-400 mb-3">{t.admin.currentAnnouncements}</h4>
+                <div className="space-y-3">
+                    {announcementList.map((ann) => (
+                        <div key={ann.id} className="bg-gray-900/40 rounded-lg p-3 border border-gray-700 flex justify-between items-start gap-4">
+                            <div className="space-y-1 flex-1">
+                                {ann.zh && <p className="text-sm text-gray-200"><span className="text-xs text-amber-500 font-bold mr-2">ZH</span>{ann.zh}</p>}
+                                {ann.en && <p className="text-sm text-gray-200"><span className="text-xs text-blue-500 font-bold mr-2">EN</span>{ann.en}</p>}
+                                <p className="text-xs text-gray-500 mt-1">{new Date(ann.id).toLocaleString()}</p>
                             </div>
                             <button 
-                                onClick={() => deleteAnnouncement(item.id)}
-                                className="p-1.5 text-gray-500 hover:text-red-400 hover:bg-red-900/20 rounded transition-colors opacity-0 group-hover:opacity-100"
-                                title="Delete"
+                                onClick={() => deleteAnnouncement(ann.id)}
+                                className="text-gray-500 hover:text-red-400 p-1"
                             >
-                                <AlertTriangle size={16} />
+                                <XCircle size={18} />
                             </button>
                         </div>
                     ))}
                 </div>
             </div>
           )}
+        </div>
+      </div>
+
+      {/* User Management */}
+      <div className="glass-panel p-4 md:p-6 rounded-xl md:rounded-2xl bg-gray-900/50 border border-blue-500/30 backdrop-blur-sm">
+        <div className="flex items-center gap-2 mb-3 md:mb-4">
+            <Settings className="text-blue-400" size={20} />
+            <h3 className="text-lg md:text-xl font-bold text-white">{t.admin.userManagerTitle}</h3>
+        </div>
+        <p className="text-xs md:text-sm text-gray-400 mb-4">{t.admin.userManagerDesc}</p>
+        
+        <div className="space-y-4">
+            <div className="flex gap-2">
+                <input 
+                    type="text" 
+                    value={searchUserAddress} 
+                    onChange={e => setSearchUserAddress(e.target.value)} 
+                    className="flex-1 p-2 border border-gray-700 bg-gray-900/50 rounded text-white text-sm font-mono placeholder-gray-600" 
+                    placeholder={t.admin.searchUserPlaceholder} 
+                />
+                <button 
+                    onClick={fetchUserInfo} 
+                    disabled={loading || !searchUserAddress} 
+                    className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-500 disabled:opacity-50 text-sm font-bold"
+                >
+                    {t.admin.search}
+                </button>
+            </div>
+
+            {searchedUserInfo && (
+                <div className="bg-gray-800/50 rounded-lg p-4 border border-blue-500/20 space-y-3">
+                    <h4 className="text-sm font-bold text-white border-b border-gray-700 pb-2">{t.admin.userInfo}</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                        <div>
+                            <span className="text-gray-400 block">{t.admin.referrer}</span>
+                            <span className="text-white font-mono break-all">{searchedUserInfo.referrer}</span>
+                        </div>
+                        <div>
+                            <span className="text-gray-400 block">{t.admin.activeDirects}</span>
+                            <span className="text-white font-mono">{searchedUserInfo.activeDirects}</span>
+                        </div>
+                        <div>
+                            <span className="text-gray-400 block">{t.admin.totalRevenue}</span>
+                            <span className="text-white font-mono">{searchedUserInfo.totalRevenue} MC</span>
+                        </div>
+                        <div>
+                            <span className="text-gray-400 block">{t.admin.isActive}</span>
+                            <span className={searchedUserInfo.isActive ? "text-green-400" : "text-red-400"}>
+                                {searchedUserInfo.isActive ? "Yes" : "No"}
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div className="pt-3 border-t border-gray-700">
+                        <label className="block text-sm font-medium text-gray-300 mb-2">{t.admin.updateTeamCount}</label>
+                        <div className="flex gap-2">
+                            <input 
+                                type="number" 
+                                value={newTeamCount} 
+                                onChange={e => setNewTeamCount(e.target.value)} 
+                                className="w-24 p-2 border border-gray-700 bg-gray-900/50 rounded text-white text-sm" 
+                            />
+                            <button 
+                                onClick={updateTeamCount} 
+                                disabled={loading} 
+                                className="px-4 py-2 bg-blue-600/20 text-blue-400 border border-blue-500/30 rounded hover:bg-blue-600/30 disabled:opacity-50 text-sm font-bold"
+                            >
+                                {t.admin.update}
+                            </button>
+                        </div>
+                        <p className="text-xs text-gray-500 mt-1">{t.admin.teamCountNote}</p>
+                    </div>
+
+                    <div className="pt-3 border-t border-gray-700">
+                        <label className="block text-sm font-medium text-gray-300 mb-2">{t.admin.fundUser}</label>
+                        <p className="text-xs text-red-400 mb-2">{t.admin.fundWarning}</p>
+                        <div className="flex gap-2">
+                            <select 
+                                value={fundToken}
+                                onChange={(e) => setFundToken(e.target.value as 'MC' | 'JBC')}
+                                className="p-2 border border-gray-700 bg-gray-900/50 rounded text-white text-sm"
+                            >
+                                <option value="MC">MC</option>
+                                <option value="JBC">JBC</option>
+                            </select>
+                            <input 
+                                type="number" 
+                                value={fundAmount} 
+                                onChange={e => setFundAmount(e.target.value)} 
+                                className="flex-1 p-2 border border-gray-700 bg-gray-900/50 rounded text-white text-sm" 
+                                placeholder="Amount"
+                            />
+                            <button 
+                                onClick={fundUser} 
+                                disabled={loading || !fundAmount} 
+                                className="px-4 py-2 bg-green-600/20 text-green-400 border border-green-500/30 rounded hover:bg-green-600/30 disabled:opacity-50 text-sm font-bold"
+                            >
+                                {t.admin.transfer}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
       </div>
 
@@ -666,46 +901,126 @@ const AdminPanel: React.FC = () => {
       <div className="glass-panel p-4 md:p-6 rounded-xl md:rounded-2xl bg-gray-900/50 border border-red-500/30 backdrop-blur-sm">
           <div className="flex items-center gap-2 mb-3 md:mb-4">
               <AlertTriangle className="text-red-400" size={20} />
-              <h3 className="text-lg md:text-xl font-bold text-white">{t.admin.liquidityMgmtTitle || 'Pool Liquidity (Admin Only)'}</h3>
+              <h3 className="text-lg md:text-xl font-bold text-white">{t.admin.liquidityMgmtTitle}</h3>
           </div>
-          <p className="text-xs md:text-sm text-gray-400 mb-4">{t.admin.liquidityMgmtDesc || 'Transfer tokens to or from the protocol contract to add or remove swap liquidity.'}</p>
+          <p className="text-xs md:text-sm text-gray-400 mb-4">{t.admin.liquidityMgmtDesc}</p>
+          
+          <div className="space-y-6">
+              {/* Add Liquidity */}
+              <div>
+                  <h4 className="text-sm font-bold text-green-400 border-b border-gray-700 pb-2 mb-3">{t.admin.addLiquidity}</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-3">
+                          <label className="block text-sm font-medium text-gray-300">{t.admin.addMcLiquidity}</label>
+                          <input 
+                              type="number" 
+                              value={mcLiquidityAmount} 
+                              onChange={e => setMcLiquidityAmount(e.target.value)} 
+                              className="w-full p-2 md:p-2.5 border border-gray-700 rounded bg-gray-900/50 text-white placeholder-gray-500 text-sm focus:outline-none focus:ring-2 focus:ring-neon-500/50"
+                              placeholder={t.admin.amountInMc}
+                          />
+                          <button 
+                              onClick={() => addLiquidity('MC')} 
+                              disabled={loading || !mcLiquidityAmount}
+                              className="w-full py-2 md:py-2.5 bg-gradient-to-r from-neon-500 to-neon-600 text-black rounded-lg hover:from-neon-400 hover:to-neon-500 disabled:opacity-50 text-sm md:text-base font-bold shadow-lg shadow-neon-500/30"
+                          >
+                              {t.admin.addMcToPool}
+                          </button>
+                      </div>
+                      
+                      <div className="space-y-3">
+                          <label className="block text-sm font-medium text-gray-300">{t.admin.addJbcLiquidity}</label>
+                          <input 
+                              type="number" 
+                              value={jbcLiquidityAmount} 
+                              onChange={e => setJbcLiquidityAmount(e.target.value)} 
+                              className="w-full p-2 md:p-2.5 border border-gray-700 rounded bg-gray-900/50 text-white placeholder-gray-500 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50"
+                              placeholder={t.admin.amountInJbc}
+                          />
+                          <button 
+                              onClick={() => addLiquidity('JBC')} 
+                              disabled={loading || !jbcLiquidityAmount}
+                              className="w-full py-2 md:py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 text-black rounded-lg hover:from-amber-400 hover:to-amber-500 disabled:opacity-50 text-sm md:text-base font-bold shadow-lg shadow-amber-500/30"
+                          >
+                              {t.admin.addJbcToPool}
+                          </button>
+                      </div>
+                  </div>
+              </div>
+
+              {/* Remove Liquidity */}
+              <div>
+                  <h4 className="text-sm font-bold text-red-400 border-b border-gray-700 pb-2 mb-3">{t.admin.removeLiquidity}</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-3">
+                          <div className="flex justify-between">
+                              <label className="block text-sm font-medium text-gray-300">{t.admin.removeMcLiquidity}</label>
+                              <span className="text-xs text-gray-500">{t.admin.currentReserves}: {parseFloat(swapReserveMC).toFixed(2)} MC</span>
+                          </div>
+                          <input 
+                              type="number" 
+                              value={mcLiquidityRemoveAmount} 
+                              onChange={e => setMcLiquidityRemoveAmount(e.target.value)} 
+                              className="w-full p-2 md:p-2.5 border border-gray-700 rounded bg-gray-900/50 text-white placeholder-gray-500 text-sm focus:outline-none focus:ring-2 focus:ring-red-500/50"
+                              placeholder={t.admin.amountInMc}
+                          />
+                          <button 
+                              onClick={() => removeLiquidity('MC')} 
+                              disabled={loading || !mcLiquidityRemoveAmount}
+                              className="w-full py-2 md:py-2.5 bg-red-600/20 text-red-400 border border-red-500/30 rounded-lg hover:bg-red-600/30 disabled:opacity-50 text-sm md:text-base font-bold"
+                          >
+                              {t.admin.remove}
+                          </button>
+                      </div>
+
+                      <div className="space-y-3">
+                          <div className="flex justify-between">
+                              <label className="block text-sm font-medium text-gray-300">{t.admin.removeJbcLiquidity}</label>
+                              <span className="text-xs text-gray-500">{t.admin.currentReserves}: {parseFloat(swapReserveJBC).toFixed(2)} JBC</span>
+                          </div>
+                          <input 
+                              type="number" 
+                              value={jbcLiquidityRemoveAmount} 
+                              onChange={e => setJbcLiquidityRemoveAmount(e.target.value)} 
+                              className="w-full p-2 md:p-2.5 border border-gray-700 rounded bg-gray-900/50 text-white placeholder-gray-500 text-sm focus:outline-none focus:ring-2 focus:ring-red-500/50"
+                              placeholder={t.admin.amountInJbc}
+                          />
+                          <button 
+                              onClick={() => removeLiquidity('JBC')} 
+                              disabled={loading || !jbcLiquidityRemoveAmount}
+                              className="w-full py-2 md:py-2.5 bg-red-600/20 text-red-400 border border-red-500/30 rounded-lg hover:bg-red-600/30 disabled:opacity-50 text-sm md:text-base font-bold"
+                          >
+                              {t.admin.remove}
+                          </button>
+                      </div>
+                  </div>
+              </div>
+          </div>
+      </div>
+
+      {/* Emergency Withdraw */}
+      <div className="glass-panel p-4 md:p-6 rounded-xl md:rounded-2xl bg-gray-900/50 border border-red-600/30 backdrop-blur-sm">
+          <div className="flex items-center gap-2 mb-3 md:mb-4">
+              <AlertTriangle className="text-red-500" size={20} />
+              <h3 className="text-lg md:text-xl font-bold text-white">{t.admin.emergencyWithdrawTitle}</h3>
+          </div>
+          <p className="text-xs md:text-sm text-gray-400 mb-4">{t.admin.emergencyWithdrawDesc}</p>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-3">
-                  <label className="block text-sm font-medium text-gray-300">{t.admin.addMcLiquidity || 'Add MC Liquidity'}</label>
-                  <input 
-                      type="number" 
-                      value={mcLiquidityAmount} 
-                      onChange={e => setMcLiquidityAmount(e.target.value)} 
-                      className="w-full p-2 md:p-2.5 border border-gray-700 rounded bg-gray-900/50 text-white placeholder-gray-500 text-sm focus:outline-none focus:ring-2 focus:ring-neon-500/50"
-                      placeholder={t.admin.amountInMc || 'Amount in MC'}
-                  />
-                  <button 
-                      onClick={() => addLiquidity('MC')} 
-                      disabled={loading || !mcLiquidityAmount}
-                      className="w-full py-2 md:py-2.5 bg-gradient-to-r from-neon-500 to-neon-600 text-black rounded-lg hover:from-neon-400 hover:to-neon-500 disabled:opacity-50 text-sm md:text-base font-bold shadow-lg shadow-neon-500/30"
-                  >
-                      {t.admin.addMcToPool || 'Add MC to Pool'}
-                  </button>
-              </div>
-              
-              <div className="space-y-3">
-                  <label className="block text-sm font-medium text-gray-300">{t.admin.addJbcLiquidity || 'Add JBC Liquidity'}</label>
-                  <input 
-                      type="number" 
-                      value={jbcLiquidityAmount} 
-                      onChange={e => setJbcLiquidityAmount(e.target.value)} 
-                      className="w-full p-2 md:p-2.5 border border-gray-700 rounded bg-gray-900/50 text-white placeholder-gray-500 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50"
-                      placeholder={t.admin.amountInJbc || 'Amount in JBC'}
-                  />
-                  <button 
-                      onClick={() => addLiquidity('JBC')} 
-                      disabled={loading || !jbcLiquidityAmount}
-                      className="w-full py-2 md:py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 text-black rounded-lg hover:from-amber-400 hover:to-amber-500 disabled:opacity-50 text-sm md:text-base font-bold shadow-lg shadow-amber-500/30"
-                  >
-                      {t.admin.addJbcToPool || 'Add JBC to Pool'}
-                  </button>
-              </div>
+              <button 
+                  onClick={() => withdrawAll('MC')} 
+                  disabled={loading}
+                  className="w-full py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 text-sm md:text-base font-bold shadow-lg shadow-red-600/20 border border-red-500"
+              >
+                  {t.admin.withdrawAllMc}
+              </button>
+              <button 
+                  onClick={() => withdrawAll('JBC')} 
+                  disabled={loading}
+                  className="w-full py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 text-sm md:text-base font-bold shadow-lg shadow-red-600/20 border border-red-500"
+              >
+                  {t.admin.withdrawAllJbc}
+              </button>
           </div>
       </div>
 
@@ -713,15 +1028,15 @@ const AdminPanel: React.FC = () => {
       <div className="glass-panel p-4 md:p-6 rounded-xl md:rounded-2xl bg-gray-900/50 border border-yellow-500/30 backdrop-blur-sm">
           <div className="flex items-center gap-2 mb-3 md:mb-4">
               <Settings className="text-yellow-400" size={20} />
-              <h3 className="text-lg md:text-xl font-bold text-white">Level Reward Pool Management</h3>
+              <h3 className="text-lg md:text-xl font-bold text-white">{t.admin.levelRewardPoolTitle}</h3>
           </div>
-          <p className="text-xs md:text-sm text-gray-400 mb-4">Manage the level reward pool that accumulates unclaimed layer rewards.</p>
+          <p className="text-xs md:text-sm text-gray-400 mb-4">{t.admin.levelRewardPoolDesc}</p>
           
           <div className="space-y-4">
               {/* Pool Balance Display */}
               <div className="bg-gray-800/50 rounded-lg p-4 border border-yellow-500/20">
                   <div className="flex justify-between items-center">
-                      <span className="text-sm text-gray-300">Current Pool Balance:</span>
+                      <span className="text-sm text-gray-300">{t.admin.currentPoolBalance}:</span>
                       <span className="text-lg font-bold text-yellow-400">{parseFloat(levelRewardPool).toFixed(4)} MC</span>
                   </div>
               </div>
@@ -733,12 +1048,12 @@ const AdminPanel: React.FC = () => {
       <div className="glass-panel p-4 md:p-6 rounded-xl md:rounded-2xl bg-gray-900/50 border border-purple-500/30 backdrop-blur-sm mt-6">
           <div className="flex items-center gap-2 mb-3 md:mb-4">
               <Settings className="text-purple-400" size={20} />
-              <h3 className="text-lg md:text-xl font-bold text-white">Super Admin Management</h3>
+              <h3 className="text-lg md:text-xl font-bold text-white">{t.admin.superAdminTitle}</h3>
           </div>
-          <p className="text-xs md:text-sm text-gray-400 mb-4">Transfer ownership of the contract to a new address. This action is irreversible.</p>
+          <p className="text-xs md:text-sm text-gray-400 mb-4">{t.admin.superAdminDesc}</p>
           
           <div className="space-y-3">
-              <label className="block text-sm font-medium text-gray-300">New Owner Address</label>
+              <label className="block text-sm font-medium text-gray-300">{t.admin.newOwnerAddress}</label>
               <div className="flex flex-col sm:flex-row gap-2">
                   <input 
                       type="text" 
@@ -752,7 +1067,7 @@ const AdminPanel: React.FC = () => {
                       disabled={loading || !newOwnerAddress} 
                       className="px-4 py-2 md:py-2.5 bg-gradient-to-r from-purple-600 to-purple-700 text-white rounded-lg hover:from-purple-500 hover:to-purple-600 disabled:opacity-50 text-sm font-bold whitespace-nowrap shadow-lg shadow-purple-500/30"
                   >
-                      Transfer Ownership
+                      {t.admin.transferOwnership}
                   </button>
               </div>
           </div>

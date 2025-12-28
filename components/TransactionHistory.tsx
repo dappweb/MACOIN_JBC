@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useWeb3 } from '../Web3Context';
-import { useLanguage } from '../LanguageContext';
+import { useWeb3 } from '../src/Web3Context';
+import { useLanguage } from '../src/LanguageContext';
 import { useEventRefresh } from '../hooks/useGlobalRefresh';
 import { FileText, X, Copy, ExternalLink, Filter, RefreshCw, Clock, TrendingUp, TrendingDown, ChevronRight, Package, Lock, Gift, Unlock, Calendar, DollarSign, ChevronDown, CheckCircle } from 'lucide-react';
 import { ethers } from 'ethers';

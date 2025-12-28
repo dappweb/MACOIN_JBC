@@ -1,8 +1,8 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { ethers } from 'ethers';
 import { Clock, TrendingUp, AlertCircle, RefreshCw } from 'lucide-react';
-import { useWeb3 } from '../Web3Context';
-import { useLanguage } from '../LanguageContext';
+import { useWeb3 } from '../src/Web3Context';
+import { useLanguage } from '../src/LanguageContext';
 import GoldenProgressBar from './GoldenProgressBar';
 
 interface RawStakePosition {

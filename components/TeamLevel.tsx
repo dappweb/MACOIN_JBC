@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react"
-import { TEAM_LEVELS } from "../constants"
+import { TEAM_LEVELS } from "../src/constants"
 import { Users, Percent, UserCheck, Copy, Share2, Crown } from "lucide-react"
-import { useLanguage } from "../LanguageContext"
-import { useWeb3 } from "../Web3Context"
+import { useLanguage } from "../src/LanguageContext"
+import { useWeb3 } from "../src/Web3Context"
 import { ethers } from "ethers"
 import toast from "react-hot-toast"
 

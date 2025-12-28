@@ -1,8 +1,8 @@
 import React, { useState, useMemo } from 'react';
-import { TicketTier, MiningPlan } from '../types';
-import { TICKET_TIERS, MINING_PLANS } from '../constants';
+import { TicketTier, MiningPlan } from '../src/types';
+import { TICKET_TIERS, MINING_PLANS } from '../src/constants';
 import { Calculator, DollarSign, TrendingUp, RefreshCw, Plus, Minus, Info } from 'lucide-react';
-import { useLanguage } from '../LanguageContext';
+import { useLanguage } from '../src/LanguageContext';
 
 interface RevenueCalculatorProps {
   initialTicket?: TicketTier;

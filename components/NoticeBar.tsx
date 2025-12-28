@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useLanguage } from '../LanguageContext';
+import { useLanguage } from '../src/LanguageContext';
 import { Megaphone, X, Info } from 'lucide-react';
 
 const NoticeBar: React.FC = () => {

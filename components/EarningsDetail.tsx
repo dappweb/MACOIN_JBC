@@ -1,8 +1,8 @@
 import React, { useEffect, useMemo, useState } from "react"
 import { ethers } from "ethers"
 import { Clock, ExternalLink, Gift, RefreshCw, Filter, X, ChevronRight, Copy, CheckCircle, Pickaxe, Zap, UserPlus, Layers, TrendingUp, ChevronLeft, AlertCircle } from "lucide-react"
-import { useWeb3 } from "../Web3Context"
-import { useLanguage } from "../LanguageContext"
+import { useWeb3 } from "../src/Web3Context"
+import { useLanguage } from "../src/LanguageContext"
 import { useEventRefresh } from "../hooks/useGlobalRefresh"
 import toast from "react-hot-toast"
 

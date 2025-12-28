@@ -6,12 +6,12 @@ export default defineConfig(({ mode }) => {
     const env = loadEnv(mode, '.', '');
     return {
       server: {
-      port: 5173,
-      host: '0.0.0.0',
-      headers: {
-        'Cross-Origin-Opener-Policy': 'same-origin-allow-popups',
+        port: 5173,
+        host: '0.0.0.0',
+        headers: {
+          'Cross-Origin-Opener-Policy': 'same-origin-allow-popups',
+        },
       },
-    },
       plugins: [react()],
       define: {
         'process.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY),
@@ -27,7 +27,7 @@ export default defineConfig(({ mode }) => {
       },
       resolve: {
         alias: {
-          '@': path.resolve(__dirname, '..'),
+          '@': path.resolve(__dirname, '.'),
         }
       }
     };

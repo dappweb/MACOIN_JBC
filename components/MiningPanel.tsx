@@ -1,9 +1,9 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
-import { TICKET_TIERS, MINING_PLANS } from '../constants';
-import { MiningPlan, TicketTier } from '../types';
+import { TICKET_TIERS, MINING_PLANS } from '../src/constants';
+import { MiningPlan, TicketTier } from '../src/types';
 import { Zap, Clock, TrendingUp, AlertCircle, ArrowRight, ShieldCheck, Lock, Package, History, ChevronDown, ChevronUp } from 'lucide-react';
-import { useLanguage } from '../LanguageContext';
-import { useWeb3 } from '../Web3Context';
+import { useLanguage } from '../src/LanguageContext';
+import { useWeb3 } from '../src/Web3Context';
 import { useGlobalRefresh, useEventRefresh } from '../hooks/useGlobalRefresh';
 import { ethers } from 'ethers';
 import toast from 'react-hot-toast';
@@ -1573,17 +1573,6 @@ const MiningPanel: React.FC = () => {
                                                 </span>
                                             )}
                                         </div>
-                                        <span className={`px-2 py-0.5 rounded text-xs font-bold border ${
-                    item.status === 'Mining' ? 'bg-green-500/10 text-green-400 border-green-500/20' :
-                    item.status === 'Completed' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' :
-                    (item.status === 'Expired' || isExpired) ? 'bg-red-500/10 text-red-400 border-red-500/20' :
-                    'hidden' // Hide Pending status
-                }`}>
-                    {item.status === 'Mining' ? t.mining.mining : 
-                     item.status === 'Completed' ? '挖矿完成' : 
-                     (item.status === 'Expired' || isExpired) ? t.mining.expired : 
-                     ''}
-                </span>
                                     </div>
                                     <div className="text-right">
                                         <div className="font-bold text-white text-lg">{item.amount} <span className="text-xs font-normal text-gray-400">MC</span></div>

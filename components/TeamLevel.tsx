@@ -107,15 +107,21 @@ const TeamLevel: React.FC = () => {
           // Fetch Direct Referrals
           setIsLoadingDirects(true)
           try {
-            // This function was added to the contract in the latest update
-            // Returns array of structs: (user, ticketAmount, joinTime)
-            const data = await protocolContract.getDirectReferralsData(account)
-            // data is a Result object that behaves like an array of Results
-            const formattedData: DirectReferral[] = data.map((item: any) => ({
-              user: item.user,
-              ticketAmount: item.ticketAmount,
-              joinTime: item.joinTime,
-            }))
+            // Fetch direct referrals addresses first
+            const directAddresses = await protocolContract.getDirectReferrals(account)
+            
+            // Then fetch ticket info for each address in parallel
+            const formattedData = await Promise.all(
+              directAddresses.map(async (addr: string) => {
+                const ticket = await protocolContract.userTicket(addr)
+                // ticket: (ticketId, amount, purchaseTime, exited)
+                return {
+                  user: addr,
+                  ticketAmount: ticket[1],
+                  joinTime: ticket[2],
+                }
+              })
+            )
             setDirectReferrals(formattedData)
           } catch (e) {
             console.error("Failed to fetch directs", e)
@@ -358,7 +364,7 @@ const TeamLevel: React.FC = () => {
               </div>
               <p className="text-sm font-bold text-gray-400 mb-2">{t.team.netTotalCap}</p>
               <p className="text-2xl md:text-3xl font-black text-blue-400 font-mono break-all tracking-tight">
-                {safeFormatEther(totalTicketAmount * 3n)} <span className="text-sm font-bold text-blue-300 ml-1">MC</span>
+                {safeFormatEther(userLevelInfo.teamTotalVolume)} <span className="text-sm font-bold text-blue-300 ml-1">MC</span>
               </p>
             </div>
           </div>

@@ -5,12 +5,17 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 
 interface IJBC is IERC20 {
     function burn(uint256 amount) external;
 }
 
-contract JinbaoProtocol is Initializable, OwnableUpgradeable, UUPSUpgradeable {
+interface IPriceOracle {
+    function getPrice(address token) external view returns (uint256);
+}
+
+contract JinbaoProtocol is Initializable, OwnableUpgradeable, UUPSUpgradeable, ReentrancyGuardUpgradeable {
     
     struct UserInfo {
         address referrer;
@@ -102,32 +107,34 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, UUPSUpgradeable {
     uint256 public ticketFlexibilityDuration;
     bool public liquidityEnabled;
     bool public redeemEnabled;
+    bool public emergencyPaused; // Emergency pause flag
 
     // Swap Pool Reserves
     uint256 public swapReserveMC;
     uint256 public swapReserveJBC;
 
+    // Price oracle for external price feeds (optional)
+    address public priceOracle;
+    
+    // Minimum liquidity to prevent price manipulation
+    uint256 public constant MIN_LIQUIDITY = 1000 * 1e18; // 1000 tokens minimum
+    
+    // Price impact protection
+    uint256 public constant MAX_PRICE_IMPACT = 1000; // 10% max price impact
+
     uint256 public nextTicketId;
     uint256 public nextStakeId;
     uint256 public lastBurnTime;
     mapping(uint256 => address) public ticketOwner;
-
+    
     // Pending Rewards for Differential System (Liquidity): stakeId => List of rewards
     mapping(uint256 => PendingReward[]) public stakePendingRewards;
     mapping(uint256 => address) public stakeOwner;
     
+    // Modifiers - ReentrancyGuard now properly implemented
+    // nonReentrant modifier is inherited from ReentrancyGuardUpgradeable
     // Level Reward Pool for unclaimed rewards (added in upgrade)
     uint256 public levelRewardPool;
-    
-    // Modifiers replaced by CEI pattern for size optimization
-    modifier nonReentrant() {
-        // Placeholder if needed, but removed for size
-        _;
-    }
-    // This reserves storage slots to allow adding new state variables
-    // without affecting the storage layout of derived contracts
-    // Reduced by 1 due to levelRewardPool addition
-    uint256[47] private __gap;
     
     // Custom Errors
     error InvalidAmount();
@@ -195,6 +202,8 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, UUPSUpgradeable {
     event RedemptionFeeUpdated(uint256 newFee);
     event SwapReservesWithdrawn(uint256 mcAmount, uint256 jbcAmount);
     event TokensRescued(address token, address to, uint256 amount);
+    event EmergencyPaused();
+    event EmergencyUnpaused();
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -211,6 +220,7 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, UUPSUpgradeable {
     ) public initializer {
         __Ownable_init(msg.sender);
         __UUPSUpgradeable_init();
+        __ReentrancyGuard_init();
 
         mcToken = IERC20(_mcToken);
         jbcToken = IJBC(_jbcToken);
@@ -239,11 +249,57 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, UUPSUpgradeable {
 
     function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
 
+    modifier whenNotPaused() {
+        require(!emergencyPaused, "Contract is paused");
+        _;
+    }
+
+    function emergencyPause() external onlyOwner {
+        emergencyPaused = true;
+        emit EmergencyPaused();
+    }
+
+    function emergencyUnpause() external onlyOwner {
+        emergencyPaused = false;
+        emit EmergencyUnpaused();
+    }
+        priceOracle = _oracle;
+    }
+
+    function getJBCPrice() public view returns (uint256) {
+        // Use external oracle if available
+        if (priceOracle != address(0)) {
+            try IPriceOracle(priceOracle).getPrice(address(jbcToken)) returns (uint256 oraclePrice) {
+                if (oraclePrice > 0) return oraclePrice;
+            } catch {
+                // Fall back to internal price if oracle fails
+            }
+        }
+        
+        // Internal price calculation with minimum liquidity check
+        if (swapReserveJBC == 0 || swapReserveMC < MIN_LIQUIDITY) {
+            return 1 ether; // Default price if insufficient liquidity
+        }
+        
+        return (swapReserveMC * 1e18) / swapReserveJBC;
+    }
+
+    function setPriceOracle(address _oracle) external onlyOwner {
+        priceOracle = _oracle;
+    }
+
     // --- Admin Functions ---
 
     function setWallets(address _marketing, address _treasury, address _lpInjection, address _buyback) external onlyOwner {
+        // Validate addresses
+        require(_marketing != address(0) && _treasury != address(0) && _lpInjection != address(0) && _buyback != address(0), "Invalid address");
+        
         marketingWallet = _marketing;
         treasuryWallet = _treasury;
+        lpInjectionWallet = _lpInjection;
+        buybackWallet = _buyback;
+        emit WalletsUpdated(_marketing, _treasury, _lpInjection, _buyback);
+    }
         lpInjectionWallet = _lpInjection;
         buybackWallet = _buyback;
         emit WalletsUpdated(_marketing, _treasury, _lpInjection, _buyback);
@@ -313,6 +369,10 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, UUPSUpgradeable {
     }
 
     function rescueTokens(address _token, address _to, uint256 _amount) external onlyOwner {
+        // Prevent rescuing main protocol tokens to avoid rug pull
+        require(_token != address(mcToken) && _token != address(jbcToken), "Cannot rescue protocol tokens");
+        require(_to != address(0), "Invalid recipient");
+        
         IERC20(_token).transfer(_to, _amount);
         emit TokensRescued(_token, _to, _amount);
     }
@@ -373,7 +433,7 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         emit BoundReferrer(msg.sender, _referrer);
     }
 
-    function buyTicket(uint256 amount) external nonReentrant {
+    function buyTicket(uint256 amount) external nonReentrant whenNotPaused {
         _expireTicketIfNeeded(msg.sender);
         // Validate Amount (T1-T4)
         if (amount != 100 * 1e18 && amount != 300 * 1e18 && amount != 500 * 1e18 && amount != 1000 * 1e18) revert InvalidAmount();
@@ -464,7 +524,7 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         emit TicketPurchased(msg.sender, amount, t.ticketId);
     }
 
-    function stakeLiquidity(uint256 amount, uint256 cycleDays) external nonReentrant {
+    function stakeLiquidity(uint256 amount, uint256 cycleDays) external nonReentrant whenNotPaused {
         Ticket storage ticket = userTicket[msg.sender];
         
         if (ticket.amount == 0) revert NotActive();
@@ -579,7 +639,7 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         }
         
         // JBC Transfer
-        uint256 jbcPrice = (swapReserveJBC == 0) ? 1 ether : (swapReserveMC * 1e18) / swapReserveJBC;
+        uint256 jbcPrice = getJBCPrice(); // Use protected price function
         uint256 jbcAmount = (jbcValuePart * 1 ether) / jbcPrice;
         uint256 jbcTransferred = 0;
         if (jbcToken.balanceOf(address(this)) >= jbcAmount && jbcAmount > 0) {
@@ -624,19 +684,24 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, UUPSUpgradeable {
                 totalYield += pending;
                 stakes[i].paid += pending;
 
-                // 2. Calculate Principal Return & Fee
-                // Fee is 1% of maxTicketAmount (deducted from wallet, not principal)
+                // 2. Calculate Principal Return & Fee (deducted from principal)
                 uint256 feeBase = userInfo[msg.sender].maxTicketAmount;
                 if (feeBase == 0) feeBase = userTicket[msg.sender].amount; // Fallback
                 
                 uint256 fee = (feeBase * redemptionFeePercent) / 100;
                 
-                // Return 100% of principal
+                // Deduct fee from principal instead of user wallet
                 uint256 returnAmt = stakes[i].amount;
+                if (returnAmt > fee) {
+                    returnAmt -= fee;
+                    totalFee += fee;
+                } else {
+                    // If principal is less than fee, take all principal as fee
+                    totalFee += returnAmt;
+                    returnAmt = 0;
+                }
                 
                 totalReturn += returnAmt;
-                totalFee += fee;
-                
                 stakes[i].active = false;
                 
                 // Release Differential Rewards for this stake
@@ -646,10 +711,8 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         
         require(totalReturn > 0 || totalYield > 0, "Nothing to redeem");
 
-        // Collect Fee from User Wallet (Must Approve first)
         // Inject Fee into Liquidity Pool (Swap Reserve MC)
         if (totalFee > 0) {
-            mcToken.transferFrom(msg.sender, address(this), totalFee);
             swapReserveMC += totalFee;
         }
 
@@ -673,7 +736,7 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, UUPSUpgradeable {
                     mcTransferred = mcPart;
                 }
                 
-                uint256 jbcPrice = (swapReserveJBC == 0) ? 1 ether : (swapReserveMC * 1e18) / swapReserveJBC;
+                uint256 jbcPrice = getJBCPrice(); // Use protected price function
                 uint256 jbcAmount = (jbcValuePart * 1 ether) / jbcPrice;
                 uint256 jbcTransferred = 0;
                 if (jbcToken.balanceOf(address(this)) >= jbcAmount && jbcAmount > 0) {
@@ -690,8 +753,8 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, UUPSUpgradeable {
             mcToken.transfer(msg.sender, totalReturn);
         }
         
-        // Record Fee for next refund
-        userInfo[msg.sender].refundFeeAmount += totalFee;
+        // No longer need to record fee for refund since it's deducted from principal
+        // userInfo[msg.sender].refundFeeAmount += totalFee;
 
         emit Redeemed(msg.sender, totalReturn, totalFee);
         
@@ -710,6 +773,12 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         Ticket storage t = userTicket[user];
         
         if (!u.isActive || t.exited || t.amount == 0) {
+            return 0;
+        }
+
+        // Check contract has sufficient balance before distribution
+        if (mcToken.balanceOf(address(this)) < amount) {
+            emit RewardCapped(user, amount, 0);
             return 0;
         }
 
@@ -744,6 +813,9 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, UUPSUpgradeable {
             uint256 totalReturn = 0;
             uint256 totalFee = 0;
             
+            // Check contract balance before processing
+            uint256 contractBalance = mcToken.balanceOf(address(this));
+            
             for (uint256 i = 0; i < stakes.length; i++) {
                 if (!stakes[i].active) continue;
                 
@@ -761,8 +833,17 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, UUPSUpgradeable {
                 stakes[i].active = false;
             }
             
+            // Only transfer if contract has sufficient balance
             if (totalReturn > 0) {
-                mcToken.transfer(user, totalReturn);
+                if (contractBalance >= totalReturn) {
+                    mcToken.transfer(user, totalReturn);
+                } else {
+                    // Emergency: transfer what we can and emit event
+                    if (contractBalance > 0) {
+                        mcToken.transfer(user, contractBalance);
+                    }
+                    emit RewardCapped(user, totalReturn, contractBalance);
+                }
             }
 
             if (totalFee > 0) {
@@ -886,8 +967,12 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, UUPSUpgradeable {
 
     function _internalBuybackAndBurn(uint256 mcAmount) internal {
         if (mcAmount == 0) return;
-        if (swapReserveMC == 0 || swapReserveJBC == 0) return;
+        if (swapReserveMC < MIN_LIQUIDITY || swapReserveJBC < MIN_LIQUIDITY) return;
         if (mcToken.balanceOf(address(this)) < swapReserveMC + mcAmount) return;
+
+        // Check price impact
+        uint256 priceImpact = (mcAmount * 10000) / swapReserveMC;
+        if (priceImpact > MAX_PRICE_IMPACT) return; // Skip if price impact too high
 
         // getAmountOut inlined
         uint256 numerator = mcAmount * swapReserveJBC;
@@ -975,14 +1060,26 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, UUPSUpgradeable {
 
     // --- AMM & Swap Support ---
 
-    function swapMCToJBC(uint256 mcAmount) external nonReentrant {
+    function swapMCToJBC(uint256 mcAmount) external nonReentrant whenNotPaused {
         if (mcAmount == 0) revert InvalidAmount();
+        
+        // Check minimum liquidity
+        if (swapReserveMC < MIN_LIQUIDITY || swapReserveJBC < MIN_LIQUIDITY) {
+            revert LowLiquidity();
+        }
+        
         mcToken.transferFrom(msg.sender, address(this), mcAmount);
 
-        // getAmountOut inlined
+        // getAmountOut inlined with price impact check
         uint256 numerator = mcAmount * swapReserveJBC;
         uint256 denominator = swapReserveMC + mcAmount;
         uint256 jbcOutput = numerator / denominator;
+        
+        // Check price impact (max 10%)
+        uint256 priceImpact = (mcAmount * 10000) / swapReserveMC;
+        if (priceImpact > MAX_PRICE_IMPACT) {
+            revert InvalidAmount(); // Price impact too high
+        }
 
         uint256 tax = (jbcOutput * swapBuyTax) / 100;
         uint256 amountToUser = jbcOutput - tax;
@@ -999,12 +1096,24 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         emit SwappedMCToJBC(msg.sender, mcAmount, amountToUser, tax);
     }
 
-    function swapJBCToMC(uint256 jbcAmount) external nonReentrant {
+    function swapJBCToMC(uint256 jbcAmount) external nonReentrant whenNotPaused {
         if (jbcAmount == 0) revert InvalidAmount();
+        
+        // Check minimum liquidity
+        if (swapReserveMC < MIN_LIQUIDITY || swapReserveJBC < MIN_LIQUIDITY) {
+            revert LowLiquidity();
+        }
+        
         jbcToken.transferFrom(msg.sender, address(this), jbcAmount);
 
         uint256 tax = (jbcAmount * swapSellTax) / 100;
         uint256 amountToSwap = jbcAmount - tax;
+        
+        // Check price impact (max 10%)
+        uint256 priceImpact = (amountToSwap * 10000) / swapReserveJBC;
+        if (priceImpact > MAX_PRICE_IMPACT) {
+            revert InvalidAmount(); // Price impact too high
+        }
         
         jbcToken.burn(tax);
         
@@ -1031,20 +1140,29 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, UUPSUpgradeable {
         
         address current = userInfo[user].referrer;
         uint256 iterations = 0;
+        address[] memory visited = new address[](20); // Track visited addresses
         
         while (current != address(0) && iterations < 20) {
+            // Check for circular references
+            for (uint256 j = 0; j < iterations; j++) {
+                if (visited[j] == current) {
+                    return; // Circular reference detected, exit
+                }
+            }
+            visited[iterations] = current;
+            
             uint256 oldCount = userInfo[current].teamCount;
             uint256 newCount;
             
             if (delta > 0) {
-                newCount = oldCount + uint256(delta);
+                // Check for overflow
+                uint256 increase = uint256(delta);
+                require(oldCount + increase >= oldCount, "Team count overflow");
+                newCount = oldCount + increase;
             } else {
                 uint256 decrease = uint256(-delta);
-                if (decrease > oldCount) {
-                    newCount = 0;
-                } else {
-                    newCount = oldCount - decrease;
-                }
+                // Safe subtraction - prevent underflow
+                newCount = decrease > oldCount ? 0 : oldCount - decrease;
             }
             
             userInfo[current].teamCount = newCount;
@@ -1105,6 +1223,7 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, UUPSUpgradeable {
 
     function batchUpdateTeamCounts(address[] calldata users, uint256[] calldata newCounts) external onlyOwner {
         if (users.length != newCounts.length) revert BatchUpdateSizeMismatch();
+        if (users.length > 100) revert BatchUpdateSizeMismatch(); // Limit batch size to prevent DoS
         
         for (uint256 i = 0; i < users.length; i++) {
             uint256 oldCount = userInfo[users[i]].teamCount;

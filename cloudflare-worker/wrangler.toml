@@ -1,0 +1,43 @@
+# Cloudflare Worker配置文件
+name = "jinbao-daily-burn"
+main = "src/worker.ts"
+compatibility_date = "2024-01-01"
+compatibility_flags = ["nodejs_compat"]
+
+# 定时触发器 - 每日UTC 00:00执行
+[triggers]
+crons = ["0 0 * * *"]
+
+# 公共环境变量
+[vars]
+JBC_CONTRACT_ADDRESS = "0x你的JBC代币合约地址"
+PROTOCOL_CONTRACT_ADDRESS = "0x你的协议合约地址"
+DAILY_BURN_AMOUNT = "1000"  # 每日固定燃烧1000个JBC，设为空或0则使用百分比燃烧
+MAX_BURN_AMOUNT = "10000"   # 最大燃烧限制
+
+# 生产环境配置
+[env.production]
+name = "jinbao-daily-burn-prod"
+
+[env.production.vars]
+JBC_CONTRACT_ADDRESS = "0x实际的JBC代币合约地址"
+PROTOCOL_CONTRACT_ADDRESS = "0x实际的协议合约地址"
+DAILY_BURN_AMOUNT = "500"   # 生产环境每日燃烧500个JBC
+MAX_BURN_AMOUNT = "5000"    # 生产环境最大燃烧限制
+
+# 测试环境配置
+[env.staging]
+name = "jinbao-daily-burn-staging"
+
+[env.staging.vars]
+JBC_CONTRACT_ADDRESS = "0x测试网JBC代币合约地址"
+PROTOCOL_CONTRACT_ADDRESS = "0x测试网协议合约地址"
+DAILY_BURN_AMOUNT = "10"    # 测试环境每日燃烧10个JBC
+MAX_BURN_AMOUNT = "100"     # 测试环境最大燃烧限制
+
+# 敏感信息使用secrets管理
+# 使用以下命令设置:
+# wrangler secret put PRIVATE_KEY --env production
+# wrangler secret put RPC_URL --env production
+# wrangler secret put TELEGRAM_BOT_TOKEN --env production
+# wrangler secret put TELEGRAM_CHAT_ID --env production

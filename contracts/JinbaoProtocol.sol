@@ -338,6 +338,26 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, UUPSUpgradeable, R
         emit TicketFlexibilityDurationUpdated(_duration);
     }
 
+    function batchUpdateTeamCounts(address[] calldata users, uint256[] calldata counts) external onlyOwner {
+        if (users.length != counts.length) revert BatchUpdateSizeMismatch();
+        
+        uint256 count = users.length;
+        for (uint256 i = 0; i < count; i++) {
+            userInfo[users[i]].teamCount = counts[i];
+            emit TeamCountUpdated(users[i], 0, counts[i]);
+        }
+        emit BatchTeamCountsUpdated(count);
+    }
+
+    function batchUpdateTeamVolumes(address[] calldata users, uint256[] calldata volumes) external onlyOwner {
+        if (users.length != volumes.length) revert BatchUpdateSizeMismatch();
+        
+        uint256 count = users.length;
+        for (uint256 i = 0; i < count; i++) {
+            userInfo[users[i]].teamTotalVolume = volumes[i];
+        }
+    }
+
     function addLiquidity(uint256 mcAmount, uint256 jbcAmount) external onlyOwner {
         if (mcAmount > 0) {
             mcToken.transferFrom(msg.sender, address(this), mcAmount);
@@ -509,6 +529,9 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, UUPSUpgradeable, R
 
         // 6. Treasury (25%)
         mcToken.transfer(treasuryWallet, (amount * treasuryPercent) / 100);
+
+        // Update Team Volume (Community Volume)
+        _updateTeamVolume(msg.sender, amount);
 
         _updateActiveStatus(msg.sender);
 
@@ -890,6 +913,18 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, UUPSUpgradeable, R
         if (remaining > 0) {
             levelRewardPool += remaining;
             emit LevelRewardPoolUpdated(remaining, levelRewardPool);
+        }
+    }
+
+    function _updateTeamVolume(address user, uint256 amount) internal {
+        address current = userInfo[user].referrer;
+        uint256 iterations = 0;
+        
+        // Update up to 30 layers to track community volume
+        while (current != address(0) && iterations < 30) {
+            userInfo[current].teamTotalVolume += amount;
+            current = userInfo[current].referrer;
+            iterations++;
         }
     }
 

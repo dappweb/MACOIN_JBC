@@ -784,6 +784,59 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, UUPSUpgradeable, R
         }
     }
 
+    // Individual stake redemption
+    function redeemStake(uint256 stakeId) external nonReentrant {
+        require(redeemEnabled, "Disabled");
+        Stake[] storage stakes = userStakes[msg.sender];
+        require(stakeId < stakes.length && stakes[stakeId].active, "Invalid stake");
+        require(block.timestamp >= stakes[stakeId].startTime + (stakes[stakeId].cycleDays * SECONDS_IN_UNIT), "Not expired");
+        
+        Stake storage stake = stakes[stakeId];
+        uint256 ratePerBillion = stake.cycleDays == 7 ? 13333334 : stake.cycleDays == 15 ? 16666667 : 20000000;
+        uint256 totalStaticShouldBe = (stake.amount * ratePerBillion * stake.cycleDays) / 1000000000;
+        uint256 pending = totalStaticShouldBe > stake.paid ? totalStaticShouldBe - stake.paid : 0;
+        
+        stake.paid += pending;
+        uint256 feeBase = userInfo[msg.sender].maxTicketAmount;
+        if (feeBase == 0) feeBase = userTicket[msg.sender].amount;
+        uint256 fee = (feeBase * redemptionFeePercent) / 100;
+        
+        if (fee > 0) {
+            require(mcToken.transferFrom(msg.sender, address(this), fee), "Fee transfer failed");
+            swapReserveMC += fee;
+            userInfo[msg.sender].refundFeeAmount += fee;
+        }
+        
+        stake.active = false;
+        _releaseDifferentialRewards(stake.id);
+        
+        if (pending > 0) {
+            uint256 available = userInfo[msg.sender].currentCap - userInfo[msg.sender].totalRevenue;
+            if (pending > available) pending = available;
+            if (pending > 0) {
+                userInfo[msg.sender].totalRevenue += pending;
+                uint256 mcPart = pending / 2;
+                if (mcToken.balanceOf(address(this)) >= mcPart && mcPart > 0) {
+                    mcToken.transfer(msg.sender, mcPart);
+                }
+                uint256 jbcPrice = getJBCPrice();
+                uint256 jbcAmount = ((pending - mcPart) * 1 ether) / jbcPrice;
+                if (jbcToken.balanceOf(address(this)) >= jbcAmount && jbcAmount > 0) {
+                    jbcToken.transfer(msg.sender, jbcAmount);
+                }
+                emit RewardPaid(msg.sender, pending, REWARD_STATIC);
+            }
+        }
+        
+        mcToken.transfer(msg.sender, stake.amount);
+        emit Redeemed(msg.sender, stake.amount, fee);
+        _updateActiveStatus(msg.sender);
+        
+        if (userInfo[msg.sender].totalRevenue >= userInfo[msg.sender].currentCap) {
+            _handleExit(msg.sender);
+        }
+    }
+
     // --- Internal Logic ---
 
     function _distributeReward(address user, uint256 amount, uint8 rType) internal returns (uint256) {

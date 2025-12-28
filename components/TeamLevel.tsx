@@ -83,7 +83,7 @@ const TeamLevel: React.FC = () => {
           // Calc Level
           const activeDirects = Number(userInfo[1])
           const teamCount = Number(userInfo[2])
-          const effectiveCount = Math.max(activeDirects, teamCount)
+          const effectiveCount = teamCount
           
           let level = "V0"
           if (effectiveCount >= 100000) level = "V9"
@@ -133,7 +133,10 @@ const TeamLevel: React.FC = () => {
         }
       }
     }
+    
     fetchTeamInfo()
+    const timer = setInterval(fetchTeamInfo, 10000) // Refresh every 10s
+    return () => clearInterval(timer)
   }, [isConnected, account, protocolContract])
 
   return (
@@ -153,7 +156,7 @@ const TeamLevel: React.FC = () => {
               <div className="bg-black/30 px-3 py-1.5 rounded-lg border border-gray-700/50 flex items-center gap-2">
                 <span className="text-xs text-gray-400">{t.team.colCount}</span>
                 <span className="text-sm md:text-base font-bold text-white">
-                  {Math.max(userLevelInfo.activeDirects, userLevelInfo.teamCount || 0)}
+                  {userLevelInfo.teamCount}
                 </span>
               </div>
               <div className="bg-black/30 px-3 py-1.5 rounded-lg border border-gray-700/50 flex items-center gap-2">

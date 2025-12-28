@@ -510,9 +510,17 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
             <span className="text-gray-300 text-xs md:text-sm font-medium">{t.stats.revenue}</span>
             <TrendingUp className="text-neon-400" size={18} />
           </div>
-          <div className="text-2xl md:text-3xl font-bold text-white mb-1">{rewardTotals.mc.toLocaleString()}</div>
-          <div className="text-xs text-gray-300 flex justify-between items-center">
-            <span>MC: {rewardTotals.mc.toLocaleString()} · JBC: {rewardTotals.jbc.toLocaleString()}</span>
+          <div className="flex flex-col gap-2 mb-2">
+            <div className="flex items-center justify-between">
+              <span className="text-neon-400 font-bold text-sm">MC</span>
+              <span className="text-xl md:text-2xl font-bold text-white">{rewardTotals.mc.toLocaleString()}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-amber-400 font-bold text-sm">JBC</span>
+              <span className="text-xl md:text-2xl font-bold text-white">{rewardTotals.jbc.toLocaleString()}</span>
+            </div>
+          </div>
+          <div className="text-xs text-gray-300 flex justify-end items-center">
             {mcUsdtPrice > 0 && (
               <span className="text-neon-400">
                 ≈${((rewardTotals.mc + rewardTotals.jbc * parseFloat(jbcPrice)) * mcUsdtPrice).toFixed(2)}

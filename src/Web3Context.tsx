@@ -18,6 +18,7 @@ export const PROTOCOL_ABI = [
   "function stakeLiquidity(uint256 amount, uint256 cycleDays) external",
   "function claimRewards() external",
   "function redeem() external",
+  "function redeemStake(uint256 stakeId) external",
   "function swapMCToJBC(uint256 mcAmount) external",
   "function swapJBCToMC(uint256 jbcAmount) external",
   "function dailyBurn() external",

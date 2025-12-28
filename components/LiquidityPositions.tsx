@@ -48,7 +48,7 @@ const formatCountdown = (endTime: number, currentTime: number, t: any): string =
 };
 
 const LiquidityPositions: React.FC = () => {
-  const { protocolContract, account } = useWeb3();
+  const { protocolContract, mcContract, account } = useWeb3();
   const { t } = useLanguage();
   const [rawPositions, setRawPositions] = useState<RawStakePosition[]>([]);
   const [loading, setLoading] = useState(false);
@@ -140,11 +140,40 @@ const LiquidityPositions: React.FC = () => {
   };
 
   const handleRedeem = async (id: string) => {
-    if (!protocolContract) return;
+    if (!protocolContract || !mcContract) return;
     setRedeemingId(id);
     try {
-      // 合约的redeem()函数会自动赎回所有到期的质押，不需要传递ID
-      const tx = await protocolContract.redeem();
+      const stakeIndex = parseInt(id); // Convert stake ID to index
+      
+      // Get user info to calculate fee
+      const userInfo = await protocolContract.userInfo(account);
+      const redemptionFeePercent = await protocolContract.redemptionFeePercent();
+      
+      // Calculate expected fee
+      const feeBase = userInfo.maxTicketAmount > 0n ? userInfo.maxTicketAmount : userInfo.refundFeeAmount;
+      const expectedFee = (feeBase * redemptionFeePercent) / 100n;
+      
+      if (expectedFee > 0n) {
+        // Check MC balance
+        const mcBalance = await mcContract.balanceOf(account);
+        if (mcBalance < expectedFee) {
+          toast.error(`Insufficient MC balance for redemption fee: ${ethers.formatEther(expectedFee)} MC required`);
+          return;
+        }
+        
+        // Check and request approval if needed
+        const allowance = await mcContract.allowance(account, protocolContract.target);
+        if (allowance < expectedFee) {
+          toast.loading("Approving MC tokens for redemption fee...");
+          const approveTx = await mcContract.approve(protocolContract.target, expectedFee);
+          await approveTx.wait();
+          toast.dismiss();
+          toast.success("Approval successful");
+        }
+      }
+      
+      // Proceed with redemption
+      const tx = await protocolContract.redeemStake(stakeIndex);
       await tx.wait();
       toast.success(t.mining?.redeemSuccess || "Redemption Successful");
       fetchPositions(); // Refresh list

@@ -29,11 +29,12 @@ async function main() {
         const batch = updates.slice(i, i + BATCH_SIZE);
         const users = batch.map(u => u.user);
         const volumes = batch.map(u => u.volume);
+        const counts = batch.map(u => u.count);
 
         console.log(`Processing batch ${Math.floor(i / BATCH_SIZE) + 1}... (${users.length} users)`);
         
         try {
-            const tx = await protocol.batchUpdateTeamVolumes(users, volumes);
+            const tx = await protocol.batchUpdateUserStats(users, counts, volumes);
             console.log(`Tx sent: ${tx.hash}`);
             await tx.wait();
             console.log("Batch confirmed.");

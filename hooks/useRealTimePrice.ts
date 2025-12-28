@@ -209,8 +209,15 @@ export const useRealTimePrice = () => {
     const handlePoolDataChanged = async () => {
       if (protocolContract) {
         try {
-          const priceWei = await protocolContract.getJBCPrice();
-          const price = parseFloat(ethers.formatEther(priceWei));
+          // Calculate JBC price inline since getJBCPrice was removed
+          const swapReserveMC = await protocolContract.swapReserveMC();
+          const swapReserveJBC = await protocolContract.swapReserveJBC();
+          
+          let price = 1; // Default price
+          if (swapReserveJBC > 0 && swapReserveMC >= ethers.parseEther('1000')) {
+            price = parseFloat(ethers.formatEther(swapReserveMC)) / parseFloat(ethers.formatEther(swapReserveJBC));
+          }
+          
           addPricePoint(price);
         } catch (error) {
           console.error('❌ [RealTimePrice] 获取当前价格失败:', error);

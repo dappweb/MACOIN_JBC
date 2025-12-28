@@ -108,7 +108,7 @@ const LiquidityPositions: React.FC = () => {
           const stakeData = await protocolContract.userStakes(account, index);
           // struct Stake { id, amount, startTime, cycleDays, active, paid }
           
-          const id = stakeData[0].toString();
+          const id = index.toString(); // Use array index as ID instead of stake ID
           const amount = stakeData[1];
           const startTime = Number(stakeData[2]);
           const cycleDays = Number(stakeData[3]);
@@ -143,7 +143,7 @@ const LiquidityPositions: React.FC = () => {
     if (!protocolContract || !mcContract) return;
     setRedeemingId(id);
     try {
-      const stakeIndex = parseInt(id); // Convert stake ID to index
+      const stakeIndex = parseInt(id); // ID is already the array index
       
       // Get user info to calculate fee
       const userInfo = await protocolContract.userInfo(account);

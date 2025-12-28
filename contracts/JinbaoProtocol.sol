@@ -12,10 +12,6 @@ interface IJBC is IERC20 {
     function burn(uint256 amount) external;
 }
 
-interface IPriceOracle {
-    function getPrice(address token) external view returns (uint256);
-}
-
 contract JinbaoProtocol is Initializable, OwnableUpgradeable, UUPSUpgradeable, ReentrancyGuardUpgradeable {
     using RedemptionLib for RedemptionLib.RedeemParams;
     
@@ -182,6 +178,8 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, UUPSUpgradeable, R
     event TokensRescued(address token, address to, uint256 amount);
     event EmergencyPaused();
     event EmergencyUnpaused();
+    event ReferrerChanged(address indexed user, address indexed oldReferrer, address indexed newReferrer);
+    event UserDataUpdated(address indexed user, uint256 activeDirects, uint256 totalRevenue, uint256 currentCap, uint256 refundFee);
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -241,24 +239,7 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, UUPSUpgradeable, R
         emit EmergencyUnpaused();
     }
 
-    function getJBCPrice() public view returns (uint256) {
-        if (priceOracle != address(0)) {
-            try IPriceOracle(priceOracle).getPrice(address(jbcToken)) returns (uint256 oraclePrice) {
-                if (oraclePrice > 0) return oraclePrice;
-            } catch {
-            }
-        }
-        
-        if (swapReserveJBC == 0 || swapReserveMC < MIN_LIQUIDITY) {
-            return 1 ether;
-        }
-        
-        return (swapReserveMC * 1e18) / swapReserveJBC;
-    }
 
-    function setPriceOracle(address _oracle) external onlyOwner {
-        priceOracle = _oracle;
-    }
 
     function setWallets(address _marketing, address _treasury, address _lpInjection, address _buyback) external onlyOwner {
         require(_marketing != address(0) && _treasury != address(0) && _lpInjection != address(0) && _buyback != address(0), "Invalid address");
@@ -303,24 +284,16 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, UUPSUpgradeable, R
         emit TicketFlexibilityDurationUpdated(_duration);
     }
 
-    function batchUpdateTeamCounts(address[] calldata users, uint256[] calldata counts) external onlyOwner {
-        if (users.length != counts.length) revert BatchUpdateSizeMismatch();
+    function batchUpdateUserStats(address[] calldata users, uint256[] calldata counts, uint256[] calldata volumes) external onlyOwner {
+        if (users.length != counts.length || users.length != volumes.length) revert BatchUpdateSizeMismatch();
         
         uint256 count = users.length;
         for (uint256 i = 0; i < count; i++) {
             userInfo[users[i]].teamCount = counts[i];
+            userInfo[users[i]].teamTotalVolume = volumes[i];
             emit TeamCountUpdated(users[i], 0, counts[i]);
         }
         emit BatchTeamCountsUpdated(count);
-    }
-
-    function batchUpdateTeamVolumes(address[] calldata users, uint256[] calldata volumes) external onlyOwner {
-        if (users.length != volumes.length) revert BatchUpdateSizeMismatch();
-        
-        uint256 count = users.length;
-        for (uint256 i = 0; i < count; i++) {
-            userInfo[users[i]].teamTotalVolume = volumes[i];
-        }
     }
 
     function addLiquidity(uint256 mcAmount, uint256 jbcAmount) external onlyOwner {
@@ -361,6 +334,113 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, UUPSUpgradeable, R
         emit TokensRescued(_token, _to, _amount);
     }
 
+    // Admin User Management Functions
+    function adminSetReferrer(address user, address newReferrer) external onlyOwner {
+        require(user != address(0) && newReferrer != address(0), "Invalid");
+        require(user != newReferrer, "Self ref");
+        
+        address current = newReferrer;
+        uint256 depth = 0;
+        while (current != address(0) && depth < 50) {
+            require(current != user, "Circular");
+            current = userInfo[current].referrer;
+            depth++;
+        }
+        
+        address oldReferrer = userInfo[user].referrer;
+        if (oldReferrer == newReferrer) return;
+        
+        userInfo[user].referrer = newReferrer;
+        
+        if (oldReferrer != address(0)) {
+            address[] storage referrals = directReferrals[oldReferrer];
+            for (uint256 i = 0; i < referrals.length; i++) {
+                if (referrals[i] == user) {
+                    referrals[i] = referrals[referrals.length - 1];
+                    referrals.pop();
+                    break;
+                }
+            }
+        }
+        directReferrals[newReferrer].push(user);
+        
+        uint256 userTeamSize = userInfo[user].teamCount + 1;
+        
+        if (oldReferrer != address(0)) {
+            current = oldReferrer;
+            uint256 iterations = 0;
+            while (current != address(0) && iterations < 30) {
+                if (userInfo[current].teamCount >= userTeamSize) {
+                    userInfo[current].teamCount -= userTeamSize;
+                } else {
+                    userInfo[current].teamCount = 0;
+                }
+                current = userInfo[current].referrer;
+                iterations++;
+            }
+        }
+        
+        if (newReferrer != address(0)) {
+            current = newReferrer;
+            uint256 iterations = 0;
+            while (current != address(0) && iterations < 30) {
+                userInfo[current].teamCount += userTeamSize;
+                current = userInfo[current].referrer;
+                iterations++;
+            }
+        }
+        
+        emit ReferrerChanged(user, oldReferrer, newReferrer);
+    }
+    
+    function adminUpdateUserData(
+        address user,
+        bool updateActiveDirects,
+        uint256 newActiveDirects,
+        bool updateTotalRevenue,
+        uint256 newTotalRevenue,
+        bool updateCurrentCap,
+        uint256 newCurrentCap,
+        bool updateRefundFee,
+        uint256 newRefundFee
+    ) external onlyOwner {
+        require(user != address(0), "Invalid");
+        
+        UserInfo storage info = userInfo[user];
+        
+        if (updateActiveDirects) info.activeDirects = newActiveDirects;
+        if (updateTotalRevenue) info.totalRevenue = newTotalRevenue;
+        if (updateCurrentCap) info.currentCap = newCurrentCap;
+        if (updateRefundFee) info.refundFeeAmount = newRefundFee;
+        
+        emit UserDataUpdated(user, newActiveDirects, newTotalRevenue, newCurrentCap, newRefundFee);
+    }
+
+    function _updateTeamCount(address user) internal {
+        address current = userInfo[user].referrer;
+        uint256 iterations = 0;
+        
+        while (current != address(0) && iterations < 30) {
+            uint256 oldCount = userInfo[current].teamCount;
+            userInfo[current].teamCount = oldCount + 1;
+            emit TeamCountUpdated(current, oldCount, oldCount + 1);
+            
+            current = userInfo[current].referrer;
+            iterations++;
+        }
+    }
+
+    function _updateTeamVolume(address user, uint256 amount) internal {
+        address current = userInfo[user].referrer;
+        uint256 iterations = 0;
+        
+        while (current != address(0) && iterations < 30) {
+            userInfo[current].teamTotalVolume += amount;
+            current = userInfo[current].referrer;
+            iterations++;
+        }
+    }
+
 
     function _getLevel(uint256 value) private pure returns (uint256 level, uint256 percent) {
         if (value >= 10000) return (9, 45);
@@ -373,14 +453,6 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, UUPSUpgradeable, R
         if (value >= 50) return (2, 10);
         if (value >= 20) return (1, 5);
         return (0, 0);
-    }
-
-    function getLevel(uint256 activeDirects) public pure returns (uint256 level, uint256 percent) {
-        return _getLevel(activeDirects);
-    }
-
-    function getLevelByTeamCount(uint256 teamCount) public pure returns (uint256 level, uint256 percent) {
-        return _getLevel(teamCount);
     }
 
     function getLevelRewardLayers(uint256 activeDirects) public pure returns (uint256) {
@@ -405,24 +477,20 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, UUPSUpgradeable, R
         directReferrals[_referrer].push(msg.sender);
         
         // 更新推荐体系中的团队人数统计
-        _updateTeamCount(msg.sender);
+        _updateTeamStats(msg.sender, 0, true);
         
         emit BoundReferrer(msg.sender, _referrer);
     }
 
     function buyTicket(uint256 amount) external nonReentrant whenNotPaused {
         _expireTicketIfNeeded(msg.sender);
-        // Validate Amount (T1-T4)
         if (amount != 100 * 1e18 && amount != 300 * 1e18 && amount != 500 * 1e18 && amount != 1000 * 1e18) revert InvalidAmount();
         
-        // Transfer MC
         mcToken.transferFrom(msg.sender, address(this), amount);
 
-        // Multi-Ticket Accumulation Logic
         Ticket storage t = userTicket[msg.sender];
         
         if (t.exited) {
-            // Re-entry after exit: Reset everything
             nextTicketId++;
             t.ticketId = nextTicketId;
             t.amount = amount;
@@ -432,9 +500,7 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, UUPSUpgradeable, R
             userInfo[msg.sender].totalRevenue = 0;
             userInfo[msg.sender].currentCap = amount * 3;
         } else {
-            // Active user adding ticket: Accumulate
             if (t.amount == 0) {
-                // First time purchase
                 nextTicketId++;
                 t.ticketId = nextTicketId;
                 t.amount = amount;
@@ -444,7 +510,6 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, UUPSUpgradeable, R
                 userInfo[msg.sender].totalRevenue = 0;
                 userInfo[msg.sender].currentCap = amount * 3;
             } else {
-                // Accumulate to existing
                 t.amount += amount;
                 if (userInfo[msg.sender].isActive) {
                     t.purchaseTime = block.timestamp;
@@ -453,21 +518,16 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, UUPSUpgradeable, R
             }
         }
 
-        // Update Max Ticket Amount (累积值，用于赎回费用计算)
         if (t.amount > userInfo[msg.sender].maxTicketAmount) {
             userInfo[msg.sender].maxTicketAmount = t.amount;
         }
 
-        // Update Max Single Ticket Amount (单张最大值，用于流动性计算)
         if (amount > userInfo[msg.sender].maxSingleTicketAmount) {
             userInfo[msg.sender].maxSingleTicketAmount = amount;
         }
 
         ticketOwner[t.ticketId] = msg.sender;
         
-        // --- Distribution ---
-        
-        // 1. Direct Reward (25%)
         address referrerAddr = userInfo[msg.sender].referrer;
         if (referrerAddr != address(0) && userInfo[referrerAddr].isActive) {
             uint256 directAmt = (amount * directRewardPercent) / 100;
@@ -476,28 +536,22 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, UUPSUpgradeable, R
                 emit ReferralRewardPaid(referrerAddr, msg.sender, paid, REWARD_DIRECT, t.ticketId);
             }
         } else {
-            // No referrer -> Marketing
             mcToken.transfer(marketingWallet, (amount * directRewardPercent) / 100);
         }
 
-        // 2. Level Reward (15%) - Fixed Layers
         _distributeTicketLevelRewards(msg.sender, amount);
 
-        // 3. Marketing (5%)
         mcToken.transfer(marketingWallet, (amount * marketingPercent) / 100);
 
-        // 4. Buyback (5%) - Internal Swap & Burn
         uint256 buybackAmt = (amount * buybackPercent) / 100;
         _internalBuybackAndBurn(buybackAmt);
 
-        // 5. Buffer / LP Injection (25%)
         mcToken.transfer(lpInjectionWallet, (amount * lpInjectionPercent) / 100);
 
-        // 6. Treasury (25%)
         mcToken.transfer(treasuryWallet, (amount * treasuryPercent) / 100);
-
-        // Update Team Volume (Community Volume)
-        _updateTeamVolume(msg.sender, amount);
+        
+        // Update team stats (volume only, count updated on bind)
+        _updateTeamStats(msg.sender, amount, false);
 
         _updateActiveStatus(msg.sender);
 
@@ -509,10 +563,7 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, UUPSUpgradeable, R
         
         if (ticket.amount == 0) revert NotActive();
         if (ticket.exited) revert AlreadyExited();
-        // Removed expiration check to allow staking anytime as long as not exited
-        // if (block.timestamp > ticket.purchaseTime + ticketFlexibilityDuration) revert Expired();
         
-        // Cycle Check: 7, 15, 30
         if (cycleDays != 7 && cycleDays != 15 && cycleDays != 30) revert InvalidCycle();
         if (amount == 0) revert InvalidAmount();
 
@@ -530,14 +581,10 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, UUPSUpgradeable, R
 
         stakeOwner[nextStakeId] = msg.sender;
 
-        // Enforce 1.5x Liquidity Rule
-        // Liquidity Amount must be exactly 1.5x the Max Single Ticket Amount
         uint256 baseMaxAmount = userInfo[msg.sender].maxSingleTicketAmount;
         
-        // Fallback for legacy users: if maxSingleTicketAmount is 0, use current ticket amount
         if (baseMaxAmount == 0) {
             baseMaxAmount = ticket.amount;
-            // Update state to fix for future
             userInfo[msg.sender].maxSingleTicketAmount = baseMaxAmount;
         }
 
@@ -548,11 +595,9 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, UUPSUpgradeable, R
 
         emit LiquidityStaked(msg.sender, amount, cycleDays, nextStakeId);
 
-        // Refund Fee if applicable (Refund 1% Fee from previous redemption)
         uint256 refund = userInfo[msg.sender].refundFeeAmount;
         if (refund > 0) {
             userInfo[msg.sender].refundFeeAmount = 0;
-            // Check if we have enough MC in reserve to refund (Fee was injected into reserve)
             if (swapReserveMC >= refund && mcToken.balanceOf(address(this)) >= refund) {
                 swapReserveMC -= refund;
                 mcToken.transfer(msg.sender, refund);
@@ -571,11 +616,10 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, UUPSUpgradeable, R
         for (uint256 i = 0; i < stakes.length; i++) {
             if (!stakes[i].active) continue;
             
-            // Calculate Static Reward for this stake
             uint256 ratePerBillion = 0;
-            if (stakes[i].cycleDays == 7) ratePerBillion = 13333334;      // 1.3333334%
-            else if (stakes[i].cycleDays == 15) ratePerBillion = 16666667; // 1.6666667%
-            else if (stakes[i].cycleDays == 30) ratePerBillion = 20000000; // 2.0%
+            if (stakes[i].cycleDays == 7) ratePerBillion = 13333334;
+            else if (stakes[i].cycleDays == 15) ratePerBillion = 16666667;
+            else if (stakes[i].cycleDays == 30) ratePerBillion = 20000000;
             
             uint256 unitsPassed = (block.timestamp - stakes[i].startTime) / SECONDS_IN_UNIT;
             if (unitsPassed > stakes[i].cycleDays) unitsPassed = stakes[i].cycleDays;
@@ -594,7 +638,6 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, UUPSUpgradeable, R
         
         if (totalPending == 0) revert NoRewards();
         
-        // Check Cap first (Static counts to cap).
         if (userInfo[msg.sender].totalRevenue + totalPending > userInfo[msg.sender].currentCap) {
             totalPending = userInfo[msg.sender].currentCap - userInfo[msg.sender].totalRevenue;
         }
@@ -609,15 +652,13 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, UUPSUpgradeable, R
         uint256 mcPart = totalPending / 2;
         uint256 jbcValuePart = totalPending / 2;
         
-        // MC Transfer
         uint256 mcTransferred = 0;
         if (mcToken.balanceOf(address(this)) >= mcPart && mcPart > 0) {
             mcToken.transfer(msg.sender, mcPart);
             mcTransferred = mcPart;
         }
         
-        // JBC Transfer
-        uint256 jbcPrice = getJBCPrice(); // Use protected price function
+        uint256 jbcPrice = swapReserveJBC == 0 || swapReserveMC < MIN_LIQUIDITY ? 1 ether : (swapReserveMC * 1e18) / swapReserveJBC;
         uint256 jbcAmount = (jbcValuePart * 1 ether) / jbcPrice;
         uint256 jbcTransferred = 0;
         if (jbcToken.balanceOf(address(this)) >= jbcAmount && jbcAmount > 0) {
@@ -628,7 +669,6 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, UUPSUpgradeable, R
         emit RewardPaid(msg.sender, totalPending, REWARD_STATIC);
         emit RewardClaimed(msg.sender, mcTransferred, jbcTransferred, REWARD_STATIC, ticket.ticketId);
         
-        // Check Exit
         if (userInfo[msg.sender].totalRevenue >= userInfo[msg.sender].currentCap) {
             _handleExit(msg.sender);
         }
@@ -636,7 +676,6 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, UUPSUpgradeable, R
 
     function redeem() external nonReentrant {
         require(redeemEnabled, "Disabled");
-        // Redeem all expired stakes
         Stake[] storage stakes = userStakes[msg.sender];
         uint256 totalReturn = 0;
         uint256 totalFee = 0;
@@ -647,11 +686,10 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, UUPSUpgradeable, R
             
             uint256 endTime = stakes[i].startTime + (stakes[i].cycleDays * SECONDS_IN_UNIT);
             if (block.timestamp >= endTime) {
-                // 1. Calculate and Settle Static Yield
                 uint256 ratePerBillion = 0;
-                if (stakes[i].cycleDays == 7) ratePerBillion = 13333334;      // 1.3333334%
-                else if (stakes[i].cycleDays == 15) ratePerBillion = 16666667; // 1.6666667%
-                else if (stakes[i].cycleDays == 30) ratePerBillion = 20000000; // 2.0%
+                if (stakes[i].cycleDays == 7) ratePerBillion = 13333334;
+                else if (stakes[i].cycleDays == 15) ratePerBillion = 16666667;
+                else if (stakes[i].cycleDays == 30) ratePerBillion = 20000000;
                 
                 uint256 totalStaticShouldBe = (stakes[i].amount * ratePerBillion * stakes[i].cycleDays) / 1000000000;
                 uint256 pending = 0;
@@ -662,19 +700,16 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, UUPSUpgradeable, R
                 totalYield += pending;
                 stakes[i].paid += pending;
 
-                // 2. Calculate Principal Return & Fee (deducted from principal)
                 uint256 feeBase = userInfo[msg.sender].maxTicketAmount;
-                if (feeBase == 0) feeBase = userTicket[msg.sender].amount; // Fallback
+                if (feeBase == 0) feeBase = userTicket[msg.sender].amount;
                 
                 uint256 fee = (feeBase * redemptionFeePercent) / 100;
                 
-                // Deduct fee from principal instead of user wallet
                 uint256 returnAmt = stakes[i].amount;
                 if (returnAmt > fee) {
                     returnAmt -= fee;
                     totalFee += fee;
                 } else {
-                    // If principal is less than fee, take all principal as fee
                     totalFee += returnAmt;
                     returnAmt = 0;
                 }
@@ -682,19 +717,16 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, UUPSUpgradeable, R
                 totalReturn += returnAmt;
                 stakes[i].active = false;
                 
-                // Release Differential Rewards for this stake
                 _releaseDifferentialRewards(stakes[i].id);
             }
         }
         
         require(totalReturn > 0 || totalYield > 0, "Nothing to redeem");
 
-        // Inject Fee into Liquidity Pool (Swap Reserve MC)
         if (totalFee > 0) {
             swapReserveMC += totalFee;
         }
 
-        // Distribute Yield (Subject to Cap)
         if (totalYield > 0) {
             uint256 available = userInfo[msg.sender].currentCap - userInfo[msg.sender].totalRevenue;
             if (totalYield > available) {
@@ -714,7 +746,7 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, UUPSUpgradeable, R
                     mcTransferred = mcPart;
                 }
                 
-                uint256 jbcPrice = getJBCPrice(); // Use protected price function
+                uint256 jbcPrice = swapReserveJBC == 0 || swapReserveMC < MIN_LIQUIDITY ? 1 ether : (swapReserveMC * 1e18) / swapReserveJBC;
                 uint256 jbcAmount = (jbcValuePart * 1 ether) / jbcPrice;
                 uint256 jbcTransferred = 0;
                 if (jbcToken.balanceOf(address(this)) >= jbcAmount && jbcAmount > 0) {
@@ -730,15 +762,11 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, UUPSUpgradeable, R
         if (totalReturn > 0) {
             mcToken.transfer(msg.sender, totalReturn);
         }
-        
-        // No longer need to record fee for refund since it's deducted from principal
-        // userInfo[msg.sender].refundFeeAmount += totalFee;
 
         emit Redeemed(msg.sender, totalReturn, totalFee);
         
         _updateActiveStatus(msg.sender);
         
-        // Check Exit
         if (userInfo[msg.sender].totalRevenue >= userInfo[msg.sender].currentCap) {
             _handleExit(msg.sender);
         }
@@ -787,7 +815,7 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, UUPSUpgradeable, R
                 if (mcToken.balanceOf(address(this)) >= mcPart && mcPart > 0) {
                     mcToken.transfer(msg.sender, mcPart);
                 }
-                uint256 jbcPrice = getJBCPrice();
+                uint256 jbcPrice = swapReserveJBC == 0 || swapReserveMC < MIN_LIQUIDITY ? 1 ether : (swapReserveMC * 1e18) / swapReserveJBC;
                 uint256 jbcAmount = ((pending - mcPart) * 1 ether) / jbcPrice;
                 if (jbcToken.balanceOf(address(this)) >= jbcAmount && jbcAmount > 0) {
                     jbcToken.transfer(msg.sender, jbcAmount);
@@ -814,13 +842,11 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, UUPSUpgradeable, R
             return 0;
         }
 
-        // Check contract has sufficient balance before distribution
         if (mcToken.balanceOf(address(this)) < amount) {
             emit RewardCapped(user, amount, 0);
             return 0;
         }
 
-        // Check Cap
         uint256 available = u.currentCap - u.totalRevenue;
         uint256 payout = amount;
         
@@ -846,12 +872,10 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, UUPSUpgradeable, R
         if (!t.exited) {
             t.exited = true;
             
-            // Force redeem all active stakes (minus fee)
             Stake[] storage stakes = userStakes[user];
             uint256 totalReturn = 0;
             uint256 totalFee = 0;
             
-            // Check contract balance before processing
             uint256 contractBalance = mcToken.balanceOf(address(this));
             
             for (uint256 i = 0; i < stakes.length; i++) {
@@ -871,12 +895,10 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, UUPSUpgradeable, R
                 stakes[i].active = false;
             }
             
-            // Only transfer if contract has sufficient balance
             if (totalReturn > 0) {
                 if (contractBalance >= totalReturn) {
                     mcToken.transfer(user, totalReturn);
                 } else {
-                    // Emergency: transfer what we can and emit event
                     if (contractBalance > 0) {
                         mcToken.transfer(user, contractBalance);
                     }
@@ -891,7 +913,6 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, UUPSUpgradeable, R
             bool wasActive = userInfo[user].isActive;
             userInfo[user].isActive = false;
             
-            // Decrement referrer
             address referrer = userInfo[user].referrer;
             if (wasActive && referrer != address(0) && userInfo[referrer].activeDirects > 0) {
                 userInfo[referrer].activeDirects--;
@@ -907,7 +928,7 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, UUPSUpgradeable, R
         uint256 totalDistributed = 0;
         uint256 layerCount = 0;
         uint256 iterations = 0;
-        uint256 rewardPerLayer = (amount * 1) / 100; // 1% per layer
+        uint256 rewardPerLayer = (amount * 1) / 100;
         
         while (current != address(0) && layerCount < 15 && iterations < 20) {
             if (!userInfo[current].isActive) {
@@ -916,11 +937,9 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, UUPSUpgradeable, R
                 continue;
             }
             
-            // Check how many layers this user can receive based on their active directs
             uint256 maxLayers = getLevelRewardLayers(userInfo[current].activeDirects);
             
             if (maxLayers > layerCount) {
-                // This user can receive reward for this layer
                 uint256 paid = _distributeReward(current, rewardPerLayer, REWARD_LEVEL);
                 if (paid > 0) {
                     totalDistributed += paid;
@@ -933,7 +952,6 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, UUPSUpgradeable, R
             iterations++;
         }
         
-        // Store remaining amount in level reward pool
         uint256 totalLevelRewardAmount = (amount * levelRewardPercent) / 100;
         uint256 remaining = totalLevelRewardAmount - totalDistributed;
         if (remaining > 0) {
@@ -942,29 +960,24 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, UUPSUpgradeable, R
         }
     }
 
-    function _updateTeamCount(address user) internal {
+    function _updateTeamStats(address user, uint256 amount, bool updateCount) internal {
         address current = userInfo[user].referrer;
         uint256 iterations = 0;
         
-        // Update up to 30 layers to track team count
         while (current != address(0) && iterations < 30) {
-            uint256 oldCount = userInfo[current].teamCount;
-            userInfo[current].teamCount = oldCount + 1;
-            emit TeamCountUpdated(current, oldCount, oldCount + 1);
+            UserInfo storage upline = userInfo[current];
             
-            current = userInfo[current].referrer;
-            iterations++;
-        }
-    }
-
-    function _updateTeamVolume(address user, uint256 amount) internal {
-        address current = userInfo[user].referrer;
-        uint256 iterations = 0;
-        
-        // Update up to 30 layers to track community volume
-        while (current != address(0) && iterations < 30) {
-            userInfo[current].teamTotalVolume += amount;
-            current = userInfo[current].referrer;
+            if (updateCount) {
+                uint256 oldCount = upline.teamCount;
+                upline.teamCount = oldCount + 1;
+                emit TeamCountUpdated(current, oldCount, oldCount + 1);
+            }
+            
+            if (amount > 0) {
+                upline.teamTotalVolume += amount;
+            }
+            
+            current = upline.referrer;
             iterations++;
         }
     }
@@ -988,8 +1001,7 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, UUPSUpgradeable, R
                 continue;
             }
 
-            // Get Upline Level
-            (, uint256 percent) = getLevel(userInfo[current].activeDirects);
+            (, uint256 percent) = _getLevel(userInfo[current].activeDirects);
             
             if (percent > previousPercent) {
                 uint256 diffPercent = percent - previousPercent;
@@ -999,7 +1011,6 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, UUPSUpgradeable, R
                 }
                 uint256 reward = (baseAmount * diffPercent) / 100;
                 
-                // Store Pending
                 stakePendingRewards[stakeId].push(PendingReward({
                     upline: current,
                     amount: reward
@@ -1010,7 +1021,7 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, UUPSUpgradeable, R
                 previousPercent = percent;
             }
             
-            if (percent >= 45) break; // Max V9
+            if (percent >= 45) break;
             
             current = userInfo[current].referrer;
             iterations++;
@@ -1085,10 +1096,8 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, UUPSUpgradeable, R
         emit TicketExpired(user, ticketId, ticketAmount);
     }
 
-    // Removed dailyBurn to reduce contract size
-
     function _requiredLiquidity(uint256 ticketAmount) internal pure returns (uint256) {
-        return (ticketAmount * 3) / 2; // 1.5x
+        return (ticketAmount * 3) / 2;
     }
 
     function _getActiveStakeTotal(address user) internal view returns (uint256 total) {
@@ -1102,7 +1111,6 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, UUPSUpgradeable, R
 
     function _updateActiveStatus(address user) internal {
         Ticket storage t = userTicket[user];
-        // 活跃状态判断：只要有门票且未出局就是活跃
         bool shouldBeActive = t.amount > 0 && !t.exited;
         bool currentlyActive = userInfo[user].isActive;
         if (shouldBeActive == currentlyActive) return;

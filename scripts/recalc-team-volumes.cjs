@@ -65,21 +65,32 @@ async function main() {
         referrerMap[user] = referrer;
     }
 
-    // 5. Calculate Volumes
+    // 5. Calculate Volumes and Counts
     const userVolumes = {}; // user -> totalVolume (BigInt)
+    const userCounts = {}; // user -> teamCount (number)
+    const hasPurchased = {}; // user -> bool
 
     for (const event of purchaseEvents) {
         const user = event.args[0];
         const amount = event.args[1];
         
+        const isFirstPurchase = !hasPurchased[user];
+        if (isFirstPurchase) {
+            hasPurchased[user] = true;
+        }
+        
         let current = referrerMap[user];
         let depth = 0;
 
         while (current && current !== ethers.ZeroAddress && depth < 30) {
-            if (!userVolumes[current]) {
-                userVolumes[current] = 0n;
-            }
+            if (!userVolumes[current]) userVolumes[current] = 0n;
+            if (!userCounts[current]) userCounts[current] = 0;
+
             userVolumes[current] += amount;
+            
+            if (isFirstPurchase) {
+                userCounts[current] += 1;
+            }
             
             current = referrerMap[current];
             depth++;
@@ -87,11 +98,20 @@ async function main() {
     }
 
     // 6. Output Results
-    console.log("\nCalculated Team Volumes (Top 20):");
+    console.log("\nCalculated Team Stats (Top 20 by Volume):");
     const updates = [];
-    for (const [user, volume] of Object.entries(userVolumes)) {
-        if (volume > 0n) {
-            updates.push({ user, volume: volume.toString() });
+    const allUsers = new Set([...Object.keys(userVolumes), ...Object.keys(userCounts)]);
+    
+    for (const user of allUsers) {
+        const volume = userVolumes[user] || 0n;
+        const count = userCounts[user] || 0;
+        
+        if (volume > 0n || count > 0) {
+            updates.push({ 
+                user, 
+                volume: volume.toString(),
+                count: count
+            });
         }
     }
     
@@ -102,7 +122,7 @@ async function main() {
     });
 
     updates.slice(0, 20).forEach(u => {
-        console.log(`${u.user}: ${ethers.formatEther(u.volume)} MC`);
+        console.log(`${u.user}: ${ethers.formatEther(u.volume)} MC, Count: ${u.count}`);
     });
 
     // 7. Save to file

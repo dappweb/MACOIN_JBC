@@ -282,8 +282,8 @@
       ]
     },
     "C:\\Users\\Administrator\\Documents\\GitHub\\MACOIN_JBC\\contracts\\JinbaoProtocol.sol": {
-      "lastModificationDate": 1766926457136,
-      "contentHash": "abfdccad93707b4b63e940e25e288a34",
+      "lastModificationDate": 1766929399201,
+      "contentHash": "b760d4ae8e53e8f6b26bdf7ff3daca41",
       "sourceName": "contracts/JinbaoProtocol.sol",
       "solcConfig": {
         "version": "0.8.22",
@@ -324,7 +324,6 @@
       ],
       "artifacts": [
         "IJBC",
-        "IPriceOracle",
         "JinbaoProtocol"
       ]
     },
@@ -952,6 +951,44 @@
       ],
       "artifacts": [
         "RedemptionLib"
+      ]
+    },
+    "C:\\Users\\Administrator\\Documents\\GitHub\\MACOIN_JBC\\contracts\\AdminLib.sol": {
+      "lastModificationDate": 1766928307402,
+      "contentHash": "775834d5307a51ff2309dd05bf87b58f",
+      "sourceName": "contracts/AdminLib.sol",
+      "solcConfig": {
+        "version": "0.8.22",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 1
+          },
+          "viaIR": true,
+          "evmVersion": "paris",
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata",
+                "storageLayout"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.20"
+      ],
+      "artifacts": [
+        "AdminLib"
       ]
     }
   }

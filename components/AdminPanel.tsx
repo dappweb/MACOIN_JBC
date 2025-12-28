@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useWeb3, CONTRACT_ADDRESSES } from '../src/Web3Context';
-import { Settings, Save, AlertTriangle, Megaphone, CheckCircle, XCircle } from 'lucide-react';
+import { Settings, Save, AlertTriangle, Megaphone, CheckCircle, XCircle, Users } from 'lucide-react';
 import { useLanguage } from '../src/LanguageContext';
 import { ethers } from 'ethers';
 import toast from 'react-hot-toast';
@@ -8,11 +8,13 @@ import { API_BASE_URL } from '../src/constants';
 import { formatContractError } from '../utils/errorFormatter';
 import { formatEnhancedContractError } from '../utils/contractErrorDecoder';
 import { isUsingLatestContract } from '../utils/contractAddressResolver';
+import AdminUserManager from './AdminUserManager';
 
 const AdminPanel: React.FC = () => {
   const { t } = useLanguage();
   const { protocolContract, isConnected, account, provider, mcContract, jbcContract, isOwner } = useWeb3();
   const [loading, setLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'settings'>('overview');
 
   // Distribution Percents
   const [direct, setDirect] = useState('25');
@@ -556,6 +558,34 @@ const AdminPanel: React.FC = () => {
         <p className="text-sm md:text-base text-gray-400">{t.admin.subtitle}</p>
       </div>
 
+      {/* Tab Navigation */}
+      <div className="flex justify-center">
+        <div className="flex bg-gray-900/50 rounded-xl p-1 border border-gray-700">
+          <button
+            onClick={() => setActiveTab('overview')}
+            className={`px-6 py-3 rounded-lg font-bold text-sm transition-all ${
+              activeTab === 'overview'
+                ? 'bg-blue-600 text-white shadow-lg'
+                : 'text-gray-400 hover:text-white hover:bg-gray-800/50'
+            }`}
+          >
+            <Settings className="inline mr-2" size={16} />
+            系统设置
+          </button>
+          <button
+            onClick={() => setActiveTab('users')}
+            className={`px-6 py-3 rounded-lg font-bold text-sm transition-all ${
+              activeTab === 'users'
+                ? 'bg-green-600 text-white shadow-lg'
+                : 'text-gray-400 hover:text-white hover:bg-gray-800/50'
+            }`}
+          >
+            <Users className="inline mr-2" size={16} />
+            用户管理
+          </button>
+        </div>
+      </div>
+
       {/* Non-Owner Warning */}
       {isConnected && !isOwner && (
         <div className="bg-red-900/30 border-l-4 border-red-500 p-4 rounded-r shadow-lg mb-6">
@@ -597,6 +627,13 @@ const AdminPanel: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Tab Content */}
+      {activeTab === 'users' ? (
+        <AdminUserManager />
+      ) : (
+        <>
+          {/* Original Admin Panel Content */}
 
       {/* Announcement Management - 最优先显示 */}
       <div className="glass-panel p-6 md:p-8 rounded-xl md:rounded-2xl bg-gradient-to-br from-amber-900/30 to-amber-800/30 border-2 border-amber-500/50 backdrop-blur-sm">
@@ -1121,6 +1158,8 @@ const AdminPanel: React.FC = () => {
               </div>
           </div>
       </div>
+        </>
+      )}
     </div>
   );
 };

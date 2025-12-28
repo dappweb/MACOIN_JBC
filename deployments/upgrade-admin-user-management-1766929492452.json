@@ -1,0 +1,21 @@
+{
+  "timestamp": "2025-12-28T13:44:52.162Z",
+  "proxyAddress": "0xc938b6D9ebC484BE7e946e11CD46BE56ee29BE19",
+  "deployer": "0x4C10831CBcF9884ba72051b5287b6c87E4F74A48",
+  "upgradeName": "admin-user-management",
+  "newFeatures": [
+    "adminSetReferrer - 管理员修改用户推荐人",
+    "adminUpdateUserData - 管理员更新用户数据",
+    "adminResetUser - 管理员重置用户状态",
+    "_hasCircularReference - 循环引用检测",
+    "_removeFromDirectReferrals - 直推列表管理",
+    "_recalculateTeamCounts - 团队人数重新计算"
+  ],
+  "events": [
+    "ReferrerChanged - 推荐人变更事件",
+    "UserDataUpdated - 用户数据更新事件",
+    "UserReset - 用户重置事件"
+  ],
+  "gasUsed": "TBD",
+  "blockNumber": 1922210
+}

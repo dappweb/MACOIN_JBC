@@ -282,8 +282,8 @@
       ]
     },
     "C:\\Users\\Administrator\\Documents\\GitHub\\MACOIN_JBC\\contracts\\JinbaoProtocol.sol": {
-      "lastModificationDate": 1766925704701,
-      "contentHash": "b8cd592f01c6fc62fb64e8c1c5f931e5",
+      "lastModificationDate": 1766926457136,
+      "contentHash": "abfdccad93707b4b63e940e25e288a34",
       "sourceName": "contracts/JinbaoProtocol.sol",
       "solcConfig": {
         "version": "0.8.22",

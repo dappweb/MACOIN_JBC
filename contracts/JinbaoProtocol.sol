@@ -404,11 +404,13 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, UUPSUpgradeable, R
         userInfo[msg.sender].referrer = _referrer;
         directReferrals[_referrer].push(msg.sender);
         
+        // 更新推荐体系中的团队人数统计
+        _updateTeamCount(msg.sender);
+        
         emit BoundReferrer(msg.sender, _referrer);
     }
 
     function buyTicket(uint256 amount) external nonReentrant whenNotPaused {
-        bool isNewUser = userInfo[msg.sender].maxTicketAmount == 0;
         _expireTicketIfNeeded(msg.sender);
         // Validate Amount (T1-T4)
         if (amount != 100 * 1e18 && amount != 300 * 1e18 && amount != 500 * 1e18 && amount != 1000 * 1e18) revert InvalidAmount();
@@ -496,11 +498,6 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, UUPSUpgradeable, R
 
         // Update Team Volume (Community Volume)
         _updateTeamVolume(msg.sender, amount);
-
-        // Update Team Count if new user
-        if (isNewUser) {
-            _updateTeamCount(msg.sender);
-        }
 
         _updateActiveStatus(msg.sender);
 

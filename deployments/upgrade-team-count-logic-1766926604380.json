@@ -1,0 +1,15 @@
+{
+  "timestamp": "2025-12-28T12:56:44.125Z",
+  "proxyAddress": "0xc938b6D9ebC484BE7e946e11CD46BE56ee29BE19",
+  "deployer": "0x4C10831CBcF9884ba72051b5287b6c87E4F74A48",
+  "upgradeName": "team-count-logic-fix",
+  "changes": [
+    "移动团队人数更新逻辑从 buyTicket() 到 bindReferrer()",
+    "现在任何绑定推荐人的地址都会被统计到团队人数中",
+    "团队人数 = 推荐体系伞下所有用户(地址)总数量",
+    "符合'买了门票就算有效地址'的业务逻辑",
+    "首页团队人数和团队节点页面社区有效地址数含义一致"
+  ],
+  "gasUsed": "TBD",
+  "blockNumber": 1921248
+}

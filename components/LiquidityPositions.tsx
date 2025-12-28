@@ -147,10 +147,11 @@ const LiquidityPositions: React.FC = () => {
       
       // Get user info to calculate fee
       const userInfo = await protocolContract.userInfo(account);
+      const userTicket = await protocolContract.userTicket(account);
       const redemptionFeePercent = await protocolContract.redemptionFeePercent();
       
-      // Calculate expected fee
-      const feeBase = userInfo.maxTicketAmount > 0n ? userInfo.maxTicketAmount : userInfo.refundFeeAmount;
+      // Calculate expected fee - use correct fallback (ticket amount, not refundFeeAmount)
+      const feeBase = userInfo.maxTicketAmount > 0n ? userInfo.maxTicketAmount : userTicket.amount;
       const expectedFee = (feeBase * redemptionFeePercent) / 100n;
       
       if (expectedFee > 0n) {
@@ -172,14 +173,36 @@ const LiquidityPositions: React.FC = () => {
         }
       }
       
+      // Add detailed logging for debugging
+      console.log("Redeem attempt:", {
+        stakeId: id,
+        stakeIndex: parseInt(id),
+        userBalance: ethers.formatEther(await mcContract.balanceOf(account)),
+        expectedFee: ethers.formatEther(expectedFee),
+        allowance: ethers.formatEther(await mcContract.allowance(account, protocolContract.target)),
+        feeBase: ethers.formatEther(feeBase)
+      });
+      
       // Proceed with redemption
       const tx = await protocolContract.redeemStake(stakeIndex);
       await tx.wait();
       toast.success(t.mining?.redeemSuccess || "Redemption Successful");
       fetchPositions(); // Refresh list
     } catch (err: any) {
-      console.error(err);
-      toast.error(formatContractError(err));
+      console.error("Redeem error details:", err);
+      
+      // Enhanced error handling with specific messages
+      if (err.message?.includes("Invalid stake")) {
+        toast.error("质押无效，请刷新页面重试");
+      } else if (err.message?.includes("Not expired")) {
+        toast.error("质押尚未到期，请等待到期后再试");
+      } else if (err.message?.includes("Disabled")) {
+        toast.error("赎回功能暂时禁用，请联系管理员");
+      } else if (err.message?.includes("Transfer failed")) {
+        toast.error("转账失败，请检查余额和授权");
+      } else {
+        toast.error(formatContractError(err));
+      }
     } finally {
       setRedeemingId(null);
     }

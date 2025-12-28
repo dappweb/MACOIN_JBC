@@ -1,30 +1,201 @@
-name: Daily Burn Keeper
+name: Daily Token Burn
 
 on:
   schedule:
-    # Runs at 00:00 UTC every day
+    # 每日UTC 00:00执行
     - cron: '0 0 * * *'
-  # Allow manual trigger
-  workflow_dispatch:
+  workflow_dispatch: # 允许手动触发
+    inputs:
+      force_burn:
+        description: '强制执行燃烧 (忽略余额检查)'
+        required: false
+        default: 'false'
+        type: boolean
 
 jobs:
-  daily-burn:
+  burn:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+    - name: 🔥 Execute Daily Token Burn
+      id: burn
+      run: |
+        echo "🚀 开始执行每日代币燃烧任务..."
+        echo "⏰ 执行时间: $(date -u)"
+        echo "🌐 API地址: ${{ secrets.BURN_API_URL }}"
+        
+        # 构建API请求
+        API_URL="${{ secrets.BURN_API_URL }}/api/burn"
+        
+        # 设置请求头
+        HEADERS="-H 'Content-Type: application/json'"
+        if [ -n "${{ secrets.API_SECRET }}" ]; then
+          HEADERS="$HEADERS -H 'Authorization: Bearer ${{ secrets.API_SECRET }}'"
+        fi
+        
+        # 执行燃烧请求
+        echo "📡 发送燃烧请求..."
+        response=$(curl -s -w "HTTPSTATUS:%{http_code}" -X POST $HEADERS "$API_URL")
+        
+        # 解析响应
+        http_code=$(echo "$response" | grep -o "HTTPSTATUS:[0-9]*" | cut -d: -f2)
+        body=$(echo "$response" | sed -E 's/HTTPSTATUS:[0-9]*$//')
+        
+        echo "📊 HTTP状态码: $http_code"
+        echo "📄 响应内容: $body"
+        
+        # 保存响应到输出
+        echo "response_body=$body" >> $GITHUB_OUTPUT
+        echo "http_code=$http_code" >> $GITHUB_OUTPUT
+        
+        # 检查执行结果
+        if [ "$http_code" -eq 200 ]; then
+          echo "✅ 燃烧API调用成功"
+          
+          # 解析响应JSON (简单检查)
+          if echo "$body" | grep -q '"success":true'; then
+            echo "✅ 燃烧任务执行成功"
+            
+            # 提取燃烧信息
+            if echo "$body" | grep -q '"burned":true'; then
+              amount=$(echo "$body" | grep -o '"amount":"[^"]*"' | cut -d'"' -f4)
+              txhash=$(echo "$body" | grep -o '"txHash":"[^"]*"' | cut -d'"' -f4)
+              echo "🔥 燃烧数量: $amount JBC"
+              echo "📝 交易哈希: $txhash"
+            else
+              reason=$(echo "$body" | grep -o '"reason":"[^"]*"' | cut -d'"' -f4)
+              echo "ℹ️ 本次无需燃烧: $reason"
+            fi
+          else
+            echo "❌ 燃烧任务执行失败"
+            error=$(echo "$body" | grep -o '"error":"[^"]*"' | cut -d'"' -f4)
+            echo "🚨 错误信息: $error"
+            exit 1
+          fi
+        else
+          echo "❌ 燃烧API调用失败 (HTTP $http_code)"
+          exit 1
+        fi
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
+    - name: 📊 Query Burn Status
+      if: success()
+      run: |
+        echo "📊 查询燃烧状态..."
+        
+        status_response=$(curl -s "${{ secrets.BURN_API_URL }}/api/status")
+        echo "📄 状态信息: $status_response"
+        
+        # 提取关键信息
+        if echo "$status_response" | grep -q '"success":true'; then
+          wallet_balance=$(echo "$status_response" | grep -o '"walletBalance":"[^"]*"' | cut -d'"' -f4)
+          total_supply=$(echo "$status_response" | grep -o '"totalSupply":"[^"]*"' | cut -d'"' -f4)
+          echo "💰 钱包余额: $wallet_balance JBC"
+          echo "📈 总供应量: $total_supply JBC"
+        fi
 
-      - name: Install dependencies
-        run: npm ci
+    - name: 🔍 Health Check
+      if: always()
+      run: |
+        echo "🔍 执行健康检查..."
+        
+        health_response=$(curl -s "${{ secrets.BURN_API_URL }}/api/health")
+        echo "❤️ 健康状态: $health_response"
 
-      - name: Run Daily Burn Script
-        env:
-          PRIVATE_KEY: ${{ secrets.KEEPER_PRIVATE_KEY }}
-        run: npx hardhat run scripts/dailyBurn.cjs --network mc
+    - name: 📢 Send Success Notification
+      if: success()
+      run: |
+        if [ -n "${{ secrets.TELEGRAM_BOT_TOKEN }}" ] && [ -n "${{ secrets.TELEGRAM_CHAT_ID }}" ]; then
+          echo "📢 发送成功通知到Telegram..."
+          
+          message="🤖 GitHub Actions 燃烧任务报告%0A%0A✅ 执行状态: 成功%0A⏰ 执行时间: $(date -u)%0A🔗 工作流: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          
+          curl -s -X POST \
+            "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
+            -d "chat_id=${{ secrets.TELEGRAM_CHAT_ID }}" \
+            -d "text=$message" \
+            -d "parse_mode=HTML"
+          
+          echo "✅ Telegram通知发送完成"
+        else
+          echo "⚠️ Telegram配置未设置，跳过通知"
+        fi
+
+    - name: 🚨 Send Failure Notification
+      if: failure()
+      run: |
+        if [ -n "${{ secrets.TELEGRAM_BOT_TOKEN }}" ] && [ -n "${{ secrets.TELEGRAM_CHAT_ID }}" ]; then
+          echo "🚨 发送失败通知到Telegram..."
+          
+          message="🤖 GitHub Actions 燃烧任务报告%0A%0A❌ 执行状态: 失败%0A⏰ 执行时间: $(date -u)%0A🔗 工作流: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}%0A%0A请检查日志并手动处理"
+          
+          curl -s -X POST \
+            "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
+            -d "chat_id=${{ secrets.TELEGRAM_CHAT_ID }}" \
+            -d "text=$message" \
+            -d "parse_mode=HTML"
+          
+          echo "✅ 失败通知发送完成"
+        else
+          echo "⚠️ Telegram配置未设置，跳过通知"
+        fi
+
+  # 可选: 备份任务状态到Issue
+  create-report:
+    needs: burn
+    runs-on: ubuntu-latest
+    if: always()
+    
+    steps:
+    - name: 📝 Create Burn Report Issue
+      if: github.event_name == 'schedule' # 只在定时任务时创建报告
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const date = new Date().toISOString().split('T')[0];
+          const status = '${{ needs.burn.result }}';
+          const title = `Daily Burn Report - ${date}`;
+          
+          const body = `
+          ## 📊 每日燃烧报告 - ${date}
+          
+          **执行状态:** ${status === 'success' ? '✅ 成功' : '❌ 失败'}
+          **执行时间:** ${new Date().toISOString()}
+          **工作流链接:** [查看详情](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+          
+          ### 详细信息
+          - API地址: ${{ secrets.BURN_API_URL }}
+          - 执行方式: GitHub Actions 定时任务
+          - 下次执行: 明日 UTC 00:00
+          
+          ${status === 'failure' ? '⚠️ **需要人工检查和处理**' : ''}
+          `;
+          
+          // 检查是否已存在今日报告
+          const issues = await github.rest.issues.listForRepo({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            labels: ['daily-burn-report'],
+            state: 'open'
+          });
+          
+          const existingIssue = issues.data.find(issue => issue.title === title);
+          
+          if (existingIssue) {
+            // 更新现有Issue
+            await github.rest.issues.update({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: existingIssue.number,
+              body: body
+            });
+          } else {
+            // 创建新Issue
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: title,
+              body: body,
+              labels: ['daily-burn-report', status === 'success' ? 'success' : 'failure']
+            });
+          }

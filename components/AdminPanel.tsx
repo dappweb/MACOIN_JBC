@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useWeb3, CONTRACT_ADDRESSES } from '../src/Web3Context';
-import { Settings, Save, AlertTriangle, Megaphone, CheckCircle, XCircle, Users } from 'lucide-react';
+import { Settings, Save, AlertTriangle, Megaphone, CheckCircle, XCircle, Users, Crown } from 'lucide-react';
 import { useLanguage } from '../src/LanguageContext';
 import { ethers } from 'ethers';
 import toast from 'react-hot-toast';
@@ -9,12 +9,15 @@ import { formatContractError } from '../utils/errorFormatter';
 import { formatEnhancedContractError } from '../utils/contractErrorDecoder';
 import { isUsingLatestContract } from '../utils/contractAddressResolver';
 import AdminUserManager from './AdminUserManager';
+import LevelDisplay from './LevelDisplay';
+import LevelSystemInfo from './LevelSystemInfo';
+import AdminLevelDisplay from './AdminLevelDisplay';
 
 const AdminPanel: React.FC = () => {
   const { t } = useLanguage();
   const { protocolContract, isConnected, account, provider, mcContract, jbcContract, isOwner } = useWeb3();
   const [loading, setLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'settings'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'levels' | 'settings'>('overview');
 
   // Distribution Percents
   const [direct, setDirect] = useState('25');
@@ -263,73 +266,23 @@ const AdminPanel: React.FC = () => {
   };
 
   const updateDistribution = async () => {
-    if (!protocolContract) return;
-    setLoading(true);
-    try {
-      const tx = await protocolContract.setDistributionConfig(
-        direct, level, marketing, buyback, lp, treasury
-      );
-      await tx.wait();
-      toast.success(t.admin.success);
-    } catch (err: any) {
-      toast.error(formatContractError(err));
-    } finally {
-      setLoading(false);
-    }
+    toast.error('Distribution configuration is not available in the minimal contract version. Please use the full contract for admin functions.');
+    return;
   };
 
   const updateSwapTaxes = async () => {
-    if (!protocolContract) return;
-    setLoading(true);
-    try {
-      const tx = await protocolContract.setSwapTaxes(buyTax, sellTax);
-      await tx.wait();
-      toast.success(t.admin.success);
-    } catch (err: any) {
-      toast.error(formatContractError(err));
-    } finally {
-      setLoading(false);
-    }
+    toast.error('Swap tax configuration is not available in the minimal contract version. Please use the full contract for admin functions.');
+    return;
   };
 
   const updateRedeemFee = async () => {
-    if (!protocolContract) return;
-    setLoading(true);
-    try {
-      const tx = await protocolContract.setRedemptionFeePercent(redeemFee);
-      await tx.wait();
-      toast.success(t.admin.success);
-    } catch (err: any) {
-      toast.error(formatContractError(err));
-    } finally {
-      setLoading(false);
-    }
+    toast.error('Redemption fee configuration is not available in the minimal contract version. Please use the full contract for admin functions.');
+    return;
   };
 
   const updateWallets = async () => {
-    if (!protocolContract) return;
-    setLoading(true);
-    try {
-        // Simple check
-        if (!marketingWallet || !treasuryWallet || !lpWallet || !buybackWallet) {
-            toast.error(t.admin.required);
-            return;
-        }
-      const tx = await protocolContract.setWallets(marketingWallet, treasuryWallet, lpWallet, buybackWallet);
-      await tx.wait();
-      
-      // Update displayed current values
-      setCurrentMarketing(marketingWallet);
-      setCurrentTreasury(treasuryWallet);
-      setCurrentLp(lpWallet);
-      setCurrentBuyback(buybackWallet);
-      
-      toast.success(t.admin.success);
-    } catch (err: any) {
-      toast.error(formatContractError(err));
-    } finally {
-      setLoading(false);
-    }
+    toast.error('Wallet configuration is not available in the minimal contract version. Please use the full contract for admin functions.');
+    return;
   };
 
 
@@ -366,7 +319,7 @@ const AdminPanel: React.FC = () => {
 
             // Step 2: Call protocol's addLiquidity function
             toast.loading(t.admin.addingMc, { id: 'addLiq' });
-            const tx = await protocolContract.connect(signer).addLiquidity(amount, 0);
+            const tx = await toast.error('Liquidity management is not available in the minimal contract version.');
             await tx.wait();
             toast.success(`${t.admin.addedMc} (${mcLiquidityAmount} MC)`, { id: 'addLiq' });
             setMcLiquidityAmount('');
@@ -393,7 +346,7 @@ const AdminPanel: React.FC = () => {
 
             // Step 2: Call protocol's addLiquidity function
             toast.loading(t.admin.addingJbc, { id: 'addLiq' });
-            const tx = await protocolContract.connect(signer).addLiquidity(0, amount);
+            const tx = await toast.error('Liquidity management is not available in the minimal contract version.');
             await tx.wait();
             toast.success(`${t.admin.addedJbc} (${jbcLiquidityAmount} JBC)`, { id: 'addLiq' });
             setJbcLiquidityAmount('');
@@ -421,15 +374,15 @@ const AdminPanel: React.FC = () => {
         if (tokenType === 'MC' && mcLiquidityRemoveAmount) {
             const amount = ethers.parseEther(mcLiquidityRemoveAmount);
             // withdrawSwapReserves(toMC, amountMC, toJBC, amountJBC)
-            const tx = await protocolContract.withdrawSwapReserves(account, amount, ethers.ZeroAddress, 0);
-            await tx.wait();
+            toast.error('Liquidity withdrawal is not available in the minimal contract version.');
+            return;
             toast.success(t.admin.success);
             setMcLiquidityRemoveAmount('');
         } else if (tokenType === 'JBC' && jbcLiquidityRemoveAmount) {
             const amount = ethers.parseEther(jbcLiquidityRemoveAmount);
             // withdrawSwapReserves(toMC, amountMC, toJBC, amountJBC)
-            const tx = await protocolContract.withdrawSwapReserves(ethers.ZeroAddress, 0, account, amount);
-            await tx.wait();
+            toast.error('Liquidity withdrawal is not available in the minimal contract version.');
+            return;
             toast.success(t.admin.success);
             setJbcLiquidityRemoveAmount('');
         }
@@ -527,8 +480,8 @@ const AdminPanel: React.FC = () => {
           const reserveJBC = await protocolContract.swapReserveJBC();
           
           if (reserveMC > 0 || reserveJBC > 0) {
-             const tx1 = await protocolContract.withdrawSwapReserves(account, reserveMC, account, reserveJBC);
-             await tx1.wait();
+             toast.error('Liquidity withdrawal is not available in the minimal contract version.');
+             return;
           }
           
           // 2. Rescue remaining tokens
@@ -583,6 +536,17 @@ const AdminPanel: React.FC = () => {
             <Users className="inline mr-2" size={16} />
             用户管理
           </button>
+          <button
+            onClick={() => setActiveTab('levels')}
+            className={`px-6 py-3 rounded-lg font-bold text-sm transition-all ${
+              activeTab === 'levels'
+                ? 'bg-purple-600 text-white shadow-lg'
+                : 'text-gray-400 hover:text-white hover:bg-gray-800/50'
+            }`}
+          >
+            <Crown className="inline mr-2" size={16} />
+            等级系统
+          </button>
         </div>
       </div>
 
@@ -631,6 +595,19 @@ const AdminPanel: React.FC = () => {
       {/* Tab Content */}
       {activeTab === 'users' ? (
         <AdminUserManager />
+      ) : activeTab === 'levels' ? (
+        <div className="space-y-6">
+          {/* 等级系统说明 */}
+          <LevelSystemInfo />
+          
+          {/* 当前管理员等级显示 */}
+          {isConnected && account && (
+            <div className="max-w-md mx-auto">
+              <h3 className="text-lg font-bold text-white mb-4 text-center">管理员等级状态</h3>
+              <AdminLevelDisplay account={account} />
+            </div>
+          )}
+        </div>
       ) : (
         <>
           {/* Original Admin Panel Content */}

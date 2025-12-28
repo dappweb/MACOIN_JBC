@@ -47,15 +47,16 @@ const AdminUserManager: React.FC = () => {
     });
 
     const calculateLevel = (teamCount: number) => {
-        if (teamCount >= 10000) return { level: 9, percent: 45 };
-        if (teamCount >= 5000) return { level: 8, percent: 40 };
-        if (teamCount >= 2000) return { level: 7, percent: 35 };
-        if (teamCount >= 1000) return { level: 6, percent: 30 };
-        if (teamCount >= 500) return { level: 5, percent: 25 };
-        if (teamCount >= 200) return { level: 4, percent: 20 };
-        if (teamCount >= 100) return { level: 3, percent: 15 };
-        if (teamCount >= 50) return { level: 2, percent: 10 };
-        if (teamCount >= 20) return { level: 1, percent: 5 };
+        // 更新的极差裂变机制等级标准
+        if (teamCount >= 100000) return { level: 9, percent: 45 };  // V9: 100,000个地址，45%极差收益
+        if (teamCount >= 30000) return { level: 8, percent: 40 };   // V8: 30,000个地址，40%极差收益
+        if (teamCount >= 10000) return { level: 7, percent: 35 };   // V7: 10,000个地址，35%极差收益
+        if (teamCount >= 3000) return { level: 6, percent: 30 };    // V6: 3,000个地址，30%极差收益
+        if (teamCount >= 1000) return { level: 5, percent: 25 };    // V5: 1,000个地址，25%极差收益
+        if (teamCount >= 300) return { level: 4, percent: 20 };     // V4: 300个地址，20%极差收益
+        if (teamCount >= 100) return { level: 3, percent: 15 };     // V3: 100个地址，15%极差收益
+        if (teamCount >= 30) return { level: 2, percent: 10 };      // V2: 30个地址，10%极差收益
+        if (teamCount >= 10) return { level: 1, percent: 5 };       // V1: 10个地址，5%极差收益
         return { level: 0, percent: 0 };
     };
 
@@ -106,78 +107,8 @@ const AdminUserManager: React.FC = () => {
     };
 
     const handleSaveChanges = async () => {
-        if (!protocolContract || !userInfo) return;
-
-        // Validate referrer address
-        if (editData.referrer && !ethers.isAddress(editData.referrer)) {
-            toast.error('推荐人地址格式无效');
-            return;
-        }
-
-        // Prevent self-reference
-        if (editData.referrer.toLowerCase() === userInfo.address.toLowerCase()) {
-            toast.error('不能设置自己为推荐人');
-            return;
-        }
-
-        setLoading(true);
-        try {
-            const promises = [];
-
-            // Update referrer if changed
-            if (editData.referrer !== userInfo.referrer) {
-                if (editData.referrer === '') {
-                    toast.error('推荐人地址不能为空');
-                    return;
-                }
-                promises.push(
-                    protocolContract.adminSetReferrer(userInfo.address, editData.referrer)
-                );
-            }
-
-            // Update other user data if changed
-            const updateActiveDirects = editData.activeDirects !== userInfo.activeDirects.toString();
-            const updateTeamCount = editData.teamCount !== userInfo.teamCount.toString();
-            const updateTotalRevenue = editData.totalRevenue !== userInfo.totalRevenue;
-            const updateCurrentCap = editData.currentCap !== userInfo.currentCap;
-            const updateRefundFee = editData.refundFeeAmount !== userInfo.refundFeeAmount;
-
-            if (updateActiveDirects || updateTeamCount || updateTotalRevenue || updateCurrentCap || updateRefundFee) {
-                promises.push(
-                    protocolContract.adminUpdateUserData(
-                        userInfo.address,
-                        updateActiveDirects,
-                        updateActiveDirects ? Number(editData.activeDirects) : 0,
-                        updateTeamCount,
-                        updateTeamCount ? Number(editData.teamCount) : 0,
-                        updateTotalRevenue,
-                        updateTotalRevenue ? ethers.parseEther(editData.totalRevenue) : 0,
-                        updateCurrentCap,
-                        updateCurrentCap ? ethers.parseEther(editData.currentCap) : 0,
-                        updateRefundFee,
-                        updateRefundFee ? ethers.parseEther(editData.refundFeeAmount) : 0
-                    )
-                );
-            }
-
-            // Execute all transactions
-            for (const promise of promises) {
-                const tx = await promise;
-                await tx.wait();
-            }
-
-            toast.success('用户信息更新成功');
-            setEditMode(false);
-            
-            // Refresh user data
-            await searchUser();
-
-        } catch (error) {
-            console.error('Update user error:', error);
-            toast.error(formatContractError(error));
-        } finally {
-            setLoading(false);
-        }
+        toast.error('User management functions are not available in the minimal contract version. Please use the full contract for admin functions.');
+        return;
     };
 
     if (!isOwner) {

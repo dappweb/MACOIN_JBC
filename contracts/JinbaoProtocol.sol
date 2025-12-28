@@ -141,6 +141,10 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, UUPSUpgradeable, R
     error InvalidTeamCountUpdate();
     error TeamCountMismatch(address user, uint256 expected, uint256 actual);
     error BatchUpdateSizeMismatch();
+    error ContractPaused();
+    error ActionTooEarly();
+    error TransferFromFailed(string reason);
+    error TransferFromFailedLowLevel();
     event BoundReferrer(address indexed user, address indexed referrer);
     event TicketPurchased(address indexed user, uint256 amount, uint256 ticketId);
     event TicketExpired(address indexed user, uint256 ticketId, uint256 amount);
@@ -158,6 +162,7 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, UUPSUpgradeable, R
     event DifferentialRewardReleased(uint256 indexed stakeId, address indexed upline, uint256 amount);
     event TeamCountUpdated(address indexed user, uint256 oldCount, uint256 newCount);
     event TeamBasedRewardCalculated(uint256 indexed stakeId, address indexed upline, uint256 amount, uint256 teamCount);
+    event UserLevelChanged(address indexed user, uint256 oldLevel, uint256 newLevel, uint256 teamCount);
     event BatchTeamCountsUpdated(uint256 usersUpdated);
     event TeamCountValidationFailed(address indexed user, uint256 expected, uint256 actual);
     event Redeemed(address indexed user, uint256 principal, uint256 fee);
@@ -179,7 +184,7 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, UUPSUpgradeable, R
     event EmergencyPaused();
     event EmergencyUnpaused();
     event ReferrerChanged(address indexed user, address indexed oldReferrer, address indexed newReferrer);
-    event UserDataUpdated(address indexed user, uint256 activeDirects, uint256 totalRevenue, uint256 currentCap, uint256 refundFee);
+    event UserDataFieldUpdated(address indexed user, uint8 field, uint256 value);
 
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
@@ -225,7 +230,7 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, UUPSUpgradeable, R
     function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
 
     modifier whenNotPaused() {
-        require(!emergencyPaused, "Contract is paused");
+        if (emergencyPaused) revert ContractPaused();
         _;
     }
 
@@ -242,7 +247,7 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, UUPSUpgradeable, R
 
 
     function setWallets(address _marketing, address _treasury, address _lpInjection, address _buyback) external onlyOwner {
-        require(_marketing != address(0) && _treasury != address(0) && _lpInjection != address(0) && _buyback != address(0), "Invalid address");
+        if (_marketing == address(0) || _treasury == address(0) || _lpInjection == address(0) || _buyback == address(0)) revert InvalidAddress();
         
         marketingWallet = _marketing;
         treasuryWallet = _treasury;
@@ -298,12 +303,22 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, UUPSUpgradeable, R
 
     function addLiquidity(uint256 mcAmount, uint256 jbcAmount) external onlyOwner {
         if (mcAmount > 0) {
-            mcToken.transferFrom(msg.sender, address(this), mcAmount);
-            swapReserveMC += mcAmount;
+            try mcToken.transferFrom(msg.sender, address(this), mcAmount) {
+                swapReserveMC += mcAmount;
+            } catch Error(string memory reason) {
+                revert TransferFromFailed(reason);
+            } catch {
+                revert TransferFromFailedLowLevel();
+            }
         }
         if (jbcAmount > 0) {
-            jbcToken.transferFrom(msg.sender, address(this), jbcAmount);
-            swapReserveJBC += jbcAmount;
+            try jbcToken.transferFrom(msg.sender, address(this), jbcAmount) {
+                swapReserveJBC += jbcAmount;
+            } catch Error(string memory reason) {
+                revert TransferFromFailed(reason);
+            } catch {
+                revert TransferFromFailedLowLevel();
+            }
         }
         emit LiquidityAdded(mcAmount, jbcAmount);
     }
@@ -327,22 +342,47 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, UUPSUpgradeable, R
     }
 
     function rescueTokens(address _token, address _to, uint256 _amount) external onlyOwner {
-        require(_token != address(mcToken) && _token != address(jbcToken), "Cannot rescue protocol tokens");
-        require(_to != address(0), "Invalid recipient");
+        if (_token == address(mcToken) || _token == address(jbcToken)) revert InvalidAddress();
+        if (_to == address(0)) revert InvalidAddress();
         
         IERC20(_token).transfer(_to, _amount);
         emit TokensRescued(_token, _to, _amount);
     }
 
+    // Helper Functions
+    function calculateLevel(uint256 teamCount) external pure returns (uint256 level, uint256 percent) {
+        return _getLevel(teamCount);
+    }
+
+    function getUserLevel(address user) external view returns (uint256 level, uint256 percent, uint256 teamCount) {
+        teamCount = userInfo[user].teamCount;
+        (level, percent) = _getLevel(teamCount);
+        return (level, percent, teamCount);
+    }
+
+    function _getLevel(uint256 value) private pure returns (uint256 level, uint256 percent) {
+        if (value >= 100000) return (9, 45);  // V9: 100,000个地址，45%极差收益
+        if (value >= 30000) return (8, 40);   // V8: 30,000个地址，40%极差收益
+        if (value >= 10000) return (7, 35);   // V7: 10,000个地址，35%极差收益
+        if (value >= 3000) return (6, 30);    // V6: 3,000个地址，30%极差收益
+        if (value >= 1000) return (5, 25);    // V5: 1,000个地址，25%极差收益
+        if (value >= 300) return (4, 20);     // V4: 300个地址，20%极差收益
+        if (value >= 100) return (3, 15);     // V3: 100个地址，15%极差收益
+        if (value >= 30) return (2, 10);      // V2: 30个地址，10%极差收益
+        if (value >= 10) return (1, 5);       // V1: 10个地址，5%极差收益
+        return (0, 0);
+    }
+
+
     // Admin User Management Functions
     function adminSetReferrer(address user, address newReferrer) external onlyOwner {
-        require(user != address(0) && newReferrer != address(0), "Invalid");
-        require(user != newReferrer, "Self ref");
+        if (user == address(0) || newReferrer == address(0)) revert InvalidAddress();
+        if (user == newReferrer) revert SelfReference();
         
         address current = newReferrer;
         uint256 depth = 0;
         while (current != address(0) && depth < 50) {
-            require(current != user, "Circular");
+            if (current == user) revert SelfReference();
             current = userInfo[current].referrer;
             depth++;
         }
@@ -367,60 +407,50 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, UUPSUpgradeable, R
         uint256 userTeamSize = userInfo[user].teamCount + 1;
         
         if (oldReferrer != address(0)) {
-            current = oldReferrer;
-            uint256 iterations = 0;
-            while (current != address(0) && iterations < 30) {
-                if (userInfo[current].teamCount >= userTeamSize) {
-                    userInfo[current].teamCount -= userTeamSize;
-                } else {
-                    userInfo[current].teamCount = 0;
-                }
-                current = userInfo[current].referrer;
-                iterations++;
-            }
+            _updateTeamCountRecursive(oldReferrer, userTeamSize, false);
         }
         
         if (newReferrer != address(0)) {
-            current = newReferrer;
-            uint256 iterations = 0;
-            while (current != address(0) && iterations < 30) {
-                userInfo[current].teamCount += userTeamSize;
-                current = userInfo[current].referrer;
-                iterations++;
-            }
+            _updateTeamCountRecursive(newReferrer, userTeamSize, true);
         }
         
         emit ReferrerChanged(user, oldReferrer, newReferrer);
     }
     
-    function adminUpdateUserData(
-        address user,
-        bool updateActiveDirects,
-        uint256 newActiveDirects,
-        bool updateTeamCount,
-        uint256 newTeamCount,
-        bool updateTotalRevenue,
-        uint256 newTotalRevenue,
-        bool updateCurrentCap,
-        uint256 newCurrentCap,
-        bool updateRefundFee,
-        uint256 newRefundFee
-    ) external onlyOwner {
-        require(user != address(0), "Invalid");
+    function adminUpdateUserField(address user, uint8 field, uint256 value) external onlyOwner {
+        if (user == address(0)) revert InvalidAddress();
         
         UserInfo storage info = userInfo[user];
         
-        if (updateActiveDirects) info.activeDirects = newActiveDirects;
-        if (updateTeamCount) {
+        if (field == 0) info.activeDirects = value;
+        else if (field == 1) {
             uint256 oldCount = info.teamCount;
-            info.teamCount = newTeamCount;
-            emit TeamCountUpdated(user, oldCount, newTeamCount);
+            info.teamCount = value;
+            emit TeamCountUpdated(user, oldCount, value);
         }
-        if (updateTotalRevenue) info.totalRevenue = newTotalRevenue;
-        if (updateCurrentCap) info.currentCap = newCurrentCap;
-        if (updateRefundFee) info.refundFeeAmount = newRefundFee;
+        else if (field == 2) info.totalRevenue = value;
+        else if (field == 3) info.currentCap = value;
+        else if (field == 4) info.refundFeeAmount = value;
         
-        emit UserDataUpdated(user, newActiveDirects, newTotalRevenue, newCurrentCap, newRefundFee);
+        emit UserDataFieldUpdated(user, field, value);
+    }
+
+    function _updateTeamCountRecursive(address startNode, uint256 amount, bool isAdd) private {
+        address current = startNode;
+        uint256 iterations = 0;
+        while (current != address(0) && iterations < 30) {
+            if (isAdd) {
+                userInfo[current].teamCount += amount;
+            } else {
+                if (userInfo[current].teamCount >= amount) {
+                    userInfo[current].teamCount -= amount;
+                } else {
+                    userInfo[current].teamCount = 0;
+                }
+            }
+            current = userInfo[current].referrer;
+            iterations++;
+        }
     }
 
     function _updateTeamCount(address user) internal {
@@ -449,17 +479,24 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, UUPSUpgradeable, R
     }
 
 
-    function _getLevel(uint256 value) private pure returns (uint256 level, uint256 percent) {
-        if (value >= 10000) return (9, 45);
-        if (value >= 5000) return (8, 40);
-        if (value >= 2000) return (7, 35);
-        if (value >= 1000) return (6, 30);
-        if (value >= 500) return (5, 25);
-        if (value >= 200) return (4, 20);
-        if (value >= 100) return (3, 15);
-        if (value >= 50) return (2, 10);
-        if (value >= 20) return (1, 5);
-        return (0, 0);
+    function _getRate(uint256 cycleDays) private pure returns (uint256) {
+        if (cycleDays == 7) return 13333334;
+        if (cycleDays == 15) return 16666667;
+        return 20000000;
+    }
+
+    function _calculateStakeReward(Stake storage stake) internal view returns (uint256) {
+        uint256 ratePerBillion = _getRate(stake.cycleDays);
+        uint256 unitsPassed = (block.timestamp - stake.startTime) / SECONDS_IN_UNIT;
+        if (unitsPassed > stake.cycleDays) unitsPassed = stake.cycleDays;
+        
+        if (unitsPassed == 0) return 0;
+        
+        uint256 totalStaticShouldBe = (stake.amount * ratePerBillion * unitsPassed) / 1000000000;
+        if (totalStaticShouldBe > stake.paid) {
+            return totalStaticShouldBe - stake.paid;
+        }
+        return 0;
     }
 
     function getLevelRewardLayers(uint256 activeDirects) public pure returns (uint256) {
@@ -623,21 +660,8 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, UUPSUpgradeable, R
         for (uint256 i = 0; i < stakes.length; i++) {
             if (!stakes[i].active) continue;
             
-            uint256 ratePerBillion = 0;
-            if (stakes[i].cycleDays == 7) ratePerBillion = 13333334;
-            else if (stakes[i].cycleDays == 15) ratePerBillion = 16666667;
-            else if (stakes[i].cycleDays == 30) ratePerBillion = 20000000;
-            
-            uint256 unitsPassed = (block.timestamp - stakes[i].startTime) / SECONDS_IN_UNIT;
-            if (unitsPassed > stakes[i].cycleDays) unitsPassed = stakes[i].cycleDays;
-            
-            if (unitsPassed == 0) continue;
-
-            uint256 totalStaticShouldBe = (stakes[i].amount * ratePerBillion * unitsPassed) / 1000000000;
-            
-            uint256 paid = stakes[i].paid;
-            if (totalStaticShouldBe > paid) {
-                uint256 stakePending = totalStaticShouldBe - paid;
+            uint256 stakePending = _calculateStakeReward(stakes[i]);
+            if (stakePending > 0) {
                 totalPending += stakePending;
                 stakes[i].paid += stakePending;
             }
@@ -682,7 +706,7 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, UUPSUpgradeable, R
     }
 
     function redeem() external nonReentrant {
-        require(redeemEnabled, "Disabled");
+        if (!redeemEnabled) revert Unauthorized();
         Stake[] storage stakes = userStakes[msg.sender];
         uint256 totalReturn = 0;
         uint256 totalFee = 0;
@@ -693,16 +717,7 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, UUPSUpgradeable, R
             
             uint256 endTime = stakes[i].startTime + (stakes[i].cycleDays * SECONDS_IN_UNIT);
             if (block.timestamp >= endTime) {
-                uint256 ratePerBillion = 0;
-                if (stakes[i].cycleDays == 7) ratePerBillion = 13333334;
-                else if (stakes[i].cycleDays == 15) ratePerBillion = 16666667;
-                else if (stakes[i].cycleDays == 30) ratePerBillion = 20000000;
-                
-                uint256 totalStaticShouldBe = (stakes[i].amount * ratePerBillion * stakes[i].cycleDays) / 1000000000;
-                uint256 pending = 0;
-                if (totalStaticShouldBe > stakes[i].paid) {
-                    pending = totalStaticShouldBe - stakes[i].paid;
-                }
+                uint256 pending = _calculateStakeReward(stakes[i]);
                 
                 totalYield += pending;
                 stakes[i].paid += pending;
@@ -728,7 +743,7 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, UUPSUpgradeable, R
             }
         }
         
-        require(totalReturn > 0 || totalYield > 0, "Nothing to redeem");
+        if (totalReturn == 0 && totalYield == 0) revert NothingToRedeem();
 
         if (totalFee > 0) {
             swapReserveMC += totalFee;
@@ -781,9 +796,9 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, UUPSUpgradeable, R
 
     // Individual stake redemption
     function redeemStake(uint256 stakeId) external nonReentrant {
-        require(redeemEnabled, "Disabled");
+        if (!redeemEnabled) revert Unauthorized();
         Stake[] storage stakes = userStakes[msg.sender];
-        require(stakeId < stakes.length && stakes[stakeId].active, "Invalid stake");
+        if (stakeId >= stakes.length || !stakes[stakeId].active) revert NotActive();
         
         Stake storage stake = stakes[stakeId];
         
@@ -799,12 +814,12 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, UUPSUpgradeable, R
         });
         
         (uint256 pending, uint256 fee, bool canRedeem) = RedemptionLib.calculateRedemption(params);
-        require(canRedeem, "Not expired");
+        if (!canRedeem) revert Expired(); // Or NotActive, or create new error NotRedeemable
         
         stake.paid += pending;
         stake.active = false;
         
-        require(RedemptionLib.processIndividualRedemption(mcToken, msg.sender, address(this), stake.amount, fee), "Transfer failed");
+        if (!RedemptionLib.processIndividualRedemption(mcToken, msg.sender, address(this), stake.amount, fee)) revert TransferFailed();
         
         if (fee > 0) {
             swapReserveMC += fee;
@@ -978,6 +993,13 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, UUPSUpgradeable, R
                 uint256 oldCount = upline.teamCount;
                 upline.teamCount = oldCount + 1;
                 emit TeamCountUpdated(current, oldCount, oldCount + 1);
+                
+                // 检查等级是否发生变化
+                (uint256 oldLevel,) = _getLevel(oldCount);
+                (uint256 newLevel,) = _getLevel(oldCount + 1);
+                if (newLevel != oldLevel) {
+                    emit UserLevelChanged(current, oldLevel, newLevel, oldCount + 1);
+                }
             }
             
             if (amount > 0) {
@@ -1008,7 +1030,7 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, UUPSUpgradeable, R
                 continue;
             }
 
-            (, uint256 percent) = _getLevel(userInfo[current].activeDirects);
+            (, uint256 percent) = _getLevel(userInfo[current].teamCount);
             
             if (percent > previousPercent) {
                 uint256 diffPercent = percent - previousPercent;
@@ -1135,6 +1157,28 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, UUPSUpgradeable, R
     }
 
     // --- AMM & Swap Support ---
+
+    // 每日燃烧功能 - 燃烧池子中1%的JBC
+    function dailyBurn() external {
+        if (block.timestamp < lastBurnTime + 24 hours) revert ActionTooEarly();
+        
+        uint256 jbcReserve = swapReserveJBC;
+        if (jbcReserve == 0) revert InvalidAmount();
+        
+        uint256 burnAmount = jbcReserve / 100; // 1%
+        if (burnAmount == 0) revert InvalidAmount();
+        
+        // 更新储备
+        swapReserveJBC -= burnAmount;
+        
+        // 燃烧代币
+        jbcToken.burn(burnAmount);
+        
+        // 更新最后燃烧时间
+        lastBurnTime = block.timestamp;
+        
+        emit BuybackAndBurn(0, burnAmount);
+    }
 
     function swapMCToJBC(uint256 mcAmount) external nonReentrant whenNotPaused {
         if (mcAmount == 0) revert InvalidAmount();

@@ -196,8 +196,15 @@ const LiquidityPositions: React.FC = () => {
       
       // Proceed with redemption
       const tx = await protocolContract.redeemStake(stakeIndex);
+      
+      // 获取预估的奖励信息用于展示
+      const targetPos = positions.find(p => p.id === id);
+      const rewardMsg = targetPos 
+        ? `\n预计获得: ${parseFloat(targetPos.pendingMc).toFixed(4)} MC + ${parseFloat(targetPos.pendingJbc).toFixed(4)} JBC`
+        : "";
+
       await tx.wait();
-      toast.success(t.mining?.redeemSuccess || "Redemption Successful");
+      toast.success((t.mining?.redeemSuccess || "Redemption Successful") + rewardMsg);
       fetchPositions(); // Refresh list
     } catch (err: any) {
       console.error("Redeem error details:", err);
@@ -399,7 +406,25 @@ const LiquidityPositions: React.FC = () => {
               <div className="text-right">
                 <div className="text-sm font-medium text-amber-400">
                   {pos.status === 'redeemed' 
-                    ? `+${parseFloat(pos.paid).toFixed(4)} Value`
+                    ? (
+                        <div className="flex flex-col items-end opacity-75">
+                          {/* 估算已领取的 MC 和 JBC，假设 50/50 分配 */}
+                          <span className="text-white">
+                            + {(parseFloat(pos.paid) / 2).toFixed(4)} MC
+                          </span>
+                          <span className="text-xs text-neon-400">
+                            + {(() => {
+                                // pos.paid is formatted string in useMemo. We should use raw calculation or re-parse.
+                                // Simplest is to re-calculate from string float.
+                                const paidFloat = parseFloat(pos.paid);
+                                const paidMcVal = paidFloat / 2;
+                                // Convert MC value to JBC amount using current rate
+                                const jbcAmount = reserves.mc > 0n ? (paidMcVal * Number(reserves.jbc)) / Number(reserves.mc) : 0;
+                                return jbcAmount.toFixed(4);
+                            })()} JBC (Est.)
+                          </span>
+                        </div>
+                      )
                     : (
                       <div className="flex flex-col items-end">
                         <span className="text-white">+ {parseFloat(pos.pendingMc).toFixed(4)} MC</span>

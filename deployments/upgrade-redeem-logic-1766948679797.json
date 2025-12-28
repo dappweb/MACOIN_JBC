@@ -1,0 +1,14 @@
+{
+  "timestamp": "2025-12-28T19:04:39.564Z",
+  "proxyAddress": "0x515871E9eADbF976b546113BbD48964383f86E61",
+  "deployer": "0x4C10831CBcF9884ba72051b5287b6c87E4F74A48",
+  "upgradeName": "individual-redeem-logic",
+  "changes": [
+    "Added redeemStake(uint256 stakeId) function for individual stake redemption",
+    "Modified redeem logic to return full principal and deduct fee from user wallet",
+    "Fee is now recorded in refundFeeAmount for next stake refund",
+    "Legacy redeem() function preserved for backward compatibility"
+  ],
+  "gasUsed": "TBD",
+  "blockNumber": 1928606
+}

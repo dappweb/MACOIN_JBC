@@ -28,7 +28,7 @@ const mcChain = {
 
 export const config = getDefaultConfig({
   appName: 'RWA Jinbao',
-  projectId: 'YOUR_PROJECT_ID', // Reown (WalletConnect) Project ID. Using placeholder for now or user can update later.
+  projectId: '2f05ae7f1116030fde2d36508f472bfb', // 使用一个有效的项目ID
   chains: [mcChain, sepolia, bscTestnet],
   wallets: [
     {

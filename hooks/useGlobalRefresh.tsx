@@ -157,9 +157,10 @@ export const GlobalRefreshProvider = ({ children }: { children: ReactNode }) => 
     try {
       switch (type) {
         case 'ticket_purchase':
-          // 购买门票后：刷新余额 + 广播门票状态更新
+          // 购买门票后：刷新余额 + 广播门票状态更新 + 可能的等级变化
           await refreshBalances();
           window.dispatchEvent(new CustomEvent('ticketStatusChanged'));
+          window.dispatchEvent(new CustomEvent('userLevelChanged'));
           break;
           
         case 'liquidity_stake':

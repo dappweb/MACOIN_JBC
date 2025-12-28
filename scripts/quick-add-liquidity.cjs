@@ -4,7 +4,7 @@ require('dotenv').config();
 // Contract addresses
 const ADDRESSES = {
     MC_TOKEN: "0xB2B8777BcBc7A8DEf49F022773d392a8787cf9EF",
-    PROTOCOL: "0xc938b6D9ebC484BE7e946e11CD46BE56ee29BE19"
+    PROTOCOL: process.env.PROXY_ADDRESS || "0x515871E9eADbF976b546113BbD48964383f86E61"
 };
 
 const PROTOCOL_ABI = [
@@ -75,7 +75,7 @@ async function quickAddLiquidity(mcAmount, jbcAmount = "0") {
         
         // 添加流动性
         console.log(`\n🔄 添加流动性: ${mcAmount} MC, ${jbcAmount} JBC`);
-        const tx = await protocolContract.addLiquidity(mcAmountWei, jbcAmountWei);
+        const tx = await protocolContract.addLiquidity(mcAmountWei, jbcAmountWei, { gasLimit: 500000 });
         console.log(`   交易哈希: ${tx.hash}`);
         console.log("   等待确认...");
         

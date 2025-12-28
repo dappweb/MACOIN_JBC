@@ -23,6 +23,7 @@ const EarningsDetail: React.FC = () => {
   const { protocolContract, account, provider } = useWeb3()
   const { t } = useLanguage()
   const [records, setRecords] = useState<RewardRecord[]>([])
+  const [pendingRewards, setPendingRewards] = useState<{mc: number, jbc: number}>({mc: 0, jbc: 0})
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const [isOwner, setIsOwner] = useState(false)
@@ -38,6 +39,17 @@ const EarningsDetail: React.FC = () => {
   // 错误状态
   const [error, setError] = useState<string | null>(null)
   
+  // 强制刷新函数
+  const forceRefresh = async () => {
+    console.log('🔄 [EarningsDetail] 强制刷新所有数据');
+    clearCache();
+    setError(null);
+    await Promise.all([
+      fetchRecords(false), // 强制刷新，不使用缓存
+      fetchPendingRewards() // 刷新待领取奖励
+    ]);
+  };
+
   // 缓存键
   const getCacheKey = (account: string, viewMode: string) => 
     `earnings_cache_${account}_${viewMode}`
@@ -126,12 +138,206 @@ const EarningsDetail: React.FC = () => {
   useEventRefresh('rewardsChanged', () => {
     console.log('🎁 [EarningsDetail] 收益变化，刷新收益记录');
     fetchRecords(false); // 强制刷新，不使用缓存
+    fetchPendingRewards(); // 同时刷新待领取奖励
   });
 
   useEventRefresh('ticketStatusChanged', () => {
     console.log('🎫 [EarningsDetail] 门票状态变化，刷新收益记录');
     fetchRecords(false); // 强制刷新，不使用缓存
+    fetchPendingRewards(); // 同时刷新待领取奖励
   });
+
+  // 获取待领取的静态奖励
+  const fetchPendingRewards = async () => {
+    if (!protocolContract || !account) {
+      console.log('🔍 [EarningsDetail] 无法获取待领取奖励: 合约或账户未连接');
+      setPendingRewards({mc: 0, jbc: 0});
+      return;
+    }
+
+    try {
+      console.log('🔍 [EarningsDetail] 开始获取待领取静态奖励...');
+      
+      // 检查用户门票状态
+      const ticket = await protocolContract.userTicket(account);
+      console.log('🎫 [EarningsDetail] 门票状态:', {
+        amount: ethers.formatEther(ticket.amount),
+        exited: ticket.exited
+      });
+      
+      if (ticket.amount === 0n || ticket.exited) {
+        console.log('❌ [EarningsDetail] 用户没有有效门票，无法获得静态奖励');
+        setPendingRewards({mc: 0, jbc: 0});
+        return;
+      }
+
+      // 检查收益上限
+      const userInfo = await protocolContract.userInfo(account);
+      const remainingCap = userInfo.currentCap - userInfo.totalRevenue;
+      console.log('📊 [EarningsDetail] 收益状态:', {
+        totalRevenue: ethers.formatEther(userInfo.totalRevenue),
+        currentCap: ethers.formatEther(userInfo.currentCap),
+        remainingCap: ethers.formatEther(remainingCap)
+      });
+      
+      if (remainingCap <= 0n) {
+        console.log('⚠️ [EarningsDetail] 用户已达到收益上限');
+        setPendingRewards({mc: 0, jbc: 0});
+        return;
+      }
+
+      // 获取时间单位，默认为60秒（如果获取失败）
+      let secondsInUnit = 60n;
+      try {
+        secondsInUnit = await protocolContract.SECONDS_IN_UNIT();
+      } catch (e) {
+        console.warn('⚠️ [EarningsDetail] Failed to fetch SECONDS_IN_UNIT, using default 60s', e);
+      }
+      
+      const currentTime = Math.floor(Date.now() / 1000);
+      console.log('⏰ [EarningsDetail] 时间参数:', {
+        secondsInUnit: Number(secondsInUnit),
+        currentTime
+      });
+      
+      let totalPendingRewards = 0n;
+      let activeStakesCount = 0;
+      
+      // 遍历用户的质押记录
+      for (let i = 0; i < 20; i++) { // 增加到检查前20条记录
+        try {
+          // 使用 userStakes 获取质押信息
+          // 注意：如果 i 超过了用户的质押数量，合约可能会 revert
+          // 所以我们需要用 try-catch 包裹每次调用
+          const stake = await protocolContract.userStakes(account, i);
+          
+          // 如果 amount 为 0，通常表示该索引没有有效质押（或者是空的结构体）
+          // 但在某些实现中，可能是被删除了。我们假设遇到空记录就停止，或者继续检查。
+          // 安全起见，如果连续遇到3个空记录才停止？
+          // 这里假设 amount > 0 才是有效记录
+          if (stake.amount === 0n) {
+             // 检查是否是真的结束了，还是只是中间有空洞
+             // 通常 userStakes 是数组，不会有空洞，除非 pop 了
+             // 暂时假设遇到 0 amount 就结束
+             break;
+          }
+          
+          if (stake.active) {
+            activeStakesCount++;
+            
+            // 计算已过时间单位
+            const unitSeconds = Number(secondsInUnit) || 60; // 防止除以0
+            const unitsPassed = Math.floor((currentTime - Number(stake.startTime)) / unitSeconds);
+            const maxUnits = Number(stake.cycleDays);
+            const actualUnits = Math.min(unitsPassed, maxUnits);
+            
+            if (actualUnits > 0) {
+              // 根据周期确定收益率
+              let ratePerBillion = 0;
+              const days = Number(stake.cycleDays);
+              
+              if (days === 7) ratePerBillion = 13333334;
+              else if (days === 15) ratePerBillion = 16666667;
+              else if (days === 30) ratePerBillion = 20000000;
+              else {
+                 // 如果是非标准周期，尝试根据比例估算？或者暂时忽略
+                 // 假设 30 天是基准？
+                 console.warn(`⚠️ [EarningsDetail] Unknown cycle days: ${days}, skipping reward calc for stake #${i}`);
+                 continue;
+              }
+              
+              // 计算应得奖励
+              const totalStaticShouldBe = (stake.amount * BigInt(ratePerBillion) * BigInt(actualUnits)) / 1000000000n;
+              const pending = totalStaticShouldBe > stake.paid ? totalStaticShouldBe - stake.paid : 0n;
+              
+              totalPendingRewards += pending;
+            }
+          }
+        } catch (error) {
+          // 索引越界，结束遍历
+          break;
+        }
+      }
+      
+      console.log('📊 [EarningsDetail] 质押汇总:', {
+        activeStakesCount,
+        totalPendingRewards: ethers.formatEther(totalPendingRewards)
+      });
+      
+      // 应用收益上限约束
+      const actualClaimable = totalPendingRewards > remainingCap ? remainingCap : totalPendingRewards;
+      console.log('🎯 [EarningsDetail] 应用收益上限约束:', {
+        totalPending: ethers.formatEther(totalPendingRewards),
+        remainingCap: ethers.formatEther(remainingCap),
+        actualClaimable: ethers.formatEther(actualClaimable)
+      });
+      
+      if (actualClaimable === 0n) {
+        console.log('💡 [EarningsDetail] 无待领取奖励');
+        setPendingRewards({mc: 0, jbc: 0});
+        return;
+      }
+      
+      // 分配50%MC和50%JBC（按价值计算）
+      const mcPart = actualClaimable / 2n;
+      const jbcValuePart = actualClaimable / 2n;
+      
+      // 获取JBC价格来计算JBC数量
+      const reserveMC = await protocolContract.swapReserveMC();
+      const reserveJBC = await protocolContract.swapReserveJBC();
+      
+      console.log('💱 [EarningsDetail] 流动性储备:', {
+        reserveMC: ethers.formatEther(reserveMC),
+        reserveJBC: ethers.formatEther(reserveJBC)
+      });
+      
+      let jbcAmount = 0;
+      if (reserveMC > 0n && reserveJBC > 0n) {
+        const jbcPrice = (reserveMC * 1000000000000000000n) / reserveJBC; // 1e18 scaled
+        const jbcAmountBigInt = (jbcValuePart * 1000000000000000000n) / jbcPrice;
+        jbcAmount = Number(ethers.formatEther(jbcAmountBigInt));
+        console.log('💱 [EarningsDetail] JBC价格计算:', {
+          jbcPrice: ethers.formatEther(jbcPrice),
+          jbcAmount
+        });
+      } else {
+        // 如果没有流动性，按1:1计算
+        jbcAmount = Number(ethers.formatEther(jbcValuePart));
+        console.log('💱 [EarningsDetail] 无流动性，使用1:1比例');
+      }
+      
+      const result = {
+        mc: Number(ethers.formatEther(mcPart)),
+        jbc: jbcAmount
+      };
+      
+      console.log('✅ [EarningsDetail] 待领取奖励计算完成:', result);
+      setPendingRewards(result);
+      
+    } catch (error) {
+      console.error('❌ [EarningsDetail] 获取待领取奖励失败:', error);
+      setPendingRewards({mc: 0, jbc: 0});
+      
+      // 显示用户友好的错误提示
+      let errorMessage = '获取待领取奖励失败';
+      if (error instanceof Error) {
+        if (error.message.includes('call revert')) {
+          errorMessage = '合约调用失败，请检查网络连接或稍后重试';
+          console.log('💡 [EarningsDetail] 可能的原因: 合约函数调用失败，请检查网络连接');
+        } else if (error.message.includes('network')) {
+          errorMessage = '网络连接问题，请检查网络设置';
+          console.log('💡 [EarningsDetail] 可能的原因: 网络连接问题');
+        } else if (error.message.includes('timeout')) {
+          errorMessage = '请求超时，请稍后重试';
+        } else if (error.message.includes('insufficient funds')) {
+          errorMessage = '账户余额不足';
+        }
+      }
+      
+      // 设置错误状态，在UI中显示
+      setError(errorMessage);
+    }
+  };
 
   const fetchRecords = async (useCache = true) => {
     if (!protocolContract || !account || !provider) {
@@ -150,31 +356,40 @@ const EarningsDetail: React.FC = () => {
       setError(null)
       
       const currentBlock = await provider.getBlockNumber()
-      const fromBlock = Math.max(0, currentBlock - 100000)
+      // 增加查询范围到 500,000 区块，确保能获取到较早的记录
+      const fromBlock = Math.max(0, currentBlock - 500000)
 
       const targetUser = isOwner && viewMode === "all" ? null : account
       
-      // 分别处理两种事件，提供更详细的错误信息
-      let rewardEvents: any[] = []
-      let referralEvents: any[] = []
-      
-      try {
-        rewardEvents = await protocolContract.queryFilter(
+      console.log(`🔍 [EarningsDetail] Querying events from block ${fromBlock} to ${currentBlock}`)
+
+      // 并行查询两种事件
+      // 使用 Promise.allSettled 避免其中一个失败导致整体失败
+      const [rewardResults, referralResults] = await Promise.allSettled([
+        protocolContract.queryFilter(
           protocolContract.filters.RewardClaimed(targetUser), 
           fromBlock
-        )
-      } catch (err) {
-        console.error("Failed to fetch reward events:", err)
-        toast.error("Failed to load reward events")
-      }
-
-      try {
-        referralEvents = await protocolContract.queryFilter(
+        ),
+        protocolContract.queryFilter(
           protocolContract.filters.ReferralRewardPaid(targetUser), 
           fromBlock
         )
-      } catch (err) {
-        console.error("Failed to fetch referral events:", err)
+      ])
+      
+      let rewardEvents: any[] = []
+      let referralEvents: any[] = []
+
+      if (rewardResults.status === 'fulfilled') {
+        rewardEvents = rewardResults.value
+      } else {
+        console.error("Failed to fetch reward events:", rewardResults.reason)
+        toast.error("Failed to load reward events")
+      }
+
+      if (referralResults.status === 'fulfilled') {
+        referralEvents = referralResults.value
+      } else {
+        console.error("Failed to fetch referral events:", referralResults.reason)
         toast.error("Failed to load referral events")
       }
 
@@ -251,8 +466,23 @@ const EarningsDetail: React.FC = () => {
       
     } catch (err: any) {
       console.error("Failed to fetch earnings records:", err)
-      setError(`Failed to load earnings data: ${err.message || 'Unknown error'}`)
-      toast.error("Failed to load earnings data")
+      
+      // 提供更详细的错误信息
+      let errorMessage = "Failed to load earnings data";
+      if (err.message.includes('network')) {
+        errorMessage = "Network connection error. Please check your internet connection.";
+      } else if (err.message.includes('timeout')) {
+        errorMessage = "Request timeout. Please try again later.";
+      } else if (err.message.includes('call revert')) {
+        errorMessage = "Contract call failed. Please check your wallet connection.";
+      } else if (err.message.includes('insufficient funds')) {
+        errorMessage = "Insufficient funds for transaction.";
+      } else if (err.code === 'NETWORK_ERROR') {
+        errorMessage = "Network error. Please switch to a different RPC endpoint.";
+      }
+      
+      setError(`${errorMessage}: ${err.message || 'Unknown error'}`)
+      toast.error(errorMessage)
     } finally {
       setLoading(false)
       setRefreshing(false)
@@ -261,6 +491,7 @@ const EarningsDetail: React.FC = () => {
 
   useEffect(() => {
     fetchRecords()
+    fetchPendingRewards()
   }, [protocolContract, account, viewMode, isOwner])
 
   // 添加分页逻辑 - 过滤掉动态奖励记录
@@ -321,8 +552,14 @@ const EarningsDetail: React.FC = () => {
       }
     })
 
+    // 如果是查看自己的数据，添加待领取的静态奖励到显示中
+    if (viewMode === "self" && account) {
+      // 注意：这里不直接加到stats中，而是在显示时特别处理
+      // 因为待领取奖励不是24小时内的历史记录
+    }
+
     return stats
-  }, [records])
+  }, [records, viewMode, account])
 
   const formatDate = (timestamp: number) => {
     return new Date(timestamp * 1000).toLocaleString()
@@ -420,7 +657,7 @@ const EarningsDetail: React.FC = () => {
             )}
             <div className="flex items-center gap-2">
               <button
-                onClick={() => fetchRecords(false)} // 强制刷新，不使用缓存
+                onClick={forceRefresh}
                 disabled={refreshing}
                 className="flex items-center gap-2 px-4 py-2 bg-black/20 hover:bg-black/30 rounded-lg text-black transition-colors disabled:opacity-50"
               >
@@ -440,6 +677,62 @@ const EarningsDetail: React.FC = () => {
         </div>
       </div>
 
+      {/* 待领取奖励提示 */}
+      {viewMode === "self" && (pendingRewards.mc > 0 || pendingRewards.jbc > 0) && (
+        <div className="bg-gradient-to-r from-green-900/30 to-emerald-900/30 border border-green-500/40 rounded-xl p-4 mb-6 backdrop-blur-sm">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-green-500/20 rounded-lg flex items-center justify-center">
+              <Pickaxe className="w-5 h-5 text-green-400" />
+            </div>
+            <div className="flex-1">
+              <h3 className="text-lg font-bold text-green-400 mb-1">{ui.pendingRewards || "有待领取的静态奖励！"}</h3>
+              <p className="text-sm text-green-300">
+                {ui.pendingRewardsDesc || "您有"} <span className="font-bold">{pendingRewards.mc.toFixed(4)} MC</span> {ui.and || "和"} <span className="font-bold">{pendingRewards.jbc.toFixed(4)} JBC</span> {ui.pendingRewardsDesc2 || "的静态奖励待领取"}
+              </p>
+              <p className="text-xs text-green-400 mt-1">
+                💡 {ui.claimHint || "请前往挖矿页面点击'领取收益'按钮来领取您的静态奖励"}
+              </p>
+            </div>
+            <div className="flex flex-col gap-2">
+              <button
+                onClick={() => window.location.href = '#/mining'}
+                className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg text-sm font-medium transition-colors"
+              >
+                {ui.goToClaim || "去领取"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 无奖励状态提示 */}
+      {viewMode === "self" && pendingRewards.mc === 0 && pendingRewards.jbc === 0 && records.length === 0 && !loading && (
+        <div className="bg-gradient-to-r from-blue-900/30 to-indigo-900/30 border border-blue-500/40 rounded-xl p-4 mb-6 backdrop-blur-sm">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-blue-500/20 rounded-lg flex items-center justify-center">
+              <AlertCircle className="w-5 h-5 text-blue-400" />
+            </div>
+            <div className="flex-1">
+              <h3 className="text-lg font-bold text-blue-400 mb-1">{ui.noStakingTitle || "暂无静态奖励"}</h3>
+              <p className="text-sm text-blue-300">
+                {ui.noStakingDesc || "您还没有进行质押或质押时间不足。静态奖励需要先购买门票并进行质押。"}
+              </p>
+              <p className="text-xs text-blue-400 mt-1">
+                💡 {ui.stakingHint || "前往挖矿页面购买门票并进行质押来获得静态奖励"}
+              </p>
+            </div>
+            <div className="flex flex-col gap-2">
+              <button
+                onClick={() => window.location.href = '#/mining'}
+                className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm font-medium transition-colors"
+              >
+                {ui.goToStake || "去质押"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Total Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
         <div className="bg-gray-900/80 border border-gray-700 rounded-xl shadow-md p-5 backdrop-blur-sm">
@@ -458,6 +751,14 @@ const EarningsDetail: React.FC = () => {
           <div className="text-sm text-gray-200 mb-2">{ui.staticReward || "Static Reward"} (24h)</div>
           <div className="text-lg font-bold text-neon-400 drop-shadow-md">{dailyStats.static.mc.toFixed(2)} MC</div>
           <div className="text-lg font-bold text-amber-400 drop-shadow-md">{dailyStats.static.jbc.toFixed(2)} JBC</div>
+          {/* 显示待领取的静态奖励 */}
+          {viewMode === "self" && (pendingRewards.mc > 0 || pendingRewards.jbc > 0) && (
+            <div className="mt-2 pt-2 border-t border-gray-600/50">
+              <div className="text-xs text-gray-400 mb-1">待领取 (Pending)</div>
+              <div className="text-sm font-bold text-green-400">+{pendingRewards.mc.toFixed(4)} MC</div>
+              <div className="text-sm font-bold text-yellow-400">+{pendingRewards.jbc.toFixed(4)} JBC</div>
+            </div>
+          )}
         </div>
         <div className="bg-gray-900/80 border border-gray-700 rounded-xl shadow-md p-4 backdrop-blur-sm">
           <div className="text-sm text-gray-200 mb-2">{ui.directReward || "Direct Reward"} (24h)</div>

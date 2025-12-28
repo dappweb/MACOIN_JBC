@@ -8,7 +8,7 @@ async function main() {
     console.log("Deployer balance:", ethers.formatEther(await deployer.provider.getBalance(deployer.address)), "MC");
 
     // Current proxy address
-    const PROXY_ADDRESS = "0xc938b6D9ebC484BE7e946e11CD46BE56ee29BE19";
+    const PROXY_ADDRESS = process.env.PROXY_ADDRESS || "0xc938b6D9ebC484BE7e946e11CD46BE56ee29BE19";
     
     console.log("\n📋 Pre-upgrade verification...");
     
@@ -37,6 +37,15 @@ async function main() {
     console.log("\n🔄 Upgrading contract implementation...");
     
     try {
+        // Import the proxy first if it's not registered
+        console.log("Trying to import proxy...");
+        try {
+            await upgrades.forceImport(PROXY_ADDRESS, JinbaoProtocol);
+            console.log("✅ Proxy imported successfully");
+        } catch (error) {
+            console.log("⚠️ Proxy import warning (might be already registered):", error.message);
+        }
+
         // Upgrade the contract
         const upgradedContract = await upgrades.upgradeProxy(PROXY_ADDRESS, JinbaoProtocol);
         await upgradedContract.waitForDeployment();

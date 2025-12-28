@@ -1,6 +1,6 @@
-import React, { useEffect, useState, useMemo } from "react"
+import React, { useEffect, useState, useMemo, useCallback } from "react"
 import { UserStats } from "../src/types"
-import { Wallet, TrendingUp, Users, Coins, ArrowUpRight, Link, Ticket } from "lucide-react"
+import { Wallet, TrendingUp, Users, Coins, Link, Ticket } from "lucide-react"
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"
 import { useLanguage } from "../src/LanguageContext"
 import { useWeb3 } from "../src/Web3Context"
@@ -109,7 +109,7 @@ const MemoizedPriceChart = React.memo(({ priceHistory, t }: { priceHistory: Pric
               fontSize: "12px",
             }}
             labelStyle={{ color: "#01FEAE", fontWeight: "bold", marginBottom: "4px", fontSize: "11px" }}
-            formatter={(value: any) => {
+            formatter={(value: number | string) => {
               if (typeof value === "number") {
                 return value.toFixed(6)
               }
@@ -197,7 +197,7 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
     }
 
     // 转换实时价格数据为图表格式
-    return rawPriceHistory.map((point, index) => {
+    return rawPriceHistory.map((point: any) => {
       const date = new Date(point.timestamp * 1000)
       const timeStr = `${date.getHours().toString().padStart(2, "0")}:${date.getMinutes().toString().padStart(2, "0")}`
       
@@ -229,112 +229,111 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
   const [isBound, setIsBound] = useState(false)
   const [isBinding, setIsBinding] = useState(false)
 
-  // 获取用户数据的useEffect
-  useEffect(() => {
-    const fetchData = async () => {
-      console.log('🔍 [StatsPanel Debug] Checking connection status...');
-      console.log('isConnected:', isConnected);
-      console.log('account:', account);
-      console.log('protocolContract:', !!protocolContract);
-      
-      if (isConnected && account && mcContract && jbcContract && protocolContract) {
-        try {
-          console.log('🔍 [StatsPanel Debug] Fetching user data for:', account);
-          
-          // 余额数据现在从全局状态获取，不需要重复获取
+  // 提取fetchData函数，以便在事件监听器中使用
+  const fetchData = useCallback(async () => {
+    console.log('🔍 [StatsPanel Debug] Checking connection status...');
+    console.log('isConnected:', isConnected);
+    console.log('account:', account);
+    console.log('protocolContract:', !!protocolContract);
+    
+    if (isConnected && account && mcContract && jbcContract && protocolContract) {
+      try {
+        console.log('🔍 [StatsPanel Debug] Fetching user data for:', account);
+        
+        // 余额数据现在从全局状态获取，不需要重复获取
 
-          // Fetch Protocol Info
-          const userInfo = await protocolContract.userInfo(account)
-          console.log('🔍 [StatsPanel Debug] User info:', userInfo);
-          
-          // userInfo returns: (referrer, activeDirects, teamCount, totalRevenue, currentCap, isActive, refundFeeAmount, teamTotalVolume, teamTotalCap)
+        // Fetch Protocol Info
+        const userInfo = await protocolContract.userInfo(account)
+        console.log('🔍 [StatsPanel Debug] User info:', userInfo);
+        
+        // userInfo returns: (referrer, activeDirects, teamCount, totalRevenue, currentCap, isActive, refundFeeAmount, teamTotalVolume, teamTotalCap)
 
-          // Check referrer binding
-          const currentReferrer = userInfo[0]
-          // Updated check: Ensure referrer is not zero address AND not user's own address (self-ref protection)
-          if (currentReferrer && currentReferrer !== ethers.ZeroAddress && currentReferrer.toLowerCase() !== account.toLowerCase()) {
-            setIsBound(true)
-          } else {
-            // Unbound, check URL
-            const urlParams = new URLSearchParams(window.location.search)
-            const refParam = urlParams.get("ref")
-            if (refParam && !referrer) {
-              setReferrer(refParam)
-            }
+        // Check referrer binding
+        const currentReferrer = userInfo[0]
+        // Updated check: Ensure referrer is not zero address AND not user's own address (self-ref protection)
+        if (currentReferrer && currentReferrer !== ethers.ZeroAddress && currentReferrer.toLowerCase() !== account.toLowerCase()) {
+          setIsBound(true)
+        } else {
+          // Unbound, check URL
+          const urlParams = new URLSearchParams(window.location.search)
+          const refParam = urlParams.get("ref")
+          if (refParam && !referrer) {
+            setReferrer(refParam)
           }
-
-          // Calculate Level based on teamCount (userInfo[2]) - Updated standards
-          let level = "V0"
-          const teamCount = Number(userInfo[2])
-          
-          console.log('🔍 [StatsPanel Debug] Team count:', teamCount);
-          
-          // Updated more achievable level standards
-          if (teamCount >= 5000) level = "V9"
-          else if (teamCount >= 1000) level = "V8"
-          else if (teamCount >= 500) level = "V7"
-          else if (teamCount >= 200) level = "V6"
-          else if (teamCount >= 100) level = "V5"
-          else if (teamCount >= 50) level = "V4"
-          else if (teamCount >= 20) level = "V3"
-          else if (teamCount >= 10) level = "V2"
-          else if (teamCount >= 5) level = "V1"
-
-          console.log('🔍 [StatsPanel Debug] Calculated level:', level);
-
-          let referralRevenue = 0
-          let rewardMc = 0
-          let rewardJbc = 0
-          try {
-            if (provider) {
-              const currentBlock = await provider.getBlockNumber()
-              const fromBlock = Math.max(0, currentBlock - 100000)
-              const [referralEvents, rewardEvents] = await Promise.all([
-                protocolContract.queryFilter(protocolContract.filters.ReferralRewardPaid(account), fromBlock),
-                protocolContract.queryFilter(protocolContract.filters.RewardClaimed(account), fromBlock),
-              ])
-              for (const event of referralEvents) {
-                if (event.args) {
-                  referralRevenue += parseFloat(ethers.formatEther(event.args[2]))
-                }
-              }
-              for (const event of rewardEvents) {
-                if (event.args) {
-                  rewardMc += parseFloat(ethers.formatEther(event.args[1]))
-                  rewardJbc += parseFloat(ethers.formatEther(event.args[2]))
-                }
-              }
-            }
-          } catch (err) {
-            console.error("Failed to fetch referral rewards", err)
-          }
-
-          const baseRevenue = parseFloat(ethers.formatEther(userInfo[3]))
-          const combinedRevenue = baseRevenue + referralRevenue
-          setRewardTotals({
-            mc: rewardMc + referralRevenue,
-            jbc: rewardJbc,
-          })
-
-          setDisplayStats((prev) => ({
-            ...prev,
-            balanceMC: parseFloat(balances.mc), // 使用全局状态的余额
-            balanceJBC: parseFloat(balances.jbc), // 使用全局状态的余额
-            totalRevenue: combinedRevenue,
-            teamCount: Number(userInfo[2]),
-            currentLevel: level,
-          }))
-          
-          console.log('🔍 [StatsPanel Debug] Updated display stats:', {
-            teamCount: Number(userInfo[2]),
-            currentLevel: level,
-            balanceMC: parseFloat(balances.mc),
-            balanceJBC: parseFloat(balances.jbc)
-          });
-        } catch (err) {
-          console.error("Error fetching stats", err)
         }
-      } else {
+
+        // Calculate Level based on teamCount (userInfo[2]) - Updated standards
+        let level = "V0"
+        const teamCount = Number(userInfo[2])
+        
+        console.log('🔍 [StatsPanel Debug] Team count:', teamCount);
+        
+        // 更新的极差裂变机制等级标准
+        if (teamCount >= 100000) level = "V9"      // V9: 100,000个地址，45%极差收益
+        else if (teamCount >= 30000) level = "V8"  // V8: 30,000个地址，40%极差收益
+        else if (teamCount >= 10000) level = "V7"  // V7: 10,000个地址，35%极差收益
+        else if (teamCount >= 3000) level = "V6"   // V6: 3,000个地址，30%极差收益
+        else if (teamCount >= 1000) level = "V5"   // V5: 1,000个地址，25%极差收益
+        else if (teamCount >= 300) level = "V4"    // V4: 300个地址，20%极差收益
+        else if (teamCount >= 100) level = "V3"    // V3: 100个地址，15%极差收益
+        else if (teamCount >= 30) level = "V2"     // V2: 30个地址，10%极差收益
+        else if (teamCount >= 10) level = "V1"     // V1: 10个地址，5%极差收益
+
+        console.log('🔍 [StatsPanel Debug] Calculated level:', level);
+
+        let referralRevenue = 0
+        let rewardMc = 0
+        let rewardJbc = 0
+        try {
+          if (provider) {
+            const currentBlock = await provider.getBlockNumber()
+            const fromBlock = Math.max(0, currentBlock - 100000)
+            const [referralEvents, rewardEvents] = await Promise.all([
+              protocolContract.queryFilter(protocolContract.filters.ReferralRewardPaid(account), fromBlock),
+              protocolContract.queryFilter(protocolContract.filters.RewardClaimed(account), fromBlock),
+            ])
+            for (const event of referralEvents) {
+              if (event.args) {
+                referralRevenue += parseFloat(ethers.formatEther(event.args[2]))
+              }
+            }
+            for (const event of rewardEvents) {
+              if (event.args) {
+                rewardMc += parseFloat(ethers.formatEther(event.args[1]))
+                rewardJbc += parseFloat(ethers.formatEther(event.args[2]))
+              }
+            }
+          }
+        } catch (err) {
+          console.error("Failed to fetch referral rewards", err)
+        }
+
+        const baseRevenue = parseFloat(ethers.formatEther(userInfo[3]))
+        const combinedRevenue = baseRevenue + referralRevenue
+        setRewardTotals({
+          mc: rewardMc + referralRevenue,
+          jbc: rewardJbc,
+        })
+
+        setDisplayStats((prev: UserStats) => ({
+          ...prev,
+          balanceMC: parseFloat(balances.mc), // 使用全局状态的余额
+          balanceJBC: parseFloat(balances.jbc), // 使用全局状态的余额
+          totalRevenue: combinedRevenue,
+          teamCount: Number(userInfo[2]),
+          currentLevel: level,
+        }))
+        
+        console.log('🔍 [StatsPanel Debug] Updated display stats:', {
+          teamCount: Number(userInfo[2]),
+          currentLevel: level,
+          balanceMC: parseFloat(balances.mc),
+          balanceJBC: parseFloat(balances.jbc)
+        });
+      } catch (err) {
+        console.error("Error fetching stats", err)
+      }
+    } else {
         console.log('🔍 [StatsPanel Debug] Not ready to fetch data:', {
           isConnected,
           hasAccount: !!account,
@@ -343,11 +342,26 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
           hasProtocolContract: !!protocolContract
         });
       }
-    }
+  }, [isConnected, account, mcContract, jbcContract, protocolContract, provider, balances.mc, balances.jbc, referrer])
+
+  // 监听用户等级变化事件
+  useEventRefresh('userLevelChanged', () => {
+    console.log('📊 [StatsPanel] 用户等级变化，刷新用户数据');
+    fetchData();
+  });
+
+  // 监听门票状态变化事件（可能影响等级）
+  useEventRefresh('ticketStatusChanged', () => {
+    console.log('🎫 [StatsPanel] 门票状态变化，刷新用户数据');
+    fetchData();
+  });
+
+  // 初始化数据获取和定期刷新
+  useEffect(() => {
     const timer = setInterval(fetchData, 5000) // Refresh every 5s
     fetchData()
     return () => clearInterval(timer)
-  }, [isConnected, account, mcContract, jbcContract, protocolContract, balances.mc, balances.jbc]) // 添加余额依赖
+  }, [fetchData])
 
   const handleBind = async () => {
     if (referrer.trim() && protocolContract) {
@@ -478,7 +492,7 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
               <input
                 type="text"
                 value={referrer}
-                onChange={(e) => setReferrer(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setReferrer(e.target.value)}
                 placeholder={t.team.bindPlaceholder}
                 className="w-full sm:w-48 md:w-64 px-3 py-2.5 md:px-4 md:py-3 bg-gray-900/50 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-neon-500/50 text-white placeholder-gray-500 text-sm md:text-base"
               />

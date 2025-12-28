@@ -89,30 +89,30 @@ const TeamLevel: React.FC = () => {
           let level = "V0"
           let progress = ""
           
-          // More achievable level standards
-          if (effectiveCount >= 5000) level = "V9"
-          else if (effectiveCount >= 1000) level = "V8"
-          else if (effectiveCount >= 500) level = "V7"
-          else if (effectiveCount >= 200) level = "V6"
-          else if (effectiveCount >= 100) level = "V5"
-          else if (effectiveCount >= 50) level = "V4"
-          else if (effectiveCount >= 20) level = "V3"
-          else if (effectiveCount >= 10) level = "V2"
-          else if (effectiveCount >= 5) level = "V1"
+          // 更新的极差裂变机制等级标准
+          if (effectiveCount >= 100000) level = "V9"      // V9: 100,000个地址，45%极差收益
+          else if (effectiveCount >= 30000) level = "V8"  // V8: 30,000个地址，40%极差收益
+          else if (effectiveCount >= 10000) level = "V7"  // V7: 10,000个地址，35%极差收益
+          else if (effectiveCount >= 3000) level = "V6"   // V6: 3,000个地址，30%极差收益
+          else if (effectiveCount >= 1000) level = "V5"   // V5: 1,000个地址，25%极差收益
+          else if (effectiveCount >= 300) level = "V4"    // V4: 300个地址，20%极差收益
+          else if (effectiveCount >= 100) level = "V3"    // V3: 100个地址，15%极差收益
+          else if (effectiveCount >= 30) level = "V2"     // V2: 30个地址，10%极差收益
+          else if (effectiveCount >= 10) level = "V1"     // V1: 10个地址，5%极差收益
           
-          // Calculate progress to next level
-          let nextLevelReq = 5
-          if (effectiveCount < 5) nextLevelReq = 5
-          else if (effectiveCount < 10) nextLevelReq = 10
-          else if (effectiveCount < 20) nextLevelReq = 20
-          else if (effectiveCount < 50) nextLevelReq = 50
+          // 计算到下一等级的进度
+          let nextLevelReq = 10
+          if (effectiveCount < 10) nextLevelReq = 10
+          else if (effectiveCount < 30) nextLevelReq = 30
           else if (effectiveCount < 100) nextLevelReq = 100
-          else if (effectiveCount < 200) nextLevelReq = 200
-          else if (effectiveCount < 500) nextLevelReq = 500
+          else if (effectiveCount < 300) nextLevelReq = 300
           else if (effectiveCount < 1000) nextLevelReq = 1000
-          else if (effectiveCount < 5000) nextLevelReq = 5000
+          else if (effectiveCount < 3000) nextLevelReq = 3000
+          else if (effectiveCount < 10000) nextLevelReq = 10000
+          else if (effectiveCount < 30000) nextLevelReq = 30000
+          else if (effectiveCount < 100000) nextLevelReq = 100000
           
-          progress = effectiveCount < 5000 ? ` (${effectiveCount}/${nextLevelReq})` : ""
+          progress = effectiveCount < 100000 ? ` (${effectiveCount}/${nextLevelReq})` : ""
 
           setUserLevelInfo({
             activeDirects: activeDirects,

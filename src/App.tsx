@@ -90,12 +90,19 @@ const AppContent: React.FC = () => {
         backgroundImage: `url(${getBackgroundImage()})`,
         backgroundSize:'cover',
         backgroundPosition:currentTab === AppTab.TEAM ? '26% 100%' : currentTab ===AppTab.HISTORY ? '24% 100%' : 'center',
-        backgroundAttachment: 'scroll', // 改为scroll以提高移动端兼容性
+        backgroundAttachment: 'scroll',
         backgroundRepeat: 'no-repeat'
       }}
     >
-      {/* 调整遮罩层透明度以显示背景图 */}
-      <div className="fixed inset-0 bg-black/30 z-0"></div>
+      {/* 增强背景图效果 - 减少遮罩层透明度，增加渐变效果 */}
+      <div className="fixed inset-0 bg-gradient-to-b from-black/20 via-black/15 to-black/40 z-0"></div>
+      
+      {/* 添加动态光效 */}
+      <div className="fixed inset-0 z-0">
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-neon-500/5 rounded-full blur-3xl animate-pulse"></div>
+        <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-amber-500/5 rounded-full blur-3xl animate-pulse delay-1000"></div>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-blue-500/3 rounded-full blur-3xl animate-pulse delay-2000"></div>
+      </div>
       
       <Navbar currentTab={currentTab} setTab={setCurrentTab} />
 

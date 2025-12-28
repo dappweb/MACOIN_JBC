@@ -26,21 +26,9 @@ export const PROTOCOL_ABI = [
   "function userTicket(address) view returns (uint256 ticketId, uint256 amount, uint256 purchaseTime, bool exited)",
   "function userStakes(address, uint256) view returns (uint256 id, uint256 amount, uint256 startTime, uint256 cycleDays, bool active, uint256 paid)",
   "function getDirectReferrals(address) view returns (address[])",
-  "function getDirectReferralsData(address) view returns (tuple(address user, uint256 ticketAmount, uint256 joinTime)[])",
+  "function getUserLevel(address) view returns (uint256 level, uint256 percent, uint256 teamCount)",
+  "function calculateLevel(uint256 teamCount) view returns (uint256 level, uint256 percent)",
   "function owner() view returns (address)",
-  "function setWallets(address, address, address, address) external",
-  "function setDistributionConfig(uint256, uint256, uint256, uint256, uint256, uint256) external",
-  "function setSwapTaxes(uint256, uint256) external",
-  "function setRedemptionFeePercent(uint256) external",
-  "function redemptionFeePercent() view returns (uint256)",
-  "function addLiquidity(uint256 mcAmount, uint256 jbcAmount) external",
-  "function withdrawSwapReserves(address, uint256, address, uint256) external",
-  "function withdrawLevelRewardPool(address, uint256) external",
-  "function rescueTokens(address, address, uint256) external",
-  "function batchUpdateUserStats(address[], uint256[], uint256[]) external",
-  "function adminSetReferrer(address, address) external",
-  "function adminUpdateUserData(address, bool, uint256, bool, uint256, bool, uint256, bool, uint256, bool, uint256) external",
-  "function getAmountOut(uint256, uint256, uint256) pure returns (uint256)",
   "function swapReserveMC() view returns (uint256)",
   "function swapReserveJBC() view returns (uint256)",
   "function lastBurnTime() view returns (uint256)",
@@ -48,14 +36,10 @@ export const PROTOCOL_ABI = [
   "function treasuryWallet() view returns (address)",
   "function lpInjectionWallet() view returns (address)",
   "function buybackWallet() view returns (address)",
-  "function setLevelConfigs(tuple(uint256 minDirects, uint256 level, uint256 percent)[]) external",
-  "function setTicketFlexibilityDuration(uint256) external",
-  "function setOperationalStatus(bool, bool) external",
   "function liquidityEnabled() view returns (bool)",
   "function redeemEnabled() view returns (bool)",
   "function ticketFlexibilityDuration() view returns (uint256)",
   "function levelRewardPool() view returns (uint256)",
-  "function transferOwnership(address newOwner) external",
   "function SECONDS_IN_UNIT() view returns (uint256)",
   "event BoundReferrer(address indexed user, address indexed referrer)",
   "event TicketPurchased(address indexed user, uint256 amount, uint256 ticketId)",
@@ -64,16 +48,32 @@ export const PROTOCOL_ABI = [
   "event RewardPaid(address indexed user, uint256 amount, uint8 rewardType)",
   "event RewardClaimed(address indexed user, uint256 mcAmount, uint256 jbcAmount, uint8 rewardType, uint256 ticketId)",
   "event ReferralRewardPaid(address indexed user, address indexed from, uint256 mcAmount, uint8 rewardType, uint256 ticketId)",
+  "event UserLevelChanged(address indexed user, uint256 oldLevel, uint256 newLevel, uint256 teamCount)",
+  "event TeamCountUpdated(address indexed user, uint256 oldCount, uint256 newCount)",
   "event Redeemed(address indexed user, uint256 principal, uint256 fee)",
   "event SwappedMCToJBC(address indexed user, uint256 mcAmount, uint256 jbcAmount, uint256 tax)",
   "event SwappedJBCToMC(address indexed user, uint256 jbcAmount, uint256 mcAmount, uint256 tax)",
+]
+
+export const DAILY_BURN_MANAGER_ABI = [
+  "function dailyBurn() external",
+  "function canBurn() view returns (bool)",
+  "function nextBurnTime() view returns (uint256)",
+  "function getBurnAmount() view returns (uint256)",
+  "function timeUntilNextBurn() view returns (uint256)",
+  "function lastBurnTime() view returns (uint256)",
+  "function emergencyPause() external",
+  "function resumeBurn() external",
+  "function owner() view returns (address)",
+  "event DailyBurnExecuted(uint256 burnAmount, uint256 timestamp, address executor)"
 ]
 
 // Contract Addresses - MC Chain Testnet
 export const CONTRACT_ADDRESSES = {
   MC_TOKEN: "0xB2B8777BcBc7A8DEf49F022773d392a8787cf9EF",
   JBC_TOKEN: "0xA743cB357a9f59D349efB7985072779a094658dD",
-  PROTOCOL: "0x515871E9eADbF976b546113BbD48964383f86E61" // 新部署的Protocol合约
+  PROTOCOL: "0x515871E9eADbF976b546113BbD48964383f86E61", // 新部署的Protocol合约
+  DAILY_BURN_MANAGER: "0x6C2FdDEb939D92E0dde178845F570FC4E0d213bc" // 每日燃烧管理合约
 };
 
 interface Web3ContextType {
@@ -81,6 +81,7 @@ interface Web3ContextType {
   signer: ethers.Signer | null
   account: string | null
   connectWallet: () => void
+  disconnectWallet: () => void
   isConnected: boolean
   mcContract: ethers.Contract | null
   jbcContract: ethers.Contract | null
@@ -176,6 +177,7 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setReferrerAddress(hasRef ? referrer : null)
       
     } catch (err) {
+      console.error("Error checking referrer status:", err)
       setHasReferrer(false)
       setIsOwner(false)
       setReferrerAddress(null)

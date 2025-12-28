@@ -9,6 +9,8 @@ import { formatContractError } from '../utils/errorFormatter';
 import { SwapErrorHandler, SwapValidationResult } from '../utils/swapErrorHandler';
 import SwapErrorModal from './SwapErrorModal';
 import SwapValidationAlert from './SwapValidationAlert';
+import AdminLiquidityPanel from './AdminLiquidityPanel';
+import DailyBurnPanel from './DailyBurnPanel';
 
 const SwapPanel: React.FC = () => {
   const { t } = useLanguage();
@@ -335,7 +337,14 @@ const SwapPanel: React.FC = () => {
   };
 
   return (
-    <div className="max-w-md mx-auto mt-4 md:mt-10 glass-panel p-5 sm:p-6 md:p-8 rounded-2xl md:rounded-3xl relative animate-fade-in bg-gray-900/50 border border-gray-800 backdrop-blur-sm">
+    <>
+      {/* 管理员流动性面板 - 只对合约拥有者显示 */}
+      {isConnected && isOwner && <AdminLiquidityPanel />}
+      
+      {/* 管理员每日燃烧面板 - 只对合约拥有者显示 */}
+      {isConnected && isOwner && <DailyBurnPanel />}
+      
+      <div className="max-w-md mx-auto mt-4 md:mt-10 glass-panel p-5 sm:p-6 md:p-8 rounded-2xl md:rounded-3xl relative animate-fade-in bg-gray-900/50 border border-gray-800 backdrop-blur-sm">
         <div className="absolute inset-0 bg-neon-500/5 blur-3xl rounded-full"></div>
         <h2 className="text-xl md:text-2xl font-bold mb-4 md:mb-6 text-center relative z-10 text-white">{t.swap.title}</h2>
 
@@ -502,6 +511,30 @@ const SwapPanel: React.FC = () => {
               </div>
             )}
 
+            {/* Owner-Only Liquidity Addition Notice */}
+            {isConnected && isOwner && (
+              <div className="bg-blue-900/20 border-2 border-blue-500/50 rounded-xl p-4 mb-4 relative z-10 backdrop-blur-sm">
+                <p className="text-blue-300 text-sm font-bold text-center">
+                  👑 管理员模式：您可以添加流动性
+                </p>
+                <p className="text-blue-200/80 text-xs text-center mt-1">
+                  As contract owner, you have access to liquidity management functions
+                </p>
+              </div>
+            )}
+
+            {/* Non-Owner Liquidity Notice */}
+            {isConnected && !isOwner && (
+              <div className="bg-amber-900/20 border-2 border-amber-500/50 rounded-xl p-4 mb-4 relative z-10 backdrop-blur-sm">
+                <p className="text-amber-300 text-sm font-bold text-center">
+                  ℹ️ 流动性管理仅限合约拥有者
+                </p>
+                <p className="text-amber-200/80 text-xs text-center mt-1">
+                  Only contract owner (0x4C...4A48) can add liquidity to the pool
+                </p>
+              </div>
+            )}
+
             {/* Action Button */}
             {!isConnected ? (
                  <button disabled className="w-full py-4 bg-gray-800 text-gray-500 font-bold text-lg rounded-xl cursor-not-allowed border border-gray-700">
@@ -551,6 +584,7 @@ const SwapPanel: React.FC = () => {
           showContactSupport={true}
         />
     </div>
+    </>
   );
 };
 

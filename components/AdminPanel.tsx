@@ -6,6 +6,8 @@ import { ethers } from 'ethers';
 import toast from 'react-hot-toast';
 import { API_BASE_URL } from '../src/constants';
 import { formatContractError } from '../utils/errorFormatter';
+import { formatEnhancedContractError } from '../utils/contractErrorDecoder';
+import { isUsingLatestContract } from '../utils/contractAddressResolver';
 
 const AdminPanel: React.FC = () => {
   const { t } = useLanguage();
@@ -116,8 +118,21 @@ const AdminPanel: React.FC = () => {
     }
   }, [protocolContract, loading]); // Refresh on loading change (after tx)
 
+  // Contract address validation
+  const [contractAddressWarning, setContractAddressWarning] = useState(false);
+
   // Level Reward Pool Management
   const [levelRewardPool, setLevelRewardPool] = useState('0');
+
+  useEffect(() => {
+    const checkContractAddress = async () => {
+      if (protocolContract) {
+        const isLatest = await isUsingLatestContract(CONTRACT_ADDRESSES.PROTOCOL);
+        setContractAddressWarning(!isLatest);
+      }
+    };
+    checkContractAddress();
+  }, [protocolContract]);
 
   // Feature Controls
   const [ticketFlexibility, setTicketFlexibility] = useState('0');
@@ -386,16 +401,8 @@ const AdminPanel: React.FC = () => {
         toast.dismiss('approve');
         toast.dismiss('addLiq');
         
-        // Enhanced error handling
-        if (err.message?.includes('Ownable: caller is not the owner')) {
-            toast.error(t.admin.onlyOwner);
-        } else if (err.message?.includes('insufficient funds')) {
-            toast.error(t.admin.insufficientFunds);
-        } else if (err.message?.includes('InvalidAmount')) {
-            toast.error(t.admin.invalidAmount);
-        } else {
-            toast.error(formatContractError(err));
-        }
+        // Use enhanced error handling
+        toast.error(formatEnhancedContractError(err, t));
     } finally {
         setLoading(false);
     }
@@ -491,7 +498,7 @@ const AdminPanel: React.FC = () => {
 
       setLoading(true);
       try {
-          const tokenAddress = fundToken === 'MC' ? CONTRACT_ADDRESSES.MC : CONTRACT_ADDRESSES.JBC;
+          const tokenAddress = fundToken === 'MC' ? CONTRACT_ADDRESSES.MC_TOKEN : CONTRACT_ADDRESSES.JBC_TOKEN;
           const amount = ethers.parseEther(fundAmount);
           
           const tx = await protocolContract.rescueTokens(tokenAddress, searchUserAddress, amount);
@@ -563,6 +570,27 @@ const AdminPanel: React.FC = () => {
               <div className="mt-2 p-2 bg-black/40 rounded border border-red-500/20">
                   <p className="text-gray-400 text-xs font-mono">
                     Current Address: <span className="text-white">{account}</span>
+                  </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Contract Address Warning */}
+      {contractAddressWarning && (
+        <div className="bg-yellow-900/30 border-l-4 border-yellow-500 p-4 rounded-r shadow-lg mb-6">
+          <div className="flex items-start">
+            <AlertTriangle className="text-yellow-400 mt-0.5 mr-3 flex-shrink-0" size={20} />
+            <div>
+              <h3 className="text-yellow-400 font-bold text-base md:text-lg">Contract Address Warning</h3>
+              <p className="text-yellow-200/80 text-sm mt-1">
+                The frontend may be using an outdated contract address. This could cause admin functions to fail.
+                <span className="text-yellow-100 font-bold"> Please refresh the page or contact support.</span>
+              </p>
+              <div className="mt-2 p-2 bg-black/40 rounded border border-yellow-500/20">
+                  <p className="text-gray-400 text-xs font-mono">
+                    Current Contract: <span className="text-white">{CONTRACT_ADDRESSES.PROTOCOL}</span>
                   </p>
               </div>
             </div>

@@ -1,0 +1,31 @@
+{
+  "network": "mc",
+  "chainId": "88813",
+  "upgrader": "0x4C10831CBcF9884ba72051b5287b6c87E4F74A48",
+  "timestamp": "2025-12-28T11:07:34.128Z",
+  "upgrade": {
+    "proxyAddress": "0x7a216BeA62eF7629904E0d30b24F6842c9b0d660",
+    "oldImplementation": "0x326c44a65d6A75217FA4064776864bc8983c1e9c",
+    "newImplementation": "0x326c44a65d6A75217FA4064776864bc8983c1e9c",
+    "version": "v2-security-fixes-and-active-logic-fix"
+  },
+  "tokens": {
+    "MC": "0xB2B8777BcBc7A8DEf49F022773d392a8787cf9EF",
+    "JBC": "0xA743cB357a9f59D349efB7985072779a094658dD"
+  },
+  "securityFixes": [
+    "Reentrancy protection implemented",
+    "Integer overflow/underflow protection",
+    "Price manipulation protection",
+    "Emergency pause mechanism",
+    "Fund locking risk mitigation",
+    "Batch operation DoS protection",
+    "Fee evasion fix",
+    "Liquidity protection"
+  ],
+  "businessLogicFixes": [
+    "Fixed activeDirects logic: ticket holders are now considered active without requiring staking",
+    "Improved reward distribution: users with tickets can now receive rewards immediately",
+    "Enhanced user experience: buying tickets immediately activates user status"
+  ]
+}

@@ -1,0 +1,32 @@
+{
+  "network": "mc",
+  "timestamp": "2025-12-28T11:32:25.251Z",
+  "deployer": "0x4C10831CBcF9884ba72051b5287b6c87E4F74A48",
+  "contracts": {
+    "mcToken": "0xB2B8777BcBc7A8DEf49F022773d392a8787cf9EF",
+    "jbcToken": "0xA743cB357a9f59D349efB7985072779a094658dD",
+    "protocolProxy": "0xc938b6D9ebC484BE7e946e11CD46BE56ee29BE19",
+    "protocolImplementation": "0x13DcfD5832100a63709A3eD13CdeFa4380d5Be22"
+  },
+  "wallets": {
+    "marketing": "0x4C10831CBcF9884ba72051b5287b6c87E4F74A48",
+    "treasury": "0x4C10831CBcF9884ba72051b5287b6c87E4F74A48",
+    "lpInjection": "0x4C10831CBcF9884ba72051b5287b6c87E4F74A48",
+    "buyback": "0x4C10831CBcF9884ba72051b5287b6c87E4F74A48"
+  },
+  "initialLiquidity": {
+    "mc": "10000.0",
+    "jbc": "10000.0"
+  },
+  "swapReserves": {
+    "mc": "10000.0",
+    "jbc": "10000.0"
+  },
+  "configuration": {
+    "directRewardPercent": "25",
+    "levelRewardPercent": "15",
+    "liquidityEnabled": true,
+    "redeemEnabled": true,
+    "jbcPrice": "1.0"
+  }
+}

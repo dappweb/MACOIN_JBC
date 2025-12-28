@@ -10,7 +10,20 @@ interface LanguageContextType {
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
 export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [language, setLanguage] = useState<Language>('zh-TW');
+  const [language, setLanguageState] = useState<Language>(() => {
+    // Try to get language from localStorage
+    const saved = localStorage.getItem('app_language');
+    // Check if saved language is valid
+    if (saved && Object.keys(translations).includes(saved)) {
+      return saved as Language;
+    }
+    return 'zh'; // Default to zh (Simplified Chinese)
+  });
+
+  const setLanguage = (lang: Language) => {
+    setLanguageState(lang);
+    localStorage.setItem('app_language', lang);
+  };
 
   const value = {
     language,

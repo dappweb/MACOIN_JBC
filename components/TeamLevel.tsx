@@ -82,20 +82,23 @@ const TeamLevel: React.FC = () => {
 
           // Calc Level
           const activeDirects = Number(userInfo[1])
+          const teamCount = Number(userInfo[2])
+          const effectiveCount = Math.max(activeDirects, teamCount)
+          
           let level = "V0"
-          if (activeDirects >= 100000) level = "V9"
-          else if (activeDirects >= 30000) level = "V8"
-          else if (activeDirects >= 10000) level = "V7"
-          else if (activeDirects >= 3000) level = "V6"
-          else if (activeDirects >= 1000) level = "V5"
-          else if (activeDirects >= 300) level = "V4"
-          else if (activeDirects >= 100) level = "V3"
-          else if (activeDirects >= 30) level = "V2"
-          else if (activeDirects >= 10) level = "V1"
+          if (effectiveCount >= 100000) level = "V9"
+          else if (effectiveCount >= 30000) level = "V8"
+          else if (effectiveCount >= 10000) level = "V7"
+          else if (effectiveCount >= 3000) level = "V6"
+          else if (effectiveCount >= 1000) level = "V5"
+          else if (effectiveCount >= 300) level = "V4"
+          else if (effectiveCount >= 100) level = "V3"
+          else if (effectiveCount >= 30) level = "V2"
+          else if (effectiveCount >= 10) level = "V1"
 
           setUserLevelInfo({
             activeDirects: activeDirects,
-            teamCount: Number(userInfo[2]),
+            teamCount: teamCount,
             currentLevel: level,
             teamTotalVolume: userInfo[7],
             teamTotalCap: userInfo[8],
@@ -143,7 +146,9 @@ const TeamLevel: React.FC = () => {
             <div className="flex flex-wrap gap-2">
               <div className="bg-black/30 px-3 py-1.5 rounded-lg border border-gray-700/50 flex items-center gap-2">
                 <span className="text-xs text-gray-400">{t.team.colCount}</span>
-                <span className="text-sm md:text-base font-bold text-white">{userLevelInfo.activeDirects}</span>
+                <span className="text-sm md:text-base font-bold text-white">
+                  {Math.max(userLevelInfo.activeDirects, userLevelInfo.teamCount || 0)}
+                </span>
               </div>
               <div className="bg-black/30 px-3 py-1.5 rounded-lg border border-gray-700/50 flex items-center gap-2">
                 <span className="text-xs text-gray-400">{t.team.colReward}</span>

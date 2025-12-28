@@ -5,7 +5,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 
 interface IJBC is IERC20 {
     function burn(uint256 amount) external;
@@ -70,9 +70,8 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, UUPSUpgradeable, R
     address public buybackWallet;     // Buyback Wallet (for future use or external buyback)
     
     // Constants
-    uint256 public constant SECONDS_IN_UNIT = 60; // Minutes for Demo, Days for Prod
+    uint256 public constant SECONDS_IN_UNIT = 60;
     
-    // Distribution Config
     uint256 public directRewardPercent;
     uint256 public levelRewardPercent;
     uint256 public marketingPercent;
@@ -80,26 +79,30 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, UUPSUpgradeable, R
     uint256 public lpInjectionPercent;
     uint256 public treasuryPercent;
     
-    // Fees & Taxes
-    uint256 public redemptionFeePercent; // 1% of Ticket Amount
-    uint256 public swapBuyTax; // 50%
-    uint256 public swapSellTax; // 25%
+    uint256 public redemptionFeePercent;
+    uint256 public swapBuyTax;
+    uint256 public swapSellTax;
 
-    // Reward Types
     uint8 public constant REWARD_STATIC = 0;
-    uint8 public constant REWARD_DYNAMIC = 1; // General dynamic
+    uint8 public constant REWARD_DYNAMIC = 1;
     uint8 public constant REWARD_DIRECT = 2;
     uint8 public constant REWARD_LEVEL = 3;
     uint8 public constant REWARD_DIFFERENTIAL = 4;
 
-    // State
     mapping(address => UserInfo) public userInfo;
-    mapping(address => Ticket) public userTicket; // One active ticket per user
-    mapping(address => Stake[]) public userStakes; // Multiple stakes per user
+    mapping(address => Ticket) public userTicket;
+    mapping(address => Stake[]) public userStakes;
     mapping(address => address[]) public directReferrals;
     
-    // Pending Rewards for Differential System: ticketId => List of rewards to release upon redemption
     mapping(uint256 => PendingReward[]) public ticketPendingRewards;
+    
+    // Level Configs (kept for storage compatibility)
+    struct LevelConfig {
+        uint256 minDirects;
+        uint256 level;
+        uint256 percent;
+    }
+    LevelConfig[] public levelConfigs;
     
     // Level Configs removed (hardcoded) to save size
     
@@ -107,14 +110,10 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, UUPSUpgradeable, R
     uint256 public ticketFlexibilityDuration;
     bool public liquidityEnabled;
     bool public redeemEnabled;
-    bool public emergencyPaused; // Emergency pause flag
 
     // Swap Pool Reserves
     uint256 public swapReserveMC;
     uint256 public swapReserveJBC;
-
-    // Price oracle for external price feeds (optional)
-    address public priceOracle;
     
     // Minimum liquidity to prevent price manipulation
     uint256 public constant MIN_LIQUIDITY = 1000 * 1e18; // 1000 tokens minimum
@@ -135,6 +134,13 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, UUPSUpgradeable, R
     // nonReentrant modifier is inherited from ReentrancyGuardUpgradeable
     // Level Reward Pool for unclaimed rewards (added in upgrade)
     uint256 public levelRewardPool;
+    
+    // Storage gap for future upgrades (kept for compatibility)
+    uint256[47] private __gap;
+    
+    // New variables added in upgrade (placed after gap for compatibility)
+    bool public emergencyPaused; // Emergency pause flag
+    address public priceOracle; // Price oracle for external price feeds
     
     // Custom Errors
     error InvalidAmount();
@@ -263,8 +269,6 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, UUPSUpgradeable, R
         emergencyPaused = false;
         emit EmergencyUnpaused();
     }
-        priceOracle = _oracle;
-    }
 
     function getJBCPrice() public view returns (uint256) {
         // Use external oracle if available
@@ -296,10 +300,6 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, UUPSUpgradeable, R
         
         marketingWallet = _marketing;
         treasuryWallet = _treasury;
-        lpInjectionWallet = _lpInjection;
-        buybackWallet = _buyback;
-        emit WalletsUpdated(_marketing, _treasury, _lpInjection, _buyback);
-    }
         lpInjectionWallet = _lpInjection;
         buybackWallet = _buyback;
         emit WalletsUpdated(_marketing, _treasury, _lpInjection, _buyback);
@@ -369,15 +369,12 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, UUPSUpgradeable, R
     }
 
     function rescueTokens(address _token, address _to, uint256 _amount) external onlyOwner {
-        // Prevent rescuing main protocol tokens to avoid rug pull
         require(_token != address(mcToken) && _token != address(jbcToken), "Cannot rescue protocol tokens");
         require(_to != address(0), "Invalid recipient");
         
         IERC20(_token).transfer(_to, _amount);
         emit TokensRescued(_token, _to, _amount);
     }
-
-    // setLevelConfigs removed for size optimization
 
 
     // --- Helper Views ---
@@ -395,11 +392,11 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, UUPSUpgradeable, R
         return (0, 0);
     }
 
-    function getLevel(uint256 activeDirects) public view returns (uint256 level, uint256 percent) {
+    function getLevel(uint256 activeDirects) public pure returns (uint256 level, uint256 percent) {
         return _getLevel(activeDirects);
     }
 
-    function getLevelByTeamCount(uint256 teamCount) public view returns (uint256 level, uint256 percent) {
+    function getLevelByTeamCount(uint256 teamCount) public pure returns (uint256 level, uint256 percent) {
         return _getLevel(teamCount);
     }
 
@@ -413,12 +410,6 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, UUPSUpgradeable, R
     function getDirectReferrals(address user) external view returns (address[] memory) {
         return directReferrals[user];
     }
-
-    // Removed helper views to save size: getJBCPrice, getUserMaxSingleTicketAmount, getTeamCount, validateTeamCount, getDirectReferralsData
-    // Frontend should use userInfo getter or query directReferrals by index
-
-
-    // Removed expireMyTicket to reduce contract size
 
     // --- Core Functions ---
 
@@ -549,8 +540,6 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, UUPSUpgradeable, R
         }));
 
         stakeOwner[nextStakeId] = msg.sender;
-        // Calculate Team-based Differential Rewards on Liquidity Amount
-        _calculateAndStoreTeamBasedDifferentialRewards(msg.sender, amount, nextStakeId);
 
         // Enforce 1.5x Liquidity Rule
         // Liquidity Amount must be exactly 1.5x the Max Single Ticket Amount
@@ -1037,8 +1026,8 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, UUPSUpgradeable, R
 
     function _updateActiveStatus(address user) internal {
         Ticket storage t = userTicket[user];
-        // 简化活跃状态判断：只要有质押且未出局就是活跃
-        bool shouldBeActive = _getActiveStakeTotal(user) > 0 && !t.exited;
+        // 活跃状态判断：只要有门票且未出局就是活跃
+        bool shouldBeActive = t.amount > 0 && !t.exited;
         bool currentlyActive = userInfo[user].isActive;
         if (shouldBeActive == currentlyActive) return;
 
@@ -1049,12 +1038,8 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, UUPSUpgradeable, R
 
         if (shouldBeActive) {
             userInfo[referrer].activeDirects++;
-            // Update team counts recursively
-            _updateTeamCountRecursive(user, 1);
         } else if (userInfo[referrer].activeDirects > 0) {
             userInfo[referrer].activeDirects--;
-            // Update team counts recursively
-            _updateTeamCountRecursive(user, -1);
         }
     }
 
@@ -1133,110 +1118,4 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, UUPSUpgradeable, R
         emit SwappedJBCToMC(msg.sender, jbcAmount, mcOutput, tax);
     }
 
-    // --- Team-based Differential Reward Functions ---
-
-    function _updateTeamCountRecursive(address user, int256 delta) internal {
-        if (user == address(0) || delta == 0) return;
-        
-        address current = userInfo[user].referrer;
-        uint256 iterations = 0;
-        address[] memory visited = new address[](20); // Track visited addresses
-        
-        while (current != address(0) && iterations < 20) {
-            // Check for circular references
-            for (uint256 j = 0; j < iterations; j++) {
-                if (visited[j] == current) {
-                    return; // Circular reference detected, exit
-                }
-            }
-            visited[iterations] = current;
-            
-            uint256 oldCount = userInfo[current].teamCount;
-            uint256 newCount;
-            
-            if (delta > 0) {
-                // Check for overflow
-                uint256 increase = uint256(delta);
-                require(oldCount + increase >= oldCount, "Team count overflow");
-                newCount = oldCount + increase;
-            } else {
-                uint256 decrease = uint256(-delta);
-                // Safe subtraction - prevent underflow
-                newCount = decrease > oldCount ? 0 : oldCount - decrease;
-            }
-            
-            userInfo[current].teamCount = newCount;
-            emit TeamCountUpdated(current, oldCount, newCount);
-            
-            current = userInfo[current].referrer;
-            iterations++;
-        }
-    }
-
-    function _calculateAndStoreTeamBasedDifferentialRewards(address user, uint256 amount, uint256 stakeId) internal {
-        address current = userInfo[user].referrer;
-        uint256 previousPercent = 0;
-        uint256 iterations = 0;
-
-        while (current != address(0) && iterations < 20) {
-            if (!userInfo[current].isActive) {
-                current = userInfo[current].referrer;
-                iterations++;
-                continue;
-            }
-
-            Ticket storage uplineTicket = userTicket[current];
-            if (uplineTicket.amount == 0 || uplineTicket.exited) {
-                current = userInfo[current].referrer;
-                iterations++;
-                continue;
-            }
-
-            // Get Upline Level based on team count
-            (, uint256 percent) = getLevelByTeamCount(userInfo[current].teamCount);
-            
-            if (percent > previousPercent) {
-                uint256 diffPercent = percent - previousPercent;
-                uint256 baseAmount = amount;
-                if (baseAmount > uplineTicket.amount) {
-                    baseAmount = uplineTicket.amount;
-                }
-                uint256 reward = (baseAmount * diffPercent) / 100;
-                
-                // Store Pending
-                stakePendingRewards[stakeId].push(PendingReward({
-                    upline: current,
-                    amount: reward
-                }));
-                
-                emit TeamBasedRewardCalculated(stakeId, current, reward, userInfo[current].teamCount);
-                
-                previousPercent = percent;
-            }
-            
-            if (percent >= 45) break; // Max V9
-            
-            current = userInfo[current].referrer;
-            iterations++;
-        }
-    }
-
-    function batchUpdateTeamCounts(address[] calldata users, uint256[] calldata newCounts) external onlyOwner {
-        if (users.length != newCounts.length) revert BatchUpdateSizeMismatch();
-        if (users.length > 100) revert BatchUpdateSizeMismatch(); // Limit batch size to prevent DoS
-        
-        for (uint256 i = 0; i < users.length; i++) {
-            uint256 oldCount = userInfo[users[i]].teamCount;
-            userInfo[users[i]].teamCount = newCounts[i];
-            emit TeamCountUpdated(users[i], oldCount, newCounts[i]);
-        }
-        
-        emit BatchTeamCountsUpdated(users.length);
-    }
-
-    // Removed getTeamLevelDistribution to reduce contract size
-
-    // Removed migrateTeamCounts to reduce contract size - use batchUpdateTeamCounts instead
-
-    // Removed initializeTeamCountsForAllUsers to reduce contract size - use migrateTeamCounts instead
 }

@@ -25,6 +25,9 @@ const NoticeBar: React.FC = () => {
   };
 
   const loadAnnouncement = () => {
+    // Determine language key: zh and zh-TW use 'zh', others use 'en'
+    const langKey = (language === 'zh' || language === 'zh-TW') ? 'zh' : 'en';
+
     // 从 localStorage 读取公告
     const storedAnnouncements = localStorage.getItem('announcements');
 
@@ -34,33 +37,33 @@ const NoticeBar: React.FC = () => {
         
         // Handle array format (new)
         if (Array.isArray(parsed)) {
-            const contents = parsed.map((item: any) => item[language] || item['en']).filter(Boolean);
+            const contents = parsed.map((item: any) => item[langKey] || item['en']).filter(Boolean);
             if (contents.length > 0) {
                 setAnnouncements(contents);
                 setIsVisible(true);
             } else {
-                setAnnouncements(demoAnnouncements[language] || demoAnnouncements['en']);
+                setAnnouncements(demoAnnouncements[langKey] || demoAnnouncements['en']);
                 setIsVisible(true);
             }
         } 
         // Handle single object format (legacy/fallback)
         else {
-            const content = parsed[language] || parsed['en'] || '';
+            const content = parsed[langKey] || parsed['en'] || '';
             if (content) {
                 setAnnouncements([content]);
                 setIsVisible(true);
             } else {
-                setAnnouncements(demoAnnouncements[language] || demoAnnouncements['en']);
+                setAnnouncements(demoAnnouncements[langKey] || demoAnnouncements['en']);
                 setIsVisible(true);
             }
         }
       } catch (err) {
         console.error('Failed to parse announcements', err);
-        setAnnouncements(demoAnnouncements[language] || demoAnnouncements['en']);
+        setAnnouncements(demoAnnouncements[langKey] || demoAnnouncements['en']);
         setIsVisible(true);
       }
     } else {
-      setAnnouncements(demoAnnouncements[language] || demoAnnouncements['en']);
+      setAnnouncements(demoAnnouncements[langKey] || demoAnnouncements['en']);
       setIsVisible(true);
     }
   };
@@ -116,7 +119,7 @@ const NoticeBar: React.FC = () => {
                           <span className="truncate">{truncateText(text, 60)}</span>
                           {text.length > 60 && (
                             <span className="text-xs bg-amber-500/20 px-2 py-0.5 rounded text-amber-200 flex items-center gap-1 hover:bg-amber-500/30 transition-colors whitespace-nowrap">
-                              <Info size={12} /> {language === 'zh' ? '点击查看详情' : 'Click for details'}
+                              <Info size={12} /> {(language === 'zh' || language === 'zh-TW') ? '点击查看详情' : 'Click for details'}
                             </span>
                           )}
                       </p>
@@ -140,7 +143,7 @@ const NoticeBar: React.FC = () => {
                   <Megaphone size={24} />
                 </div>
                 <h3 className="text-xl font-bold text-white">
-                  {language === 'zh' ? '系统公告' : 'Announcement'}
+                  {(language === 'zh' || language === 'zh-TW') ? '系统公告' : 'Announcement'}
                 </h3>
               </div>
               <button 
@@ -162,7 +165,7 @@ const NoticeBar: React.FC = () => {
                 onClick={() => setSelectedNotice(null)}
                 className="px-6 py-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black font-bold rounded-lg transition-all shadow-lg shadow-amber-500/30"
               >
-                {language === 'zh' ? '关闭' : 'Close'}
+                {(language === 'zh' || language === 'zh-TW') ? '关闭' : 'Close'}
               </button>
             </div>
           </div>

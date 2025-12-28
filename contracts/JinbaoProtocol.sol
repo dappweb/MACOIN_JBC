@@ -445,6 +445,7 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, UUPSUpgradeable, R
     }
 
     function buyTicket(uint256 amount) external nonReentrant whenNotPaused {
+        bool isNewUser = userInfo[msg.sender].maxTicketAmount == 0;
         _expireTicketIfNeeded(msg.sender);
         // Validate Amount (T1-T4)
         if (amount != 100 * 1e18 && amount != 300 * 1e18 && amount != 500 * 1e18 && amount != 1000 * 1e18) revert InvalidAmount();
@@ -532,6 +533,11 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, UUPSUpgradeable, R
 
         // Update Team Volume (Community Volume)
         _updateTeamVolume(msg.sender, amount);
+
+        // Update Team Count if new user
+        if (isNewUser) {
+            _updateTeamCount(msg.sender);
+        }
 
         _updateActiveStatus(msg.sender);
 
@@ -913,6 +919,21 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, UUPSUpgradeable, R
         if (remaining > 0) {
             levelRewardPool += remaining;
             emit LevelRewardPoolUpdated(remaining, levelRewardPool);
+        }
+    }
+
+    function _updateTeamCount(address user) internal {
+        address current = userInfo[user].referrer;
+        uint256 iterations = 0;
+        
+        // Update up to 30 layers to track team count
+        while (current != address(0) && iterations < 30) {
+            uint256 oldCount = userInfo[current].teamCount;
+            userInfo[current].teamCount = oldCount + 1;
+            emit TeamCountUpdated(current, oldCount, oldCount + 1);
+            
+            current = userInfo[current].referrer;
+            iterations++;
         }
     }
 

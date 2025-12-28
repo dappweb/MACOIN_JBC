@@ -12,6 +12,7 @@
             "enabled": true,
             "runs": 1
           },
+          "viaIR": true,
           "evmVersion": "paris",
           "outputSelection": {
             "*": {
@@ -52,6 +53,7 @@
             "enabled": true,
             "runs": 1
           },
+          "viaIR": true,
           "evmVersion": "paris",
           "outputSelection": {
             "*": {
@@ -91,6 +93,7 @@
             "enabled": true,
             "runs": 1
           },
+          "viaIR": true,
           "evmVersion": "paris",
           "outputSelection": {
             "*": {
@@ -133,6 +136,7 @@
             "enabled": true,
             "runs": 1
           },
+          "viaIR": true,
           "evmVersion": "paris",
           "outputSelection": {
             "*": {
@@ -170,6 +174,7 @@
             "enabled": true,
             "runs": 1
           },
+          "viaIR": true,
           "evmVersion": "paris",
           "outputSelection": {
             "*": {
@@ -207,6 +212,7 @@
             "enabled": true,
             "runs": 1
           },
+          "viaIR": true,
           "evmVersion": "paris",
           "outputSelection": {
             "*": {
@@ -246,6 +252,7 @@
             "enabled": true,
             "runs": 1
           },
+          "viaIR": true,
           "evmVersion": "paris",
           "outputSelection": {
             "*": {
@@ -275,8 +282,8 @@
       ]
     },
     "C:\\Users\\Administrator\\Documents\\GitHub\\MACOIN_JBC\\contracts\\JinbaoProtocol.sol": {
-      "lastModificationDate": 1766924524303,
-      "contentHash": "748ce5b7011a92f4cf0194515319bb54",
+      "lastModificationDate": 1766925704701,
+      "contentHash": "b8cd592f01c6fc62fb64e8c1c5f931e5",
       "sourceName": "contracts/JinbaoProtocol.sol",
       "solcConfig": {
         "version": "0.8.22",
@@ -285,6 +292,7 @@
             "enabled": true,
             "runs": 1
           },
+          "viaIR": true,
           "evmVersion": "paris",
           "outputSelection": {
             "*": {
@@ -308,7 +316,8 @@
         "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol",
         "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol",
         "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol",
-        "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol"
+        "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol",
+        "./RedemptionLib.sol"
       ],
       "versionPragmas": [
         "^0.8.20"
@@ -330,6 +339,7 @@
             "enabled": true,
             "runs": 1
           },
+          "viaIR": true,
           "evmVersion": "paris",
           "outputSelection": {
             "*": {
@@ -367,6 +377,7 @@
             "enabled": true,
             "runs": 1
           },
+          "viaIR": true,
           "evmVersion": "paris",
           "outputSelection": {
             "*": {
@@ -406,6 +417,7 @@
             "enabled": true,
             "runs": 1
           },
+          "viaIR": true,
           "evmVersion": "paris",
           "outputSelection": {
             "*": {
@@ -446,6 +458,7 @@
             "enabled": true,
             "runs": 1
           },
+          "viaIR": true,
           "evmVersion": "paris",
           "outputSelection": {
             "*": {
@@ -487,6 +500,7 @@
             "enabled": true,
             "runs": 1
           },
+          "viaIR": true,
           "evmVersion": "paris",
           "outputSelection": {
             "*": {
@@ -526,6 +540,7 @@
             "enabled": true,
             "runs": 1
           },
+          "viaIR": true,
           "evmVersion": "paris",
           "outputSelection": {
             "*": {
@@ -563,6 +578,7 @@
             "enabled": true,
             "runs": 1
           },
+          "viaIR": true,
           "evmVersion": "paris",
           "outputSelection": {
             "*": {
@@ -605,6 +621,7 @@
             "enabled": true,
             "runs": 1
           },
+          "viaIR": true,
           "evmVersion": "paris",
           "outputSelection": {
             "*": {
@@ -642,6 +659,7 @@
             "enabled": true,
             "runs": 1
           },
+          "viaIR": true,
           "evmVersion": "paris",
           "outputSelection": {
             "*": {
@@ -679,6 +697,7 @@
             "enabled": true,
             "runs": 1
           },
+          "viaIR": true,
           "evmVersion": "paris",
           "outputSelection": {
             "*": {
@@ -716,6 +735,7 @@
             "enabled": true,
             "runs": 1
           },
+          "viaIR": true,
           "evmVersion": "paris",
           "outputSelection": {
             "*": {
@@ -755,6 +775,7 @@
             "enabled": true,
             "runs": 1
           },
+          "viaIR": true,
           "evmVersion": "paris",
           "outputSelection": {
             "*": {
@@ -792,6 +813,7 @@
             "enabled": true,
             "runs": 1
           },
+          "viaIR": true,
           "evmVersion": "paris",
           "outputSelection": {
             "*": {
@@ -831,6 +853,7 @@
             "enabled": true,
             "runs": 1
           },
+          "viaIR": true,
           "evmVersion": "paris",
           "outputSelection": {
             "*": {
@@ -855,6 +878,80 @@
       ],
       "artifacts": [
         "Test"
+      ]
+    },
+    "C:\\Users\\Administrator\\Documents\\GitHub\\MACOIN_JBC\\contracts\\JinbaoProtocolOptimized.sol": {
+      "lastModificationDate": 1766925397370,
+      "contentHash": "d41d8cd98f00b204e9800998ecf8427e",
+      "sourceName": "contracts/JinbaoProtocolOptimized.sol",
+      "solcConfig": {
+        "version": "0.8.22",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 1
+          },
+          "viaIR": true,
+          "evmVersion": "paris",
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata",
+                "storageLayout"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [],
+      "artifacts": []
+    },
+    "C:\\Users\\Administrator\\Documents\\GitHub\\MACOIN_JBC\\contracts\\RedemptionLib.sol": {
+      "lastModificationDate": 1766925528158,
+      "contentHash": "fa481a5e22ba0f40e1f92279d4c7d9d2",
+      "sourceName": "contracts/RedemptionLib.sol",
+      "solcConfig": {
+        "version": "0.8.22",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 1
+          },
+          "viaIR": true,
+          "evmVersion": "paris",
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata",
+                "storageLayout"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "@openzeppelin/contracts/token/ERC20/IERC20.sol"
+      ],
+      "versionPragmas": [
+        "^0.8.20"
+      ],
+      "artifacts": [
+        "RedemptionLib"
       ]
     }
   }

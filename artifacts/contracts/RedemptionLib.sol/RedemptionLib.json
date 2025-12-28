@@ -1,0 +1,10 @@
+{
+  "_format": "hh-sol-artifact-1",
+  "contractName": "RedemptionLib",
+  "sourceName": "contracts/RedemptionLib.sol",
+  "abi": [],
+  "bytecode": "0x60808060405234601757603a9081601d823930815050f35b600080fdfe600080fdfea2646970667358221220b9df8a336b33a706b06a2b8f919d8654e1d6cfa88ec34165970f286767faaed164736f6c63430008160033",
+  "deployedBytecode": "0x600080fdfea2646970667358221220b9df8a336b33a706b06a2b8f919d8654e1d6cfa88ec34165970f286767faaed164736f6c63430008160033",
+  "linkReferences": {},
+  "deployedLinkReferences": {}
+}

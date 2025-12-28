@@ -14,15 +14,15 @@ export const MINING_PLANS: MiningPlan[] = [
 ];
 
 export const TEAM_LEVELS: TeamLevel[] = [
-  { level: 'V1', countRequired: 10, reward: 5, desc: '极差奖励' },
-  { level: 'V2', countRequired: 30, reward: 10, desc: '极差奖励' },
-  { level: 'V3', countRequired: 100, reward: 15, desc: '极差奖励' },
-  { level: 'V4', countRequired: 300, reward: 20, desc: '极差奖励' },
-  { level: 'V5', countRequired: 1000, reward: 25, desc: '极差奖励' },
-  { level: 'V6', countRequired: 3000, reward: 30, desc: '极差奖励' },
-  { level: 'V7', countRequired: 10000, reward: 35, desc: '极差奖励' },
-  { level: 'V8', countRequired: 30000, reward: 40, desc: '极差奖励' },
-  { level: 'V9', countRequired: 100000, reward: 45, desc: '极差奖励' },
+  { level: 'V1', countRequired: 5, reward: 5, desc: '极差奖励' },
+  { level: 'V2', countRequired: 10, reward: 10, desc: '极差奖励' },
+  { level: 'V3', countRequired: 20, reward: 15, desc: '极差奖励' },
+  { level: 'V4', countRequired: 50, reward: 20, desc: '极差奖励' },
+  { level: 'V5', countRequired: 100, reward: 25, desc: '极差奖励' },
+  { level: 'V6', countRequired: 200, reward: 30, desc: '极差奖励' },
+  { level: 'V7', countRequired: 500, reward: 35, desc: '极差奖励' },
+  { level: 'V8', countRequired: 1000, reward: 40, desc: '极差奖励' },
+  { level: 'V9', countRequired: 5000, reward: 45, desc: '极差奖励' },
 ];
 
 export const MOCK_USER_STATS = {

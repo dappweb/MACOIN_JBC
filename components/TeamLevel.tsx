@@ -28,6 +28,7 @@ const TeamLevel: React.FC = () => {
     activeDirects: 0,
     teamCount: 0,
     currentLevel: "V0",
+    baseLevel: "V0", // Add base level for reward lookup
     teamTotalVolume: 0n,
     teamTotalCap: 0n,
   })
@@ -80,26 +81,44 @@ const TeamLevel: React.FC = () => {
           const userInfo = await protocolContract.userInfo(account)
           // userInfo: (referrer, activeDirects, teamCount, totalRevenue, currentCap, isActive)
 
-          // Calc Level
+          // Calc Level - Updated with more achievable standards
           const activeDirects = Number(userInfo[1])
           const teamCount = Number(userInfo[2])
           const effectiveCount = teamCount
           
           let level = "V0"
-          if (effectiveCount >= 100000) level = "V9"
-          else if (effectiveCount >= 30000) level = "V8"
-          else if (effectiveCount >= 10000) level = "V7"
-          else if (effectiveCount >= 3000) level = "V6"
-          else if (effectiveCount >= 1000) level = "V5"
-          else if (effectiveCount >= 300) level = "V4"
-          else if (effectiveCount >= 100) level = "V3"
-          else if (effectiveCount >= 30) level = "V2"
-          else if (effectiveCount >= 10) level = "V1"
+          let progress = ""
+          
+          // More achievable level standards
+          if (effectiveCount >= 5000) level = "V9"
+          else if (effectiveCount >= 1000) level = "V8"
+          else if (effectiveCount >= 500) level = "V7"
+          else if (effectiveCount >= 200) level = "V6"
+          else if (effectiveCount >= 100) level = "V5"
+          else if (effectiveCount >= 50) level = "V4"
+          else if (effectiveCount >= 20) level = "V3"
+          else if (effectiveCount >= 10) level = "V2"
+          else if (effectiveCount >= 5) level = "V1"
+          
+          // Calculate progress to next level
+          let nextLevelReq = 5
+          if (effectiveCount < 5) nextLevelReq = 5
+          else if (effectiveCount < 10) nextLevelReq = 10
+          else if (effectiveCount < 20) nextLevelReq = 20
+          else if (effectiveCount < 50) nextLevelReq = 50
+          else if (effectiveCount < 100) nextLevelReq = 100
+          else if (effectiveCount < 200) nextLevelReq = 200
+          else if (effectiveCount < 500) nextLevelReq = 500
+          else if (effectiveCount < 1000) nextLevelReq = 1000
+          else if (effectiveCount < 5000) nextLevelReq = 5000
+          
+          progress = effectiveCount < 5000 ? ` (${effectiveCount}/${nextLevelReq})` : ""
 
           setUserLevelInfo({
             activeDirects: activeDirects,
             teamCount: teamCount,
-            currentLevel: level,
+            currentLevel: level + progress, // Add progress display
+            baseLevel: level, // Store base level for reward lookup
             teamTotalVolume: userInfo[7],
             teamTotalCap: userInfo[8],
           })
@@ -162,7 +181,7 @@ const TeamLevel: React.FC = () => {
               <div className="bg-black/30 px-3 py-1.5 rounded-lg border border-gray-700/50 flex items-center gap-2">
                 <span className="text-xs text-gray-400">{t.team.colReward}</span>
                 <span className="text-sm md:text-base font-bold text-amber-400">
-                  {TEAM_LEVELS.find((l) => l.level === userLevelInfo.currentLevel)?.reward || "0"}%
+                  {TEAM_LEVELS.find((l) => l.level === userLevelInfo.baseLevel)?.reward || "0"}%
                 </span>
               </div>
             </div>
@@ -179,7 +198,7 @@ const TeamLevel: React.FC = () => {
           </div>
 
           {TEAM_LEVELS.map((level) => {
-            const isCurrent = level.level === userLevelInfo.currentLevel
+            const isCurrent = level.level === userLevelInfo.baseLevel
 
             let badgeStyle = isCurrent
               ? "bg-neon-500 text-black shadow-[0_0_10px_rgba(34,197,94,0.4)]"
@@ -267,7 +286,7 @@ const TeamLevel: React.FC = () => {
             </thead>
             <tbody className="divide-y divide-gray-800">
               {TEAM_LEVELS.map((level) => {
-                const isCurrent = level.level === userLevelInfo.currentLevel
+                const isCurrent = level.level === userLevelInfo.baseLevel
 
                 let badgeStyle = isCurrent
                   ? "bg-neon-500 text-black"

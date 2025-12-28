@@ -1,0 +1,23 @@
+{
+  "network": "mc",
+  "chainId": "88813",
+  "timestamp": "2025-12-28T15:33:12.583Z",
+  "deployer": "0x4C10831CBcF9884ba72051b5287b6c87E4F74A48",
+  "contracts": {
+    "mcToken": "0xB2B8777BcBc7A8DEf49F022773d392a8787cf9EF",
+    "jbcToken": "0xA743cB357a9f59D349efB7985072779a094658dD",
+    "protocolProxy": "0x515871E9eADbF976b546113BbD48964383f86E61",
+    "protocolImplementation": "0x06512C96e8c245308f940F283F0eca81E034E684"
+  },
+  "wallets": {
+    "marketing": "0x4C10831CBcF9884ba72051b5287b6c87E4F74A48",
+    "treasury": "0x4C10831CBcF9884ba72051b5287b6c87E4F74A48",
+    "lpInjection": "0x4C10831CBcF9884ba72051b5287b6c87E4F74A48",
+    "buyback": "0x4C10831CBcF9884ba72051b5287b6c87E4F74A48"
+  },
+  "initialLiquidity": {
+    "mcAmount": "10000.0",
+    "jbcAmount": "10000.0",
+    "initialized": true
+  }
+}

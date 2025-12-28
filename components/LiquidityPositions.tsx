@@ -148,7 +148,18 @@ const LiquidityPositions: React.FC = () => {
       // Get user info to calculate fee
       const userInfo = await protocolContract.userInfo(account);
       const userTicket = await protocolContract.userTicket(account);
-      const redemptionFeePercent = await protocolContract.redemptionFeePercent();
+      
+      let redemptionFeePercent = 0n;
+      try {
+        // Safe check for function existence
+        if (typeof protocolContract.redemptionFeePercent === 'function') {
+            redemptionFeePercent = await protocolContract.redemptionFeePercent();
+        } else {
+            console.warn("redemptionFeePercent function not found on contract");
+        }
+      } catch (err) {
+        console.error("Failed to fetch redemptionFeePercent:", err);
+      }
       
       // Calculate expected fee - use correct fallback (ticket amount, not refundFeeAmount)
       const feeBase = userInfo.maxTicketAmount > 0n ? userInfo.maxTicketAmount : userTicket.amount;

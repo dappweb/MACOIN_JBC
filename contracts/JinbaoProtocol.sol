@@ -397,6 +397,8 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, UUPSUpgradeable, R
         address user,
         bool updateActiveDirects,
         uint256 newActiveDirects,
+        bool updateTeamCount,
+        uint256 newTeamCount,
         bool updateTotalRevenue,
         uint256 newTotalRevenue,
         bool updateCurrentCap,
@@ -409,6 +411,11 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, UUPSUpgradeable, R
         UserInfo storage info = userInfo[user];
         
         if (updateActiveDirects) info.activeDirects = newActiveDirects;
+        if (updateTeamCount) {
+            uint256 oldCount = info.teamCount;
+            info.teamCount = newTeamCount;
+            emit TeamCountUpdated(user, oldCount, newTeamCount);
+        }
         if (updateTotalRevenue) info.totalRevenue = newTotalRevenue;
         if (updateCurrentCap) info.currentCap = newCurrentCap;
         if (updateRefundFee) info.refundFeeAmount = newRefundFee;

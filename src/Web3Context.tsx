@@ -39,7 +39,7 @@ export const PROTOCOL_ABI = [
   "function rescueTokens(address, address, uint256) external",
   "function batchUpdateUserStats(address[], uint256[], uint256[]) external",
   "function adminSetReferrer(address, address) external",
-  "function adminUpdateUserData(address, bool, uint256, bool, uint256, bool, uint256, bool, uint256) external",
+  "function adminUpdateUserData(address, bool, uint256, bool, uint256, bool, uint256, bool, uint256, bool, uint256) external",
   "function getAmountOut(uint256, uint256, uint256) pure returns (uint256)",
   "function swapReserveMC() view returns (uint256)",
   "function swapReserveJBC() view returns (uint256)",
@@ -69,11 +69,11 @@ export const PROTOCOL_ABI = [
   "event SwappedJBCToMC(address indexed user, uint256 jbcAmount, uint256 mcAmount, uint256 tax)",
 ]
 
-// Contract Addresses
+// Contract Addresses - MC Chain Testnet
 export const CONTRACT_ADDRESSES = {
   MC_TOKEN: "0xB2B8777BcBc7A8DEf49F022773d392a8787cf9EF",
   JBC_TOKEN: "0xA743cB357a9f59D349efB7985072779a094658dD",
-  PROTOCOL: "0xc938b6D9ebC484BE7e946e11CD46BE56ee29BE19" // 全新部署的合约地址
+  PROTOCOL: "0x515871E9eADbF976b546113BbD48964383f86E61" // 新部署的Protocol合约
 };
 
 interface Web3ContextType {

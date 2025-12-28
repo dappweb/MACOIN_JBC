@@ -1573,13 +1573,14 @@ const MiningPanel: React.FC = () => {
                                     </div>
                                 </div>
                                 
-                                <div className="grid grid-cols-2 gap-2 text-xs text-gray-400">
+                                <div className="grid grid-cols-1 gap-2 text-xs text-gray-400">
                                     <div className="flex flex-col">
                                         <span className="text-gray-500 mb-0.5">{t.mining.purchaseTime}</span>
                                         <span className="font-mono text-gray-300">{formatDate(item.purchaseTime)}</span>
                                     </div>
                                     
-                                    {item.status === 'Mining' && item.endTime && (
+                                    {/* 隐藏质押返回时间和质押可赎回状态 */}
+                                    {false && item.status === 'Mining' && item.endTime && (
                                         <div className="flex flex-col text-right">
                                             <span className="text-gray-500 mb-0.5">{t.mining?.countdown || "倒计时"}</span>
                                             <span className={`font-mono ${item.endTime <= currentTime ? 'text-green-400' : 'text-neon-400'}`}>
@@ -1588,7 +1589,7 @@ const MiningPanel: React.FC = () => {
                                         </div>
                                     )}
                                     
-                                    {item.status === 'Completed' && (
+                                    {false && item.status === 'Completed' && (
                                          <div className="flex flex-col text-right">
                                             <span className="text-gray-500 mb-0.5">状态</span>
                                             <span className="font-mono text-blue-300">挖矿完成</span>
@@ -1596,7 +1597,7 @@ const MiningPanel: React.FC = () => {
                                     )}
 
                                     {item.status === 'Pending' && !isExpired && (
-                                        <div className="flex flex-col text-right">
+                                        <div className="flex flex-col">
                                             <span className="text-gray-500 mb-0.5">{t.mining.endTime || "Valid Until"}</span>
                                             <span className="font-mono text-amber-400">长期有效</span>
                                         </div>

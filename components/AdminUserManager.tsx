@@ -23,6 +23,7 @@ interface UserInfo {
 interface EditableUserData {
     referrer: string;
     activeDirects: string;
+    teamCount: string;
     totalRevenue: string;
     currentCap: string;
     refundFeeAmount: string;
@@ -39,6 +40,7 @@ const AdminUserManager: React.FC = () => {
     const [editData, setEditData] = useState<EditableUserData>({
         referrer: '',
         activeDirects: '',
+        teamCount: '',
         totalRevenue: '',
         currentCap: '',
         refundFeeAmount: ''
@@ -89,6 +91,7 @@ const AdminUserManager: React.FC = () => {
             setEditData({
                 referrer: userData.referrer,
                 activeDirects: userData.activeDirects.toString(),
+                teamCount: userData.teamCount.toString(),
                 totalRevenue: userData.totalRevenue,
                 currentCap: userData.currentCap,
                 refundFeeAmount: userData.refundFeeAmount
@@ -134,16 +137,19 @@ const AdminUserManager: React.FC = () => {
 
             // Update other user data if changed
             const updateActiveDirects = editData.activeDirects !== userInfo.activeDirects.toString();
+            const updateTeamCount = editData.teamCount !== userInfo.teamCount.toString();
             const updateTotalRevenue = editData.totalRevenue !== userInfo.totalRevenue;
             const updateCurrentCap = editData.currentCap !== userInfo.currentCap;
             const updateRefundFee = editData.refundFeeAmount !== userInfo.refundFeeAmount;
 
-            if (updateActiveDirects || updateTotalRevenue || updateCurrentCap || updateRefundFee) {
+            if (updateActiveDirects || updateTeamCount || updateTotalRevenue || updateCurrentCap || updateRefundFee) {
                 promises.push(
                     protocolContract.adminUpdateUserData(
                         userInfo.address,
                         updateActiveDirects,
                         updateActiveDirects ? Number(editData.activeDirects) : 0,
+                        updateTeamCount,
+                        updateTeamCount ? Number(editData.teamCount) : 0,
                         updateTotalRevenue,
                         updateTotalRevenue ? ethers.parseEther(editData.totalRevenue) : 0,
                         updateCurrentCap,
@@ -251,6 +257,7 @@ const AdminUserManager: React.FC = () => {
                                             setEditData({
                                                 referrer: userInfo.referrer,
                                                 activeDirects: userInfo.activeDirects.toString(),
+                                                teamCount: userInfo.teamCount.toString(),
                                                 totalRevenue: userInfo.totalRevenue,
                                                 currentCap: userInfo.currentCap,
                                                 refundFeeAmount: userInfo.refundFeeAmount
@@ -313,9 +320,18 @@ const AdminUserManager: React.FC = () => {
 
                             <div>
                                 <label className="block text-sm font-medium text-gray-400 mb-1">团队人数</label>
-                                <div className="p-3 bg-gray-800/50 rounded-lg border border-gray-700">
-                                    <span className="text-white font-bold">{userInfo.teamCount}</span>
-                                </div>
+                                {editMode ? (
+                                    <input
+                                        type="number"
+                                        value={editData.teamCount}
+                                        onChange={(e) => setEditData({...editData, teamCount: e.target.value})}
+                                        className="w-full p-3 border border-gray-700 bg-gray-900/50 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                                    />
+                                ) : (
+                                    <div className="p-3 bg-gray-800/50 rounded-lg border border-gray-700">
+                                        <span className="text-white font-bold">{userInfo.teamCount}</span>
+                                    </div>
+                                )}
                             </div>
                         </div>
 

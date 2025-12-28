@@ -232,12 +232,21 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
   // 获取用户数据的useEffect
   useEffect(() => {
     const fetchData = async () => {
+      console.log('🔍 [StatsPanel Debug] Checking connection status...');
+      console.log('isConnected:', isConnected);
+      console.log('account:', account);
+      console.log('protocolContract:', !!protocolContract);
+      
       if (isConnected && account && mcContract && jbcContract && protocolContract) {
         try {
+          console.log('🔍 [StatsPanel Debug] Fetching user data for:', account);
+          
           // 余额数据现在从全局状态获取，不需要重复获取
 
           // Fetch Protocol Info
           const userInfo = await protocolContract.userInfo(account)
+          console.log('🔍 [StatsPanel Debug] User info:', userInfo);
+          
           // userInfo returns: (referrer, activeDirects, teamCount, totalRevenue, currentCap, isActive, refundFeeAmount, teamTotalVolume, teamTotalCap)
 
           // Check referrer binding
@@ -254,18 +263,24 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
             }
           }
 
-          // Calculate Level based on activeDirects (simplified V1-V9 logic)
+          // Calculate Level based on teamCount (userInfo[2]) - Updated standards
           let level = "V0"
-          const activeDirects = Number(userInfo[1])
-          if (activeDirects >= 100000) level = "V9"
-          else if (activeDirects >= 30000) level = "V8"
-          else if (activeDirects >= 10000) level = "V7"
-          else if (activeDirects >= 3000) level = "V6"
-          else if (activeDirects >= 1000) level = "V5"
-          else if (activeDirects >= 300) level = "V4"
-          else if (activeDirects >= 100) level = "V3"
-          else if (activeDirects >= 30) level = "V2"
-          else if (activeDirects >= 10) level = "V1"
+          const teamCount = Number(userInfo[2])
+          
+          console.log('🔍 [StatsPanel Debug] Team count:', teamCount);
+          
+          // Updated more achievable level standards
+          if (teamCount >= 5000) level = "V9"
+          else if (teamCount >= 1000) level = "V8"
+          else if (teamCount >= 500) level = "V7"
+          else if (teamCount >= 200) level = "V6"
+          else if (teamCount >= 100) level = "V5"
+          else if (teamCount >= 50) level = "V4"
+          else if (teamCount >= 20) level = "V3"
+          else if (teamCount >= 10) level = "V2"
+          else if (teamCount >= 5) level = "V1"
+
+          console.log('🔍 [StatsPanel Debug] Calculated level:', level);
 
           let referralRevenue = 0
           let rewardMc = 0
@@ -309,9 +324,24 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
             teamCount: Number(userInfo[2]),
             currentLevel: level,
           }))
+          
+          console.log('🔍 [StatsPanel Debug] Updated display stats:', {
+            teamCount: Number(userInfo[2]),
+            currentLevel: level,
+            balanceMC: parseFloat(balances.mc),
+            balanceJBC: parseFloat(balances.jbc)
+          });
         } catch (err) {
           console.error("Error fetching stats", err)
         }
+      } else {
+        console.log('🔍 [StatsPanel Debug] Not ready to fetch data:', {
+          isConnected,
+          hasAccount: !!account,
+          hasMcContract: !!mcContract,
+          hasJbcContract: !!jbcContract,
+          hasProtocolContract: !!protocolContract
+        });
       }
     }
     const timer = setInterval(fetchData, 5000) // Refresh every 5s

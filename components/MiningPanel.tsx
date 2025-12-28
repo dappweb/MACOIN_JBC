@@ -706,6 +706,9 @@ const MiningPanel: React.FC = () => {
           
           // 使用全局刷新机制
           await onTransactionSuccess('ticket_purchase');
+          
+          // 购买成功后自动跳转到提供流动性页面
+          setCurrentStep(2);
       } catch (err: any) {
           console.error(err);
           // Special handling for active ticket using the new formatter context if needed, 
@@ -1245,24 +1248,11 @@ const MiningPanel: React.FC = () => {
                     </div>
                 </div>
             </div>
-
-             {/* Warnings */}
-             <div className="bg-amber-900/20 border border-amber-500/30 rounded-lg p-3 md:p-4 flex items-start gap-2 md:gap-3 backdrop-blur-sm">
-                <AlertCircle className="text-amber-400 shrink-0 mt-0.5 md:w-4.5 md:h-4.5" size={16} />
-                <div className="text-xs md:text-sm text-amber-200/80">
-                    <p className="font-bold mb-1 text-amber-300">{t.mining.notice}</p>
-                    <ul className="list-disc pl-3 md:pl-4 space-y-0.5 md:space-y-1">
-                        <li>{t.mining.notice1}</li>
-                        <li>{t.mining.notice2}</li>
-                        <li>{t.mining.notice3}</li>
-                    </ul>
-                </div>
-            </div>
         </div>
 
         {/* Right Col: Summary */}
-        <div className="space-y-4 md:space-y-6">
-            <div className="glass-panel p-4 md:p-6 rounded-xl md:rounded-2xl h-full border-t-4 border-t-neon-500 flex flex-col justify-between relative bg-gray-900/50 border border-gray-800">
+        <div className="space-y-4 md:space-y-6 flex flex-col h-full">
+            <div className="glass-panel p-4 md:p-6 rounded-xl md:rounded-2xl flex-1 border-t-4 border-t-neon-500 flex flex-col justify-between relative bg-gray-900/50 border border-gray-800">
 
 
                 <div>
@@ -1341,19 +1331,28 @@ const MiningPanel: React.FC = () => {
                     </p>
                 </div>
 
-                {/* Active Mining Controls */}
+                {/* Active Mining Controls - Unified Redeem Removed */}
                 {hasStakedLiquidity && (
-                    <div className="mt-4 pt-4 border-t border-slate-100 flex gap-2">
-                         <button
-                            onClick={handleRedeem}
-                            disabled={txPending || !isRedeemable}
-                            className="flex-1 py-2 bg-red-500/20 text-red-300 font-bold rounded-lg hover:bg-red-500/30 transition-colors disabled:opacity-50 border border-red-500/30 cursor-pointer disabled:cursor-not-allowed"
-                         >
-                            {isRedeemable ? t.mining.redeem : t.mining.mining}
-                         </button>
+                    <div className="mt-4 pt-4 border-t border-slate-100">
+                         <p className="text-xs text-center text-gray-500">
+                            {t.mining?.redeemInstruction || "Please manage your positions in the list below"}
+                         </p>
                     </div>
                 )}
 
+            </div>
+
+             {/* Warnings - Moved from Left Col */}
+             <div className="bg-amber-900/20 border border-amber-500/30 rounded-lg p-3 md:p-4 flex items-start gap-2 md:gap-3 backdrop-blur-sm">
+                <AlertCircle className="text-amber-400 shrink-0 mt-0.5 md:w-4.5 md:h-4.5" size={16} />
+                <div className="text-xs md:text-sm text-amber-200/80">
+                    <p className="font-bold mb-1 text-amber-300">{t.mining.notice}</p>
+                    <ul className="list-disc pl-3 md:pl-4 space-y-0.5 md:space-y-1">
+                        <li>{t.mining.notice1}</li>
+                        <li>{t.mining.notice2}</li>
+                        <li>{t.mining.notice3}</li>
+                    </ul>
+                </div>
             </div>
         </div>
 
@@ -1472,17 +1471,12 @@ const MiningPanel: React.FC = () => {
                 )}
             </div>
 
-            {/* Action Buttons for Step 3 */}
+            {/* Action Buttons for Step 3 - Unified Redeem Removed */}
             {hasValidTicket && (
-                 <div className="mt-6 pt-6 border-t border-gray-700 flex flex-col md:flex-row gap-4">
-                     <button
-                        onClick={handleRedeem}
-                        disabled={txPending || !isRedeemable}
-                        className="flex-1 py-3 md:py-4 bg-gradient-to-r from-red-500/20 to-red-600/20 hover:from-red-500/30 hover:to-red-600/30 text-red-300 font-bold rounded-xl border border-red-500/30 transition-all flex items-center justify-center gap-2 shadow-lg shadow-red-500/10 disabled:opacity-50 disabled:cursor-not-allowed"
-                     >
-                        <TrendingUp size={20} />
-                        {isRedeemable ? t.mining.redeem : t.mining.mining}
-                     </button>
+                 <div className="mt-6 pt-6 border-t border-gray-700">
+                     <p className="text-sm text-center text-gray-400">
+                        {t.mining?.redeemInstruction || "Please manage your positions in the Liquidity Positions list below"}
+                     </p>
                 </div>
             )}
           </>

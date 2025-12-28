@@ -1,9 +1,11 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { ethers } from 'ethers';
-import { Clock, TrendingUp, AlertCircle, RefreshCw } from 'lucide-react';
+import { Clock, TrendingUp, AlertCircle, RefreshCw, ArrowRight } from 'lucide-react';
 import { useWeb3 } from '../src/Web3Context';
 import { useLanguage } from '../src/LanguageContext';
 import GoldenProgressBar from './GoldenProgressBar';
+import toast from 'react-hot-toast';
+import { formatContractError } from '../utils/errorFormatter';
 
 interface RawStakePosition {
   id: string;
@@ -50,6 +52,7 @@ const LiquidityPositions: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [currentTime, setCurrentTime] = useState(Math.floor(Date.now() / 1000));
   const [secondsInUnit, setSecondsInUnit] = useState(60);
+  const [redeemingId, setRedeemingId] = useState<string | null>(null);
 
   // Update current time every second for countdown/progress
   useEffect(() => {
@@ -116,6 +119,22 @@ const LiquidityPositions: React.FC = () => {
       console.error("Failed to fetch stake positions", err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleRedeem = async (id: string) => {
+    if (!protocolContract) return;
+    setRedeemingId(id);
+    try {
+      const tx = await protocolContract.redeem(id);
+      await tx.wait();
+      toast.success(t.mining?.redeemSuccess || "Redemption Successful");
+      fetchPositions(); // Refresh list
+    } catch (err: any) {
+      console.error(err);
+      toast.error(formatContractError(err));
+    } finally {
+      setRedeemingId(null);
     }
   };
 
@@ -241,15 +260,27 @@ const LiquidityPositions: React.FC = () => {
               <div>
                 <div className="flex items-center gap-2">
                   <span className="font-bold text-white text-lg">{parseFloat(pos.amount).toFixed(0)} MC</span>
-                  <span className={`text-xs px-2 py-0.5 rounded border ${
-                    pos.status === 'active' ? 'bg-neon-500/10 text-neon-400 border-neon-500/30' :
-                    pos.status === 'completed' ? 'bg-gray-700 text-gray-400 border-gray-600' :
-                    'bg-gray-700 text-gray-400 border-gray-600'
-                  }`}>
-                    {pos.status === 'active' ? (t.mining?.mining || 'Mining') : 
-                     pos.status === 'completed' ? (t.mining?.redeemed || 'Redeemed') : 
-                     (t.mining?.redeemed || 'Redeemed')}
-                  </span>
+                  {pos.status === 'completed' ? (
+                    <button
+                        onClick={() => handleRedeem(pos.id)}
+                        disabled={redeemingId === pos.id}
+                        className="flex items-center gap-1 px-3 py-1 bg-red-500/20 text-red-400 border border-red-500/30 rounded-lg hover:bg-red-500/30 transition-all disabled:opacity-50 text-xs font-bold animate-pulse"
+                    >
+                        {redeemingId === pos.id ? (
+                            <span className="animate-spin">⌛</span>
+                        ) : (
+                            <TrendingUp size={12} />
+                        )}
+                        {redeemingId === pos.id ? (t.mining?.redeeming || "Redeeming...") : (t.mining?.redeem || "Redeem")}
+                    </button>
+                  ) : (
+                    <span className={`text-xs px-2 py-0.5 rounded border ${
+                      pos.status === 'active' ? 'bg-neon-500/10 text-neon-400 border-neon-500/30' :
+                      'bg-gray-700 text-gray-400 border-gray-600'
+                    }`}>
+                      {pos.status === 'active' ? (t.mining?.mining || 'Mining') : (t.mining?.redeemed || 'Redeemed')}
+                    </span>
+                  )}
                 </div>
                 <div className="text-xs text-gray-400 mt-1 flex items-center gap-1">
                   <Clock className="w-3 h-3" />

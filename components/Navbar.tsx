@@ -222,13 +222,27 @@ const Navbar: React.FC<NavbarProps> = ({ currentTab, setTab }) => {
             {/* Wallet Connect */}
             <div className="flex items-center gap-2 md:gap-4">
               <button
-                onClick={() => setLanguage(language === "zh" ? "en" : "zh")}
+                onClick={() => {
+                  const langs = ['zh-TW', 'zh', 'en', 'ja', 'ko'] as const;
+                  const idx = langs.indexOf(language as any);
+                  const next = langs[(idx + 1) % langs.length];
+                  setLanguage(next);
+                }}
                 className="p-1.5 md:p-2 transition-colors rounded-lg md:rounded-xl bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-emerald-400  flex items-center gap-1 md:gap-2 border border-gray-700"
                 title="Switch Language"
               >
                 <Globe size={18} className="md:w-5 md:h-5" />
-                <span className="text-xs md:text-sm font-bold hidden sm:inline">
-                  {language === "zh" ? "EN" : "ZH"}
+                <span className="text-xs md:text-sm font-bold">
+                  {{
+                    'zh-TW': '繁',
+                    'zh': '简',
+                    'en': 'EN',
+                    'ja': 'JP',
+                    'ko': 'KR',
+                    'ar': 'AR',
+                    'ru': 'RU',
+                    'es': 'ES'
+                  }[language] || 'EN'}
                 </span>
               </button>
               {/* Button removed as requested for auto-logic */}

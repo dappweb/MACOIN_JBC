@@ -11,7 +11,7 @@
 
 export interface MiningPlan {
   days: number;
-  dailyRate: number; // Percentage (e.g., 2.0)
+  dailyRate: number; // Per-minute rate in test environment, daily rate in production
 }
 
 export interface TicketTier {

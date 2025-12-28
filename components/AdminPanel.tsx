@@ -9,7 +9,7 @@ import { formatContractError } from '../utils/errorFormatter';
 
 const AdminPanel: React.FC = () => {
   const { t } = useLanguage();
-  const { protocolContract, isConnected, account, provider, mcContract, jbcContract } = useWeb3();
+  const { protocolContract, isConnected, account, provider, mcContract, jbcContract, isOwner } = useWeb3();
   const [loading, setLoading] = useState(false);
 
   // Distribution Percents
@@ -548,6 +548,27 @@ const AdminPanel: React.FC = () => {
         </h2>
         <p className="text-sm md:text-base text-gray-400">{t.admin.subtitle}</p>
       </div>
+
+      {/* Non-Owner Warning */}
+      {isConnected && !isOwner && (
+        <div className="bg-red-900/30 border-l-4 border-red-500 p-4 rounded-r shadow-lg mb-6">
+          <div className="flex items-start">
+            <AlertTriangle className="text-red-400 mt-0.5 mr-3 flex-shrink-0" size={20} />
+            <div>
+              <h3 className="text-red-400 font-bold text-base md:text-lg">Permission Warning</h3>
+              <p className="text-red-200/80 text-sm mt-1">
+                You are currently connected with an address that is <strong>NOT</strong> the contract owner.
+                You can view the dashboard, but <span className="text-red-100 font-bold underline">any attempt to update data will fail</span>.
+              </p>
+              <div className="mt-2 p-2 bg-black/40 rounded border border-red-500/20">
+                  <p className="text-gray-400 text-xs font-mono">
+                    Current Address: <span className="text-white">{account}</span>
+                  </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Announcement Management - 最优先显示 */}
       <div className="glass-panel p-6 md:p-8 rounded-xl md:rounded-2xl bg-gradient-to-br from-amber-900/30 to-amber-800/30 border-2 border-amber-500/50 backdrop-blur-sm">

@@ -23,7 +23,9 @@ interface StakePosition {
   cycleDays: number;
   active: boolean;
   paid: string;
-  staticReward: string; // Estimated pending static reward
+  staticReward: string; // Keep for compatibility or total value
+  pendingMc: string;
+  pendingJbc: string;
   endTime: number;
   progress: number;
   status: 'active' | 'completed' | 'redeemed';
@@ -51,8 +53,11 @@ const LiquidityPositions: React.FC = () => {
   const [rawPositions, setRawPositions] = useState<RawStakePosition[]>([]);
   const [loading, setLoading] = useState(false);
   const [currentTime, setCurrentTime] = useState(Math.floor(Date.now() / 1000));
-  const [secondsInUnit, setSecondsInUnit] = useState(60);
+  // Default to 86400 (1 day) to be safe for production/testnet unless contract specifies otherwise.
+  // This prevents premature "Redeem" availability if contract fetch fails.
+  const [secondsInUnit, setSecondsInUnit] = useState(86400);
   const [redeemingId, setRedeemingId] = useState<string | null>(null);
+  const [reserves, setReserves] = useState<{mc: bigint, jbc: bigint}>({ mc: 0n, jbc: 0n });
 
   // Update current time every second for countdown/progress
   useEffect(() => {
@@ -62,20 +67,32 @@ const LiquidityPositions: React.FC = () => {
     return () => clearInterval(timer);
   }, []);
 
-  // Fetch SECONDS_IN_UNIT from contract
+  // Fetch SECONDS_IN_UNIT and Reserves from contract
   useEffect(() => {
     const fetchConstants = async () => {
       if (protocolContract) {
         try {
-          // Check if function exists in ABI before calling (handled by try/catch or ensure ABI update)
           const s = await protocolContract.SECONDS_IN_UNIT();
           setSecondsInUnit(Number(s));
         } catch (e) {
-          console.warn("Failed to fetch SECONDS_IN_UNIT, using default 60", e);
+          console.warn("Failed to fetch SECONDS_IN_UNIT", e);
+        }
+
+        try {
+           const mc = await protocolContract.swapReserveMC();
+           const jbc = await protocolContract.swapReserveJBC();
+           console.log("Reserves:", mc, jbc);
+           setReserves({ mc: BigInt(mc), jbc: BigInt(jbc) });
+        } catch (e) {
+           console.warn("Failed to fetch reserves", e);
         }
       }
     };
     fetchConstants();
+    
+    // Poll reserves every 10 seconds
+    const interval = setInterval(fetchConstants, 10000);
+    return () => clearInterval(interval);
   }, [protocolContract]);
 
   const fetchPositions = async () => {
@@ -167,6 +184,24 @@ const LiquidityPositions: React.FC = () => {
         const pendingBigInt = totalStaticShouldBe > pos.paid ? totalStaticShouldBe - pos.paid : 0n;
         const staticReward = ethers.formatEther(pendingBigInt);
 
+        // Split Pending Reward 50/50
+        const pendingMcVal = pendingBigInt / 2n;
+        const pendingJbcVal = pendingBigInt - pendingMcVal;
+        
+        let pendingJbcAmount = 0n;
+        if (reserves.mc > 0n && reserves.jbc > 0n) {
+            // JBC Price (in MC) = ReserveMC / ReserveJBC (scaled 1e18)
+            // But we can just use ratio: AmountJBC = ValueMC * ReserveJBC / ReserveMC
+            pendingJbcAmount = (pendingJbcVal * reserves.jbc) / reserves.mc;
+        } else {
+             // Fallback if reserves are 0 (should not happen if liquidity provided)
+             // Use 1:1 or keep as 0? Safe to show 0 if no market.
+             // But technically if no reserves, price is 1 ether in contract logic.
+             // uint256 jbcPrice = (swapReserveJBC == 0) ? 1 ether : ...
+             // If price is 1 ether (1 MC = 1 JBC), then amount = value.
+             pendingJbcAmount = pendingJbcVal;
+        }
+
         const totalDuration = endTime - pos.startTime;
         const elapsed = currentTime - pos.startTime;
         let progress = Math.min(100, Math.max(0, (elapsed / totalDuration) * 100));
@@ -180,6 +215,8 @@ const LiquidityPositions: React.FC = () => {
             active: pos.active,
             paid: ethers.formatEther(pos.paid),
             staticReward,
+            pendingMc: ethers.formatEther(pendingMcVal),
+            pendingJbc: ethers.formatEther(pendingJbcAmount),
             endTime,
             progress,
             status
@@ -229,6 +266,13 @@ const LiquidityPositions: React.FC = () => {
                 <p className="text-lg font-bold text-amber-400">≈ {totalPending.toFixed(4)} Value</p>
             </div>
         </div>
+        
+        {/* Debug Info (Visible only if needed, currently showing rate for verification) */}
+        {reserves.mc > 0n && reserves.jbc > 0n && (
+            <div className="mt-2 text-xs text-gray-500 text-right">
+                Exchange Rate: 1 JBC ≈ {(Number(ethers.formatEther(reserves.mc)) / Number(ethers.formatEther(reserves.jbc))).toFixed(4)} MC
+            </div>
+        )}
       </div>
 
       <div className="space-y-3">
@@ -291,8 +335,13 @@ const LiquidityPositions: React.FC = () => {
               <div className="text-right">
                 <div className="text-sm font-medium text-amber-400">
                   {pos.status === 'redeemed' 
-                    ? `+${parseFloat(pos.paid).toFixed(4)}`
-                    : `+${parseFloat(pos.staticReward).toFixed(4)}`
+                    ? `+${parseFloat(pos.paid).toFixed(4)} Value`
+                    : (
+                      <div className="flex flex-col items-end">
+                        <span className="text-white">+ {parseFloat(pos.pendingMc).toFixed(4)} MC</span>
+                        <span className="text-xs text-neon-400">+ {parseFloat(pos.pendingJbc).toFixed(4)} JBC</span>
+                      </div>
+                    )
                   }
                 </div>
                 <div className="text-xs text-gray-500">
@@ -313,7 +362,7 @@ const LiquidityPositions: React.FC = () => {
                  <span className="text-gray-500 text-xs block">{t.mining?.countdown || "倒计时"}</span>
                  <span className={`font-mono ${pos.status === 'completed' ? 'text-green-400' : pos.status === 'redeemed' ? 'text-gray-400' : 'text-neon-400'}`}>
                     {pos.status === 'redeemed' ? (t.mining?.redeemed || "已赎回") : 
-                     pos.status === 'completed' ? (t.mining?.redeemed || "已赎回") : 
+                     pos.status === 'completed' ? (t.mining?.redeemable || "可赎回") : 
                      formatCountdown(pos.endTime, currentTime, t)}
                  </span>
                </div>

@@ -126,7 +126,7 @@ async function queryUserEarnings(userAddress) {
 
         console.log(`\n质押 #${i + 1}:`);
         console.log(`  金额: ${ethers.formatEther(stakeAmount)} MC`);
-        console.log(`  周期: ${cycleDays} 分钟`);
+        console.log(`  周期: ${cycleDays} 天`);
         console.log(`  开始时间: ${new Date(startTime * 1000).toLocaleString()}`);
         console.log(`  状态: ${active ? '🟢 活跃' : '🔴 已结束'}`);
         console.log(`  已支付: ${ethers.formatEther(paid)} MC`);
@@ -147,7 +147,7 @@ async function queryUserEarnings(userAddress) {
             totalPendingStatic += pending;
 
             console.log(`  已过单位: ${unitsPassed}/${cycleDays}`);
-            console.log(`  收益率: ${ratePerBillion / 10000000}% 每分钟`);
+            console.log(`  收益率: ${ratePerBillion / 10000000}% 每日`);
             console.log(`  应得总收益: ${ethers.formatEther(totalStaticShouldBe)} MC`);
             console.log(`  待领取: ${ethers.formatEther(pending)} MC`);
             

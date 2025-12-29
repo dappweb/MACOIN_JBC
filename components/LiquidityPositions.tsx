@@ -53,9 +53,9 @@ const LiquidityPositions: React.FC = () => {
   const [rawPositions, setRawPositions] = useState<RawStakePosition[]>([]);
   const [loading, setLoading] = useState(false);
   const [currentTime, setCurrentTime] = useState(Math.floor(Date.now() / 1000));
-  // Default to 60 (1 minute) to match contract SECONDS_IN_UNIT constant.
+  // Default to 86400 (1 day) to match production contract SECONDS_IN_UNIT constant.
   // This ensures correct static reward calculations even if contract fetch fails.
-  const [secondsInUnit, setSecondsInUnit] = useState(60);
+  const [secondsInUnit, setSecondsInUnit] = useState(86400);
   const [redeemingId, setRedeemingId] = useState<string | null>(null);
   const [reserves, setReserves] = useState<{mc: bigint, jbc: bigint}>({ mc: 0n, jbc: 0n });
 
@@ -441,7 +441,7 @@ const LiquidityPositions: React.FC = () => {
             <div className="grid grid-cols-2 gap-2 text-sm">
                <div className="bg-black/20 rounded p-2">
                  <span className="text-gray-500 text-xs block">{t.mining?.cycle || "Cycle"}</span>
-                 <span className="text-gray-300">{pos.cycleDays} {t.mining?.days || "Mins"}</span>
+                 <span className="text-gray-300">{pos.cycleDays} {t.mining?.days || "天"}</span>
                </div>
                <div className="bg-black/20 rounded p-2">
                  <span className="text-gray-500 text-xs block">{t.mining?.countdown || "倒计时"}</span>

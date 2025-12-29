@@ -152,7 +152,7 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, UUPSUpgradeable, R
     event FeeRefunded(address indexed user, uint256 amount);
     event RewardPaid(address indexed user, uint256 amount, uint8 rewardType);
     event RewardClaimed(address indexed user, uint256 mcAmount, uint256 jbcAmount, uint8 rewardType, uint256 ticketId);
-    event ReferralRewardPaid(address indexed user, address indexed from, uint256 mcAmount, uint8 rewardType, uint256 ticketId);
+    event ReferralRewardPaid(address indexed user, address indexed from, uint256 mcAmount, uint256 jbcAmount, uint8 rewardType, uint256 ticketId);
     event RewardCapped(address indexed user, uint256 amount, uint256 cappedAmount);
     event LevelRewardRecorded(uint256 indexed ticketId, address indexed upline, uint256 amount);
     event LevelRewardReleased(uint256 indexed ticketId, address indexed upline, uint256 amount);
@@ -160,6 +160,12 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, UUPSUpgradeable, R
     event LevelRewardPoolWithdrawn(address indexed to, uint256 amount);
     event DifferentialRewardRecorded(uint256 indexed stakeId, address indexed upline, uint256 amount);
     event DifferentialRewardReleased(uint256 indexed stakeId, address indexed upline, uint256 amount);
+    event DifferentialRewardDistributed(address indexed user, uint256 mcAmount, uint256 jbcAmount, uint256 jbcPrice, uint256 timestamp);
+    event RewardTransferFailed(address indexed user, uint256 mcAmount, uint256 jbcAmount, string reason);
+    event PartialRewardTransfer(address indexed user, uint256 mcRequested, uint256 mcTransferred, uint256 jbcRequested, uint256 jbcTransferred);
+    event LiquidityProtectionTriggered(address indexed user, uint256 adjustedJbcAmount);
+    event DifferentialRewardCalculated(address indexed user, uint256 totalAmount, uint256 mcPart, uint256 jbcValuePart, uint256 jbcPrice, uint256 jbcAmount);
+    event DifferentialRewardFailed(address indexed user, uint256 totalAmount, uint256 mcPart, uint256 jbcAmount, string reason);
     event TeamCountUpdated(address indexed user, uint256 oldCount, uint256 newCount);
     event TeamBasedRewardCalculated(uint256 indexed stakeId, address indexed upline, uint256 amount, uint256 teamCount);
     event UserLevelChanged(address indexed user, uint256 oldLevel, uint256 newLevel, uint256 teamCount);
@@ -547,7 +553,7 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, UUPSUpgradeable, R
             uint256 directAmt = (amount * directRewardPercent) / 100;
             uint256 paid = _distributeReward(referrerAddr, directAmt, REWARD_DIRECT);
             if (paid > 0) {
-                emit ReferralRewardPaid(referrerAddr, msg.sender, paid, REWARD_DIRECT, t.ticketId);
+                emit ReferralRewardPaid(referrerAddr, msg.sender, paid, 0, REWARD_DIRECT, t.ticketId);
             }
         } else {
             mcToken.transfer(marketingWallet, (amount * directRewardPercent) / 100);
@@ -784,11 +790,6 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, UUPSUpgradeable, R
             return 0;
         }
 
-        if (mcToken.balanceOf(address(this)) < amount) {
-            emit RewardCapped(user, amount, 0);
-            return 0;
-        }
-
         uint256 available = u.currentCap - u.totalRevenue;
         uint256 payout = amount;
         
@@ -797,16 +798,197 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, UUPSUpgradeable, R
             emit RewardCapped(user, amount, available);
         }
         
-        if (payout > 0) {
-            u.totalRevenue += payout;
-            mcToken.transfer(user, payout);
-            emit RewardPaid(user, payout, rType);
+        if (payout == 0) {
+            return 0;
         }
+        
+        // 對於級差獎勵，實施 50% MC + 50% JBC 分配機制
+        if (rType == REWARD_DIFFERENTIAL) {
+            return _distributeDifferentialReward(user, payout, rType);
+        }
+        
+        // 其他獎勵類型保持原有邏輯（純 MC 分配）
+        if (mcToken.balanceOf(address(this)) < payout) {
+            emit RewardCapped(user, payout, 0);
+            return 0;
+        }
+        
+        u.totalRevenue += payout;
+        mcToken.transfer(user, payout);
+        emit RewardPaid(user, payout, rType);
 
         if (u.totalRevenue >= u.currentCap) {
             _handleExit(user);
         }
         return payout;
+    }
+    
+    /**
+     * @dev 分配級差獎勵，實施 50% MC + 50% JBC 分配機制
+     * @param user 接收獎勵的用戶地址
+     * @param amount 獎勵總額 (MC 等值)
+     * @param rType 獎勵類型
+     * @return 實際分配的總價值 (MC 等值)
+     */
+    function _distributeDifferentialReward(address user, uint256 amount, uint8 rType) internal returns (uint256) {
+        UserInfo storage u = userInfo[user];
+        
+        // 50/50 分配
+        uint256 mcPart = amount / 2;
+        uint256 jbcValuePart = amount / 2;
+        
+        // 計算 JBC 價格
+        uint256 jbcPrice = _getCurrentJBCPrice();
+        uint256 jbcAmount = (jbcValuePart * 1 ether) / jbcPrice;
+        
+        // 記錄詳細的計算信息
+        emit DifferentialRewardCalculated(user, amount, mcPart, jbcValuePart, jbcPrice, jbcAmount);
+        
+        // 檢查余額並執行安全轉賬
+        (uint256 mcTransferred, uint256 jbcTransferred) = _safeTransferDifferentialReward(user, mcPart, jbcAmount);
+        
+        // 計算實際分配的總價值
+        uint256 actualValue = mcTransferred + ((jbcTransferred * jbcPrice) / 1 ether);
+        
+        if (actualValue > 0) {
+            u.totalRevenue += actualValue;
+            
+            // 觸發事件
+            emit RewardPaid(user, actualValue, rType);
+            emit DifferentialRewardDistributed(user, mcTransferred, jbcTransferred, jbcPrice, block.timestamp);
+            
+            if (u.totalRevenue >= u.currentCap) {
+                _handleExit(user);
+            }
+        } else {
+            // 記錄分配失敗的詳細信息
+            emit DifferentialRewardFailed(user, amount, mcPart, jbcAmount, "No tokens transferred");
+        }
+        
+        // 存儲分配詳情供事件使用
+        _lastDifferentialDistribution[user] = DifferentialDistribution({
+            mcAmount: mcTransferred,
+            jbcAmount: jbcTransferred,
+            totalValue: actualValue
+        });
+        
+        return actualValue;
+    }
+    
+    /**
+     * @dev 安全轉賬級差獎勵，處理余額不足情況
+     * @param user 接收獎勵的用戶地址
+     * @param mcAmount 需要轉賬的 MC 數量
+     * @param jbcAmount 需要轉賬的 JBC 數量
+     * @return mcTransferred 實際轉賬的 MC 數量
+     * @return jbcTransferred 實際轉賬的 JBC 數量
+     */
+    function _safeTransferDifferentialReward(address user, uint256 mcAmount, uint256 jbcAmount) 
+        internal returns (uint256 mcTransferred, uint256 jbcTransferred) {
+        
+        // 檢查流動性影響
+        if (!_checkLiquidityImpact(jbcAmount)) {
+            // 如果影響過大，減少 JBC 分配量
+            jbcAmount = swapReserveJBC / 20; // 限制為儲備的 5%
+            emit LiquidityProtectionTriggered(user, jbcAmount);
+        }
+        
+        // 檢查 MC 余額並轉賬
+        uint256 mcBalance = mcToken.balanceOf(address(this));
+        if (mcAmount > 0 && mcBalance > 0) {
+            mcTransferred = mcAmount > mcBalance ? mcBalance : mcAmount;
+            try mcToken.transfer(user, mcTransferred) {
+                // 轉賬成功
+            } catch {
+                // 轉賬失敗，記錄錯誤
+                emit RewardTransferFailed(user, mcTransferred, 0, "MC transfer failed");
+                mcTransferred = 0;
+            }
+        }
+        
+        // 檢查 JBC 余額並轉賬
+        uint256 jbcBalance = jbcToken.balanceOf(address(this));
+        if (jbcAmount > 0 && jbcBalance > 0) {
+            jbcTransferred = jbcAmount > jbcBalance ? jbcBalance : jbcAmount;
+            try jbcToken.transfer(user, jbcTransferred) {
+                // 轉賬成功
+            } catch {
+                // 轉賬失敗，記錄錯誤
+                emit RewardTransferFailed(user, 0, jbcTransferred, "JBC transfer failed");
+                jbcTransferred = 0;
+            }
+        }
+        
+        // 記錄部分轉賬情況
+        if (mcAmount > mcTransferred || jbcAmount > jbcTransferred) {
+            emit PartialRewardTransfer(user, mcAmount, mcTransferred, jbcAmount, jbcTransferred);
+        }
+    }
+    
+    struct DifferentialDistribution {
+        uint256 mcAmount;
+        uint256 jbcAmount;
+        uint256 totalValue;
+    }
+    
+    mapping(address => DifferentialDistribution) private _lastDifferentialDistribution;
+    
+    /**
+     * @dev 獲取當前 JBC 價格，包含流動性保護機制
+     * @return JBC 價格 (以 MC 計價，18 位小數)
+     */
+    function _getCurrentJBCPrice() internal view returns (uint256) {
+        // 檢查最小流動性閾值
+        if (swapReserveJBC == 0 || swapReserveMC < MIN_LIQUIDITY) {
+            return 1 ether; // 使用 1:1 默認比例
+        }
+        
+        // 計算原始價格: JBC價格 = MC儲備 / JBC儲備
+        uint256 rawPrice = (swapReserveMC * 1 ether) / swapReserveJBC;
+        
+        // 應用價格保護機制
+        return _applyPriceProtection(rawPrice);
+    }
+    
+    /**
+     * @dev 應用價格保護機制，防止極端價格波動
+     * @param rawPrice 原始計算的價格
+     * @return 保護後的價格
+     */
+    function _applyPriceProtection(uint256 rawPrice) internal pure returns (uint256) {
+        // 設置價格上下限 (0.1 - 10 MC per JBC)
+        uint256 minPrice = 0.1 ether;
+        uint256 maxPrice = 10 ether;
+        
+        if (rawPrice < minPrice) {
+            return minPrice;
+        }
+        if (rawPrice > maxPrice) {
+            return maxPrice;
+        }
+        
+        return rawPrice;
+    }
+    
+    /**
+     * @dev 檢查流動性是否充足
+     * @return 流動性是否充足
+     */
+    function _isLiquiditySufficient() internal view returns (bool) {
+        return swapReserveMC >= MIN_LIQUIDITY && swapReserveJBC >= MIN_LIQUIDITY;
+    }
+    
+    /**
+     * @dev 檢查大額分配對流動性的影響
+     * @param jbcAmount 要分配的 JBC 數量
+     * @return 是否可以安全分配
+     */
+    function _checkLiquidityImpact(uint256 jbcAmount) internal view returns (bool) {
+        if (jbcAmount == 0) return true;
+        
+        // 檢查分配量是否超過儲備的 5%
+        uint256 maxImpact = swapReserveJBC / 20; // 5%
+        return jbcAmount <= maxImpact;
     }
 
     function _handleExit(address user) internal {
@@ -885,7 +1067,7 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, UUPSUpgradeable, R
                 uint256 paid = _distributeReward(current, rewardPerLayer, REWARD_LEVEL);
                 if (paid > 0) {
                     totalDistributed += paid;
-                    emit ReferralRewardPaid(current, user, paid, REWARD_LEVEL, userTicket[user].ticketId);
+                    emit ReferralRewardPaid(current, user, paid, 0, REWARD_LEVEL, userTicket[user].ticketId);
                 }
             }
             
@@ -983,7 +1165,9 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, UUPSUpgradeable, R
         for (uint256 i = 0; i < rewards.length; i++) {
             uint256 paid = _distributeReward(rewards[i].upline, rewards[i].amount, REWARD_DIFFERENTIAL);
             if (paid > 0) {
-                emit ReferralRewardPaid(rewards[i].upline, from, paid, REWARD_DIFFERENTIAL, stakeId);
+                // 獲取分配詳情
+                DifferentialDistribution memory dist = _lastDifferentialDistribution[rewards[i].upline];
+                emit ReferralRewardPaid(rewards[i].upline, from, dist.mcAmount, dist.jbcAmount, REWARD_DIFFERENTIAL, stakeId);
             }
             emit DifferentialRewardReleased(stakeId, rewards[i].upline, paid);
         }

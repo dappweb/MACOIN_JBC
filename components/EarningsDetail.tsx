@@ -380,9 +380,9 @@ const EarningsDetail: React.FC = () => {
       
       console.log(`🔍 [EarningsDetail] Querying events from block ${fromBlock} to ${currentBlock}`)
 
-      // 并行查询三种事件
+      // 并行查询四种事件
       // 使用 Promise.allSettled 避免其中一个失败导致整体失败
-      const [rewardPaidResults, rewardClaimedResults, referralResults] = await Promise.allSettled([
+      const [rewardPaidResults, rewardClaimedResults, referralResults, differentialResults] = await Promise.allSettled([
         protocolContract.queryFilter(
           protocolContract.filters.RewardPaid(targetUser), 
           fromBlock
@@ -394,12 +394,17 @@ const EarningsDetail: React.FC = () => {
         protocolContract.queryFilter(
           protocolContract.filters.ReferralRewardPaid(targetUser), 
           fromBlock
+        ),
+        protocolContract.queryFilter(
+          protocolContract.filters.DifferentialRewardDistributed(targetUser), 
+          fromBlock
         )
       ])
       
       let rewardPaidEvents: any[] = []
       let rewardClaimedEvents: any[] = []
       let referralEvents: any[] = []
+      let differentialEvents: any[] = []
 
       if (rewardPaidResults.status === 'fulfilled') {
         rewardPaidEvents = rewardPaidResults.value
@@ -420,6 +425,13 @@ const EarningsDetail: React.FC = () => {
       } else {
         console.error("Failed to fetch referral events:", referralResults.reason)
         toast.error("Failed to load referral events")
+      }
+
+      if (differentialResults.status === 'fulfilled') {
+        differentialEvents = differentialResults.value
+      } else {
+        console.error("Failed to fetch differential events:", differentialResults.reason)
+        // 不显示错误，因为这是新事件，旧合约可能没有
       }
 
       const rows: RewardRecord[] = []
@@ -495,16 +507,35 @@ const EarningsDetail: React.FC = () => {
       for (const event of referralEvents) {
         try {
           const block = await provider.getBlock(event.blockNumber)
-          const mcAmount = event.args ? ethers.formatEther(event.args[2]) : "0"
-          const rewardType = event.args ? Number(event.args[3]) : 0
-          const ticketId = event.args ? event.args[4].toString() : ""
+          
+          // 检查事件参数数量来判断是新格式还是旧格式
+          const isNewFormat = event.args && event.args.length >= 6 // 新格式有6个参数
+          
+          let mcAmount = "0"
+          let jbcAmount = "0"
+          let rewardType = 0
+          let ticketId = ""
+          
+          if (isNewFormat) {
+            // 新格式: ReferralRewardPaid(user, from, mcAmount, jbcAmount, rewardType, ticketId)
+            mcAmount = event.args ? ethers.formatEther(event.args[2]) : "0"
+            jbcAmount = event.args ? ethers.formatEther(event.args[3]) : "0"
+            rewardType = event.args ? Number(event.args[4]) : 0
+            ticketId = event.args ? event.args[5].toString() : ""
+          } else {
+            // 旧格式: ReferralRewardPaid(user, from, mcAmount, rewardType, ticketId)
+            mcAmount = event.args ? ethers.formatEther(event.args[2]) : "0"
+            jbcAmount = "0"
+            rewardType = event.args ? Number(event.args[3]) : 0
+            ticketId = event.args ? event.args[4].toString() : ""
+          }
 
           rows.push({
             hash: event.transactionHash,
             user: event.args ? event.args[0] : "",
             source: event.args ? event.args[1] : "",
             mcAmount,
-            jbcAmount: "0",
+            jbcAmount,
             rewardType,
             ticketId,
             blockNumber: event.blockNumber,
@@ -514,6 +545,32 @@ const EarningsDetail: React.FC = () => {
           processedEvents++
         } catch (err) {
           console.error("Error parsing referral reward event:", err, event)
+          failedEvents++
+        }
+      }
+
+      // 处理新的 DifferentialRewardDistributed 事件
+      for (const event of differentialEvents) {
+        try {
+          const block = await provider.getBlock(event.blockNumber)
+          const mcAmount = event.args ? ethers.formatEther(event.args[1]) : "0"
+          const jbcAmount = event.args ? ethers.formatEther(event.args[2]) : "0"
+          const jbcPrice = event.args ? ethers.formatEther(event.args[3]) : "0"
+
+          rows.push({
+            hash: event.transactionHash,
+            user: event.args ? event.args[0] : "",
+            mcAmount,
+            jbcAmount,
+            rewardType: 4, // 級差獎勵
+            ticketId: "", // DifferentialRewardDistributed 事件沒有 ticketId
+            blockNumber: event.blockNumber,
+            timestamp: block ? block.timestamp : 0,
+            status: "confirmed",
+          })
+          processedEvents++
+        } catch (err) {
+          console.error("Error parsing differential reward event:", err, event)
           failedEvents++
         }
       }
@@ -931,9 +988,24 @@ const EarningsDetail: React.FC = () => {
           )}
         </div>
         <div className="bg-gray-900/80 border border-gray-700 rounded-xl shadow-md p-4 backdrop-blur-sm">
-          <div className="text-sm text-gray-200 mb-2">{ui.differentialReward || "Differential Reward"} (24h)</div>
-          <div className="text-lg font-bold text-neon-400 drop-shadow-md">{dailyStats.differential.mc.toFixed(4)} MC</div>
-          <div className="text-lg font-bold text-amber-400 drop-shadow-md">{dailyStats.differential.jbc.toFixed(4)} JBC</div>
+          <div className="text-sm text-gray-200 mb-2 flex items-center gap-2">
+            <TrendingUp className="w-4 h-4" />
+            {ui.differentialReward || "Differential Reward"} (24h)
+            <span className="px-2 py-0.5 bg-gradient-to-r from-neon-500/20 to-amber-500/20 text-xs rounded-full border border-neon-500/30">
+              50% MC + 50% JBC
+            </span>
+          </div>
+          <div className="space-y-1">
+            <div className="text-lg font-bold text-neon-400 drop-shadow-md">{dailyStats.differential.mc.toFixed(4)} MC</div>
+            <div className="text-lg font-bold text-amber-400 drop-shadow-md">{dailyStats.differential.jbc.toFixed(4)} JBC</div>
+            
+            {/* 显示总价值 */}
+            {currentJBCPrice > 0 && (dailyStats.differential.mc > 0 || dailyStats.differential.jbc > 0) && (
+              <div className="text-sm text-gray-400 mt-2 pt-2 border-t border-gray-600/50">
+                💰 总价值: {(dailyStats.differential.mc + dailyStats.differential.jbc * currentJBCPrice).toFixed(4)} MC
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -1059,8 +1131,34 @@ const EarningsDetail: React.FC = () => {
                           </div>
                         )}
                         
-                        {/* 非静态奖励的常规显示 */}
-                        {row.rewardType !== 0 && (
+                        {/* 級差獎勵特殊顯示 */}
+                        {row.rewardType === 4 && (parseFloat(row.mcAmount) > 0 || parseFloat(row.jbcAmount) > 0) && (
+                          <div className="bg-gray-800/50 rounded-lg p-3 border border-gray-600/50">
+                            <div className="text-xs text-gray-400 mb-2 flex items-center gap-1">
+                              <TrendingUp className="w-3 h-3" />
+                              級差獎勵 - 50% MC + 50% JBC 分配
+                            </div>
+                            <div className="grid grid-cols-2 gap-2">
+                              <div className="bg-neon-500/10 rounded p-2">
+                                <div className="text-xs text-neon-400">MC 部分 (50%)</div>
+                                <div className="font-semibold text-neon-400">{parseFloat(row.mcAmount).toFixed(4)} MC</div>
+                              </div>
+                              <div className="bg-amber-500/10 rounded p-2">
+                                <div className="text-xs text-amber-400">JBC 部分 (50%)</div>
+                                <div className="font-semibold text-amber-400">{parseFloat(row.jbcAmount).toFixed(4)} JBC</div>
+                              </div>
+                            </div>
+                            {currentJBCPrice > 0 && (
+                              <div className="text-xs text-gray-400 mt-2 pt-2 border-t border-gray-600/30">
+                                💰 总价值: {(parseFloat(row.mcAmount) + parseFloat(row.jbcAmount) * currentJBCPrice).toFixed(4)} MC
+                                <span className="ml-2">💱 汇率: 1 JBC = {currentJBCPrice.toFixed(6)} MC</span>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                        
+                        {/* 非級差獎勵的常規顯示 */}
+                        {row.rewardType !== 0 && row.rewardType !== 4 && (
                           <>
                             {parseFloat(row.mcAmount) > 0 && (
                               <p className="text-sm text-gray-200">
@@ -1144,6 +1242,25 @@ const EarningsDetail: React.FC = () => {
                     {row.rewardType === 0 ? (
                       <div className="space-y-1">
                         <div className="text-xs text-gray-400 mb-1">50% MC + 50% JBC</div>
+                        {parseFloat(row.mcAmount) > 0 && (
+                          <p className="text-sm text-right font-semibold text-neon-400">+{parseFloat(row.mcAmount).toFixed(2)} MC</p>
+                        )}
+                        {parseFloat(row.jbcAmount) > 0 && (
+                          <p className="text-sm text-right font-semibold text-amber-400">+{parseFloat(row.jbcAmount).toFixed(2)} JBC</p>
+                        )}
+                        {currentJBCPrice > 0 && (
+                          <div className="text-xs text-gray-500">
+                            ≈ {(parseFloat(row.mcAmount) + parseFloat(row.jbcAmount) * currentJBCPrice).toFixed(2)} MC
+                          </div>
+                        )}
+                      </div>
+                    ) : row.rewardType === 4 ? (
+                      /* 級差獎勵特殊顯示 */
+                      <div className="space-y-1">
+                        <div className="text-xs text-gray-400 mb-1 flex items-center gap-1">
+                          <TrendingUp className="w-3 h-3" />
+                          50% MC + 50% JBC
+                        </div>
                         {parseFloat(row.mcAmount) > 0 && (
                           <p className="text-sm text-right font-semibold text-neon-400">+{parseFloat(row.mcAmount).toFixed(2)} MC</p>
                         )}
@@ -1262,11 +1379,13 @@ const EarningsDetail: React.FC = () => {
               {/* Amounts */}
               <div className="space-y-3">
                 <div className="text-sm text-gray-200 uppercase font-mono tracking-wider">
-                  {selectedRecord.rewardType === 0 ? "静态奖励分配 (50% MC + 50% JBC)" : (ui.mcAmount || "Reward Amount")}
+                  {selectedRecord.rewardType === 0 ? "静态奖励分配 (50% MC + 50% JBC)" : 
+                   selectedRecord.rewardType === 4 ? "級差奖励分配 (50% MC + 50% JBC)" : 
+                   (ui.mcAmount || "Reward Amount")}
                 </div>
                 <div className="bg-gray-800/50 rounded-xl p-4 border border-gray-700">
-                  {selectedRecord.rewardType === 0 ? (
-                    /* 静态奖励特殊显示 */
+                  {(selectedRecord.rewardType === 0 || selectedRecord.rewardType === 4) ? (
+                    /* 静态奖励和級差獎勵特殊显示 */
                     <div className="space-y-3">
                       <div className="grid grid-cols-2 gap-3">
                         <div className="bg-neon-500/10 rounded-lg p-3 border border-neon-500/20">

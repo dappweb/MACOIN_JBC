@@ -39,6 +39,10 @@ const EarningsDetail: React.FC = () => {
   // 错误状态
   const [error, setError] = useState<string | null>(null)
   
+  // JBC 价格状态
+  const [currentJBCPrice, setCurrentJBCPrice] = useState(0)
+  const [reserveInfo, setReserveInfo] = useState<{mc: string, jbc: string}>({mc: "0", jbc: "0"})
+  
   // 强制刷新函数
   const forceRefresh = async () => {
     console.log('🔄 [EarningsDetail] 强制刷新所有数据');
@@ -291,11 +295,20 @@ const EarningsDetail: React.FC = () => {
         reserveJBC: ethers.formatEther(reserveJBC)
       });
       
+      // 更新储备信息状态
+      setReserveInfo({
+        mc: ethers.formatEther(reserveMC),
+        jbc: ethers.formatEther(reserveJBC)
+      });
+      
       let jbcAmount = 0;
+      let calculatedJBCPrice = 0;
       if (reserveMC > 0n && reserveJBC > 0n) {
         const jbcPrice = (reserveMC * 1000000000000000000n) / reserveJBC; // 1e18 scaled
         const jbcAmountBigInt = (jbcValuePart * 1000000000000000000n) / jbcPrice;
         jbcAmount = Number(ethers.formatEther(jbcAmountBigInt));
+        calculatedJBCPrice = Number(ethers.formatEther(jbcPrice));
+        
         console.log('💱 [EarningsDetail] JBC价格计算:', {
           jbcPrice: ethers.formatEther(jbcPrice),
           jbcAmount
@@ -303,8 +316,12 @@ const EarningsDetail: React.FC = () => {
       } else {
         // 如果没有流动性，按1:1计算
         jbcAmount = Number(ethers.formatEther(jbcValuePart));
+        calculatedJBCPrice = 1;
         console.log('💱 [EarningsDetail] 无流动性，使用1:1比例');
       }
+      
+      // 更新JBC价格状态
+      setCurrentJBCPrice(calculatedJBCPrice);
       
       const result = {
         mc: Number(ethers.formatEther(mcPart)),
@@ -727,6 +744,37 @@ const EarningsDetail: React.FC = () => {
         </div>
       </div>
 
+      {/* 价格信息显示 */}
+      {currentJBCPrice > 0 && reserveInfo.mc !== "0" && reserveInfo.jbc !== "0" && (
+        <div className="bg-gradient-to-r from-blue-900/30 to-indigo-900/30 border border-blue-500/40 rounded-xl p-4 mb-6 backdrop-blur-sm">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-blue-500/20 rounded-lg flex items-center justify-center">
+              <TrendingUp className="w-5 h-5 text-blue-400" />
+            </div>
+            <div className="flex-1">
+              <h3 className="text-lg font-bold text-blue-400 mb-1">💱 当前汇率信息</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="bg-blue-800/30 rounded-lg p-3">
+                  <div className="text-xs text-blue-400 mb-1">JBC 价格</div>
+                  <div className="font-bold text-blue-300">1 JBC = {currentJBCPrice.toFixed(6)} MC</div>
+                </div>
+                <div className="bg-blue-800/30 rounded-lg p-3">
+                  <div className="text-xs text-blue-400 mb-1">MC 储备</div>
+                  <div className="font-bold text-blue-300">{parseFloat(reserveInfo.mc).toFixed(2)} MC</div>
+                </div>
+                <div className="bg-blue-800/30 rounded-lg p-3">
+                  <div className="text-xs text-blue-400 mb-1">JBC 储备</div>
+                  <div className="font-bold text-blue-300">{parseFloat(reserveInfo.jbc).toFixed(2)} JBC</div>
+                </div>
+              </div>
+              <p className="text-xs text-blue-400 mt-2">
+                💡 静态奖励按 50% MC + 50% JBC (等值) 分配，JBC 数量根据当前汇率计算
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* 待领取奖励提示 */}
       {viewMode === "self" && (pendingRewards.mc > 0 || pendingRewards.jbc > 0) && (
         <div className="bg-gradient-to-r from-green-900/30 to-emerald-900/30 border border-green-500/40 rounded-xl p-4 mb-6 backdrop-blur-sm">
@@ -736,9 +784,45 @@ const EarningsDetail: React.FC = () => {
             </div>
             <div className="flex-1">
               <h3 className="text-lg font-bold text-green-400 mb-1">{ui.pendingRewards || "有待领取的静态奖励！"}</h3>
-              <p className="text-sm text-green-300">
-                {ui.pendingRewardsDesc || "您有"} <span className="font-bold">{pendingRewards.mc.toFixed(4)} MC</span> {ui.and || "和"} <span className="font-bold">{pendingRewards.jbc.toFixed(4)} JBC</span> {ui.pendingRewardsDesc2 || "的静态奖励待领取"}
-              </p>
+              
+              {/* 50/50 分配说明 */}
+              <div className="bg-green-900/20 rounded-lg p-3 mb-2 border border-green-500/20">
+                <div className="text-sm text-green-300 mb-2">
+                  <span className="font-semibold">📊 分配机制:</span> 50% MC + 50% JBC (按当前汇率计算)
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="bg-green-800/30 rounded-lg p-2">
+                    <div className="text-xs text-green-400 mb-1">MC 部分 (50%)</div>
+                    <div className="font-bold text-green-300">{pendingRewards.mc.toFixed(4)} MC</div>
+                  </div>
+                  <div className="bg-yellow-800/30 rounded-lg p-2">
+                    <div className="text-xs text-yellow-400 mb-1">JBC 部分 (50%)</div>
+                    <div className="font-bold text-yellow-300">{pendingRewards.jbc.toFixed(4)} JBC</div>
+                  </div>
+                </div>
+                
+                {/* 当前汇率显示 */}
+                {currentJBCPrice > 0 && (
+                  <div className="mt-2 pt-2 border-t border-green-500/20">
+                    <div className="text-xs text-green-400">
+                      💱 当前汇率: 1 JBC = {currentJBCPrice.toFixed(6)} MC
+                    </div>
+                    <div className="text-xs text-green-400">
+                      💰 总价值: {(pendingRewards.mc + pendingRewards.jbc * currentJBCPrice).toFixed(4)} MC
+                    </div>
+                  </div>
+                )}
+                
+                {/* 流动性池信息 */}
+                {reserveInfo.mc !== "0" && reserveInfo.jbc !== "0" && (
+                  <div className="mt-2 pt-2 border-t border-green-500/20">
+                    <div className="text-xs text-green-400">
+                      🏊 流动性池: {parseFloat(reserveInfo.mc).toFixed(2)} MC / {parseFloat(reserveInfo.jbc).toFixed(2)} JBC
+                    </div>
+                  </div>
+                )}
+              </div>
+              
               <p className="text-xs text-green-400 mt-1">
                 💡 {ui.claimHint || "请前往挖矿页面点击'领取收益'按钮来领取您的静态奖励"}
               </p>
@@ -799,14 +883,36 @@ const EarningsDetail: React.FC = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <div className="bg-gray-900/80 border border-gray-700 rounded-xl shadow-md p-4 backdrop-blur-sm">
           <div className="text-sm text-gray-200 mb-2">{ui.staticReward || "Static Reward"} (24h)</div>
-          <div className="text-lg font-bold text-neon-400 drop-shadow-md">{dailyStats.static.mc.toFixed(2)} MC</div>
-          <div className="text-lg font-bold text-amber-400 drop-shadow-md">{dailyStats.static.jbc.toFixed(2)} JBC</div>
+          <div className="space-y-1">
+            <div className="text-lg font-bold text-neon-400 drop-shadow-md">{dailyStats.static.mc.toFixed(2)} MC</div>
+            <div className="text-lg font-bold text-amber-400 drop-shadow-md">{dailyStats.static.jbc.toFixed(2)} JBC</div>
+            
+            {/* 显示总价值 */}
+            {currentJBCPrice > 0 && (dailyStats.static.mc > 0 || dailyStats.static.jbc > 0) && (
+              <div className="text-sm text-gray-400 mt-2 pt-2 border-t border-gray-600/50">
+                💰 总价值: {(dailyStats.static.mc + dailyStats.static.jbc * currentJBCPrice).toFixed(4)} MC
+              </div>
+            )}
+            
+            {/* 50/50 机制说明 */}
+            {(dailyStats.static.mc > 0 || dailyStats.static.jbc > 0) && (
+              <div className="text-xs text-gray-500 mt-1">
+                📊 50% MC + 50% JBC 分配
+              </div>
+            )}
+          </div>
+          
           {/* 显示待领取的静态奖励 */}
           {viewMode === "self" && (pendingRewards.mc > 0 || pendingRewards.jbc > 0) && (
             <div className="mt-2 pt-2 border-t border-gray-600/50">
               <div className="text-xs text-gray-400 mb-1">待领取 (Pending)</div>
               <div className="text-sm font-bold text-green-400">+{pendingRewards.mc.toFixed(4)} MC</div>
               <div className="text-sm font-bold text-yellow-400">+{pendingRewards.jbc.toFixed(4)} JBC</div>
+              {currentJBCPrice > 0 && (
+                <div className="text-xs text-gray-500 mt-1">
+                  价值: +{(pendingRewards.mc + pendingRewards.jbc * currentJBCPrice).toFixed(4)} MC
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -927,18 +1033,50 @@ const EarningsDetail: React.FC = () => {
                         )}
                       </div>
                       <div className="space-y-1 mb-2">
-                        {parseFloat(row.mcAmount) > 0 && (
-                          <p className="text-sm text-gray-200">
-                            {ui.mcAmount || "MC Reward"}:{" "}
-                            <span className="font-semibold text-neon-400 drop-shadow-sm">{parseFloat(row.mcAmount).toFixed(4)} MC</span>
-                          </p>
+                        {/* 静态奖励特殊显示 */}
+                        {row.rewardType === 0 && (parseFloat(row.mcAmount) > 0 || parseFloat(row.jbcAmount) > 0) && (
+                          <div className="bg-gray-800/50 rounded-lg p-3 border border-gray-600/50">
+                            <div className="text-xs text-gray-400 mb-2 flex items-center gap-1">
+                              <Pickaxe className="w-3 h-3" />
+                              静态奖励 - 50% MC + 50% JBC 分配
+                            </div>
+                            <div className="grid grid-cols-2 gap-2">
+                              <div className="bg-neon-500/10 rounded p-2">
+                                <div className="text-xs text-neon-400">MC 部分 (50%)</div>
+                                <div className="font-semibold text-neon-400">{parseFloat(row.mcAmount).toFixed(4)} MC</div>
+                              </div>
+                              <div className="bg-amber-500/10 rounded p-2">
+                                <div className="text-xs text-amber-400">JBC 部分 (50%)</div>
+                                <div className="font-semibold text-amber-400">{parseFloat(row.jbcAmount).toFixed(4)} JBC</div>
+                              </div>
+                            </div>
+                            {currentJBCPrice > 0 && (
+                              <div className="text-xs text-gray-400 mt-2 pt-2 border-t border-gray-600/30">
+                                💰 总价值: {(parseFloat(row.mcAmount) + parseFloat(row.jbcAmount) * currentJBCPrice).toFixed(4)} MC
+                                <span className="ml-2">💱 汇率: 1 JBC = {currentJBCPrice.toFixed(6)} MC</span>
+                              </div>
+                            )}
+                          </div>
                         )}
-                        {parseFloat(row.jbcAmount) > 0 && (
-                          <p className="text-sm text-gray-200">
-                            {ui.jbcAmount || "JBC Reward"}:{" "}
-                            <span className="font-semibold text-amber-400 drop-shadow-sm">{parseFloat(row.jbcAmount).toFixed(4)} JBC</span>
-                          </p>
+                        
+                        {/* 非静态奖励的常规显示 */}
+                        {row.rewardType !== 0 && (
+                          <>
+                            {parseFloat(row.mcAmount) > 0 && (
+                              <p className="text-sm text-gray-200">
+                                {ui.mcAmount || "MC Reward"}:{" "}
+                                <span className="font-semibold text-neon-400 drop-shadow-sm">{parseFloat(row.mcAmount).toFixed(4)} MC</span>
+                              </p>
+                            )}
+                            {parseFloat(row.jbcAmount) > 0 && (
+                              <p className="text-sm text-gray-200">
+                                {ui.jbcAmount || "JBC Reward"}:{" "}
+                                <span className="font-semibold text-amber-400 drop-shadow-sm">{parseFloat(row.jbcAmount).toFixed(4)} JBC</span>
+                              </p>
+                            )}
+                          </>
                         )}
+                        
                         {row.source && (
                           <p className="text-sm text-gray-300">
                             {ui.rewardFrom || "From"}:{" "}
@@ -1002,14 +1140,32 @@ const EarningsDetail: React.FC = () => {
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="space-y-0.5">
-                      {parseFloat(row.mcAmount) > 0 && (
-                        <p className="text-sm text-right font-semibold text-neon-400">+{parseFloat(row.mcAmount).toFixed(2)} MC</p>
-                      )}
-                      {parseFloat(row.jbcAmount) > 0 && (
-                        <p className="text-sm text-right font-semibold text-amber-400">+{parseFloat(row.jbcAmount).toFixed(2)} JBC</p>
-                      )}
-                    </div>
+                    {/* 静态奖励特殊显示 */}
+                    {row.rewardType === 0 ? (
+                      <div className="space-y-1">
+                        <div className="text-xs text-gray-400 mb-1">50% MC + 50% JBC</div>
+                        {parseFloat(row.mcAmount) > 0 && (
+                          <p className="text-sm text-right font-semibold text-neon-400">+{parseFloat(row.mcAmount).toFixed(2)} MC</p>
+                        )}
+                        {parseFloat(row.jbcAmount) > 0 && (
+                          <p className="text-sm text-right font-semibold text-amber-400">+{parseFloat(row.jbcAmount).toFixed(2)} JBC</p>
+                        )}
+                        {currentJBCPrice > 0 && (
+                          <div className="text-xs text-gray-500">
+                            ≈ {(parseFloat(row.mcAmount) + parseFloat(row.jbcAmount) * currentJBCPrice).toFixed(2)} MC
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="space-y-0.5">
+                        {parseFloat(row.mcAmount) > 0 && (
+                          <p className="text-sm text-right font-semibold text-neon-400">+{parseFloat(row.mcAmount).toFixed(2)} MC</p>
+                        )}
+                        {parseFloat(row.jbcAmount) > 0 && (
+                          <p className="text-sm text-right font-semibold text-amber-400">+{parseFloat(row.jbcAmount).toFixed(2)} JBC</p>
+                        )}
+                      </div>
+                    )}
                     <ChevronRight className="w-4 h-4 text-gray-400 ml-auto mt-1" />
                   </div>
                 </div>
@@ -1105,18 +1261,61 @@ const EarningsDetail: React.FC = () => {
 
               {/* Amounts */}
               <div className="space-y-3">
-                <div className="text-sm text-gray-200 uppercase font-mono tracking-wider">{ui.mcAmount || "MC Reward"}</div>
+                <div className="text-sm text-gray-200 uppercase font-mono tracking-wider">
+                  {selectedRecord.rewardType === 0 ? "静态奖励分配 (50% MC + 50% JBC)" : (ui.mcAmount || "Reward Amount")}
+                </div>
                 <div className="bg-gray-800/50 rounded-xl p-4 border border-gray-700">
-                  {parseFloat(selectedRecord.mcAmount) > 0 && (
-                    <div className={`flex justify-between items-center ${parseFloat(selectedRecord.jbcAmount) > 0 ? 'mb-2' : ''}`}>
-                      <span className="text-gray-200">MC</span>
-                      <span className="font-bold text-neon-400 text-lg drop-shadow-sm">{parseFloat(selectedRecord.mcAmount).toFixed(4)}</span>
+                  {selectedRecord.rewardType === 0 ? (
+                    /* 静态奖励特殊显示 */
+                    <div className="space-y-3">
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="bg-neon-500/10 rounded-lg p-3 border border-neon-500/20">
+                          <div className="text-xs text-neon-400 mb-1">MC 部分 (50%)</div>
+                          <div className="font-bold text-neon-400 text-lg">{parseFloat(selectedRecord.mcAmount).toFixed(4)}</div>
+                        </div>
+                        <div className="bg-amber-500/10 rounded-lg p-3 border border-amber-500/20">
+                          <div className="text-xs text-amber-400 mb-1">JBC 部分 (50%)</div>
+                          <div className="font-bold text-amber-400 text-lg">{parseFloat(selectedRecord.jbcAmount).toFixed(4)}</div>
+                        </div>
+                      </div>
+                      {currentJBCPrice > 0 && (
+                        <div className="bg-gray-700/50 rounded-lg p-3 border border-gray-600/50">
+                          <div className="text-xs text-gray-400 mb-2">价值计算</div>
+                          <div className="space-y-1 text-sm">
+                            <div className="flex justify-between">
+                              <span className="text-gray-300">MC 价值:</span>
+                              <span className="text-neon-400">{parseFloat(selectedRecord.mcAmount).toFixed(4)} MC</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-gray-300">JBC 价值:</span>
+                              <span className="text-amber-400">{(parseFloat(selectedRecord.jbcAmount) * currentJBCPrice).toFixed(4)} MC</span>
+                            </div>
+                            <div className="flex justify-between font-bold border-t border-gray-600 pt-1">
+                              <span className="text-gray-200">总价值:</span>
+                              <span className="text-green-400">{(parseFloat(selectedRecord.mcAmount) + parseFloat(selectedRecord.jbcAmount) * currentJBCPrice).toFixed(4)} MC</span>
+                            </div>
+                          </div>
+                          <div className="text-xs text-gray-500 mt-2">
+                            汇率: 1 JBC = {currentJBCPrice.toFixed(6)} MC
+                          </div>
+                        </div>
+                      )}
                     </div>
-                  )}
-                  {parseFloat(selectedRecord.jbcAmount) > 0 && (
-                    <div className="flex justify-between items-center">
-                      <span className="text-gray-200">JBC</span>
-                      <span className="font-bold text-amber-400 text-lg drop-shadow-sm">{parseFloat(selectedRecord.jbcAmount).toFixed(4)}</span>
+                  ) : (
+                    /* 非静态奖励常规显示 */
+                    <div>
+                      {parseFloat(selectedRecord.mcAmount) > 0 && (
+                        <div className={`flex justify-between items-center ${parseFloat(selectedRecord.jbcAmount) > 0 ? 'mb-2' : ''}`}>
+                          <span className="text-gray-200">MC</span>
+                          <span className="font-bold text-neon-400 text-lg drop-shadow-sm">{parseFloat(selectedRecord.mcAmount).toFixed(4)}</span>
+                        </div>
+                      )}
+                      {parseFloat(selectedRecord.jbcAmount) > 0 && (
+                        <div className="flex justify-between items-center">
+                          <span className="text-gray-200">JBC</span>
+                          <span className="font-bold text-amber-400 text-lg drop-shadow-sm">{parseFloat(selectedRecord.jbcAmount).toFixed(4)}</span>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>

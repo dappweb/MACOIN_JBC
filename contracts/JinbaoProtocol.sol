@@ -289,18 +289,6 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, UUPSUpgradeable, R
         emit TicketFlexibilityDurationUpdated(_duration);
     }
 
-    function batchUpdateUserStats(address[] calldata users, uint256[] calldata counts, uint256[] calldata volumes) external onlyOwner {
-        if (users.length != counts.length || users.length != volumes.length) revert BatchUpdateSizeMismatch();
-        
-        uint256 count = users.length;
-        for (uint256 i = 0; i < count; i++) {
-            userInfo[users[i]].teamCount = counts[i];
-            userInfo[users[i]].teamTotalVolume = volumes[i];
-            emit TeamCountUpdated(users[i], 0, counts[i]);
-        }
-        emit BatchTeamCountsUpdated(count);
-    }
-
     function addLiquidity(uint256 mcAmount, uint256 jbcAmount) external onlyOwner {
         if (mcAmount > 0) {
             try mcToken.transferFrom(msg.sender, address(this), mcAmount) {
@@ -417,24 +405,6 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, UUPSUpgradeable, R
         emit ReferrerChanged(user, oldReferrer, newReferrer);
     }
     
-    function adminUpdateUserField(address user, uint8 field, uint256 value) external onlyOwner {
-        if (user == address(0)) revert InvalidAddress();
-        
-        UserInfo storage info = userInfo[user];
-        
-        if (field == 0) info.activeDirects = value;
-        else if (field == 1) {
-            uint256 oldCount = info.teamCount;
-            info.teamCount = value;
-            emit TeamCountUpdated(user, oldCount, value);
-        }
-        else if (field == 2) info.totalRevenue = value;
-        else if (field == 3) info.currentCap = value;
-        else if (field == 4) info.refundFeeAmount = value;
-        
-        emit UserDataFieldUpdated(user, field, value);
-    }
-
     function _updateTeamCountRecursive(address startNode, uint256 amount, bool isAdd) private {
         address current = startNode;
         uint256 iterations = 0;
@@ -639,6 +609,9 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, UUPSUpgradeable, R
 
         emit LiquidityStaked(msg.sender, amount, cycleDays, nextStakeId);
 
+        // 计算并存储极差奖励
+        _calculateAndStoreDifferentialRewards(msg.sender, amount, nextStakeId);
+
         uint256 refund = userInfo[msg.sender].refundFeeAmount;
         if (refund > 0) {
             userInfo[msg.sender].refundFeeAmount = 0;
@@ -664,6 +637,13 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, UUPSUpgradeable, R
             if (stakePending > 0) {
                 totalPending += stakePending;
                 stakes[i].paid += stakePending;
+                
+                // 检查质押是否已完成周期，如果是则发放极差奖励
+                uint256 endTime = stakes[i].startTime + (stakes[i].cycleDays * SECONDS_IN_UNIT);
+                if (block.timestamp >= endTime) {
+                    stakes[i].active = false;
+                    _releaseDifferentialRewards(stakes[i].id);
+                }
             }
         }
         
@@ -787,66 +767,6 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, UUPSUpgradeable, R
 
         emit Redeemed(msg.sender, totalReturn, totalFee);
         
-        _updateActiveStatus(msg.sender);
-        
-        if (userInfo[msg.sender].totalRevenue >= userInfo[msg.sender].currentCap) {
-            _handleExit(msg.sender);
-        }
-    }
-
-    // Individual stake redemption
-    function redeemStake(uint256 stakeId) external nonReentrant {
-        if (!redeemEnabled) revert Unauthorized();
-        Stake[] storage stakes = userStakes[msg.sender];
-        if (stakeId >= stakes.length || !stakes[stakeId].active) revert NotActive();
-        
-        Stake storage stake = stakes[stakeId];
-        
-        RedemptionLib.RedeemParams memory params = RedemptionLib.RedeemParams({
-            amount: stake.amount,
-            startTime: stake.startTime,
-            cycleDays: stake.cycleDays,
-            paid: stake.paid,
-            maxTicketAmount: userInfo[msg.sender].maxTicketAmount,
-            fallbackAmount: userTicket[msg.sender].amount,
-            redemptionFeePercent: redemptionFeePercent,
-            secondsInUnit: SECONDS_IN_UNIT
-        });
-        
-        (uint256 pending, uint256 fee, bool canRedeem) = RedemptionLib.calculateRedemption(params);
-        if (!canRedeem) revert Expired(); // Or NotActive, or create new error NotRedeemable
-        
-        stake.paid += pending;
-        stake.active = false;
-        
-        if (!RedemptionLib.processIndividualRedemption(mcToken, msg.sender, address(this), stake.amount, fee)) revert TransferFailed();
-        
-        if (fee > 0) {
-            swapReserveMC += fee;
-            userInfo[msg.sender].refundFeeAmount += fee;
-        }
-        
-        _releaseDifferentialRewards(stake.id);
-        
-        if (pending > 0) {
-            uint256 available = userInfo[msg.sender].currentCap - userInfo[msg.sender].totalRevenue;
-            if (pending > available) pending = available;
-            if (pending > 0) {
-                userInfo[msg.sender].totalRevenue += pending;
-                uint256 mcPart = pending / 2;
-                if (mcToken.balanceOf(address(this)) >= mcPart && mcPart > 0) {
-                    mcToken.transfer(msg.sender, mcPart);
-                }
-                uint256 jbcPrice = swapReserveJBC == 0 || swapReserveMC < MIN_LIQUIDITY ? 1 ether : (swapReserveMC * 1e18) / swapReserveJBC;
-                uint256 jbcAmount = ((pending - mcPart) * 1 ether) / jbcPrice;
-                if (jbcToken.balanceOf(address(this)) >= jbcAmount && jbcAmount > 0) {
-                    jbcToken.transfer(msg.sender, jbcAmount);
-                }
-                emit RewardPaid(msg.sender, pending, REWARD_STATIC);
-            }
-        }
-        
-        emit Redeemed(msg.sender, stake.amount, fee);
         _updateActiveStatus(msg.sender);
         
         if (userInfo[msg.sender].totalRevenue >= userInfo[msg.sender].currentCap) {

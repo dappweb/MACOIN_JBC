@@ -11,7 +11,7 @@ module.exports = {
         settings: {
           optimizer: {
             enabled: true,
-            runs: 1,
+            runs: 50, // 平衡优化：合约大小与gas效率
           },
           viaIR: true,
         },
@@ -21,7 +21,7 @@ module.exports = {
         settings: {
           optimizer: {
             enabled: true,
-            runs: 1,
+            runs: 50, // 平衡优化：合约大小与gas效率
           },
           viaIR: true,
         },

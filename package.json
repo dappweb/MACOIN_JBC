@@ -34,6 +34,7 @@
     "setup:secrets": "./scripts/setup-secrets.sh",
     "setup:secrets:prod": "./scripts/setup-secrets.sh production",
     "setup:secrets:staging": "./scripts/setup-secrets.sh staging",
+    "validate:prod": "node scripts/validate-production-config.mjs",
     "pages:deploy:prod": "wrangler pages deploy dist --project-name=jinbao-protocol-prod",
     "pages:deploy:staging": "wrangler pages deploy dist --project-name=jinbao-protocol-staging",
     "secrets:list:prod": "wrangler pages secret list --project-name=jinbao-protocol-prod",

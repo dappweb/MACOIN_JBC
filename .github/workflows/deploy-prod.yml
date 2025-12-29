@@ -1,0 +1,265 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches: [ prod ]
+  workflow_dispatch:
+    inputs:
+      force_deploy:
+        description: '强制部署 (跳过测试)'
+        required: false
+        default: 'false'
+        type: boolean
+
+env:
+  NODE_VERSION: '18'
+  CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+  CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+jobs:
+  # 构建和测试阶段
+  build-and-test:
+    runs-on: ubuntu-latest
+    if: github.event.inputs.force_deploy != 'true'
+    
+    steps:
+    - name: 📥 Checkout Code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: 🔧 Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+
+    - name: 📦 Install Dependencies
+      run: |
+        npm ci
+        echo "✅ Dependencies installed successfully"
+
+    - name: 🔨 Build Frontend
+      run: |
+        echo "🚀 Building frontend for production..."
+        npm run build
+        echo "✅ Frontend build completed"
+
+    - name: 🧪 Run Tests
+      run: |
+        echo "🧪 Running test suite..."
+        npm run test:all || {
+          echo "❌ Tests failed"
+          exit 1
+        }
+        echo "✅ All tests passed"
+
+    - name: 📊 Upload Build Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: build-artifacts
+        path: |
+          dist/
+          functions/
+        retention-days: 1
+
+  # 智能合约部署阶段
+  deploy-contracts:
+    runs-on: ubuntu-latest
+    needs: [build-and-test]
+    if: always() && (needs.build-and-test.result == 'success' || github.event.inputs.force_deploy == 'true')
+    
+    steps:
+    - name: 📥 Checkout Code
+      uses: actions/checkout@v4
+
+    - name: 🔧 Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+
+    - name: 📦 Install Dependencies
+      run: npm ci
+
+    - name: 🔨 Compile Contracts
+      run: |
+        echo "🔨 Compiling smart contracts..."
+        npm run compile
+        echo "✅ Contracts compiled successfully"
+
+    - name: 🚀 Deploy to MC Chain (Production)
+      env:
+        PRIVATE_KEY: ${{ secrets.PROD_PRIVATE_KEY }}
+        MC_RPC_URL: ${{ secrets.MC_RPC_URL }}
+      run: |
+        echo "🚀 Deploying contracts to MC Chain production..."
+        npm run deploy:mc
+        echo "✅ Contracts deployed to MC Chain"
+
+    - name: 📝 Save Deployment Info
+      run: |
+        echo "📝 Saving deployment information..."
+        mkdir -p deployment-info
+        cp deployments/mc/*.json deployment-info/ 2>/dev/null || echo "No deployment files found"
+        echo "$(date -u)" > deployment-info/deployment-timestamp.txt
+        echo "prod" > deployment-info/environment.txt
+
+    - name: 📊 Upload Deployment Info
+      uses: actions/upload-artifact@v4
+      with:
+        name: deployment-info
+        path: deployment-info/
+        retention-days: 30
+
+  # Cloudflare Pages 部署阶段
+  deploy-frontend:
+    runs-on: ubuntu-latest
+    needs: [build-and-test, deploy-contracts]
+    if: always() && (needs.build-and-test.result == 'success' || github.event.inputs.force_deploy == 'true')
+    
+    steps:
+    - name: 📥 Checkout Code
+      uses: actions/checkout@v4
+
+    - name: 🔧 Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+
+    - name: 📦 Install Dependencies
+      run: npm ci
+
+    - name: 📥 Download Build Artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: build-artifacts
+        path: .
+
+    - name: 🔧 Setup Wrangler
+      run: |
+        npm install -g wrangler
+        echo "✅ Wrangler installed"
+
+    - name: 🚀 Deploy to Cloudflare Pages
+      env:
+        CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      run: |
+        echo "🚀 Deploying to Cloudflare Pages (Production)..."
+        
+        # 部署到生产环境
+        wrangler pages deploy dist \
+          --project-name="jinbao-protocol-prod" \
+          --compatibility-date="2024-01-01" \
+          --compatibility-flags="nodejs_compat"
+        
+        echo "✅ Frontend deployed to Cloudflare Pages"
+
+    - name: 🔧 Configure Environment Variables
+      env:
+        CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      run: |
+        echo "🔧 Setting production environment variables..."
+        
+        # 设置生产环境变量
+        wrangler pages secret put JBC_CONTRACT_ADDRESS --text "${{ secrets.PROD_JBC_CONTRACT_ADDRESS }}" --project-name="jinbao-protocol-prod"
+        wrangler pages secret put PROTOCOL_CONTRACT_ADDRESS --text "${{ secrets.PROD_PROTOCOL_CONTRACT_ADDRESS }}" --project-name="jinbao-protocol-prod"
+        wrangler pages secret put PRIVATE_KEY --text "${{ secrets.PROD_PRIVATE_KEY }}" --project-name="jinbao-protocol-prod"
+        wrangler pages secret put RPC_URL --text "${{ secrets.MC_RPC_URL }}" --project-name="jinbao-protocol-prod"
+        
+        echo "✅ Environment variables configured"
+
+  # 部署后验证
+  post-deploy-verification:
+    runs-on: ubuntu-latest
+    needs: [deploy-contracts, deploy-frontend]
+    if: always() && needs.deploy-frontend.result == 'success'
+    
+    steps:
+    - name: 🔍 Health Check
+      run: |
+        echo "🔍 Performing post-deployment health checks..."
+        
+        # 等待部署完成
+        sleep 30
+        
+        # 检查前端是否可访问
+        FRONTEND_URL="${{ secrets.PROD_FRONTEND_URL }}"
+        if [ -n "$FRONTEND_URL" ]; then
+          echo "🌐 Checking frontend: $FRONTEND_URL"
+          
+          response=$(curl -s -o /dev/null -w "%{http_code}" "$FRONTEND_URL")
+          if [ "$response" = "200" ]; then
+            echo "✅ Frontend is accessible"
+          else
+            echo "❌ Frontend check failed (HTTP $response)"
+            exit 1
+          fi
+        fi
+        
+        # 检查API端点
+        API_URL="${{ secrets.PROD_FRONTEND_URL }}/api/health"
+        if [ -n "$API_URL" ]; then
+          echo "🔧 Checking API: $API_URL"
+          
+          api_response=$(curl -s "$API_URL")
+          if echo "$api_response" | grep -q "success"; then
+            echo "✅ API is working"
+          else
+            echo "❌ API check failed"
+            echo "Response: $api_response"
+            exit 1
+          fi
+        fi
+
+    - name: 📊 Deployment Summary
+      run: |
+        echo "📊 ==================================="
+        echo "🎉 PRODUCTION DEPLOYMENT COMPLETED"
+        echo "📊 ==================================="
+        echo "⏰ Deployment Time: $(date -u)"
+        echo "🌐 Frontend URL: ${{ secrets.PROD_FRONTEND_URL }}"
+        echo "🔗 Repository: ${{ github.repository }}"
+        echo "📝 Commit: ${{ github.sha }}"
+        echo "👤 Triggered by: ${{ github.actor }}"
+        echo "📊 ==================================="
+
+  # 通知阶段
+  notify:
+    runs-on: ubuntu-latest
+    needs: [deploy-contracts, deploy-frontend, post-deploy-verification]
+    if: always()
+    
+    steps:
+    - name: 📢 Send Success Notification
+      if: needs.post-deploy-verification.result == 'success'
+      run: |
+        if [ -n "${{ secrets.TELEGRAM_BOT_TOKEN }}" ] && [ -n "${{ secrets.TELEGRAM_CHAT_ID }}" ]; then
+          echo "📢 Sending success notification..."
+          
+          message="🎉 <b>生产环境部署成功</b>%0A%0A✅ 状态: 部署完成%0A⏰ 时间: $(date -u)%0A🌐 前端: ${{ secrets.PROD_FRONTEND_URL }}%0A📝 提交: ${{ github.sha }}%0A👤 操作者: ${{ github.actor }}%0A🔗 详情: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          
+          curl -s -X POST \
+            "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
+            -d "chat_id=${{ secrets.TELEGRAM_CHAT_ID }}" \
+            -d "text=$message" \
+            -d "parse_mode=HTML"
+        fi
+
+    - name: 🚨 Send Failure Notification
+      if: failure() || needs.post-deploy-verification.result == 'failure'
+      run: |
+        if [ -n "${{ secrets.TELEGRAM_BOT_TOKEN }}" ] && [ -n "${{ secrets.TELEGRAM_CHAT_ID }}" ]; then
+          echo "🚨 Sending failure notification..."
+          
+          message="🚨 <b>生产环境部署失败</b>%0A%0A❌ 状态: 部署失败%0A⏰ 时间: $(date -u)%0A📝 提交: ${{ github.sha }}%0A👤 操作者: ${{ github.actor }}%0A🔗 日志: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}%0A%0A⚠️ 请立即检查并修复问题"
+          
+          curl -s -X POST \
+            "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
+            -d "chat_id=${{ secrets.TELEGRAM_CHAT_ID }}" \
+            -d "text=$message" \
+            -d "parse_mode=HTML"
+        fi

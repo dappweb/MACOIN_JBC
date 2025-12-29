@@ -1,0 +1,68 @@
+{
+  "timestamp": "2025-12-29T09:21:38.945Z",
+  "testCases": 5,
+  "boundaryTests": {
+    "total": 7,
+    "passed": 7,
+    "success": true
+  },
+  "levels": [
+    {
+      "minTeam": 0,
+      "level": 0,
+      "percent": 0
+    },
+    {
+      "minTeam": 10,
+      "level": 1,
+      "percent": 5
+    },
+    {
+      "minTeam": 30,
+      "level": 2,
+      "percent": 10
+    },
+    {
+      "minTeam": 100,
+      "level": 3,
+      "percent": 15
+    },
+    {
+      "minTeam": 300,
+      "level": 4,
+      "percent": 20
+    },
+    {
+      "minTeam": 1000,
+      "level": 5,
+      "percent": 25
+    },
+    {
+      "minTeam": 3000,
+      "level": 6,
+      "percent": 30
+    },
+    {
+      "minTeam": 10000,
+      "level": 7,
+      "percent": 35
+    },
+    {
+      "minTeam": 30000,
+      "level": 8,
+      "percent": 40
+    },
+    {
+      "minTeam": 100000,
+      "level": 9,
+      "percent": 45
+    }
+  ],
+  "summary": {
+    "mechanism": "级差奖励机制",
+    "maxLevels": 20,
+    "maxPercent": 45,
+    "stopAtV9": true,
+    "requiresActiveTicket": true
+  }
+}

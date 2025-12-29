@@ -29,7 +29,15 @@
     "check": "npx hardhat run scripts/check-network.js --network mc",
     "check:mc": "npx hardhat run scripts/check-network.js --network mc",
     "check:sepolia": "npx hardhat run scripts/check-network.js --network sepolia",
-    "check:bsc": "npx hardhat run scripts/check-network.js --network bscTestnet"
+    "check:bsc": "npx hardhat run scripts/check-network.js --network bscTestnet",
+    "deploy:prod": "./scripts/deploy-prod.sh",
+    "setup:secrets": "./scripts/setup-secrets.sh",
+    "setup:secrets:prod": "./scripts/setup-secrets.sh production",
+    "setup:secrets:staging": "./scripts/setup-secrets.sh staging",
+    "pages:deploy:prod": "wrangler pages deploy dist --project-name=jinbao-protocol-prod",
+    "pages:deploy:staging": "wrangler pages deploy dist --project-name=jinbao-protocol-staging",
+    "secrets:list:prod": "wrangler pages secret list --project-name=jinbao-protocol-prod",
+    "secrets:list:staging": "wrangler pages secret list --project-name=jinbao-protocol-staging"
   },
   "dependencies": {
     "@rainbow-me/rainbowkit": "^2.2.10",

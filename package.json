@@ -38,7 +38,13 @@
     "pages:deploy:prod": "wrangler pages deploy dist --project-name=jinbao-protocol-prod",
     "pages:deploy:staging": "wrangler pages deploy dist --project-name=jinbao-protocol-staging",
     "secrets:list:prod": "wrangler pages secret list --project-name=jinbao-protocol-prod",
-    "secrets:list:staging": "wrangler pages secret list --project-name=jinbao-protocol-staging"
+    "secrets:list:staging": "wrangler pages secret list --project-name=jinbao-protocol-staging",
+    "deploy:jbc-v2": "npx hardhat run scripts/deploy-jbc-v2.cjs --network mc --config config/hardhat.config.cjs",
+    "deploy:jbc-v2:sepolia": "npx hardhat run scripts/deploy-jbc-v2.cjs --network sepolia --config config/hardhat.config.cjs",
+    "migrate:jbc": "npx hardhat run scripts/migrate-jbc-tokens.cjs --network mc --config config/hardhat.config.cjs",
+    "test:jbc-v2": "npx hardhat test test/JBCv2.test.cjs --config config/hardhat.config.cjs",
+    "test:migration": "npx hardhat test test/JBCMigration.test.cjs --config config/hardhat.config.cjs",
+    "test:jbc-all": "npm run test:jbc-v2 && npm run test:migration"
   },
   "dependencies": {
     "@rainbow-me/rainbowkit": "^2.2.10",

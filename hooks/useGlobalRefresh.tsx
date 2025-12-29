@@ -34,7 +34,7 @@ type TransactionType = 'ticket_purchase' | 'liquidity_stake' | 'swap' | 'redeem'
 const GlobalRefreshContext = createContext<GlobalRefreshContextType | null>(null);
 
 export const GlobalRefreshProvider = ({ children }: { children: ReactNode }) => {
-  const { mcContract, jbcContract, protocolContract, account, isConnected } = useWeb3();
+  const { provider, jbcContract, protocolContract, account, isConnected, mcBalance, refreshMcBalance } = useWeb3();
   
   const [balances, setBalances] = useState({
     mc: '0',
@@ -50,18 +50,20 @@ export const GlobalRefreshProvider = ({ children }: { children: ReactNode }) => 
   
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  // 刷新余额
+  // 刷新余额 - 使用原生MC余额
   const refreshBalances = useCallback(async () => {
-    if (!isConnected || !account || !mcContract || !jbcContract) return;
+    if (!isConnected || !account || !provider || !jbcContract) return;
     
     try {
-      const [mcBal, jbcBal] = await Promise.all([
-        mcContract.balanceOf(account),
+      const [jbcBal] = await Promise.all([
         jbcContract.balanceOf(account)
       ]);
       
+      // 使用Web3Context中的原生MC余额
+      const mcBalanceFormatted = mcBalance ? ethers.formatEther(mcBalance) : '0';
+      
       const newBalances = {
-        mc: ethers.formatEther(mcBal),
+        mc: mcBalanceFormatted,
         jbc: ethers.formatEther(jbcBal),
         lastUpdated: Date.now()
       };
@@ -73,11 +75,11 @@ export const GlobalRefreshProvider = ({ children }: { children: ReactNode }) => 
         detail: newBalances 
       }));
       
-      console.log('✅ [GlobalRefresh] 余额已更新:', newBalances);
+      console.log('✅ [GlobalRefresh] 余额已更新 (Native MC):', newBalances);
     } catch (error) {
       console.error('❌ [GlobalRefresh] 余额更新失败:', error);
     }
-  }, [isConnected, account, mcContract, jbcContract]);
+  }, [isConnected, account, provider, jbcContract, mcBalance]);
 
   // 刷新价格数据
   const refreshPriceData = useCallback(async () => {
@@ -157,20 +159,23 @@ export const GlobalRefreshProvider = ({ children }: { children: ReactNode }) => 
     try {
       switch (type) {
         case 'ticket_purchase':
-          // 购买门票后：刷新余额 + 广播门票状态更新 + 可能的等级变化
+          // 购买门票后：刷新原生MC余额 + 广播门票状态更新 + 可能的等级变化
+          await refreshMcBalance(); // 刷新原生MC余额
           await refreshBalances();
           window.dispatchEvent(new CustomEvent('ticketStatusChanged'));
           window.dispatchEvent(new CustomEvent('userLevelChanged'));
           break;
           
         case 'liquidity_stake':
-          // 质押流动性后：刷新余额 + 广播质押状态更新
+          // 质押流动性后：刷新原生MC余额 + 广播质押状态更新
+          await refreshMcBalance(); // 刷新原生MC余额
           await refreshBalances();
           window.dispatchEvent(new CustomEvent('stakingStatusChanged'));
           break;
           
         case 'swap':
-          // 兑换后：刷新余额 + 价格 + 广播池子数据更新
+          // 兑换后：刷新原生MC余额 + JBC余额 + 价格 + 广播池子数据更新
+          await refreshMcBalance(); // 刷新原生MC余额
           await Promise.all([
             refreshBalances(),
             refreshPriceData()
@@ -180,7 +185,8 @@ export const GlobalRefreshProvider = ({ children }: { children: ReactNode }) => 
           
         case 'redeem':
         case 'claim':
-          // 赎回/领取后：刷新余额 + 广播收益数据更新
+          // 赎回/领取后：刷新原生MC余额 + JBC余额 + 广播收益数据更新
+          await refreshMcBalance(); // 刷新原生MC余额
           await refreshBalances();
           window.dispatchEvent(new CustomEvent('rewardsChanged'));
           break;
@@ -192,7 +198,7 @@ export const GlobalRefreshProvider = ({ children }: { children: ReactNode }) => 
     } finally {
       setIsRefreshing(false);
     }
-  }, [refreshBalances, refreshPriceData, refreshAll]);
+  }, [refreshBalances, refreshPriceData, refreshAll, refreshMcBalance]);
 
   // 定期刷新价格数据（降低频率到60秒）
   useEffect(() => {

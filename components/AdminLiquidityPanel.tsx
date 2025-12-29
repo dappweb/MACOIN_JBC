@@ -6,7 +6,7 @@ import toast from 'react-hot-toast';
 import { RotateCw, Plus, Minus, Info, TrendingUp } from 'lucide-react';
 
 const AdminLiquidityPanel: React.FC = () => {
-  const { mcContract, jbcContract, protocolContract, account, isConnected, isOwner } = useWeb3();
+  const { jbcContract, protocolContract, account, isConnected, isOwner, mcBalance, refreshMcBalance } = useWeb3();
   
   // 使用全局刷新机制
   const { balances, onTransactionSuccess } = useGlobalRefresh();
@@ -21,7 +21,7 @@ const AdminLiquidityPanel: React.FC = () => {
   const [showProgress, setShowProgress] = useState(false);
 
   // 从全局状态获取余额
-  const balanceMC = balances.mc;
+  const balanceMC = ethers.formatEther(mcBalance || 0n);
   const balanceJBC = balances.jbc;
 
   // 监听池子数据变化事件
@@ -73,7 +73,7 @@ const AdminLiquidityPanel: React.FC = () => {
 
   // 添加流动性
   const handleAddLiquidity = async () => {
-    if (!protocolContract || !mcContract || !jbcContract) return;
+    if (!protocolContract || !jbcContract) return;
     
     const mcAmountWei = mcAmount ? ethers.parseEther(mcAmount) : 0n;
     const jbcAmountWei = jbcAmount ? ethers.parseEther(jbcAmount) : 0n;
@@ -91,18 +91,17 @@ const AdminLiquidityPanel: React.FC = () => {
       console.log('   JBC 数量:', jbcAmount, 'Wei:', jbcAmountWei.toString());
       console.log('   合约地址:', CONTRACT_ADDRESSES.PROTOCOL);
       
-      // 检查并授权代币
+      // 检查原生MC余额
       if (mcAmountWei > 0n) {
-        const mcAllowance = await mcContract.allowance(account, CONTRACT_ADDRESSES.PROTOCOL);
-        console.log('   MC 当前授权:', ethers.formatEther(mcAllowance));
-        if (mcAllowance < mcAmountWei) {
-          toast.loading('正在授权MC代币...', { id: 'approve-mc' });
-          const approveTx = await mcContract.approve(CONTRACT_ADDRESSES.PROTOCOL, ethers.MaxUint256);
-          await approveTx.wait();
-          toast.success('MC代币授权成功', { id: 'approve-mc' });
+        const currentMcBalance = mcBalance || 0n;
+        console.log('   MC 当前余额:', ethers.formatEther(currentMcBalance));
+        if (currentMcBalance < mcAmountWei) {
+          toast.error(`MC余额不足，需要 ${ethers.formatEther(mcAmountWei)} MC`);
+          return;
         }
       }
 
+      // 检查并授权JBC代币
       if (jbcAmountWei > 0n) {
         const jbcAllowance = await jbcContract.allowance(account, CONTRACT_ADDRESSES.PROTOCOL);
         console.log('   JBC 当前授权:', ethers.formatEther(jbcAllowance));
@@ -114,20 +113,21 @@ const AdminLiquidityPanel: React.FC = () => {
         }
       }
 
-      // 添加流动性
+      // 添加流动性 - 原生MC版本
       console.log('💧 [AdminLiquidityPanel] 调用 addLiquidity');
       toast.loading('正在添加流动性...', { id: 'add-liquidity' });
       
       // 先尝试静态调用
       try {
-        await protocolContract.addLiquidity.staticCall(mcAmountWei, jbcAmountWei);
+        await protocolContract.addLiquidity.staticCall(jbcAmountWei, { value: mcAmountWei });
         console.log('✅ [AdminLiquidityPanel] 静态调用成功');
       } catch (staticError) {
         console.error('❌ [AdminLiquidityPanel] 静态调用失败:', staticError);
         throw staticError;
       }
       
-      const tx = await protocolContract.addLiquidity(mcAmountWei, jbcAmountWei);
+      // 执行交易 - 原生MC作为value发送，JBC作为参数
+      const tx = await protocolContract.addLiquidity(jbcAmountWei, { value: mcAmountWei });
       console.log('📝 [AdminLiquidityPanel] 交易哈希:', tx.hash);
       
       await tx.wait();
@@ -139,6 +139,9 @@ const AdminLiquidityPanel: React.FC = () => {
       
       // 使用全局刷新机制
       await onTransactionSuccess('liquidity');
+      
+      // 刷新原生MC余额
+      await refreshMcBalance();
       
       // 显示进度动画
       setShowProgress(true);

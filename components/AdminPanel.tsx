@@ -15,7 +15,7 @@ import AdminLevelDisplay from './AdminLevelDisplay';
 
 const AdminPanel: React.FC = () => {
   const { t } = useLanguage();
-  const { protocolContract, isConnected, account, provider, mcContract, jbcContract, isOwner } = useWeb3();
+  const { protocolContract, isConnected, account, provider, jbcContract, isOwner, mcBalance, refreshMcBalance } = useWeb3();
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'levels' | 'settings'>('overview');
 
@@ -375,29 +375,25 @@ const AdminPanel: React.FC = () => {
         if (tokenType === 'MC' && mcLiquidityAmount) {
             const amount = ethers.parseEther(mcLiquidityAmount);
 
-            if (!mcContract) {
-                toast.error(t.admin.mcContractNotFound);
+            // 检查原生MC余额
+            const currentMcBalance = mcBalance || 0n;
+            console.log('Current MC balance:', ethers.formatEther(currentMcBalance));
+            console.log('Required amount:', ethers.formatEther(amount));
+            
+            if (currentMcBalance < amount) {
+                toast.error(`MC余额不足，需要 ${ethers.formatEther(amount)} MC`);
                 return;
             }
 
-            // Step 1: Check current allowance
-            const allowance = await mcContract.allowance(account, CONTRACT_ADDRESSES.PROTOCOL);
-            console.log('Current MC allowance:', ethers.formatEther(allowance));
-            console.log('Required amount:', ethers.formatEther(amount));
-            
-            if (allowance < amount) {
-                toast.loading(t.admin.approvingMc, { id: 'approve' });
-                const approveTx = await mcContract.approve(CONTRACT_ADDRESSES.PROTOCOL, amount);
-                await approveTx.wait();
-                toast.success(t.admin.mcApproved, { id: 'approve' });
-            }
-
-            // Step 2: Call protocol's addLiquidity function
+            // 调用原生MC版本的addLiquidity - MC作为value发送
             toast.loading(t.admin.addingMc, { id: 'addLiq' });
-            const tx = await protocolContract.addLiquidity(amount, 0);
+            const tx = await protocolContract.addLiquidity(0, { value: amount });
             await tx.wait();
             toast.success(`${t.admin.addedMc} (${mcLiquidityAmount} MC)`, { id: 'addLiq' });
             setMcLiquidityAmount('');
+            
+            // 刷新原生MC余额
+            await refreshMcBalance();
             
         } else if (tokenType === 'JBC' && jbcLiquidityAmount) {
             const amount = ethers.parseEther(jbcLiquidityAmount);
@@ -419,9 +415,9 @@ const AdminPanel: React.FC = () => {
                 toast.success(t.admin.jbcApproved, { id: 'approve' });
             }
 
-            // Step 2: Call protocol's addLiquidity function
+            // Step 2: Call protocol's addLiquidity function - JBC作为参数，MC为0
             toast.loading(t.admin.addingJbc, { id: 'addLiq' });
-            const tx = await protocolContract.addLiquidity(0, amount);
+            const tx = await protocolContract.addLiquidity(amount, { value: 0 });
             await tx.wait();
             toast.success(`${t.admin.addedJbc} (${jbcLiquidityAmount} JBC)`, { id: 'addLiq' });
             setJbcLiquidityAmount('');
@@ -544,7 +540,7 @@ const AdminPanel: React.FC = () => {
   };
 
   const withdrawAll = async (tokenType: 'MC' | 'JBC') => {
-      if (!protocolContract || !mcContract || !jbcContract) return;
+      if (!protocolContract || !jbcContract) return;
       if (!window.confirm(t.admin.confirmWithdraw)) return;
       
       setLoading(true);
@@ -564,15 +560,31 @@ const AdminPanel: React.FC = () => {
           }
           
           // 2. Rescue remaining tokens
-          const tokenContract = tokenType === 'MC' ? mcContract : jbcContract;
-          const balance = await tokenContract.balanceOf(CONTRACT_ADDRESSES.PROTOCOL);
-          
-          if (balance > 0) {
-              const tx2 = await protocolContract.rescueTokens(await tokenContract.getAddress(), account, balance);
-              await tx2.wait();
+          if (tokenType === 'JBC') {
+              const balance = await jbcContract.balanceOf(CONTRACT_ADDRESSES.PROTOCOL);
+              
+              if (balance > 0) {
+                  const tx2 = await protocolContract.rescueTokens(await jbcContract.getAddress(), account, balance);
+                  await tx2.wait();
+              }
+          } else if (tokenType === 'MC') {
+              // For native MC, we need to rescue any remaining native balance in the contract
+              // This would be done through a special function if available, or manual withdrawal
+              const contractBalance = await provider.getBalance(CONTRACT_ADDRESSES.PROTOCOL);
+              
+              if (contractBalance > 0) {
+                  // Note: This requires a special function in the contract to withdraw native MC
+                  // For now, we'll show a message that manual intervention is needed
+                  toast.warning('原生MC提取需要特殊处理，请联系技术支持');
+              }
           }
           
           toast.success(t.admin.withdrawSuccess);
+          
+          // 刷新原生MC余额
+          if (tokenType === 'MC') {
+              await refreshMcBalance();
+          }
       } catch (err: any) {
           console.error(err);
           toast.error(formatContractError(err));

@@ -175,7 +175,7 @@ const MemoizedPriceChart = React.memo(({ priceHistory, t }: { priceHistory: Pric
 
 const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClick, onBuyTicketClick }) => {
   const { t } = useLanguage()
-  const { mcContract, jbcContract, protocolContract, account, isConnected, provider } = useWeb3()
+  const { jbcContract, protocolContract, account, isConnected, provider, mcBalance } = useWeb3()
   
   // 使用全局刷新机制
   const { balances, priceData, refreshAll } = useGlobalRefresh()
@@ -236,7 +236,7 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
     console.log('account:', account);
     console.log('protocolContract:', !!protocolContract);
     
-    if (isConnected && account && mcContract && jbcContract && protocolContract) {
+    if (isConnected && account && jbcContract && protocolContract) {
       try {
         console.log('🔍 [StatsPanel Debug] Fetching user data for:', account);
         
@@ -337,12 +337,11 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
         console.log('🔍 [StatsPanel Debug] Not ready to fetch data:', {
           isConnected,
           hasAccount: !!account,
-          hasMcContract: !!mcContract,
           hasJbcContract: !!jbcContract,
           hasProtocolContract: !!protocolContract
         });
       }
-  }, [isConnected, account, mcContract, jbcContract, protocolContract, provider, balances.mc, balances.jbc, referrer])
+  }, [isConnected, account, jbcContract, protocolContract, provider, balances.mc, balances.jbc, referrer])
 
   // 监听用户等级变化事件
   useEventRefresh('userLevelChanged', () => {

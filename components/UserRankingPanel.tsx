@@ -37,7 +37,7 @@ const RankingTab: React.FC<RankingTabProps> = ({ title, icon, isActive, onClick 
 );
 
 const UserRankingPanel: React.FC = () => {
-  const { protocolContract, mcContract, jbcContract, isConnected } = useWeb3();
+  const { protocolContract, jbcContract, isConnected, provider } = useWeb3();
   
   const [activeTab, setActiveTab] = useState<'liquidity' | 'mc' | 'jbc'>('liquidity');
   const [rankingData, setRankingData] = useState<UserRankingData[]>([]);
@@ -60,7 +60,7 @@ const UserRankingPanel: React.FC = () => {
 
   // 获取用户排行数据
   const fetchRankingData = async () => {
-    if (!protocolContract || !mcContract || !jbcContract) return;
+    if (!protocolContract || !jbcContract || !provider) return;
 
     setLoading(true);
     setError(null);
@@ -83,7 +83,7 @@ const UserRankingPanel: React.FC = () => {
         try {
           const [userInfo, mcBalance, jbcBalance] = await Promise.all([
             protocolContract.userInfo(address),
-            mcContract.balanceOf(address),
+            provider.getBalance(address), // 使用原生MC余额
             jbcContract.balanceOf(address)
           ]);
 
@@ -124,7 +124,7 @@ const UserRankingPanel: React.FC = () => {
     if (isConnected) {
       fetchRankingData();
     }
-  }, [protocolContract, mcContract, jbcContract, isConnected]);
+  }, [protocolContract, jbcContract, provider, isConnected]);
 
   // 根据当前标签页排序数据
   const getSortedData = () => {

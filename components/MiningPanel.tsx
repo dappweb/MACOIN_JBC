@@ -87,7 +87,7 @@ const MiningPanel: React.FC = () => {
   const [currentTime, setCurrentTime] = useState(Math.floor(Date.now() / 1000)); // 用于倒计时
   
   const { t, language } = useLanguage();
-  const { protocolContract, mcContract, account, isConnected, hasReferrer, isOwner, referrerAddress, checkReferrerStatus, provider } = useWeb3();
+  const { protocolContract, account, isConnected, hasReferrer, isOwner, referrerAddress, checkReferrerStatus, provider, mcBalance } = useWeb3();
   
   // 使用全局刷新机制
   const { balances, priceData, onTransactionSuccess, refreshAll } = useGlobalRefresh();
@@ -627,47 +627,19 @@ const MiningPanel: React.FC = () => {
     }
   }, [ticketInfo, protocolContract]);
 
+  // 原生MC版本 - 不需要检查授权
   useEffect(() => {
-    const checkAllowance = async () => {
-        if (mcContract && account && protocolContract) {
-            setIsCheckingAllowance(true);
-            try {
-                const protocolAddr = await protocolContract.getAddress();
-                const allowance = await mcContract.allowance(account, protocolAddr);
-                // 检查授权额度是否覆盖所需的总投资
-                // 使用稍低的阈值来捕获"已批准无限额度"
-                // 或仅检查所需金额
-                const requiredWei = ethers.parseEther(totalInvestment.toString());
+    // 原生MC不需要授权检查，直接设置为已授权
+    setIsApproved(true);
+    setIsCheckingAllowance(false);
+  }, [account, protocolContract, totalInvestment]);
 
-                if (allowance >= requiredWei) {
-                    setIsApproved(true);
-                } else {
-                    setIsApproved(false);
-                }
-            } catch (err) {
-                console.error("Failed to check allowance", err);
-            } finally {
-                setIsCheckingAllowance(false);
-            }
-        }
-    };
-    checkAllowance();
-  }, [mcContract, account, protocolContract, totalInvestment]);
-
+  // 原生MC版本 - 不需要授权函数
   const handleApprove = async () => {
-      if (!mcContract || !protocolContract) return;
-      setTxPending(true);
-      try {
-          const tx = await mcContract.approve(await protocolContract.getAddress(), ethers.MaxUint256);
-          await tx.wait();
-          setIsApproved(true);
-          toast.success(t.mining.approveSuccess);
-      } catch (err: any) {
-          console.error(err);
-          toast.error(formatContractError(err));
-          // 演示用回退
-          setIsApproved(true);
-      } finally {
+    // 原生MC不需要授权，直接设置为已授权
+    setIsApproved(true);
+    toast.success('原生MC无需授权，可直接使用');
+  };
           setTxPending(false);
       }
   };
@@ -678,7 +650,7 @@ const MiningPanel: React.FC = () => {
   };
 
   const handleBuyTicket = async () => {
-      if (!protocolContract || !mcContract) return;
+      if (!protocolContract) return;
 
       // Guard removed: Allow buying multiple tickets or overwriting
       /*
@@ -691,16 +663,17 @@ const MiningPanel: React.FC = () => {
       
       setTxPending(true);
       try {
-          // 检查 MC 余额
+          // 检查原生MC余额
           const amountWei = ethers.parseEther(selectedTicket.amount.toString());
-          const mcBalance = await mcContract.balanceOf(account);
+          const currentMcBalance = mcBalance || 0n;
           
-          if (mcBalance < amountWei) {
-              toast.error(`${t.mining.insufficientMC} ${t.mining.needsMC} ${selectedTicket.amount} MC，${t.mining.currentBalance}: ${ethers.formatEther(mcBalance)} MC`);
+          if (currentMcBalance < amountWei) {
+              toast.error(`${t.mining.insufficientMC} ${t.mining.needsMC} ${selectedTicket.amount} MC，${t.mining.currentBalance}: ${ethers.formatEther(currentMcBalance)} MC`);
               return;
           }
 
-          const tx = await protocolContract.buyTicket(amountWei);
+          // 使用原生MC购买门票
+          const tx = await protocolContract.buyTicket({ value: amountWei });
           await tx.wait();
           toast.success(t.mining.ticketBuySuccess);
           
@@ -727,42 +700,46 @@ const MiningPanel: React.FC = () => {
   };
 
   const handleStake = async () => {
-      if (!protocolContract || !mcContract) return;
+      if (!protocolContract || !provider) return;
       if (stakeAmount <= 0n) {
           toast.error(t.mining.invalidAmount || "Invalid amount");
           return;
       }
-      // 移除门票过期检查 - 允许任何时候质押
-      // 移除其他限制检查 - 只要未达到3倍出局即可质押
 
       setTxPending(true);
       try {
-          // 1. 检查 MC 余额
+          // 1. 检查原生MC余额
           const requiredAmount = stakeAmount;
-          const mcBalance = await mcContract.balanceOf(account);
+          const currentMcBalance = mcBalance || 0n;
           
-          if (mcBalance < requiredAmount) {
-              toast.error(`${t.mining.insufficientMC} ${t.mining.needsMC} ${liquidityAmountInput} MC，${t.mining.currentBalance}: ${ethers.formatEther(mcBalance)} MC`);
+          if (currentMcBalance < requiredAmount) {
+              toast.error(`${t.mining.insufficientMC} ${t.mining.needsMC} ${liquidityAmountInput} MC，${t.mining.currentBalance}: ${ethers.formatEther(currentMcBalance)} MC`);
               return;
           }
 
-          // 2. 检查授权
-          const protocolAddr = await protocolContract.getAddress();
-          const allowance = await mcContract.allowance(account, protocolAddr);
-          
-          if (allowance < requiredAmount) {
-              toast.error(t.mining.needApprove);
-              const approveTx = await mcContract.approve(protocolAddr, ethers.MaxUint256);
-              await approveTx.wait();
-              toast.success(t.mining.approveSuccess);
-              return;
+          // 2. 检查Gas费用
+          try {
+              const gasEstimate = await protocolContract.stakeLiquidity.estimateGas(selectedPlan.days, { value: requiredAmount });
+              const feeData = await provider.getFeeData();
+              const gasCost = gasEstimate * (feeData.gasPrice || 0n);
+              const totalRequired = requiredAmount + gasCost;
+              
+              if (currentMcBalance < totalRequired) {
+                  const shortfall = ethers.formatEther(totalRequired - currentMcBalance);
+                  toast.error(`余额不足，还需要 ${shortfall} MC 作为Gas费用`);
+                  return;
+              }
+          } catch (error) {
+              console.warn("Gas estimation failed, proceeding anyway:", error);
           }
 
-          // 3. 执行质押
-          const tx = await protocolContract.stakeLiquidity(requiredAmount, selectedPlan.days);
+          // 3. 直接执行质押 - 使用原生MC (payable)
+          const tx = await protocolContract.stakeLiquidity(selectedPlan.days, { value: requiredAmount });
+          
+          toast.loading("质押确认中...", { id: "stake-liquidity" });
           await tx.wait();
 
-          toast.success(t.mining.stakeSuccess);
+          toast.success(t.mining.stakeSuccess, { id: "stake-liquidity" });
           
           // 使用全局刷新机制
           await onTransactionSuccess('liquidity_stake');
@@ -771,7 +748,7 @@ const MiningPanel: React.FC = () => {
           setLiquidityAmountInput('');
       } catch (err: any) {
           console.error(t.mining.stakeFailed, err);
-          toast.error(formatContractError(err));
+          toast.error(formatContractError(err), { id: "stake-liquidity" });
       } finally {
           setTxPending(false);
       }

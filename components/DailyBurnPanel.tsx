@@ -5,7 +5,7 @@ import toast from 'react-hot-toast';
 import { Flame, Clock, RotateCw, Info } from 'lucide-react';
 
 const DailyBurnPanel: React.FC = () => {
-  const { mcContract, jbcContract, protocolContract, account, isConnected, isOwner, provider } = useWeb3();
+  const { jbcContract, protocolContract, account, isConnected, isOwner, provider } = useWeb3();
   
   // 创建每日燃烧管理合约实例
   const [dailyBurnContract, setDailyBurnContract] = useState<ethers.Contract | null>(null);

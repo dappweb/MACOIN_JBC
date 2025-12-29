@@ -16,8 +16,8 @@ const TICKET_TIERS = CONST_TIERS.map(t => t.amount)
 
 const BuyTicketPanel: React.FC<BuyTicketPanelProps> = ({ onBack }) => {
   const { t } = useLanguage()
-  const { mcContract, protocolContract, account, isConnected } = useWeb3()
-  const { balances, refreshAll } = useGlobalRefresh()
+  const { provider, protocolContract, account, isConnected, mcBalance } = useWeb3()
+  const { balances, refreshAll, onTransactionSuccess } = useGlobalRefresh()
   
   const [selectedTier, setSelectedTier] = useState<number>(100)
   const [isLoading, setIsLoading] = useState(false)
@@ -73,38 +73,49 @@ const BuyTicketPanel: React.FC<BuyTicketPanelProps> = ({ onBack }) => {
   const requiredLiquidity = baseAmount * 1.5
   const isHigherLiquidity = baseAmount > selectedTier
   const handleBuyTicket = async () => {
-    if (!protocolContract || !mcContract || !account) {
+    if (!protocolContract || !provider || !account) {
       toast.error("请先连接钱包")
       return
     }
 
     const amountWei = ethers.parseEther(selectedTier.toString())
     
-    // 检查余额
-    if (parseFloat(balances.mc) < selectedTier) {
-      toast.error(`${t.mining.insufficientMC} ${t.mining.needsMC} ${selectedTier} MC, ${t.mining.currentBalance}: ${parseFloat(balances.mc).toFixed(2)} MC`)
+    // 检查原生MC余额
+    const currentMcBalance = mcBalance || 0n
+    if (currentMcBalance < amountWei) {
+      toast.error(`${t.mining.insufficientMC} ${t.mining.needsMC} ${selectedTier} MC, ${t.mining.currentBalance}: ${ethers.formatEther(currentMcBalance)} MC`)
       return
+    }
+
+    // 检查是否有足够的MC支付Gas费用
+    try {
+      const gasEstimate = await protocolContract.buyTicket.estimateGas({ value: amountWei })
+      const feeData = await provider.getFeeData()
+      const gasCost = gasEstimate * (feeData.gasPrice || 0n)
+      const totalRequired = amountWei + gasCost
+      
+      if (currentMcBalance < totalRequired) {
+        const shortfall = ethers.formatEther(totalRequired - currentMcBalance)
+        toast.error(`余额不足，还需要 ${shortfall} MC 作为Gas费用`)
+        return
+      }
+    } catch (error) {
+      console.warn("Gas estimation failed, proceeding anyway:", error)
     }
 
     setIsLoading(true)
     
     try {
-      // 检查授权
-      const allowance = await mcContract.allowance(account, await protocolContract.getAddress())
-      if (allowance < amountWei) {
-        toast.error(t.mining.needApprove)
-        setIsLoading(false)
-        return
-      }
-
-      // 购买门票
-      const tx = await protocolContract.buyTicket(amountWei)
+      // 直接购买门票 - 使用原生MC (payable)
+      const tx = await protocolContract.buyTicket({ value: amountWei })
+      
+      toast.loading("交易确认中...", { id: "buy-ticket" })
       await tx.wait()
       
-      toast.success(t.mining.ticketBuySuccess)
+      toast.success(t.mining.ticketBuySuccess, { id: "buy-ticket" })
       
-      // 刷新数据
-      await refreshAll()
+      // 通知全局刷新系统
+      await onTransactionSuccess('ticket_purchase')
       
       // 重新检查门票状态
       const newTicket = await protocolContract.userTicket(account)
@@ -113,49 +124,16 @@ const BuyTicketPanel: React.FC<BuyTicketPanelProps> = ({ onBack }) => {
       
     } catch (err: any) {
       console.error("Buy ticket failed", err)
-      toast.error(formatContractError(err))
+      toast.error(formatContractError(err), { id: "buy-ticket" })
     } finally {
       setIsLoading(false)
     }
   }
 
-  const handleApprove = async () => {
-    if (!mcContract || !protocolContract || !account) return
-    
-    setIsLoading(true)
-    try {
-      const tx = await mcContract.approve(await protocolContract.getAddress(), ethers.MaxUint256)
-      await tx.wait()
-      toast.success(t.mining.approveSuccess)
-    } catch (err: any) {
-      console.error("Approve failed", err)
-      toast.error(formatContractError(err))
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  const checkNeedsApproval = async () => {
-    if (!mcContract || !protocolContract || !account) return true
-    
-    try {
-      const amountWei = ethers.parseEther(selectedTier.toString())
-      const allowance = await mcContract.allowance(account, await protocolContract.getAddress())
-      return allowance < amountWei
-    } catch {
-      return true
-    }
-  }
-
-  const [needsApproval, setNeedsApproval] = useState(true)
-
-  useEffect(() => {
-    const checkApproval = async () => {
-      const needs = await checkNeedsApproval()
-      setNeedsApproval(needs)
-    }
-    checkApproval()
-  }, [selectedTier, mcContract, protocolContract, account])
+  // 移除授权相关函数 - 原生MC不需要授权
+  // const handleApprove = async () => { ... } // 删除
+  // const checkNeedsApproval = async () => { ... } // 删除
+  // const [needsApproval, setNeedsApproval] = useState(true) // 删除
 
   return (
     <div className="max-w-4xl mx-auto space-y-6 animate-fade-in">
@@ -204,16 +182,19 @@ const BuyTicketPanel: React.FC<BuyTicketPanelProps> = ({ onBack }) => {
         </div>
       )}
 
-      {/* 余额显示 */}
+      {/* 余额显示 - 使用原生MC余额 */}
       <div className="bg-black/60 border border-gray-700 rounded-xl p-4 backdrop-blur-sm">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Wallet className="text-neon-400" size={20} />
-            <span className="text-gray-300">MC 余额</span>
+            <span className="text-gray-300">MC 余额 (原生代币)</span>
           </div>
           <span className="text-2xl font-bold text-white">
-            {parseFloat(balances.mc).toLocaleString()} MC
+            {mcBalance ? parseFloat(ethers.formatEther(mcBalance)).toLocaleString() : '0'} MC
           </span>
+        </div>
+        <div className="mt-2 text-xs text-gray-400">
+          💡 使用原生MC代币，无需授权，交易更便捷
         </div>
       </div>
 
@@ -264,10 +245,13 @@ const BuyTicketPanel: React.FC<BuyTicketPanelProps> = ({ onBack }) => {
 
         </div>
 
-        {/* 重要提示 */}
+        {/* 重要提示 - 更新为原生MC说明 */}
         <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4 mb-6">
-          <h3 className="font-bold text-blue-400 mb-2">重要提示</h3>
+          <h3 className="font-bold text-blue-400 mb-2">重要提示 (原生MC版本)</h3>
           <ul className="text-sm text-blue-300 space-y-1">
+            <li>✅ 使用原生MC代币，无需授权步骤</li>
+            <li>✅ 一键完成购买，交易更快更便宜</li>
+            <li>⚠️ 请预留足够的MC作为Gas费用</li>
             <li>{t.mining.buyTicketTip1}</li>
             <li>{t.mining.buyTicketTip2}</li>
             <li>{t.mining.buyTicketTip3}</li>
@@ -276,27 +260,19 @@ const BuyTicketPanel: React.FC<BuyTicketPanelProps> = ({ onBack }) => {
           </ul>
         </div>
 
-        {/* 操作按钮 */}
+        {/* 操作按钮 - 简化为单步操作 */}
         {!isConnected ? (
           <div className="text-center py-8">
             <p className="text-gray-400 mb-4">请先连接钱包</p>
           </div>
-        ) : needsApproval ? (
-          <button
-            onClick={handleApprove}
-            disabled={isLoading}
-            className="w-full py-4 bg-amber-500 hover:bg-amber-600 disabled:opacity-50 disabled:cursor-not-allowed text-black font-bold rounded-lg transition-colors flex items-center justify-center gap-2"
-          >
-            {isLoading ? "授权中..." : `第一步: 授权 ${selectedTier} MC`}
-          </button>
         ) : (
           <button
             onClick={handleBuyTicket}
-            disabled={isLoading || parseFloat(balances.mc) < selectedTier}
+            disabled={isLoading || !mcBalance || mcBalance < ethers.parseEther(selectedTier.toString())}
             className="w-full py-4 bg-gradient-to-r from-neon-500 to-neon-600 hover:from-neon-400 hover:to-neon-500 disabled:opacity-50 disabled:cursor-not-allowed text-black font-bold rounded-lg transition-colors flex items-center justify-center gap-2"
           >
             <Ticket size={20} />
-            {isLoading ? "购买中..." : `购买 ${selectedTier} MC 门票`}
+            {isLoading ? "购买中..." : `直接购买 ${selectedTier} MC 门票`}
           </button>
         )}
       </div>

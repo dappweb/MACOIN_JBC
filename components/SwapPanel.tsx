@@ -14,7 +14,7 @@ import DailyBurnPanel from './DailyBurnPanel';
 
 const SwapPanel: React.FC = () => {
   const { t } = useLanguage();
-  const { mcContract, jbcContract, protocolContract, account, isConnected, provider, hasReferrer, isOwner } = useWeb3();
+  const { jbcContract, protocolContract, account, isConnected, provider, hasReferrer, isOwner, mcBalance } = useWeb3();
   
   // 使用全局刷新机制
   const { balances, onTransactionSuccess } = useGlobalRefresh();
@@ -39,8 +39,8 @@ const SwapPanel: React.FC = () => {
     isApproving: boolean;
   }>({ isApproved: false, isChecking: false, isApproving: false });
 
-  // 从全局状态获取余额
-  const balanceMC = balances.mc;
+  // 从全局状态和原生余额获取余额
+  const balanceMC = mcBalance ? ethers.formatEther(mcBalance) : '0';
   const balanceJBC = balances.jbc;
 
   // 监听池子数据变化事件
@@ -96,7 +96,7 @@ const SwapPanel: React.FC = () => {
     fetchBalances();
     const interval = setInterval(fetchPoolData, 30000); // 只刷新池子数据，余额由全局状态管理
     return () => clearInterval(interval);
-  }, [isConnected, account, mcContract, jbcContract, protocolContract, provider]);
+  }, [isConnected, account, jbcContract, protocolContract, provider]);
 
   // Debounce effect for calculating estimate and validation
   useEffect(() => {
@@ -123,7 +123,7 @@ const SwapPanel: React.FC = () => {
       balanceJBC,
       poolMC,
       poolJBC,
-      mcContract,
+      null, // mcContract no longer needed for native MC
       jbcContract,
       protocolContract,
       account
@@ -132,19 +132,25 @@ const SwapPanel: React.FC = () => {
     setValidationResult(result);
   };
 
-  // 检查授权状态
+  // 检查授权状态 - 只检查JBC，原生MC不需要授权
   const checkApprovalStatus = async (amount: string) => {
     if (!amount || !protocolContract || !account) {
       setApprovalStatus({ isApproved: false, isChecking: false, isApproving: false });
       return;
     }
 
+    // 原生MC不需要授权
+    if (!isSelling) {
+      setApprovalStatus({ isApproved: true, isChecking: false, isApproving: false });
+      return;
+    }
+
     setApprovalStatus(prev => ({ ...prev, isChecking: true }));
 
     try {
-      const contract = isSelling ? jbcContract : mcContract;
-      if (contract) {
-        const allowance = await contract.allowance(account, CONTRACT_ADDRESSES.PROTOCOL);
+      // 只检查JBC授权
+      if (jbcContract) {
+        const allowance = await jbcContract.allowance(account, CONTRACT_ADDRESSES.PROTOCOL);
         const requiredAmount = ethers.parseEther(amount);
         const isApproved = allowance >= requiredAmount;
         
@@ -167,17 +173,21 @@ const SwapPanel: React.FC = () => {
     setApprovalStatus(prev => ({ ...prev, isApproving: true }));
 
     try {
-      const contract = isSelling ? jbcContract : mcContract;
-      const tokenName = isSelling ? 'JBC' : 'MC';
-      
-      if (contract) {
+      // 原生MC不需要授权，只有JBC需要授权
+      if (isSelling && jbcContract) {
+        const tokenName = 'JBC';
+        
         toast.loading(`正在授权${tokenName}代币...`, { id: 'approve' });
-        const approveTx = await contract.approve(CONTRACT_ADDRESSES.PROTOCOL, ethers.MaxUint256);
+        const approveTx = await jbcContract.approve(CONTRACT_ADDRESSES.PROTOCOL, ethers.MaxUint256);
         await approveTx.wait();
         toast.success(`${tokenName}授权成功！`, { id: 'approve' });
         
         // 重新检查授权状态
         await checkApprovalStatus(payAmount);
+      } else if (!isSelling) {
+        // MC→JBC 不需要授权，直接设置为已授权
+        setApprovalStatus({ isApproved: true, isChecking: false, isApproving: false });
+        toast.success('原生MC无需授权！', { id: 'approve' });
       }
     } catch (error: any) {
       console.error('授权失败:', error);
@@ -198,7 +208,7 @@ const SwapPanel: React.FC = () => {
   const handleSwap = async () => {
       if (!protocolContract || !payAmount) return;
       
-      // 预验证
+      // 预验证 - 更新为原生MC验证
       const validation = await SwapErrorHandler.validateSwapConditions(
         payAmount,
         isSelling,
@@ -206,7 +216,7 @@ const SwapPanel: React.FC = () => {
         balanceJBC,
         poolMC,
         poolJBC,
-        mcContract,
+        null, // mcContract no longer needed for native MC
         jbcContract,
         protocolContract,
         account
@@ -223,9 +233,9 @@ const SwapPanel: React.FC = () => {
         return;
       }
 
-      // 检查授权状态
-      if (!approvalStatus.isApproved) {
-        toast.error('请先授权代币使用权限');
+      // 检查授权状态 - 只有JBC需要授权，原生MC不需要
+      if (isSelling && !approvalStatus.isApproved) {
+        toast.error('请先授权JBC代币使用权限');
         return;
       }
 
@@ -235,13 +245,38 @@ const SwapPanel: React.FC = () => {
           let tx;
 
           if (isSelling) {
-              // Sell JBC -> SwapJBCToMC
+              // Sell JBC -> SwapJBCToMC (保持不变)
               toast.loading('正在执行JBC兑换...', { id: 'swap' });
               tx = await protocolContract.swapJBCToMC(amount);
           } else {
-              // Buy JBC -> SwapMCToJBC
+              // Buy JBC -> SwapMCToJBC (使用原生MC - payable)
               toast.loading('正在执行MC兑换...', { id: 'swap' });
-              tx = await protocolContract.swapMCToJBC(amount);
+              
+              // 检查原生MC余额和Gas费用
+              const currentMcBalance = mcBalance || 0n;
+              if (currentMcBalance < amount) {
+                toast.error(`MC余额不足，需要 ${payAmount} MC`);
+                return;
+              }
+              
+              // 估算Gas费用
+              try {
+                const gasEstimate = await protocolContract.swapMCToJBC.estimateGas({ value: amount });
+                const feeData = await provider.getFeeData();
+                const gasCost = gasEstimate * (feeData.gasPrice || 0n);
+                const totalRequired = amount + gasCost;
+                
+                if (currentMcBalance < totalRequired) {
+                  const shortfall = ethers.formatEther(totalRequired - currentMcBalance);
+                  toast.error(`余额不足，还需要 ${shortfall} MC 作为Gas费用`);
+                  return;
+                }
+              } catch (error) {
+                console.warn("Gas estimation failed, proceeding anyway:", error);
+              }
+              
+              // 执行原生MC交换
+              tx = await protocolContract.swapMCToJBC({ value: amount });
           }
           
           await tx.wait();

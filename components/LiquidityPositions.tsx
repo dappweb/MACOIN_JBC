@@ -48,7 +48,7 @@ const formatCountdown = (endTime: number, currentTime: number, t: any): string =
 };
 
 const LiquidityPositions: React.FC = () => {
-  const { protocolContract, mcContract, account } = useWeb3();
+  const { protocolContract, account, mcBalance, refreshMcBalance } = useWeb3();
   const { t } = useLanguage();
   const [rawPositions, setRawPositions] = useState<RawStakePosition[]>([]);
   const [loading, setLoading] = useState(false);
@@ -140,7 +140,7 @@ const LiquidityPositions: React.FC = () => {
   };
 
   const handleRedeem = async (id: string) => {
-    if (!protocolContract || !mcContract) return;
+    if (!protocolContract) return;
     setRedeemingId(id);
     try {
       const stakeIndex = parseInt(id); // ID is already the array index
@@ -166,36 +166,28 @@ const LiquidityPositions: React.FC = () => {
       const expectedFee = (feeBase * redemptionFeePercent) / 100n;
       
       if (expectedFee > 0n) {
-        // Check MC balance
-        const mcBalance = await mcContract.balanceOf(account);
-        if (mcBalance < expectedFee) {
+        // Check native MC balance
+        const currentMcBalance = mcBalance || 0n;
+        if (currentMcBalance < expectedFee) {
           toast.error(`Insufficient MC balance for redemption fee: ${ethers.formatEther(expectedFee)} MC required`);
           return;
         }
         
-        // Check and request approval if needed
-        const allowance = await mcContract.allowance(account, protocolContract.target);
-        if (allowance < expectedFee) {
-          toast.loading("Approving MC tokens for redemption fee...");
-          const approveTx = await mcContract.approve(protocolContract.target, expectedFee);
-          await approveTx.wait();
-          toast.dismiss();
-          toast.success("Approval successful");
-        }
+        // For native MC, no approval needed - fee will be deducted from the transaction value
+        console.log('Native MC redemption fee will be handled automatically');
       }
       
       // Add detailed logging for debugging
       console.log("Redeem attempt:", {
         stakeId: id,
         stakeIndex: parseInt(id),
-        userBalance: ethers.formatEther(await mcContract.balanceOf(account)),
+        userBalance: ethers.formatEther(mcBalance || 0n),
         expectedFee: ethers.formatEther(expectedFee),
-        allowance: ethers.formatEther(await mcContract.allowance(account, protocolContract.target)),
         feeBase: ethers.formatEther(feeBase)
       });
       
-      // Proceed with redemption
-      const tx = await protocolContract.redeem();
+      // Proceed with redemption - for native MC, send fee as value
+      const tx = await protocolContract.redeem({ value: expectedFee });
       
       // 获取预估的奖励信息用于展示
       const targetPos = positions.find(p => p.id === id);
@@ -205,6 +197,10 @@ const LiquidityPositions: React.FC = () => {
 
       await tx.wait();
       toast.success((t.mining?.redeemSuccess || "Redemption Successful") + rewardMsg);
+      
+      // 刷新原生MC余额
+      await refreshMcBalance();
+      
       fetchPositions(); // Refresh list
     } catch (err: any) {
       console.error("Redeem error details:", err);

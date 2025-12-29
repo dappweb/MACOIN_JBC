@@ -4,20 +4,14 @@ import { useAccount, useChainId, useDisconnect } from "wagmi"
 import { useEthersProvider, useEthersSigner } from "./wagmi-adapters"
 import { useConnectModal } from "@rainbow-me/rainbowkit"
 
-// Partial ABIs
-export const MC_ABI = [
-  "function approve(address spender, uint256 amount) external returns (bool)",
-  "function allowance(address owner, address spender) external view returns (uint256)",
-  "function balanceOf(address account) external view returns (uint256)",
-]
-
+// Native MC Protocol ABI - No MC token contract needed
 export const PROTOCOL_ABI = [
   "function bindReferrer(address _referrer) external",
-  "function buyTicket(uint256 amount) external",
-  "function stakeLiquidity(uint256 amount, uint256 cycleDays) external",
+  "function buyTicket() external payable",
+  "function stakeLiquidity(uint256 cycleDays) external payable",
   "function claimRewards() external",
   "function redeem() external",
-  "function swapMCToJBC(uint256 mcAmount) external",
+  "function swapMCToJBC() external payable",
   "function swapJBCToMC(uint256 jbcAmount) external",
   "function dailyBurn() external",
   "function userInfo(address) view returns (address referrer, uint256 activeDirects, uint256 teamCount, uint256 totalRevenue, uint256 currentCap, bool isActive, uint256 refundFeeAmount, uint256 teamTotalVolume, uint256 teamTotalCap, uint256 maxTicketAmount, uint256 maxSingleTicketAmount)",
@@ -77,12 +71,12 @@ export const DAILY_BURN_MANAGER_ABI = [
   "event DailyBurnExecuted(uint256 burnAmount, uint256 timestamp, address executor)"
 ]
 
-// Contract Addresses - MC Chain Testnet
+// Contract Addresses - MC Chain Testnet (Native MC Version)
 export const CONTRACT_ADDRESSES = {
-  MC_TOKEN: "0xB2B8777BcBc7A8DEf49F022773d392a8787cf9EF",
+  // MC_TOKEN: "0xB2B8777BcBc7A8DEf49F022773d392a8787cf9EF", // No longer needed
   JBC_TOKEN: "0xA743cB357a9f59D349efB7985072779a094658dD",
-  PROTOCOL: "0x515871E9eADbF976b546113BbD48964383f86E61", // 新部署的Protocol合约
-  DAILY_BURN_MANAGER: "0x6C2FdDEb939D92E0dde178845F570FC4E0d213bc" // 每日燃烧管理合约
+  PROTOCOL: "0x515871E9eADbF976b546113BbD48964383f86E61", // Will be updated with native MC version
+  DAILY_BURN_MANAGER: "0x6C2FdDEb939D92E0dde178845F570FC4E0d213bc"
 };
 
 interface Web3ContextType {
@@ -92,9 +86,12 @@ interface Web3ContextType {
   connectWallet: () => void
   disconnectWallet: () => void
   isConnected: boolean
-  mcContract: ethers.Contract | null
+  // mcContract: ethers.Contract | null  // Removed - no longer needed
   jbcContract: ethers.Contract | null
   protocolContract: ethers.Contract | null
+  // Native MC balance management
+  mcBalance: bigint | null
+  refreshMcBalance: () => Promise<void>
   hasReferrer: boolean
   isOwner: boolean
   referrerAddress: string | null
@@ -111,50 +108,68 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const signer = useEthersSigner({ chainId })
   const { openConnectModal } = useConnectModal()
 
-  const [mcContract, setMcContract] = useState<ethers.Contract | null>(null)
+  // Removed mcContract state - no longer needed
   const [jbcContract, setJbcContract] = useState<ethers.Contract | null>(null)
   const [protocolContract, setProtocolContract] = useState<ethers.Contract | null>(null)
+  const [mcBalance, setMcBalance] = useState<bigint | null>(null)
   const [hasReferrer, setHasReferrer] = useState(false)
   const [isOwner, setIsOwner] = useState(false)
   const [referrerAddress, setReferrerAddress] = useState<string | null>(null)
 
-  useEffect(() => {
-    const checkOwner = async () => {
-      if (protocolContract && address) { // Use address from useAccount() instead of account from context
-        try {
-          const owner = await protocolContract.owner()
-          setIsOwner(owner.toLowerCase() === address.toLowerCase())
-        } catch (e) {
-          console.error("Failed to check owner in Web3Context", e)
-        }
-      }
+  // Native MC balance refresh function
+  const refreshMcBalance = async () => {
+    if (!provider || !address) {
+      setMcBalance(null)
+      return
     }
+    
+    try {
+      const balance = await provider.getBalance(address)
+      setMcBalance(balance)
+    } catch (error) {
+      console.error("Failed to fetch native MC balance:", error)
+      setMcBalance(null)
+    }
+  }
+
+  useEffect(() => {
     checkOwner()
   }, [protocolContract, address])
 
   useEffect(() => {
     if (signer) {
-      // Init Contracts with Signer (Write access)
-      const _mc = new ethers.Contract(CONTRACT_ADDRESSES.MC_TOKEN, MC_ABI, signer)
-      const _jbc = new ethers.Contract(CONTRACT_ADDRESSES.JBC_TOKEN, MC_ABI, signer)
+      // Init Contracts with Signer (Write access) - No MC contract needed
+      const _jbc = new ethers.Contract(CONTRACT_ADDRESSES.JBC_TOKEN, ["function transfer(address to, uint256 amount) external returns (bool)", "function transferFrom(address from, address to, uint256 amount) external returns (bool)", "function balanceOf(address account) external view returns (uint256)", "function approve(address spender, uint256 amount) external returns (bool)", "function allowance(address owner, address spender) external view returns (uint256)"], signer)
       const _protocol = new ethers.Contract(CONTRACT_ADDRESSES.PROTOCOL, PROTOCOL_ABI, signer)
-      setMcContract(_mc)
       setJbcContract(_jbc)
       setProtocolContract(_protocol)
     } else if (provider) {
-      // Init Contracts with Provider (Read only)
-      const _mc = new ethers.Contract(CONTRACT_ADDRESSES.MC_TOKEN, MC_ABI, provider)
-      const _jbc = new ethers.Contract(CONTRACT_ADDRESSES.JBC_TOKEN, MC_ABI, provider)
+      // Init Contracts with Provider (Read only) - No MC contract needed
+      const _jbc = new ethers.Contract(CONTRACT_ADDRESSES.JBC_TOKEN, ["function transfer(address to, uint256 amount) external returns (bool)", "function transferFrom(address from, address to, uint256 amount) external returns (bool)", "function balanceOf(address account) external view returns (uint256)", "function approve(address spender, uint256 amount) external returns (bool)", "function allowance(address owner, address spender) external view returns (uint256)"], provider)
       const _protocol = new ethers.Contract(CONTRACT_ADDRESSES.PROTOCOL, PROTOCOL_ABI, provider)
-      setMcContract(_mc)
       setJbcContract(_jbc)
       setProtocolContract(_protocol)
     } else {
-      setMcContract(null)
       setJbcContract(null)
       setProtocolContract(null)
     }
   }, [signer, provider])
+
+  // Refresh native MC balance when provider or address changes
+  useEffect(() => {
+    refreshMcBalance()
+  }, [provider, address])
+
+  const checkOwner = async () => {
+    if (protocolContract && address) {
+      try {
+        const owner = await protocolContract.owner()
+        setIsOwner(owner.toLowerCase() === address.toLowerCase())
+      } catch (e) {
+        console.error("Failed to check owner in Web3Context", e)
+      }
+    }
+  }
 
   // 检查推荐人状态
   const checkReferrerStatus = async () => {
@@ -255,6 +270,7 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setHasReferrer(false)
     setIsOwner(false)
     setReferrerAddress(null)
+    setMcBalance(null)
   }
 
   return (
@@ -266,9 +282,11 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
         connectWallet,
         disconnectWallet,
         isConnected,
-        mcContract,
+        // mcContract, // Removed - no longer needed
         jbcContract,
         protocolContract,
+        mcBalance,
+        refreshMcBalance,
         hasReferrer,
         isOwner,
         referrerAddress,

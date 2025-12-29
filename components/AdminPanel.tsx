@@ -266,37 +266,112 @@ const AdminPanel: React.FC = () => {
   };
 
   const updateDistribution = async () => {
-    toast.error('Distribution configuration is not available in the minimal contract version. Please use the full contract for admin functions.');
-    return;
+    if (!protocolContract) return;
+    
+    const total = Number(direct) + Number(level) + Number(marketing) + Number(buyback) + Number(lp) + Number(treasury);
+    if (total !== 100) {
+      toast.error(t.admin.totalMustBe100);
+      return;
+    }
+    
+    setLoading(true);
+    try {
+      const tx = await protocolContract.setDistributionConfig(
+        Number(direct),
+        Number(level), 
+        Number(marketing),
+        Number(buyback),
+        Number(lp),
+        Number(treasury)
+      );
+      await tx.wait();
+      toast.success(t.admin.success);
+    } catch (err: any) {
+      toast.error(formatContractError(err));
+    } finally {
+      setLoading(false);
+    }
   };
 
   const updateSwapTaxes = async () => {
-    toast.error('Swap tax configuration is not available in the minimal contract version. Please use the full contract for admin functions.');
-    return;
+    if (!protocolContract) return;
+    
+    setLoading(true);
+    try {
+      const tx = await protocolContract.setSwapTaxes(Number(buyTax), Number(sellTax));
+      await tx.wait();
+      toast.success(t.admin.success);
+    } catch (err: any) {
+      toast.error(formatContractError(err));
+    } finally {
+      setLoading(false);
+    }
   };
 
   const updateRedeemFee = async () => {
-    toast.error('Redemption fee configuration is not available in the minimal contract version. Please use the full contract for admin functions.');
-    return;
+    if (!protocolContract) return;
+    
+    setLoading(true);
+    try {
+      const tx = await protocolContract.setRedemptionFeePercent(Number(redeemFee));
+      await tx.wait();
+      toast.success(t.admin.success);
+    } catch (err: any) {
+      toast.error(formatContractError(err));
+    } finally {
+      setLoading(false);
+    }
   };
 
   const updateWallets = async () => {
-    toast.error('Wallet configuration is not available in the minimal contract version. Please use the full contract for admin functions.');
-    return;
+    if (!protocolContract) return;
+    
+    // Validate addresses
+    if (!ethers.isAddress(marketingWallet) || !ethers.isAddress(treasuryWallet) || 
+        !ethers.isAddress(lpWallet) || !ethers.isAddress(buybackWallet)) {
+      toast.error(t.admin.invalidAddress);
+      return;
+    }
+    
+    setLoading(true);
+    try {
+      const tx = await protocolContract.setWallets(
+        marketingWallet,
+        treasuryWallet, 
+        lpWallet,
+        buybackWallet
+      );
+      await tx.wait();
+      toast.success(t.admin.success);
+      
+      // Update current wallet displays
+      setCurrentMarketing(marketingWallet);
+      setCurrentTreasury(treasuryWallet);
+      setCurrentLp(lpWallet);
+      setCurrentBuyback(buybackWallet);
+      
+      // Clear input fields
+      setMarketingWallet('');
+      setTreasuryWallet('');
+      setLpWallet('');
+      setBuybackWallet('');
+    } catch (err: any) {
+      toast.error(formatContractError(err));
+    } finally {
+      setLoading(false);
+    }
   };
 
 
 
   const addLiquidity = async (tokenType: 'MC' | 'JBC') => {
-    if (!isConnected || !provider || !protocolContract) {
+    if (!isConnected || !protocolContract) {
         toast.error(t.admin.connectFirst);
         return;
     }
 
     setLoading(true);
     try {
-        const signer = await provider.getSigner();
-
         if (tokenType === 'MC' && mcLiquidityAmount) {
             const amount = ethers.parseEther(mcLiquidityAmount);
 
@@ -312,14 +387,14 @@ const AdminPanel: React.FC = () => {
             
             if (allowance < amount) {
                 toast.loading(t.admin.approvingMc, { id: 'approve' });
-                const approveTx = await mcContract.connect(signer).approve(CONTRACT_ADDRESSES.PROTOCOL, amount);
+                const approveTx = await mcContract.approve(CONTRACT_ADDRESSES.PROTOCOL, amount);
                 await approveTx.wait();
                 toast.success(t.admin.mcApproved, { id: 'approve' });
             }
 
             // Step 2: Call protocol's addLiquidity function
             toast.loading(t.admin.addingMc, { id: 'addLiq' });
-            const tx = await toast.error('Liquidity management is not available in the minimal contract version.');
+            const tx = await protocolContract.addLiquidity(amount, 0);
             await tx.wait();
             toast.success(`${t.admin.addedMc} (${mcLiquidityAmount} MC)`, { id: 'addLiq' });
             setMcLiquidityAmount('');
@@ -339,14 +414,14 @@ const AdminPanel: React.FC = () => {
             
             if (allowance < amount) {
                 toast.loading(t.admin.approvingJbc, { id: 'approve' });
-                const approveTx = await jbcContract.connect(signer).approve(CONTRACT_ADDRESSES.PROTOCOL, amount);
+                const approveTx = await jbcContract.approve(CONTRACT_ADDRESSES.PROTOCOL, amount);
                 await approveTx.wait();
                 toast.success(t.admin.jbcApproved, { id: 'approve' });
             }
 
             // Step 2: Call protocol's addLiquidity function
             toast.loading(t.admin.addingJbc, { id: 'addLiq' });
-            const tx = await toast.error('Liquidity management is not available in the minimal contract version.');
+            const tx = await protocolContract.addLiquidity(0, amount);
             await tx.wait();
             toast.success(`${t.admin.addedJbc} (${jbcLiquidityAmount} JBC)`, { id: 'addLiq' });
             setJbcLiquidityAmount('');
@@ -364,7 +439,7 @@ const AdminPanel: React.FC = () => {
   };
 
   const removeLiquidity = async (tokenType: 'MC' | 'JBC') => {
-    if (!protocolContract || !isConnected || !provider || !account) {
+    if (!protocolContract || !isConnected || !account) {
         toast.error(t.admin.failed);
         return;
     }
@@ -374,15 +449,15 @@ const AdminPanel: React.FC = () => {
         if (tokenType === 'MC' && mcLiquidityRemoveAmount) {
             const amount = ethers.parseEther(mcLiquidityRemoveAmount);
             // withdrawSwapReserves(toMC, amountMC, toJBC, amountJBC)
-            toast.error('Liquidity withdrawal is not available in the minimal contract version.');
-            return;
+            const tx = await protocolContract.withdrawSwapReserves(account, amount, ethers.ZeroAddress, 0);
+            await tx.wait();
             toast.success(t.admin.success);
             setMcLiquidityRemoveAmount('');
         } else if (tokenType === 'JBC' && jbcLiquidityRemoveAmount) {
             const amount = ethers.parseEther(jbcLiquidityRemoveAmount);
             // withdrawSwapReserves(toMC, amountMC, toJBC, amountJBC)
-            toast.error('Liquidity withdrawal is not available in the minimal contract version.');
-            return;
+            const tx = await protocolContract.withdrawSwapReserves(ethers.ZeroAddress, 0, account, amount);
+            await tx.wait();
             toast.success(t.admin.success);
             setJbcLiquidityRemoveAmount('');
         }
@@ -405,8 +480,8 @@ const AdminPanel: React.FC = () => {
         // Get level
         let level = '0';
         try {
-            // Try getLevelByTeamCount first as it's more relevant for admin updates
-            const levelInfo = await protocolContract.getLevelByTeamCount(info.teamCount);
+            // Use calculateLevel instead of getLevelByTeamCount
+            const levelInfo = await protocolContract.calculateLevel(info.teamCount);
             level = levelInfo[0].toString();
         } catch (e) {
             console.warn('Failed to fetch level', e);
@@ -435,10 +510,9 @@ const AdminPanel: React.FC = () => {
     if (!protocolContract || !searchUserAddress) return;
     setLoading(true);
     try {
-        const tx = await protocolContract.batchUpdateTeamCounts([searchUserAddress], [newTeamCount]);
-        await tx.wait();
-        toast.success(t.admin.success);
-        fetchUserInfo(); // Refresh
+        // Note: Direct team count update is not available in the current contract
+        // Team counts are automatically calculated based on referral relationships
+        toast.error('Direct team count update is not supported. Team counts are automatically calculated based on referral relationships.');
     } catch (err: any) {
         console.error(err);
         toast.error(formatContractError(err));
@@ -480,8 +554,13 @@ const AdminPanel: React.FC = () => {
           const reserveJBC = await protocolContract.swapReserveJBC();
           
           if (reserveMC > 0 || reserveJBC > 0) {
-             toast.error('Liquidity withdrawal is not available in the minimal contract version.');
-             return;
+             const tx1 = await protocolContract.withdrawSwapReserves(
+                 account, 
+                 reserveMC, 
+                 account, 
+                 reserveJBC
+             );
+             await tx1.wait();
           }
           
           // 2. Rescue remaining tokens

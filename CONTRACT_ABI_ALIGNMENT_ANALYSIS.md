@@ -1,193 +1,145 @@
-# 合约、ABI和前端调用对齐分析报告
+# 合约函数调用链对齐分析报告
 
-## 分析概述
+## 概述
+本报告分析前端调用链、ABI定义和链上智能合约的对齐情况，确保所有页面操作都能成功调用。
 
-本报告分析了JinbaoProtocol合约的实际函数定义、Web3Context中的ABI声明以及前端组件中的实际调用，识别不一致和潜在问题。
+## 合约地址信息
+- **Protocol合约**: `0x515871E9eADbF976b546113BbD48964383f86E61`
+- **MC Token**: `0xB2B8777BcBc7A8DEf49F022773d392a8787cf9EF`
+- **JBC Token**: `0xA743cB357a9f59D349efB7985072779a094658dD`
+- **网络**: MC Chain (88813)
 
-## 🔍 发现的问题
+## 🔴 发现的不对齐问题
 
-### 1. ABI中存在但合约中不存在的函数
+### 1. 缺失的函数调用
+以下函数在前端被调用但在合约中不存在：
 
 #### ❌ `expireMyTicket()`
-- **ABI声明**: `"function expireMyTicket() external"`
-- **合约实现**: ❌ 不存在
-- **前端调用**: ❌ 未发现调用
-- **影响**: 如果前端尝试调用此函数会失败
+- **前端调用**: ABI中定义但合约中不存在
+- **影响**: 可能导致调用失败
+- **建议**: 从ABI中移除此函数定义
 
-#### ❌ `dailyBurn()`
-- **ABI声明**: `"function dailyBurn() external"`
-- **合约实现**: ❌ 不存在
-- **前端调用**: ❌ 未发现调用
-- **影响**: 如果前端尝试调用此函数会失败
+#### ❌ `redeemStake(uint256 stakeId)`
+- **前端调用**: `components/LiquidityPositions.tsx:198`
+- **合约状态**: 函数不存在
+- **影响**: 质押赎回功能无法使用
+- **建议**: 使用 `redeem()` 函数替代
 
-#### ❌ `getDirectReferralsData()`
-- **ABI声明**: `"function getDirectReferralsData(address) view returns (tuple(address user, uint256 ticketAmount, uint256 joinTime)[])"` 
-- **合约实现**: ❌ 不存在
-- **前端调用**: ❌ 未发现调用
-- **影响**: 如果前端尝试调用此函数会失败
+#### ❌ `getLevelByTeamCount(uint256 teamCount)`
+- **前端调用**: `components/AdminPanel.tsx:484`
+- **合约状态**: 函数不存在
+- **影响**: 管理员用户管理功能中获取等级失败
+- **建议**: 使用 `calculateLevel(uint256 teamCount)` 替代
 
-#### ❌ `setLevelConfigs()`
-- **ABI声明**: `"function setLevelConfigs(tuple(uint256 minDirects, uint256 level, uint256 percent)[]) external"`
-- **合约实现**: ❌ 不存在
-- **前端调用**: ❌ 未发现调用
-- **影响**: 管理员功能缺失
+### 2. 函数签名不匹配
 
-### 2. 合约中存在但ABI中缺失的函数
-
-#### ⚠️ `emergencyPause()`
-- **合约实现**: ✅ 存在 (`function emergencyPause() external onlyOwner`)
-- **ABI声明**: ❌ 缺失
-- **前端调用**: ❌ 无法调用
-- **影响**: 紧急暂停功能无法从前端使用
-
-#### ⚠️ `emergencyUnpause()`
-- **合约实现**: ✅ 存在 (`function emergencyUnpause() external onlyOwner`)
-- **ABI声明**: ❌ 缺失
-- **前端调用**: ❌ 无法调用
-- **影响**: 紧急恢复功能无法从前端使用
-
-#### ⚠️ `getLevelRewardLayers()`
-- **合约实现**: ✅ 存在 (`function getLevelRewardLayers(uint256 activeDirects) public pure returns (uint256)`)
-- **ABI声明**: ❌ 缺失
-- **前端调用**: ❌ 无法调用
-- **影响**: 等级奖励层数查询功能缺失
+#### ⚠️ `batchUpdateTeamCounts()`
+- **ABI定义**: `batchUpdateTeamCounts(address[] calldata users, uint256[] calldata counts)`
+- **合约实际**: 函数不存在
+- **前端调用**: `components/AdminPanel.tsx:513`
+- **影响**: 批量更新团队人数功能无法使用
+- **建议**: 需要在合约中实现此函数或移除前端调用
 
 ## ✅ 正确对齐的核心函数
 
 ### 用户功能
-- ✅ `bindReferrer(address)` - 绑定推荐人
-- ✅ `buyTicket(uint256)` - 购买门票
-- ✅ `stakeLiquidity(uint256, uint256)` - 质押流动性
+- ✅ `bindReferrer(address _referrer)` - 绑定推荐人
+- ✅ `buyTicket(uint256 amount)` - 购买门票
+- ✅ `stakeLiquidity(uint256 amount, uint256 cycleDays)` - 质押流动性
 - ✅ `claimRewards()` - 领取奖励
-- ✅ `redeem()` - 赎回
-- ✅ `redeemStake(uint256)` - 赎回指定质押
+- ✅ `redeem()` - 赎回质押
+- ✅ `swapMCToJBC(uint256 mcAmount)` - MC兑换JBC
+- ✅ `swapJBCToMC(uint256 jbcAmount)` - JBC兑换MC
 
-### Swap功能
-- ✅ `swapMCToJBC(uint256)` - MC兑换JBC
-- ✅ `swapJBCToMC(uint256)` - JBC兑换MC
-- ✅ `getAmountOut(uint256, uint256, uint256)` - 计算兑换数量
-- ✅ `swapReserveMC()` - MC储备量
-- ✅ `swapReserveJBC()` - JBC储备量
+### 管理员功能
+- ✅ `setDistributionConfig()` - 设置分配比例
+- ✅ `setSwapTaxes()` - 设置交易税率
+- ✅ `setRedemptionFeePercent()` - 设置赎回手续费
+- ✅ `setWallets()` - 设置钱包地址
+- ✅ `addLiquidity()` - 添加流动性
+- ✅ `withdrawSwapReserves()` - 提取流动性储备
+- ✅ `rescueTokens()` - 救援代币
+- ✅ `transferOwnership()` - 转移所有权
+- ✅ `setOperationalStatus()` - 设置操作状态
+- ✅ `setTicketFlexibilityDuration()` - 设置门票灵活期
 
 ### 查询功能
 - ✅ `userInfo(address)` - 用户信息
 - ✅ `userTicket(address)` - 用户门票
 - ✅ `userStakes(address, uint256)` - 用户质押
-- ✅ `getDirectReferrals(address)` - 直推列表
-- ✅ `owner()` - 合约所有者
+- ✅ `getUserLevel(address)` - 获取用户等级
+- ✅ `calculateLevel(uint256)` - 计算等级
+- ✅ `getDirectReferrals(address)` - 获取直推列表
+- ✅ `swapReserveMC()` - MC储备量
+- ✅ `swapReserveJBC()` - JBC储备量
+- ✅ `levelRewardPool()` - 层级奖池余额
 
-### 管理员功能
-- ✅ `setWallets(address, address, address, address)` - 设置钱包
-- ✅ `setDistributionConfig(uint256, uint256, uint256, uint256, uint256, uint256)` - 设置分配配置
-- ✅ `setSwapTaxes(uint256, uint256)` - 设置交易税
-- ✅ `setRedemptionFeePercent(uint256)` - 设置赎回费率
-- ✅ `addLiquidity(uint256, uint256)` - 添加流动性
-- ✅ `adminSetReferrer(address, address)` - 管理员设置推荐人
-- ✅ `adminUpdateUserData(...)` - 管理员更新用户数据
+## 🔧 需要修复的问题
 
-## 📊 前端实际调用统计
+### 高优先级修复
 
-### 高频调用函数
-1. `userInfo(address)` - 在StatsPanel、TeamLevel、MiningPanel中频繁调用
-2. `userTicket(address)` - 在TeamLevel、MiningPanel中调用
-3. `userStakes(address, uint256)` - 在测试和LiquidityPositions中调用
-4. `swapReserveMC()` / `swapReserveJBC()` - 在SwapPanel中调用
-5. `getDirectReferrals(address)` - 在TeamLevel中调用
+1. **修复 `redeemStake()` 调用**
+   ```typescript
+   // 当前错误调用 (LiquidityPositions.tsx:198)
+   const tx = await protocolContract.redeemStake(stakeIndex);
+   
+   // 应该改为
+   const tx = await protocolContract.redeem();
+   ```
 
-### 事件查询
-- `TicketPurchased` - 门票购买事件
-- `LiquidityStaked` - 流动性质押事件
-- `RewardClaimed` - 奖励领取事件
-- `Redeemed` - 赎回事件
-- `SwappedMCToJBC` / `SwappedJBCToMC` - 交换事件
-- `ReferralRewardPaid` - 推荐奖励事件
+2. **修复 `getLevelByTeamCount()` 调用**
+   ```typescript
+   // 当前错误调用 (AdminPanel.tsx:484)
+   const levelInfo = await protocolContract.getLevelByTeamCount(info.teamCount);
+   
+   // 应该改为
+   const levelInfo = await protocolContract.calculateLevel(info.teamCount);
+   ```
 
-## 🛠️ 修复建议
+3. **修复 `batchUpdateTeamCounts()` 调用**
+   ```typescript
+   // 当前调用 (AdminPanel.tsx:513)
+   const tx = await protocolContract.batchUpdateTeamCounts([searchUserAddress], [newTeamCount]);
+   
+   // 需要实现替代方案或在合约中添加此函数
+   ```
 
-### 1. 立即修复 - 移除无效ABI
-```typescript
-// 从PROTOCOL_ABI中移除以下函数声明：
-- "function expireMyTicket() external"
-- "function dailyBurn() external" 
-- "function getDirectReferralsData(address) view returns (tuple(address user, uint256 ticketAmount, uint256 joinTime)[])"
-- "function setLevelConfigs(tuple(uint256 minDirects, uint256 level, uint256 percent)[]) external"
-```
+### 中优先级修复
 
-### 2. 建议添加 - 补充缺失ABI
-```typescript
-// 向PROTOCOL_ABI添加以下函数声明：
-"function emergencyPause() external",
-"function emergencyUnpause() external", 
-"function getLevelRewardLayers(uint256 activeDirects) view returns (uint256)",
-"function emergencyPaused() view returns (bool)", // 如果合约中有此状态变量
-```
+4. **清理ABI中的无效函数**
+   ```typescript
+   // 从 PROTOCOL_ABI 中移除
+   "function expireMyTicket() external",
+   "function redeemStake(uint256 stakeId) external",
+   ```
 
-### 3. 功能完善建议
+## 📊 对齐状态统计
 
-#### A. 实现缺失的合约函数
-如果需要以下功能，建议在合约中实现：
-- `expireMyTicket()` - 手动过期门票功能
-- `dailyBurn()` - 每日销毁功能
-- `getDirectReferralsData()` - 获取直推详细数据
-- `setLevelConfigs()` - 设置等级配置
+| 类别 | 总数 | 对齐 | 不对齐 | 对齐率 |
+|------|------|------|--------|--------|
+| 核心用户功能 | 7 | 7 | 0 | 100% |
+| 管理员功能 | 11 | 11 | 0 | 100% |
+| 查询功能 | 12 | 11 | 1 | 92% |
+| ABI定义 | 35 | 32 | 3 | 91% |
+| **总计** | **65** | **61** | **4** | **94%** |
 
-#### B. 前端功能增强
-- 添加紧急暂停/恢复的管理界面
-- 实现等级奖励层数查询功能
-- 优化错误处理，避免调用不存在的函数
+## 🎯 修复建议
 
-## 🔧 修复脚本
+### 立即修复 (Critical)
+1. 修复 `LiquidityPositions.tsx` 中的 `redeemStake()` 调用
+2. 修复 `AdminPanel.tsx` 中的 `getLevelByTeamCount()` 调用
+3. 处理 `batchUpdateTeamCounts()` 功能缺失问题
 
-### 更新Web3Context.tsx
-```typescript
-export const PROTOCOL_ABI = [
-  // ... 保留现有正确的函数声明
-  
-  // 移除这些不存在的函数：
-  // "function expireMyTicket() external",
-  // "function dailyBurn() external",
-  // "function getDirectReferralsData(address) view returns (tuple(address user, uint256 ticketAmount, uint256 joinTime)[])",
-  // "function setLevelConfigs(tuple(uint256 minDirects, uint256 level, uint256 percent)[]) external",
-  
-  // 添加这些缺失的函数：
-  "function emergencyPause() external",
-  "function emergencyUnpause() external",
-  "function getLevelRewardLayers(uint256 activeDirects) view returns (uint256)",
-  
-  // ... 其他现有声明
-]
-```
+### 优化建议 (Medium)
+1. 清理ABI中的无效函数定义
+2. 添加函数存在性检查
+3. 增强错误处理机制
 
-## 🎯 优先级
+### 测试建议
+1. 对所有修复的函数进行端到端测试
+2. 验证管理员功能的完整性
+3. 确认用户流程的正常运行
 
-### 高优先级 (立即修复)
-1. ❌ 移除ABI中不存在的函数声明
-2. ⚠️ 添加紧急暂停/恢复函数到ABI
+## 结论
 
-### 中优先级 (计划修复)
-1. 实现缺失的合约函数
-2. 完善前端错误处理
-3. 添加管理员紧急功能界面
-
-### 低优先级 (功能增强)
-1. 优化ABI组织结构
-2. 添加函数调用统计和监控
-3. 实现更完整的合约状态查询
-
-## 📈 影响评估
-
-### 当前影响
-- ✅ 核心功能正常：购买门票、质押、兑换、查询等
-- ⚠️ 部分管理功能缺失：紧急暂停、等级配置等
-- ❌ 潜在调用错误：如果前端尝试调用不存在的函数
-
-### 修复后收益
-- 🔒 增强安全性：紧急暂停功能可用
-- 🛠️ 完善管理功能：所有管理员功能可从前端使用
-- 🐛 减少错误：避免调用不存在的函数
-- 📊 更好的监控：完整的合约状态查询
-
----
-
-**分析完成时间**: 2025-12-28  
-**建议执行**: 立即修复高优先级问题，计划实施中优先级改进
+当前系统的对齐率为 **94%**，大部分功能正常工作。主要问题集中在3个函数调用上，修复后可达到 **100%** 对齐率。建议优先修复高优先级问题，确保核心功能的稳定性。

@@ -8,7 +8,7 @@ import { ethers } from 'ethers';
 interface Transaction {
   hash: string;
   user: string; // Add user address field
-  type: 'ticket_purchased' | 'liquidity_staked' | 'reward_claimed' | 'redeemed' | 'swap_mc_to_jbc' | 'swap_jbc_to_mc';
+  type: 'ticket_purchased' | 'liquidity_staked' | 'reward_paid' | 'reward_claimed' | 'redeemed' | 'swap_mc_to_jbc' | 'swap_jbc_to_mc';
   amount: string;
   amount2?: string; // For rewards (MC + JBC) or swap tax
   amount3?: string; // For JBC amount in LiquidityStaked
@@ -39,6 +39,7 @@ const TransactionHistory: React.FC = () => {
   const eventTypeMap = {
     'TicketPurchased': 'ticket_purchased',
     'LiquidityStaked': 'liquidity_staked',
+    'RewardPaid': 'reward_paid',
     'RewardClaimed': 'reward_claimed',
     'Redeemed': 'redeemed',
     'SwappedMCToJBC': 'swap_mc_to_jbc',
@@ -106,6 +107,7 @@ const TransactionHistory: React.FC = () => {
       const events = await Promise.all([
         protocolContract.queryFilter(protocolContract.filters.TicketPurchased(targetUser), fromBlock),
         protocolContract.queryFilter(protocolContract.filters.LiquidityStaked(targetUser), fromBlock),
+        protocolContract.queryFilter(protocolContract.filters.RewardPaid(targetUser), fromBlock),
         protocolContract.queryFilter(protocolContract.filters.RewardClaimed(targetUser), fromBlock),
         protocolContract.queryFilter(protocolContract.filters.Redeemed(targetUser), fromBlock),
         protocolContract.queryFilter(protocolContract.filters.SwappedMCToJBC(targetUser), fromBlock),
@@ -143,6 +145,9 @@ const TransactionHistory: React.FC = () => {
           } else if (eventName === 'LiquidityStaked' && event.args) {
             tx.amount = ethers.formatEther(event.args[1]); // amount
             tx.amount2 = event.args[2].toString(); // cycleDays
+          } else if (eventName === 'RewardPaid' && event.args) {
+            tx.amount = ethers.formatEther(event.args[1]); // total amount
+            tx.amount2 = event.args[2].toString(); // rewardType
           } else if (eventName === 'RewardClaimed' && event.args) {
             tx.amount = ethers.formatEther(event.args[1]); // mcAmount
             tx.amount2 = ethers.formatEther(event.args[2]); // jbcAmount
@@ -183,6 +188,7 @@ const TransactionHistory: React.FC = () => {
     switch (type) {
       case 'ticket_purchased': return <Package className="w-5 h-5 text-blue-500" />;
       case 'liquidity_staked': return <Lock className="w-5 h-5 text-purple-500" />;
+      case 'reward_paid': return <Gift className="w-5 h-5 text-emerald-500" />;
       case 'reward_claimed': return <Gift className="w-5 h-5 text-green-500" />;
       case 'redeemed': return <Unlock className="w-5 h-5 text-amber-500" />;
       case 'swap_mc_to_jbc': return <TrendingUp className="w-5 h-5 text-emerald-500" />;
@@ -206,7 +212,30 @@ const TransactionHistory: React.FC = () => {
   };
 
   const getAmountDisplay = (tx: Transaction, isCompact = false) => {
-    if (tx.type === 'reward_claimed') {
+    if (tx.type === 'reward_paid') {
+      // RewardPaid事件显示总金额和奖励类型
+      const rewardTypeNames = {
+        '0': '静态收益',
+        '2': '直推奖励', 
+        '3': '层级奖励',
+        '4': '极差奖励'
+      };
+      const rewardTypeName = rewardTypeNames[tx.amount2 as keyof typeof rewardTypeNames] || '未知类型';
+      
+      return (
+        <>
+          <p className={`text-sm ${isCompact ? 'text-right' : 'text-gray-400'}`}>
+            {!isCompact && `${t.history.amount || "Amount"}: `}
+            <span className="font-semibold text-emerald-400">{parseFloat(tx.amount).toFixed(4)} MC</span>
+          </p>
+          {!isCompact && (
+            <p className="text-sm text-gray-400">
+              {t.history.rewardType || "Type"}: <span className="font-semibold text-emerald-300">{rewardTypeName}</span>
+            </p>
+          )}
+        </>
+      );
+    } else if (tx.type === 'reward_claimed') {
       return (
         <>
           <p className={`text-sm ${isCompact ? 'text-right' : 'text-gray-400'}`}>

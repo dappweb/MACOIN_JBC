@@ -363,9 +363,13 @@ const EarningsDetail: React.FC = () => {
       
       console.log(`🔍 [EarningsDetail] Querying events from block ${fromBlock} to ${currentBlock}`)
 
-      // 并行查询两种事件
+      // 并行查询三种事件
       // 使用 Promise.allSettled 避免其中一个失败导致整体失败
-      const [rewardResults, referralResults] = await Promise.allSettled([
+      const [rewardPaidResults, rewardClaimedResults, referralResults] = await Promise.allSettled([
+        protocolContract.queryFilter(
+          protocolContract.filters.RewardPaid(targetUser), 
+          fromBlock
+        ),
         protocolContract.queryFilter(
           protocolContract.filters.RewardClaimed(targetUser), 
           fromBlock
@@ -376,14 +380,22 @@ const EarningsDetail: React.FC = () => {
         )
       ])
       
-      let rewardEvents: any[] = []
+      let rewardPaidEvents: any[] = []
+      let rewardClaimedEvents: any[] = []
       let referralEvents: any[] = []
 
-      if (rewardResults.status === 'fulfilled') {
-        rewardEvents = rewardResults.value
+      if (rewardPaidResults.status === 'fulfilled') {
+        rewardPaidEvents = rewardPaidResults.value
       } else {
-        console.error("Failed to fetch reward events:", rewardResults.reason)
-        toast.error("Failed to load reward events")
+        console.error("Failed to fetch RewardPaid events:", rewardPaidResults.reason)
+        toast.error("Failed to load RewardPaid events")
+      }
+
+      if (rewardClaimedResults.status === 'fulfilled') {
+        rewardClaimedEvents = rewardClaimedResults.value
+      } else {
+        console.error("Failed to fetch RewardClaimed events:", rewardClaimedResults.reason)
+        toast.error("Failed to load RewardClaimed events")
       }
 
       if (referralResults.status === 'fulfilled') {
@@ -397,8 +409,46 @@ const EarningsDetail: React.FC = () => {
       let processedEvents = 0
       let failedEvents = 0
 
-      // 处理奖励事件
-      for (const event of rewardEvents) {
+      // 处理RewardPaid事件（包含静态收益）
+      for (const event of rewardPaidEvents) {
+        try {
+          const block = await provider.getBlock(event.blockNumber)
+          const amount = event.args ? ethers.formatEther(event.args[1]) : "0"
+          const rewardType = event.args ? Number(event.args[2]) : 0
+
+          // RewardPaid事件只有总金额，需要根据类型判断是MC还是JBC
+          // 对于静态收益，通常是50%MC + 50%JBC
+          let mcAmount = "0"
+          let jbcAmount = "0"
+          
+          if (rewardType === 0) { // 静态收益
+            mcAmount = (parseFloat(amount) / 2).toString()
+            jbcAmount = (parseFloat(amount) / 2).toString()
+          } else {
+            // 其他类型收益通常只是MC
+            mcAmount = amount
+          }
+
+          rows.push({
+            hash: event.transactionHash,
+            user: event.args ? event.args[0] : "",
+            mcAmount,
+            jbcAmount,
+            rewardType,
+            ticketId: "", // RewardPaid事件没有ticketId
+            blockNumber: event.blockNumber,
+            timestamp: block ? block.timestamp : 0,
+            status: "confirmed",
+          })
+          processedEvents++
+        } catch (err) {
+          console.error("Error parsing RewardPaid event:", err, event)
+          failedEvents++
+        }
+      }
+
+      // 处理RewardClaimed事件
+      for (const event of rewardClaimedEvents) {
         try {
           const block = await provider.getBlock(event.blockNumber)
           const mcAmount = event.args ? ethers.formatEther(event.args[1]) : "0"
@@ -419,7 +469,7 @@ const EarningsDetail: React.FC = () => {
           })
           processedEvents++
         } catch (err) {
-          console.error("Error parsing reward event:", err, event)
+          console.error("Error parsing RewardClaimed event:", err, event)
           failedEvents++
         }
       }

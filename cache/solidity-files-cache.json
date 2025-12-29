@@ -2,7 +2,7 @@
   "_format": "hh-sol-cache-2",
   "files": {
     "C:\\Users\\Administrator\\Documents\\GitHub\\MACOIN_JBC\\contracts\\AdminLib.sol": {
-      "lastModificationDate": 1766928307402,
+      "lastModificationDate": 1766987751687,
       "contentHash": "775834d5307a51ff2309dd05bf87b58f",
       "sourceName": "contracts/AdminLib.sol",
       "solcConfig": {
@@ -40,7 +40,7 @@
       ]
     },
     "C:\\Users\\Administrator\\Documents\\GitHub\\MACOIN_JBC\\contracts\\DailyBurnExtension.sol": {
-      "lastModificationDate": 1766938005716,
+      "lastModificationDate": 1766987757433,
       "contentHash": "64a672be9d50f898ebe17270bdf3a739",
       "sourceName": "contracts/DailyBurnExtension.sol",
       "solcConfig": {
@@ -80,8 +80,8 @@
       ]
     },
     "C:\\Users\\Administrator\\Documents\\GitHub\\MACOIN_JBC\\contracts\\JinbaoProtocol.sol": {
-      "lastModificationDate": 1766952226402,
-      "contentHash": "b4c8efa6f29fe7b6342aa617c66156e8",
+      "lastModificationDate": 1766991087627,
+      "contentHash": "8524765b0d5b92d0cf95981eb762f796",
       "sourceName": "contracts/JinbaoProtocol.sol",
       "solcConfig": {
         "version": "0.8.22",
@@ -126,7 +126,7 @@
       ]
     },
     "C:\\Users\\Administrator\\Documents\\GitHub\\MACOIN_JBC\\contracts\\RedemptionLib.sol": {
-      "lastModificationDate": 1766925528158,
+      "lastModificationDate": 1766987751701,
       "contentHash": "fa481a5e22ba0f40e1f92279d4c7d9d2",
       "sourceName": "contracts/RedemptionLib.sol",
       "solcConfig": {
@@ -920,7 +920,7 @@
       ]
     },
     "C:\\Users\\Administrator\\Documents\\GitHub\\MACOIN_JBC\\contracts\\DailyBurnManager.sol": {
-      "lastModificationDate": 1766939780497,
+      "lastModificationDate": 1766987757433,
       "contentHash": "de288bbb6cba8a1e0b04a641f0982ca0",
       "sourceName": "contracts/DailyBurnManager.sol",
       "solcConfig": {
@@ -1001,7 +1001,7 @@
       ]
     },
     "C:\\Users\\Administrator\\Documents\\GitHub\\MACOIN_JBC\\contracts\\JinbaoProtocolV2.sol": {
-      "lastModificationDate": 1766945414717,
+      "lastModificationDate": 1766987757448,
       "contentHash": "c072318f9cb984231b6229e10e2cb564",
       "sourceName": "contracts/JinbaoProtocolV2.sol",
       "solcConfig": {
@@ -1115,6 +1115,98 @@
       ],
       "artifacts": [
         "Test"
+      ]
+    },
+    "C:\\Users\\Administrator\\Documents\\GitHub\\MACOIN_JBC\\contracts\\JinbaoProtocolFixed.sol": {
+      "lastModificationDate": 1766987075825,
+      "contentHash": "492417fe109a90998b368b2713392bb2",
+      "sourceName": "contracts/JinbaoProtocolFixed.sol",
+      "solcConfig": {
+        "version": "0.8.22",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 1
+          },
+          "viaIR": true,
+          "evmVersion": "paris",
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata",
+                "storageLayout"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "@openzeppelin/contracts/token/ERC20/IERC20.sol",
+        "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol",
+        "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol",
+        "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol",
+        "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol",
+        "./RedemptionLib.sol"
+      ],
+      "versionPragmas": [
+        "^0.8.20"
+      ],
+      "artifacts": [
+        "IJBC",
+        "JinbaoProtocolFixed"
+      ]
+    },
+    "C:\\Users\\Administrator\\Documents\\GitHub\\MACOIN_JBC\\contracts\\JinbaoProtocolComplete.sol": {
+      "lastModificationDate": 1766986831165,
+      "contentHash": "4159d9402048e84d24261152754f7ad5",
+      "sourceName": "contracts/JinbaoProtocolComplete.sol",
+      "solcConfig": {
+        "version": "0.8.22",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 1
+          },
+          "viaIR": true,
+          "evmVersion": "paris",
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata",
+                "storageLayout"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [
+        "@openzeppelin/contracts/token/ERC20/IERC20.sol",
+        "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol",
+        "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol",
+        "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol",
+        "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol",
+        "./RedemptionLib.sol"
+      ],
+      "versionPragmas": [
+        "^0.8.20"
+      ],
+      "artifacts": [
+        "IJBC",
+        "JinbaoProtocolComplete"
       ]
     }
   }

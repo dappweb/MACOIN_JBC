@@ -53,9 +53,9 @@ const LiquidityPositions: React.FC = () => {
   const [rawPositions, setRawPositions] = useState<RawStakePosition[]>([]);
   const [loading, setLoading] = useState(false);
   const [currentTime, setCurrentTime] = useState(Math.floor(Date.now() / 1000));
-  // Default to 86400 (1 day) to be safe for production/testnet unless contract specifies otherwise.
-  // This prevents premature "Redeem" availability if contract fetch fails.
-  const [secondsInUnit, setSecondsInUnit] = useState(86400);
+  // Default to 60 (1 minute) to match contract SECONDS_IN_UNIT constant.
+  // This ensures correct static reward calculations even if contract fetch fails.
+  const [secondsInUnit, setSecondsInUnit] = useState(60);
   const [redeemingId, setRedeemingId] = useState<string | null>(null);
   const [reserves, setReserves] = useState<{mc: bigint, jbc: bigint}>({ mc: 0n, jbc: 0n });
 
@@ -195,7 +195,7 @@ const LiquidityPositions: React.FC = () => {
       });
       
       // Proceed with redemption
-      const tx = await protocolContract.redeemStake(stakeIndex);
+      const tx = await protocolContract.redeem();
       
       // 获取预估的奖励信息用于展示
       const targetPos = positions.find(p => p.id === id);

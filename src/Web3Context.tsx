@@ -50,7 +50,7 @@ export const PROTOCOL_ABI = [
   "event LiquidityStaked(address indexed user, uint256 amount, uint256 cycleDays, uint256 stakeId)",
   "event RewardPaid(address indexed user, uint256 amount, uint8 rewardType)",
   "event RewardClaimed(address indexed user, uint256 mcAmount, uint256 jbcAmount, uint8 rewardType, uint256 ticketId)",
-  "event ReferralRewardPaid(address indexed user, address indexed from, uint256 mcAmount, uint8 rewardType, uint256 ticketId)",
+  "event ReferralRewardPaid(address indexed user, address indexed from, uint256 mcAmount, uint256 jbcAmount, uint8 rewardType, uint256 ticketId)",
   "event UserLevelChanged(address indexed user, uint256 oldLevel, uint256 newLevel, uint256 teamCount)",
   "event TeamCountUpdated(address indexed user, uint256 oldCount, uint256 newCount)",
   "event Redeemed(address indexed user, uint256 principal, uint256 fee)",

@@ -75,7 +75,6 @@ export const GlobalRefreshProvider = ({ children }: { children: ReactNode }) => 
         detail: newBalances 
       }));
       
-      console.log('✅ [GlobalRefresh] 余额已更新 (Native MC):', newBalances);
     } catch (error) {
       console.error('❌ [GlobalRefresh] 余额更新失败:', error);
     }
@@ -131,7 +130,6 @@ export const GlobalRefreshProvider = ({ children }: { children: ReactNode }) => 
         detail: newPriceData 
       }));
       
-      console.log('✅ [GlobalRefresh] 价格已更新:', newPriceData);
     } catch (error) {
       console.error('❌ [GlobalRefresh] 价格更新失败:', error);
     }
@@ -152,8 +150,6 @@ export const GlobalRefreshProvider = ({ children }: { children: ReactNode }) => 
 
   // 交易成功后的刷新策略
   const onTransactionSuccess = useCallback(async (type: TransactionType) => {
-    console.log(`🔄 [GlobalRefresh] 交易成功，开始刷新数据: ${type}`);
-    
     setIsRefreshing(true);
     
     try {
@@ -247,7 +243,6 @@ export const useGlobalRefresh = () => {
 export const useEventRefresh = (eventName: string, callback: () => void) => {
   useEffect(() => {
     const handleEvent = () => {
-      console.log(`📡 [EventRefresh] 收到事件: ${eventName}`);
       callback();
     };
     

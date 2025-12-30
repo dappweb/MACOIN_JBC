@@ -117,19 +117,16 @@ const MiningPanel: React.FC = () => {
 
   // 监听事件刷新
   useEventRefresh('ticketStatusChanged', () => {
-    console.log('🎫 [MiningPanel] 门票状态变化，刷新数据');
     checkTicketStatus();
     fetchHistory();
   });
 
   useEventRefresh('stakingStatusChanged', () => {
-    console.log('💰 [MiningPanel] 质押状态变化，刷新数据');
     checkTicketStatus();
     fetchHistory();
   });
 
   useEventRefresh('rewardsChanged', () => {
-    console.log('🎁 [MiningPanel] 收益变化，刷新数据');
     checkTicketStatus();
   });
   // Auto-select ticket tier if user has bought one
@@ -262,14 +259,6 @@ const MiningPanel: React.FC = () => {
   }, [ticketHistory, activeStake, currentTime, secondsInUnit]);
 
   const getUserMiningState = (): UserMiningState => {
-    console.log('🔍 [State Detection] Current state check:', {
-      isConnected,
-      isExited,
-      hasStakedLiquidity,
-      isApproved,
-      isCheckingAllowance
-    });
-
     if (!isConnected) return UserMiningState.NOT_CONNECTED;
     if (isCheckingAllowance) return UserMiningState.NOT_CONNECTED; // Treat as not ready
     if (isExited) return UserMiningState.MINING_COMPLETE;
@@ -449,16 +438,6 @@ const MiningPanel: React.FC = () => {
           if (userInfo.maxSingleTicketAmount) {
               maxSingleTicket = userInfo.maxSingleTicketAmount;
           }
-
-          console.log('ticket info:', {
-              amount: ticket.amount.toString(),
-              exited: ticket.exited,
-              purchaseTime: Number(ticket.purchaseTime),
-              totalRevenue: userInfo.totalRevenue.toString(),
-              currentCap: userInfo.currentCap.toString(),
-              maxTicketAmount: userInfo.maxTicketAmount.toString(),
-              maxSingleTicketAmount: maxSingleTicket.toString()
-          });
 
           setTicketInfo({
               amount: ticket.amount,
@@ -1095,17 +1074,6 @@ const MiningPanel: React.FC = () => {
                 const isDisabled = hasTicket && !isExited && tier.amount < maxSingleTicket;
                 const isSelected = selectedTicket.amount === tier.amount;
 
-                // 调试信息
-                console.log('🎫 [Ticket Selection Logic]', {
-                  tierAmount: tier.amount,
-                  currentTotalAmount: ticketInfo ? parseFloat(ethers.formatEther(ticketInfo.amount)) : 0,
-                  maxSingleFromContract: ticketInfo?.maxSingleTicketAmount ? parseFloat(ethers.formatEther(ticketInfo.maxSingleTicketAmount)) : 0,
-                  maxSingleFromHistory: maxUnredeemedTicket,
-                  finalMaxSingle: maxSingleTicket,
-                  isDisabled: isDisabled,
-                  hasTicket,
-                  isExited
-                });
                 return (
                   <button
                     key={tier.amount}
@@ -1406,8 +1374,6 @@ const MiningPanel: React.FC = () => {
                     {(() => {
                         const userState = getUserMiningState();
                         const buttonState = getStakingButtonState(userState);
-                        
-                        console.log('🎯 [Button State] Current user state:', userState, 'Button:', buttonState.text);
                         
                         return (
                             <button

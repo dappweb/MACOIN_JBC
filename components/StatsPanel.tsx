@@ -214,13 +214,11 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
 
   // 监听余额变化事件
   useEventRefresh('balanceUpdated', () => {
-    console.log('💰 [StatsPanel] 余额更新，刷新显示数据');
     // 余额数据已通过全局状态自动更新
   });
 
   // 监听价格变化事件
   useEventRefresh('priceUpdated', () => {
-    console.log('📈 [StatsPanel] 价格更新');
     // 价格数据已通过全局状态和实时价格Hook自动更新
   });
 
@@ -231,20 +229,12 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
 
   // 提取fetchData函数，以便在事件监听器中使用
   const fetchData = useCallback(async () => {
-    console.log('🔍 [StatsPanel Debug] Checking connection status...');
-    console.log('isConnected:', isConnected);
-    console.log('account:', account);
-    console.log('protocolContract:', !!protocolContract);
-    
     if (isConnected && account && jbcContract && protocolContract) {
       try {
-        console.log('🔍 [StatsPanel Debug] Fetching user data for:', account);
-        
         // 余额数据现在从全局状态获取，不需要重复获取
 
         // Fetch Protocol Info
         const userInfo = await protocolContract.userInfo(account)
-        console.log('🔍 [StatsPanel Debug] User info:', userInfo);
         
         // userInfo returns: (referrer, activeDirects, teamCount, totalRevenue, currentCap, isActive, refundFeeAmount, teamTotalVolume, teamTotalCap)
 
@@ -266,8 +256,6 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
         let level = "V0"
         const teamCount = Number(userInfo[2])
         
-        console.log('🔍 [StatsPanel Debug] Team count:', teamCount);
-        
         // 更新的极差裂变机制等级标准
         if (teamCount >= 100000) level = "V9"      // V9: 100,000个地址，45%极差收益
         else if (teamCount >= 30000) level = "V8"  // V8: 30,000个地址，40%极差收益
@@ -279,8 +267,6 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
         else if (teamCount >= 30) level = "V2"     // V2: 30个地址，10%极差收益
         else if (teamCount >= 10) level = "V1"     // V1: 10个地址，5%极差收益
 
-        console.log('🔍 [StatsPanel Debug] Calculated level:', level);
-
         let referralRevenue = 0
         let rewardMc = 0
         let rewardJbc = 0
@@ -290,17 +276,10 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
             // 统一查询范围到 50,000 区块，与 EarningsDetail 保持一致
             const fromBlock = Math.max(0, currentBlock - 50000)
             
-            console.log('🔍 [StatsPanel] Querying events from block', fromBlock, 'to', currentBlock);
-            
             const [referralEvents, rewardEvents] = await Promise.all([
               protocolContract.queryFilter(protocolContract.filters.ReferralRewardPaid(account), fromBlock),
               protocolContract.queryFilter(protocolContract.filters.RewardClaimed(account), fromBlock),
             ])
-            
-            console.log('🔍 [StatsPanel] Found events:', {
-              referralEvents: referralEvents.length,
-              rewardEvents: rewardEvents.length
-            });
             
             for (const event of referralEvents) {
               if (event.args) {
@@ -314,16 +293,10 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
               }
             }
             
-            console.log('🔍 [StatsPanel] Calculated rewards:', {
-              referralRevenue,
-              rewardMc,
-              rewardJbc
-            });
           }
         } catch (err) {
           console.error("Failed to fetch referral rewards", err)
           // 不要因为事件查询失败就阻止整个数据更新
-          console.log('⚠️ [StatsPanel] Event query failed, continuing with contract state only');
         }
 
         const baseRevenue = parseFloat(ethers.formatEther(userInfo[3]))
@@ -342,34 +315,21 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
           currentLevel: level,
         }))
         
-        console.log('🔍 [StatsPanel Debug] Updated display stats:', {
-          teamCount: Number(userInfo[2]),
-          currentLevel: level,
-          balanceMC: parseFloat(balances.mc),
-          balanceJBC: parseFloat(balances.jbc)
-        });
       } catch (err) {
         console.error("Error fetching stats", err)
       }
     } else {
-        console.log('🔍 [StatsPanel Debug] Not ready to fetch data:', {
-          isConnected,
-          hasAccount: !!account,
-          hasJbcContract: !!jbcContract,
-          hasProtocolContract: !!protocolContract
-        });
-      }
+      // Not ready to fetch data
+    }
   }, [isConnected, account, jbcContract, protocolContract, provider, balances.mc, balances.jbc, referrer])
 
   // 监听用户等级变化事件
   useEventRefresh('userLevelChanged', () => {
-    console.log('📊 [StatsPanel] 用户等级变化，刷新用户数据');
     fetchData();
   });
 
   // 监听门票状态变化事件（可能影响等级）
   useEventRefresh('ticketStatusChanged', () => {
-    console.log('🎫 [StatsPanel] 门票状态变化，刷新用户数据');
     fetchData();
   });
 

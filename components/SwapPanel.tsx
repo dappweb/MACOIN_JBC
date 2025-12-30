@@ -52,7 +52,6 @@ const SwapPanel: React.FC = () => {
 
   // 监听池子数据变化事件
   useEventRefresh('poolDataChanged', () => {
-    console.log('🏊 [SwapPanel] 池子数据变化，刷新池子储备');
     fetchPoolData();
   });
 
@@ -61,36 +60,24 @@ const SwapPanel: React.FC = () => {
     if (protocolContract) {
         setIsLoadingPoolData(true);
         try {
-            console.log('💰 [SwapPanel] 正在获取池子储备量...')
-            
             const poolMcBal = await protocolContract.swapReserveMC();
             const poolMcFormatted = ethers.formatEther(poolMcBal);
             setPoolMC(poolMcFormatted);
-            console.log('💰 [SwapPanel] MC 池子储备:', poolMcFormatted, 'MC')
 
             const poolJbcBal = await protocolContract.swapReserveJBC();
             const poolJbcFormatted = ethers.formatEther(poolJbcBal);
             setPoolJBC(poolJbcFormatted);
-            console.log('💰 [SwapPanel] JBC 池子储备:', poolJbcFormatted, 'JBC')
             
             // 计算 LP 总量
             const mcAmount = parseFloat(poolMcFormatted);
             const jbcAmount = parseFloat(poolJbcFormatted);
             const totalLpTokens = mcAmount + jbcAmount;
-            
-            console.log('📊 [SwapPanel] ========== LP 总量统计 ==========')
-            console.log('📊 [SwapPanel] MC 数量:', mcAmount.toFixed(4), 'MC')
-            console.log('📊 [SwapPanel] JBC 数量:', jbcAmount.toFixed(4), 'JBC')
-            console.log('📊 [SwapPanel] LP 总量 (MC + JBC):', totalLpTokens.toFixed(4))
-            console.log('📊 [SwapPanel] =====================================')
-        } catch (err) {
-            console.error("❌ [SwapPanel] 获取池子余额失败:", err);
             ToastEnhancer.error('Failed to load pool data. Please refresh the page.');
         } finally {
             setIsLoadingPoolData(false);
         }
     } else {
-         console.log('⚠️ [SwapPanel] protocolContract 未初始化')
+        // protocolContract not initialized
     }
   };
 
@@ -100,7 +87,6 @@ const SwapPanel: React.FC = () => {
     await fetchPoolData();
 
     // 用户余额现在从全局状态获取，无需单独获取
-    console.log('✅ [SwapPanel] 余额数据已从全局状态获取');
   };
 
   useEffect(() => {

@@ -269,7 +269,7 @@ const BuyTicketPanel: React.FC<BuyTicketPanelProps> = ({ onBack }) => {
           <button
             onClick={handleBuyTicket}
             disabled={isLoading || !mcBalance || mcBalance < ethers.parseEther(selectedTier.toString())}
-            className="w-full py-4 bg-gradient-to-r from-neon-500 to-neon-600 hover:from-neon-400 hover:to-neon-500 disabled:opacity-50 disabled:cursor-not-allowed text-black font-bold rounded-lg transition-colors flex items-center justify-center gap-2"
+            className="w-full py-4 bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-400 hover:to-yellow-500 disabled:opacity-50 disabled:cursor-not-allowed text-black font-bold rounded-lg transition-colors flex items-center justify-center gap-2"
           >
             <Ticket size={20} />
             {isLoading ? "购买中..." : `直接购买 ${selectedTier} MC 门票`}

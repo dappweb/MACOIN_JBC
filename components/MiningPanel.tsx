@@ -1124,7 +1124,7 @@ const MiningPanel: React.FC = () => {
               <button
                 onClick={handleBuyTicket}
                 disabled={txPending}
-                className="w-full py-4 md:py-5 bg-gradient-to-r from-neon-500 to-neon-600 hover:from-neon-400 hover:to-neon-500 text-black font-extrabold text-xl rounded-xl shadow-[0_0_20px_rgba(34,197,94,0.4)] hover:shadow-[0_0_30px_rgba(34,197,94,0.6)] transition-all transform hover:scale-[1.02] active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed relative overflow-hidden"
+                className="w-full py-4 md:py-5 bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-400 hover:to-yellow-500 text-black font-extrabold text-xl rounded-xl shadow-[0_0_20px_rgba(255,215,0,0.4)] hover:shadow-[0_0_30px_rgba(255,215,0,0.6)] transition-all transform hover:scale-[1.02] active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed relative overflow-hidden"
               >
                 <div className="absolute inset-0 bg-white/20 translate-x-[-100%] animate-[shimmer_2s_infinite]"></div>
                 <div className="relative flex items-center justify-center gap-2">
@@ -1422,7 +1422,7 @@ const MiningPanel: React.FC = () => {
                             setCurrentStep(1);
                             handleScrollToBuy();
                         }}
-                        className="px-8 py-3 bg-gradient-to-r from-neon-500 to-neon-600 hover:from-neon-400 hover:to-neon-500 text-black font-bold rounded-xl shadow-lg shadow-neon-500/20 transition-all transform hover:scale-105"
+                        className="px-8 py-3 bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-400 hover:to-yellow-500 text-black font-bold rounded-xl shadow-lg shadow-yellow-500/20 transition-all transform hover:scale-105"
                     >
                         {t.mining.buyTicket} (Start New Round)
                     </button>

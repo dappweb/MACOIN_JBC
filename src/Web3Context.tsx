@@ -50,7 +50,7 @@ export const PROTOCOL_ABI = [
   "event LiquidityStaked(address indexed user, uint256 amount, uint256 cycleDays, uint256 stakeId)",
   "event RewardPaid(address indexed user, uint256 amount, uint8 rewardType)",
   "event RewardClaimed(address indexed user, uint256 mcAmount, uint256 jbcAmount, uint8 rewardType, uint256 ticketId)",
-  "event ReferralRewardPaid(address indexed user, address indexed from, uint256 mcAmount, uint8 rewardType, uint256 ticketId)",
+  "event ReferralRewardPaid(address indexed user, address indexed from, uint256 mcAmount, uint256 jbcAmount, uint8 rewardType, uint256 ticketId)",
   "event UserLevelChanged(address indexed user, uint256 oldLevel, uint256 newLevel, uint256 teamCount)",
   "event TeamCountUpdated(address indexed user, uint256 oldCount, uint256 newCount)",
   "event Redeemed(address indexed user, uint256 principal, uint256 fee)",
@@ -71,11 +71,17 @@ export const DAILY_BURN_MANAGER_ABI = [
   "event DailyBurnExecuted(uint256 burnAmount, uint256 timestamp, address executor)"
 ]
 
-// Contract Addresses - MC Chain Testnet (Native MC Version)
+// Contract Addresses - MC Chain (Dynamic Detection)
 export const CONTRACT_ADDRESSES = {
-  // MC_TOKEN: "0xB2B8777BcBc7A8DEf49F022773d392a8787cf9EF", // No longer needed
-  JBC_TOKEN: "0x1Bf9ACe2485BC3391150762a109886d0B85f40Da",
-  PROTOCOL: "0xD437e63c2A76e0237249eC6070Bef9A2484C4302", // Native MC version with minute time unit
+  // 根据环境自动选择合约地址
+  JBC_TOKEN: process.env.NODE_ENV === 'production' 
+    ? "0xA743cB357a9f59D349efB7985072779a094658dD"  // P-prod JBC
+    : "0x1Bf9ACe2485BC3391150762a109886d0B85f40Da", // Test JBC
+  
+  PROTOCOL: process.env.NODE_ENV === 'production'
+    ? "0x515871E9eADbF976b546113BbD48964383f86E61"  // P-prod Protocol (86400s)
+    : "0xD437e63c2A76e0237249eC6070Bef9A2484C4302", // Test Protocol (60s)
+    
   DAILY_BURN_MANAGER: "0x6C2FdDEb939D92E0dde178845F570FC4E0d213bc"
 };
 

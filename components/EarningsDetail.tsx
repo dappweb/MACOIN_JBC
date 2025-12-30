@@ -339,8 +339,27 @@ const EarningsDetail: React.FC<{ onNavigateToMining?: () => void }> = ({ onNavig
       setError(null)
       
       const currentBlock = await provider.getBlockNumber()
-      // 减少查询范围到 50,000 区块，提高查询成功率
-      const fromBlock = Math.max(0, currentBlock - 50000)
+      // 根据时间单位动态调整查询范围
+      let blockRange = 100000; // 默认范围
+      
+      try {
+        const secondsInUnit = await protocolContract.SECONDS_IN_UNIT();
+        const timeUnit = Number(secondsInUnit);
+        
+        if (timeUnit === 60) {
+          // 测试环境 (分钟单位) - 较小范围即可
+          blockRange = 50000;
+          console.log('🔍 [EarningsDetail] 检测到测试环境 (60s单位)，使用50K区块范围');
+        } else if (timeUnit === 86400) {
+          // 生产环境 (天单位) - 需要更大范围
+          blockRange = 200000;
+          console.log('🔍 [EarningsDetail] 检测到生产环境 (86400s单位)，使用200K区块范围');
+        }
+      } catch (e) {
+        console.warn('⚠️ [EarningsDetail] 无法检测时间单位，使用默认范围');
+      }
+      
+      const fromBlock = Math.max(0, currentBlock - blockRange)
 
       const targetUser = isOwner && viewMode === "all" ? null : account
 
@@ -386,6 +405,15 @@ const EarningsDetail: React.FC<{ onNavigateToMining?: () => void }> = ({ onNavig
 
       if (referralResults.status === 'fulfilled') {
         referralEvents = referralResults.value
+        console.log(`✅ [EarningsDetail] 成功获取 ${referralEvents.length} 个推荐奖励事件`);
+      console.log(`🔍 [EarningsDetail] 当前合约地址: ${await protocolContract.getAddress()}`);
+      
+      // 检测合约版本
+      if (await protocolContract.getAddress() === "0x515871E9eADbF976b546113BbD48964383f86E61") {
+        console.log('📋 [EarningsDetail] 使用生产环境合约 (P-prod)');
+      } else if (await protocolContract.getAddress() === "0xD437e63c2A76e0237249eC6070Bef9A2484C4302") {
+        console.log('🧪 [EarningsDetail] 使用测试环境合约 (Test)');
+      }
       } else {
         console.error("Failed to fetch referral events:", referralResults.reason)
         toast.error("Failed to load referral events")
@@ -472,6 +500,13 @@ const EarningsDetail: React.FC<{ onNavigateToMining?: () => void }> = ({ onNavig
         try {
           const block = await provider.getBlock(event.blockNumber)
           
+          // 调试：记录事件参数格式
+          console.log(`🔍 [EarningsDetail] ReferralRewardPaid 事件参数:`, {
+            argsLength: event.args?.length,
+            args: event.args,
+            blockNumber: event.blockNumber
+          })
+          
           // 检查事件参数数量来判断是新格式还是旧格式
           const isNewFormat = event.args && event.args.length >= 6 // 新格式有6个参数
           
@@ -506,11 +541,31 @@ const EarningsDetail: React.FC<{ onNavigateToMining?: () => void }> = ({ onNavig
             timestamp: block ? block.timestamp : 0,
             status: "confirmed",
           })
+          
+          // 调试：记录奖励类型
+          if (rewardType === 2) {
+            console.log(`💰 [EarningsDetail] 发现直推奖励:`, { user: event.args[0], mcAmount, rewardType })
+          } else if (rewardType === 3) {
+            console.log(`🏆 [EarningsDetail] 发现层级奖励:`, { user: event.args[0], mcAmount, rewardType })
+          }
+          
           processedEvents++
         } catch (err) {
           console.error("Error parsing referral reward event:", err, event)
           failedEvents++
         }
+      }
+
+      // 🚨 Test分支特殊处理：如果没有ReferralRewardPaid事件，显示警告
+      if (referralEvents.length === 0 && rewardPaidEvents.length > 0) {
+        console.warn('⚠️ [EarningsDetail] Test分支合约问题: 有门票购买但没有ReferralRewardPaid事件');
+        console.warn('这表明合约没有正确触发直推和层级奖励事件');
+        
+        // 显示用户友好的提示
+        toast.error('当前合约版本存在奖励分发问题，直推和层级奖励可能无法正常显示', {
+          duration: 5000,
+          id: 'contract-reward-issue'
+        });
       }
 
       // 处理新的 DifferentialRewardDistributed 事件

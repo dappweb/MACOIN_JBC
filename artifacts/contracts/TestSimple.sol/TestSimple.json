@@ -1,0 +1,37 @@
+{
+  "_format": "hh-sol-artifact-1",
+  "contractName": "TestSimple",
+  "sourceName": "contracts/TestSimple.sol",
+  "abi": [
+    {
+      "inputs": [],
+      "name": "SECONDS_IN_UNIT",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "getSecondsInUnit",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "pure",
+      "type": "function"
+    }
+  ],
+  "bytecode": "0x6080806040523460145760a3908161001a8239f35b600080fdfe6080806040526004361015601257600080fd5b600090813560e01c90816331765d55146050575063488b5d9714603457600080fd5b34604d5780600319360112604d576020604051603c8152f35b80fd5b9050346069578160031936011260695780603c60209252f35b5080fdfea26469706673582212206e40f4d509e342a3d809be2ce9ab607695b3851434ce3909fa546691229ffa3d64736f6c63430008160033",
+  "deployedBytecode": "0x6080806040526004361015601257600080fd5b600090813560e01c90816331765d55146050575063488b5d9714603457600080fd5b34604d5780600319360112604d576020604051603c8152f35b80fd5b9050346069578160031936011260695780603c60209252f35b5080fdfea26469706673582212206e40f4d509e342a3d809be2ce9ab607695b3851434ce3909fa546691229ffa3d64736f6c63430008160033",
+  "linkReferences": {},
+  "deployedLinkReferences": {}
+}

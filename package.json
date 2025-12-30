@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "npx vite build",
     "preview": "vite preview",
     "compile": "npx hardhat compile --config config/hardhat.config.cjs",
     "test": "npx hardhat test --config config/hardhat.config.cjs",

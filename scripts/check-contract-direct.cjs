@@ -7,7 +7,7 @@ async function main() {
   const provider = new ethers.JsonRpcProvider("https://chain.mcerscan.com/");
   
   // 合约地址
-  const PROTOCOL_ADDRESS = "0x1EC3576609b2E1D834570Bd56A1A51fb24fD7FB5";
+  const PROTOCOL_ADDRESS = "0xD437e63c2A76e0237249eC6070Bef9A2484C4302";
   
   // 简化的 ABI，只包含我们需要的函数
   const SIMPLE_ABI = [

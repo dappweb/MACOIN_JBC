@@ -165,7 +165,7 @@ async function testTimeDetection() {
   try {
     const provider = new ethers.JsonRpcProvider("https://chain.mcerscan.com/");
     const SIMPLE_ABI = ["function SECONDS_IN_UNIT() view returns (uint256)"];
-    const contract = new ethers.Contract("0x1EC3576609b2E1D834570Bd56A1A51fb24fD7FB5", SIMPLE_ABI, provider);
+    const contract = new ethers.Contract("0xD437e63c2A76e0237249eC6070Bef9A2484C4302", SIMPLE_ABI, provider);
     
     const contractSecondsInUnit = await contract.SECONDS_IN_UNIT();
     console.log("   合约 SECONDS_IN_UNIT:", contractSecondsInUnit.toString());

@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { TICKET_TIERS, MINING_PLANS } from '../src/constants';
 import { MiningPlan, TicketTier } from '../src/types';
-import { Zap, Clock, TrendingUp, AlertCircle, ArrowRight, ShieldCheck, Lock, Package, History, ChevronDown, ChevronUp } from 'lucide-react';
+import { Zap, Clock, TrendingUp, AlertCircle, ArrowRight, ShieldCheck, Lock, Package, History, ChevronDown, ChevronUp, Loader2 } from 'lucide-react';
 import { useLanguage } from '../src/LanguageContext';
 import { useWeb3 } from '../src/Web3Context';
 import { useGlobalRefresh, useEventRefresh } from '../hooks/useGlobalRefresh';
@@ -10,6 +10,19 @@ import toast from 'react-hot-toast';
 import { formatContractError } from '../utils/errorFormatter';
 import LiquidityPositions from './LiquidityPositions';
 import GoldenProgressBar from './GoldenProgressBar';
+
+// Skeleton components for loading states
+const SkeletonCard: React.FC<{ className?: string }> = ({ className = "" }) => (
+  <div className={`animate-pulse bg-gray-800/50 rounded-xl p-4 border border-gray-700 ${className}`}>
+    <div className="h-4 bg-gray-700 rounded w-3/4 mb-2"></div>
+    <div className="h-8 bg-gray-700 rounded w-1/2 mb-2"></div>
+    <div className="h-3 bg-gray-700 rounded w-full"></div>
+  </div>
+);
+
+const SkeletonButton: React.FC<{ className?: string }> = ({ className = "" }) => (
+  <div className={`animate-pulse bg-gray-700 rounded-xl h-12 ${className}`}></div>
+);
 
 type TicketInfo = {
   amount: bigint;
@@ -72,6 +85,11 @@ const MiningPanel: React.FC = () => {
   const [txPending, setTxPending] = useState(false);
   const [inputReferrerAddress, setInputReferrerAddress] = useState('');
   const [isBindingReferrer, setIsBindingReferrer] = useState(false);
+  
+  // Loading states for better UX
+  const [isLoadingTicketStatus, setIsLoadingTicketStatus] = useState(true);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
   
   // 历史记录状态
   const [ticketHistory, setTicketHistory] = useState<TicketHistoryItem[]>([]);
@@ -395,9 +413,11 @@ const MiningPanel: React.FC = () => {
   const checkTicketStatus = async () => {
       if (!protocolContract || !account) {
           setTicketInfo(null);
+          setIsLoadingTicketStatus(false);
           return;
       }
 
+      setIsLoadingTicketStatus(true);
       try {
           const [ticket, userInfo] = await Promise.all([
               protocolContract.userTicket(account),
@@ -436,12 +456,16 @@ const MiningPanel: React.FC = () => {
           });
       } catch (err) {
           console.error('Failed to check ticket status', err);
+          toast.error('Failed to load ticket information. Please try again.');
+      } finally {
+          setIsLoadingTicketStatus(false);
       }
   };
 
   const fetchHistory = async () => {
     if (!protocolContract || !account || !provider) return;
     setLoadingHistory(true);
+    setIsLoadingHistory(true);
     try {
         const currentBlock = await provider.getBlockNumber();
         const fromBlock = Math.max(0, currentBlock - 1000000); 
@@ -536,14 +560,24 @@ const MiningPanel: React.FC = () => {
         }
     } catch (err) {
         console.error("Failed to fetch history", err);
+        toast.error('Failed to load transaction history. Please try again.');
     } finally {
         setLoadingHistory(false);
+        setIsLoadingHistory(false);
     }
   };
 
   useEffect(() => {
-    checkTicketStatus();
-    fetchHistory();
+    const initializeData = async () => {
+      setIsInitialLoad(true);
+      await Promise.all([
+        checkTicketStatus(),
+        fetchHistory()
+      ]);
+      setIsInitialLoad(false);
+    };
+    
+    initializeData();
   }, [protocolContract, account]);
 
   useEffect(() => {
@@ -640,9 +674,6 @@ const MiningPanel: React.FC = () => {
     setIsApproved(true);
     toast.success('原生MC无需授权，可直接使用');
   };
-          setTxPending(false);
-      }
-  };
 
   const handleScrollToBuy = () => {
       if (typeof window === 'undefined') return;
@@ -674,8 +705,11 @@ const MiningPanel: React.FC = () => {
 
           // 使用原生MC购买门票
           const tx = await protocolContract.buyTicket({ value: amountWei });
+          
+          // Enhanced loading feedback
+          toast.loading('🎫 Processing ticket purchase...', { id: 'buy-ticket' });
           await tx.wait();
-          toast.success(t.mining.ticketBuySuccess);
+          toast.success('🎉 Ticket purchased successfully!', { id: 'buy-ticket' });
           
           // 使用全局刷新机制
           await onTransactionSuccess('ticket_purchase');
@@ -684,6 +718,7 @@ const MiningPanel: React.FC = () => {
           setCurrentStep(2);
       } catch (err: any) {
           console.error(err);
+          toast.dismiss('buy-ticket');
           // Special handling for active ticket using the new formatter context if needed, 
           // or just rely on formatter. For now, let's use the formatter which handles most cases nicely.
           // If we want to preserve the specific "Active ticket" hint for missing revert data in buyTicket:
@@ -736,16 +771,17 @@ const MiningPanel: React.FC = () => {
           // 3. 直接执行质押 - 使用原生MC (payable)
           const tx = await protocolContract.stakeLiquidity(selectedPlan.days, { value: requiredAmount });
           
-          toast.loading("质押确认中...", { id: "stake-liquidity" });
+          toast.loading("💎 Staking liquidity...", { id: "stake-liquidity" });
           await tx.wait();
 
-          toast.success(t.mining.stakeSuccess, { id: "stake-liquidity" });
+          toast.success("🚀 Liquidity staked successfully!", { id: "stake-liquidity" });
           
           // 使用全局刷新机制
           await onTransactionSuccess('liquidity_stake');
           
-          // Clear input
+          // Clear input and move to dashboard
           setLiquidityAmountInput('');
+          setCurrentStep(3);
       } catch (err: any) {
           console.error(t.mining.stakeFailed, err);
           toast.error(formatContractError(err), { id: "stake-liquidity" });
@@ -872,50 +908,76 @@ const MiningPanel: React.FC = () => {
         <p className="text-sm md:text-base text-gray-400">{t.mining.subtitle}</p>
       </div>
 
-      {/* Step Indicator */}
-      <div className="flex items-center justify-center gap-2 md:gap-4 mb-8">
-        {[
-          { step: 1, label: t.mining.buyTicket, icon: Package },
-          { step: 2, label: t.mining.stake, icon: Lock },
-          { step: 3, label: t.mining.mining, icon: Zap }
-        ].map((s, idx) => {
-          const userState = getUserMiningState();
-          
-          // Determine if step is completed based on unified state
-          const isCompleted = (s.step === 1 && userState !== UserMiningState.NOT_CONNECTED && userState !== UserMiningState.NO_TICKET) || 
-                             (s.step === 2 && (userState === UserMiningState.ALREADY_STAKED || userState === UserMiningState.MINING_COMPLETE));
-          
-          // All steps are accessible for browsing
-          const isAccessible = true;
-          
-          return (
-          <div key={s.step} className="flex items-center">
-            <button 
-              onClick={() => {
-                if (isAccessible) setCurrentStep(s.step);
-              }}
-              disabled={!isAccessible}
-              className={`flex items-center gap-2 px-4 py-2 rounded-full border transition-all ${
-                isAccessible ? 'cursor-pointer hover:scale-105 active:scale-95' : 'cursor-not-allowed opacity-50'
-              } ${
-              currentStep === s.step 
-                ? 'bg-neon-500/20 border-neon-500 text-neon-400 shadow-lg shadow-neon-500/20' 
-                : isCompleted
-                  ? 'bg-green-500/10 border-green-500/30 text-green-400 hover:bg-green-500/20'
-                  : 'bg-gray-900/50 border-gray-700 text-gray-500 hover:border-gray-500 hover:text-gray-300'
-            }`}>
-              <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
-                 currentStep === s.step ? 'bg-neon-500 text-black' : 
-                 isCompleted ? 'bg-green-500 text-black' : 'bg-gray-800'
-              }`}>
-                {isCompleted ? '✓' : s.step}
+      {/* Loading State for Initial Load */}
+      {isInitialLoad && (
+        <div className="space-y-6">
+          <div className="flex items-center justify-center gap-4 mb-8">
+            {[1, 2, 3].map((step) => (
+              <div key={step} className="flex items-center">
+                <SkeletonButton className="w-32 h-10" />
+                {step < 3 && <div className="w-8 h-0.5 mx-2 bg-gray-800" />}
               </div>
-              <span className="hidden md:block font-bold text-sm">{s.label}</span>
-            </button>
-            {idx < 2 && <div className={`w-8 h-0.5 mx-2 ${isCompleted ? 'bg-green-500/30' : 'bg-gray-800'}`} />}
+            ))}
           </div>
-        )})}
-      </div>
+          <SkeletonCard className="h-64" />
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2">
+              <SkeletonCard className="h-48" />
+            </div>
+            <SkeletonCard className="h-48" />
+          </div>
+        </div>
+      )}
+
+      {/* Main Content - Hidden during initial load */}
+      {!isInitialLoad && (
+        <>
+          {/* Step Indicator */}
+          <div className="flex items-center justify-center gap-2 md:gap-4 mb-8">
+            {[
+              { step: 1, label: t.mining.buyTicket, icon: Package },
+              { step: 2, label: t.mining.stake, icon: Lock },
+              { step: 3, label: t.mining.mining, icon: Zap }
+            ].map((s, idx) => {
+              const userState = getUserMiningState();
+              
+              // Determine if step is completed based on unified state
+              const isCompleted = (s.step === 1 && userState !== UserMiningState.NOT_CONNECTED && userState !== UserMiningState.NO_TICKET) || 
+                                 (s.step === 2 && (userState === UserMiningState.ALREADY_STAKED || userState === UserMiningState.MINING_COMPLETE));
+              
+              // All steps are accessible for browsing
+              const isAccessible = true;
+              
+              return (
+              <div key={s.step} className="flex items-center">
+                <button 
+                  onClick={() => {
+                    if (isAccessible) setCurrentStep(s.step);
+                  }}
+                  disabled={!isAccessible}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-full border transition-all transform active:scale-95 ${
+                    isAccessible ? 'cursor-pointer hover:scale-105 active:scale-95' : 'cursor-not-allowed opacity-50'
+                  } ${
+                  currentStep === s.step 
+                    ? 'bg-neon-500/20 border-neon-500 text-neon-400 shadow-lg shadow-neon-500/20' 
+                    : isCompleted
+                      ? 'bg-green-500/10 border-green-500/30 text-green-400 hover:bg-green-500/20'
+                      : 'bg-gray-900/50 border-gray-700 text-gray-500 hover:border-gray-500 hover:text-gray-300'
+                }`}>
+                  <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
+                     currentStep === s.step ? 'bg-neon-500 text-black' : 
+                     isCompleted ? 'bg-green-500 text-black' : 'bg-gray-800'
+                  }`}>
+                    {isCompleted ? '✓' : s.step}
+                  </div>
+                  <span className="hidden md:block font-bold text-sm">{s.label}</span>
+                </button>
+                {idx < 2 && <div className={`w-8 h-0.5 mx-2 transition-colors ${isCompleted ? 'bg-green-500/30' : 'bg-gray-800'}`} />}
+              </div>
+            )})}
+          </div>
+        </>
+      )}
 
       {/* 鎺ㄨ崘浜虹粦瀹氭彁绀?- 闈炵鐞嗗憳涓旀湭缁戝畾鎺ㄨ崘浜烘椂鏄剧ず */}
       {isConnected && !hasReferrer && !isOwner && (
@@ -975,7 +1037,7 @@ const MiningPanel: React.FC = () => {
 
 
       {/* Ticket Selection UI Enhancement */}
-      {currentStep === 1 && isConnected && (
+      {currentStep === 1 && isConnected && !isInitialLoad && (
         <div className="glass-panel p-6 md:p-8 rounded-2xl border-2 border-neon-500/50 shadow-xl shadow-neon-500/20 animate-fade-in bg-gray-900/50 relative overflow-hidden">
           {/* Background Decorative Elements */}
           <div className="absolute top-0 right-0 w-64 h-64 bg-neon-500/5 rounded-full blur-3xl -z-10"></div>
@@ -987,72 +1049,88 @@ const MiningPanel: React.FC = () => {
             <p className="text-gray-400 max-w-lg mx-auto">{t.mining.step1}</p>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 md:gap-6 mb-8">
-            {TICKET_TIERS.map((tier) => {
-              const maxSingleTicket = getMaxSingleTicketAmount();
-              const isDisabled = hasTicket && !isExited && tier.amount < maxSingleTicket;
-              const isSelected = selectedTicket.amount === tier.amount;
+          {/* Loading state for ticket status */}
+          {isLoadingTicketStatus ? (
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 md:gap-6 mb-8">
+              {[1, 2, 3, 4].map((i) => (
+                <SkeletonCard key={i} className="h-32" />
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 md:gap-6 mb-8">
+              {TICKET_TIERS.map((tier) => {
+                const maxSingleTicket = getMaxSingleTicketAmount();
+                const isDisabled = hasTicket && !isExited && tier.amount < maxSingleTicket;
+                const isSelected = selectedTicket.amount === tier.amount;
 
-              // 调试信息
-              console.log('🎫 [Ticket Selection Logic]', {
-                tierAmount: tier.amount,
-                currentTotalAmount: ticketInfo ? parseFloat(ethers.formatEther(ticketInfo.amount)) : 0,
-                maxSingleFromContract: ticketInfo?.maxSingleTicketAmount ? parseFloat(ethers.formatEther(ticketInfo.maxSingleTicketAmount)) : 0,
-                maxSingleFromHistory: maxUnredeemedTicket,
-                finalMaxSingle: maxSingleTicket,
-                isDisabled: isDisabled,
-                hasTicket,
-                isExited
-              });
-              return (
-                <button
-                  key={tier.amount}
-                  onClick={() => !isDisabled && setSelectedTicket(tier)}
-                  disabled={isDisabled}
-                  className={`group relative py-6 md:py-8 rounded-xl border transition-all duration-300 flex flex-col items-center justify-center gap-2 overflow-hidden ${
-                    isDisabled
-                      ? 'bg-gray-900/30 border-gray-800 text-gray-600 cursor-not-allowed opacity-50 grayscale'
-                      : isSelected
-                      ? 'bg-gradient-to-br from-gray-800 to-gray-900 border-neon-400 shadow-[0_0_20px_rgba(34,197,94,0.3)] transform scale-105 z-10'
-                      : 'bg-gray-900/50 border-gray-700 text-gray-300 hover:border-neon-500/50 hover:bg-gray-800/80 hover:shadow-lg'
-                  }`}
-                >
-                  {/* Selection Indicator */}
-                  {isSelected && (
-                    <div className="absolute top-0 right-0 w-8 h-8 bg-neon-500 text-black flex items-center justify-center rounded-bl-xl font-bold">
-                      ✓
-                    </div>
-                  )}
-                  
-                  {/* Holographic Effect for Selected */}
-                  {isSelected && (
-                     <div className="absolute inset-0 bg-gradient-to-tr from-neon-500/10 via-transparent to-transparent opacity-50 pointer-events-none"></div>
-                  )}
+                // 调试信息
+                console.log('🎫 [Ticket Selection Logic]', {
+                  tierAmount: tier.amount,
+                  currentTotalAmount: ticketInfo ? parseFloat(ethers.formatEther(ticketInfo.amount)) : 0,
+                  maxSingleFromContract: ticketInfo?.maxSingleTicketAmount ? parseFloat(ethers.formatEther(ticketInfo.maxSingleTicketAmount)) : 0,
+                  maxSingleFromHistory: maxUnredeemedTicket,
+                  finalMaxSingle: maxSingleTicket,
+                  isDisabled: isDisabled,
+                  hasTicket,
+                  isExited
+                });
+                return (
+                  <button
+                    key={tier.amount}
+                    onClick={() => !isDisabled && setSelectedTicket(tier)}
+                    disabled={isDisabled}
+                    className={`group relative py-6 md:py-8 rounded-xl border transition-all duration-300 flex flex-col items-center justify-center gap-2 overflow-hidden transform active:scale-95 ${
+                      isDisabled
+                        ? 'bg-gray-900/30 border-gray-800 text-gray-600 cursor-not-allowed opacity-50 grayscale'
+                        : isSelected
+                        ? 'bg-gradient-to-br from-gray-800 to-gray-900 border-neon-400 shadow-[0_0_20px_rgba(34,197,94,0.3)] transform scale-105 z-10'
+                        : 'bg-gray-900/50 border-gray-700 text-gray-300 hover:border-neon-500/50 hover:bg-gray-800/80 hover:shadow-lg hover:scale-102'
+                    }`}
+                  >
+                    {/* Selection Indicator */}
+                    {isSelected && (
+                      <div className="absolute top-0 right-0 w-8 h-8 bg-neon-500 text-black flex items-center justify-center rounded-bl-xl font-bold animate-bounce">
+                        ✓
+                      </div>
+                    )}
+                    
+                    {/* Holographic Effect for Selected */}
+                    {isSelected && (
+                       <div className="absolute inset-0 bg-gradient-to-tr from-neon-500/10 via-transparent to-transparent opacity-50 pointer-events-none"></div>
+                    )}
 
-                  {isDisabled && (
-                    <div className="absolute top-2 right-2">
-                      <Lock className="w-4 h-4 text-gray-600" />
+                    {isDisabled && (
+                      <div className="absolute top-2 right-2">
+                        <Lock className="w-4 h-4 text-gray-600" />
+                      </div>
+                    )}
+                    
+                    <div className={`text-3xl md:text-4xl font-bold font-mono tracking-tighter transition-all ${isSelected ? 'text-neon-400 text-shadow-neon' : 'text-white'}`}>
+                      {tier.amount}
                     </div>
-                  )}
-                  
-                  <div className={`text-3xl md:text-4xl font-bold font-mono tracking-tighter ${isSelected ? 'text-neon-400 text-shadow-neon' : 'text-white'}`}>
-                    {tier.amount}
-                  </div>
-                  <span className={`text-xs font-bold uppercase tracking-wider ${isSelected ? 'text-white' : 'text-gray-500'}`}>MC Token</span>
-                  
-                  {/* Cap Info */}
-                  <div className={`mt-2 px-2 py-1 rounded text-[10px] md:text-xs font-mono border ${
-                      isSelected ? 'bg-neon-500/20 border-neon-500/30 text-neon-300' : 'bg-gray-800 border-gray-700 text-gray-500'
-                  }`}>
-                    Cap: {tier.amount * 3}
-                  </div>
-                </button>
-              );
-            })}
-          </div>
+                    <span className={`text-xs font-bold uppercase tracking-wider transition-all ${isSelected ? 'text-white' : 'text-gray-500'}`}>MC Token</span>
+                    
+                    {/* Cap Info */}
+                    <div className={`mt-2 px-2 py-1 rounded text-[10px] md:text-xs font-mono border transition-all ${
+                        isSelected ? 'bg-neon-500/20 border-neon-500/30 text-neon-300' : 'bg-gray-800 border-gray-700 text-gray-500'
+                    }`}>
+                      Cap: {tier.amount * 3}
+                    </div>
+
+                    {/* Ripple effect on click */}
+                    {!isDisabled && (
+                      <div className="absolute inset-0 overflow-hidden rounded-xl">
+                        <div className="absolute inset-0 bg-white/10 scale-0 rounded-full transition-transform duration-300 group-active:scale-150"></div>
+                      </div>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          )}
 
           {hasTicket && !isExited && (
-            <div className="mb-6 bg-amber-900/20 border border-amber-500/30 rounded-xl p-4 flex items-start gap-3 backdrop-blur-sm">
+            <div className="mb-6 bg-amber-900/20 border border-amber-500/30 rounded-xl p-4 flex items-start gap-3 backdrop-blur-sm animate-fade-in">
               <AlertCircle className="text-amber-400 shrink-0 mt-0.5" size={20} />
               <div className="text-sm text-amber-200/80">
                  <span className="font-bold text-amber-300 block mb-1">升级限制</span>
@@ -1066,23 +1144,29 @@ const MiningPanel: React.FC = () => {
               <button
                 onClick={handleApprove}
                 disabled={txPending}
-                className="w-full py-4 bg-gray-700 hover:bg-gray-600 text-white font-bold text-lg rounded-xl transition-all shadow-lg hover:shadow-xl border border-gray-600 disabled:opacity-50 relative overflow-hidden group"
+                className="w-full py-4 bg-gray-700 hover:bg-gray-600 text-white font-bold text-lg rounded-xl transition-all shadow-lg hover:shadow-xl border border-gray-600 disabled:opacity-50 relative overflow-hidden group transform active:scale-95"
               >
                 <div className="absolute inset-0 bg-white/5 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
-                {txPending ? t.mining.approving : `${t.mining.approve}`}
+                <div className="relative flex items-center justify-center gap-2">
+                  {txPending && <Loader2 className="animate-spin" size={20} />}
+                  {txPending ? t.mining.approving : `${t.mining.approve}`}
+                </div>
               </button>
             ) : (
               <button
                 onClick={handleBuyTicket}
                 disabled={txPending}
-                className="w-full py-4 md:py-5 bg-gradient-to-r from-neon-500 to-neon-600 hover:from-neon-400 hover:to-neon-500 text-black font-extrabold text-xl rounded-xl shadow-[0_0_20px_rgba(34,197,94,0.4)] hover:shadow-[0_0_30px_rgba(34,197,94,0.6)] transition-all transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed relative overflow-hidden"
+                className="w-full py-4 md:py-5 bg-gradient-to-r from-neon-500 to-neon-600 hover:from-neon-400 hover:to-neon-500 text-black font-extrabold text-xl rounded-xl shadow-[0_0_20px_rgba(34,197,94,0.4)] hover:shadow-[0_0_30px_rgba(34,197,94,0.6)] transition-all transform hover:scale-[1.02] active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed relative overflow-hidden"
               >
                 <div className="absolute inset-0 bg-white/20 translate-x-[-100%] animate-[shimmer_2s_infinite]"></div>
-                {txPending ? t.mining.buying : (
-                    <span className="flex items-center justify-center gap-2">
-                        {t.mining.buyTicket} <span className="opacity-80 font-mono text-lg">({selectedTicket.amount} MC)</span>
-                    </span>
-                )}
+                <div className="relative flex items-center justify-center gap-2">
+                  {txPending && <Loader2 className="animate-spin" size={20} />}
+                  {txPending ? t.mining.buying : (
+                      <span className="flex items-center justify-center gap-2">
+                          {t.mining.buyTicket} <span className="opacity-80 font-mono text-lg">({selectedTicket.amount} MC)</span>
+                      </span>
+                  )}
+                </div>
               </button>
             )}
           </div>
@@ -1293,12 +1377,15 @@ const MiningPanel: React.FC = () => {
                             <button
                                 onClick={buttonState.action || undefined}
                                 disabled={buttonState.disabled}
-                                className={buttonState.className}
+                                className={`${buttonState.className} transform active:scale-95 transition-all duration-200`}
                             >
-                                {buttonState.text}
-                                {userState === UserMiningState.READY_TO_STAKE && !buttonState.disabled && (
-                                    <ArrowRight size={20} />
-                                )}
+                                <div className="flex items-center justify-center gap-2">
+                                    {txPending && <Loader2 className="animate-spin" size={20} />}
+                                    <span>{buttonState.text}</span>
+                                    {userState === UserMiningState.READY_TO_STAKE && !buttonState.disabled && !txPending && (
+                                        <ArrowRight size={20} />
+                                    )}
+                                </div>
                             </button>
                         );
                     })()}
@@ -1494,29 +1581,33 @@ const MiningPanel: React.FC = () => {
       {isConnected && <LiquidityPositions />}
 
       {/* History Section */}
-      {isConnected && (
+      {isConnected && !isInitialLoad && (
         <div className="glass-panel p-4 md:p-6 rounded-xl border border-gray-800 bg-gray-900/50 mt-8 animate-fade-in">
             <button 
                 onClick={() => setShowHistory(!showHistory)}
-                className="w-full flex items-center justify-between text-white hover:text-neon-400 transition-colors"
+                className="w-full flex items-center justify-between text-white hover:text-neon-400 transition-colors transform active:scale-95"
             >
                 <div className="flex items-center gap-2">
                     <History className="text-neon-400" size={20} />
                     <h3 className="text-lg font-bold">{t.mining.ticketHistory || "Ticket History"}</h3>
+                    {isLoadingHistory && <Loader2 className="animate-spin text-neon-400" size={16} />}
                 </div>
                 {showHistory ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
             </button>
 
             {showHistory && (
                 <div className="mt-4 space-y-3 animate-fade-in">
-                    {loadingHistory ? (
-                        <div className="text-center py-8 text-gray-400 flex flex-col items-center gap-2">
-                             <div className="w-6 h-6 border-2 border-neon-500 border-t-transparent rounded-full animate-spin"></div>
-                             <span>Loading history...</span>
+                    {loadingHistory || isLoadingHistory ? (
+                        <div className="space-y-3">
+                            {[1, 2, 3].map((i) => (
+                                <SkeletonCard key={i} className="h-24" />
+                            ))}
                         </div>
                     ) : ticketHistory.length === 0 ? (
                         <div className="text-center py-8 text-gray-400 border-2 border-dashed border-gray-800 rounded-xl">
-                            No ticket history found
+                            <Package className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                            <p>No ticket history found</p>
+                            <p className="text-xs mt-1 opacity-70">Your transactions will appear here</p>
                         </div>
                     ) : (
                         <div className="space-y-3">
@@ -1531,7 +1622,7 @@ const MiningPanel: React.FC = () => {
                                 const isAddOn = idx < ticketHistory.length - 1 && ticketHistory[idx + 1].ticketId === item.ticketId;
 
                                 return (
-                                <div key={idx} className="bg-gray-800/30 rounded-lg p-4 border border-gray-700/50 hover:border-neon-500/30 transition-colors">
+                                <div key={idx} className="bg-gray-800/30 rounded-lg p-4 border border-gray-700/50 hover:border-neon-500/30 transition-all duration-300 transform hover:scale-[1.01]">
                                 <div className="flex justify-between items-start mb-3">
                                     <div className="flex items-center gap-3">
                                         <div className="flex flex-col items-start gap-1">
@@ -1588,7 +1679,7 @@ const MiningPanel: React.FC = () => {
                                                 handleScrollToStake();
                                                 setCurrentStep(2);
                                             }}
-                                            className="w-full py-2 bg-gradient-to-r from-amber-500/20 to-amber-600/20 hover:from-amber-500/30 hover:to-amber-600/30 text-amber-300 font-bold rounded-lg border border-amber-500/30 transition-all flex items-center justify-center gap-2 text-sm"
+                                            className="w-full py-2 bg-gradient-to-r from-amber-500/20 to-amber-600/20 hover:from-amber-500/30 hover:to-amber-600/30 text-amber-300 font-bold rounded-lg border border-amber-500/30 transition-all flex items-center justify-center gap-2 text-sm transform active:scale-95"
                                         >
                                             {t.mining.stake} <ArrowRight size={14} />
                                         </button>

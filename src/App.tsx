@@ -10,6 +10,8 @@ import AdminPanel from "../components/AdminPanel"
 import TransactionHistory from "../components/TransactionHistory"
 import EarningsDetail from "../components/EarningsDetail"
 import PullToRefresh from "../components/PullToRefresh"
+import ErrorBoundary from "../components/ErrorBoundary"
+import { SkeletonCard } from "../components/LoadingSkeletons"
 import { AppTab } from "./types"
 import { MOCK_USER_STATS } from "./constants"
 import { ArrowLeftRight } from "lucide-react"
@@ -29,6 +31,7 @@ const queryClient = new QueryClient()
 const AppContent: React.FC = () => {
   const [currentTab, setCurrentTab] = useState<AppTab>(AppTab.HOME)
   const [loading, setLoading] = useState(true)
+  const [appError, setAppError] = useState<string | null>(null)
   const { t } = useLanguage()
 
   const handleRefresh = async () => {
@@ -37,25 +40,70 @@ const AppContent: React.FC = () => {
     window.location.reload();
   }
 
+  const handleAppError = (error: Error) => {
+    console.error('App-level error:', error);
+    setAppError(error.message);
+  }
+
   useEffect(() => {
-    // Simulate initial loading
+    // Simulate initial loading with better UX
     const timer = setTimeout(() => {
       setLoading(false)
-    }, 1500)
+    }, 1200) // Reduced from 1500ms for better perceived performance
     return () => clearTimeout(timer)
   }, [])
 
+  // Enhanced loading screen
   if (loading) {
     return (
       <div className="min-h-screen w-full bg-black flex flex-col items-center justify-center relative overflow-hidden">
+        {/* Background effects */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/15 to-black/40 z-0"></div>
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-neon-500/5 rounded-full blur-3xl animate-pulse"></div>
+        <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-amber-500/5 rounded-full blur-3xl animate-pulse delay-1000"></div>
+        
         <div className="z-10 flex flex-col items-center">
-          <div className="w-40 h-40 overflow-hidden  rounded-xl animate-spin mb-8 shadow-xl">
-            <img src="/icon.png" alt="" />
+          <div className="w-32 h-32 md:w-40 md:h-40 overflow-hidden rounded-xl animate-spin mb-6 md:mb-8 shadow-xl">
+            <img src="/icon.png" alt="Jinbao Protocol" className="w-full h-full object-cover" />
           </div>
-          <h1 className="text-2xl font-bold text-white tracking-widest animate-pulse">
+          <h1 className="text-xl md:text-2xl font-bold text-white tracking-widest animate-pulse mb-2">
             JBC <span className="text-neon-400">RWA</span>
           </h1>
-          <p className="text-gray-400 text-sm mt-2">Loading Protocol Data...</p>
+          <p className="text-gray-400 text-xs md:text-sm animate-pulse">Loading Protocol Data...</p>
+          
+          {/* Loading progress indicator */}
+          <div className="mt-6 w-48 h-1 bg-gray-800 rounded-full overflow-hidden">
+            <div className="h-full bg-gradient-to-r from-neon-500 to-neon-400 rounded-full animate-[loading_1.2s_ease-in-out_infinite]"></div>
+          </div>
+        </div>
+        
+        <style jsx>{`
+          @keyframes loading {
+            0% { width: 0%; }
+            50% { width: 70%; }
+            100% { width: 100%; }
+          }
+        `}</style>
+      </div>
+    )
+  }
+
+  // Error state
+  if (appError) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center p-4">
+        <div className="max-w-md w-full bg-gray-900/50 border border-red-500/30 rounded-2xl p-8 text-center backdrop-blur-sm">
+          <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-6 border border-red-500/30">
+            <ArrowLeftRight className="w-8 h-8 text-red-400" />
+          </div>
+          <h2 className="text-2xl font-bold text-white mb-2">Application Error</h2>
+          <p className="text-gray-400 mb-6">{appError}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="w-full py-3 bg-gradient-to-r from-neon-500 to-neon-600 hover:from-neon-400 hover:to-neon-500 text-black font-bold rounded-xl transition-all transform active:scale-95"
+          >
+            Reload Application
+          </button>
         </div>
       </div>
     )
@@ -109,30 +157,58 @@ const AppContent: React.FC = () => {
       <PullToRefresh onRefresh={handleRefresh} className="pt-20 md:pt-24 relative z-10">
         <main className="px-3 sm:px-4 md:px-6 lg:px-8 mb-16 md:mb-0">
           <NoticeBar />
-          {/* Render Tab Content */}
+          {/* Render Tab Content with Error Boundaries */}
           {currentTab === AppTab.HOME && (
-            <StatsPanel
-              stats={MOCK_USER_STATS}
-              onJoinClick={() => setCurrentTab(AppTab.MINING)}
-              onBuyTicketClick={() => setCurrentTab(AppTab.BUY_TICKET)}
-            />
+            <ErrorBoundary onError={handleAppError}>
+              <StatsPanel
+                stats={MOCK_USER_STATS}
+                onJoinClick={() => setCurrentTab(AppTab.MINING)}
+                onBuyTicketClick={() => setCurrentTab(AppTab.BUY_TICKET)}
+              />
+            </ErrorBoundary>
           )}
 
-          {currentTab === AppTab.MINING && <MiningPanel />}
+          {currentTab === AppTab.MINING && (
+            <ErrorBoundary onError={handleAppError}>
+              <MiningPanel />
+            </ErrorBoundary>
+          )}
 
           {currentTab === AppTab.BUY_TICKET && (
-            <BuyTicketPanel onBack={() => setCurrentTab(AppTab.HOME)} />
+            <ErrorBoundary onError={handleAppError}>
+              <BuyTicketPanel onBack={() => setCurrentTab(AppTab.HOME)} />
+            </ErrorBoundary>
           )}
 
-          {currentTab === AppTab.TEAM && <TeamLevel />}
+          {currentTab === AppTab.TEAM && (
+            <ErrorBoundary onError={handleAppError}>
+              <TeamLevel />
+            </ErrorBoundary>
+          )}
 
-          {currentTab === AppTab.SWAP && <SwapPanel />}
+          {currentTab === AppTab.SWAP && (
+            <ErrorBoundary onError={handleAppError}>
+              <SwapPanel />
+            </ErrorBoundary>
+          )}
 
-          {currentTab === AppTab.HISTORY && <TransactionHistory />}
+          {currentTab === AppTab.HISTORY && (
+            <ErrorBoundary onError={handleAppError}>
+              <TransactionHistory />
+            </ErrorBoundary>
+          )}
 
-          {currentTab === AppTab.EARNINGS && <EarningsDetail />}
+          {currentTab === AppTab.EARNINGS && (
+            <ErrorBoundary onError={handleAppError}>
+              <EarningsDetail />
+            </ErrorBoundary>
+          )}
 
-          {currentTab === AppTab.ADMIN && <AdminPanel />}
+          {currentTab === AppTab.ADMIN && (
+            <ErrorBoundary onError={handleAppError}>
+              <AdminPanel />
+            </ErrorBoundary>
+          )}
         </main>
       </PullToRefresh>
 

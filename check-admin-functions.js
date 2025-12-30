@@ -43,7 +43,7 @@ const PROTOCOL_ABI = [
   "function setRedemptionFeePercent(uint256) external",
   "function setOperationalStatus(bool,bool) external",
   "function setTicketFlexibilityDuration(uint256) external",
-  "function addLiquidity(uint256,uint256) external",
+  "function addLiquidity(uint256 jbcAmount) external payable",
   "function withdrawLevelRewardPool(address,uint256) external",
   "function withdrawSwapReserves(address,uint256,address,uint256) external",
   "function rescueTokens(address,address,uint256) external",

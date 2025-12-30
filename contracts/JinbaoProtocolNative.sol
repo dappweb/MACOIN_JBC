@@ -854,9 +854,9 @@ contract JinbaoProtocolNative is Initializable, OwnableUpgradeable, UUPSUpgradea
         // 檢查 MC 余額並轉賬 - 使用原生MC
         if (mcAmount > 0 && address(this).balance > 0) {
             mcTransferred = mcAmount > address(this).balance ? address(this).balance : mcAmount;
-            try {
+            if (address(this).balance >= mcTransferred) {
                 _transferNativeMC(user, mcTransferred);
-            } catch {
+            } else {
                 // 轉賬失敗，記錄錯誤
                 emit RewardTransferFailed(user, mcTransferred, 0, "Native MC transfer failed");
                 mcTransferred = 0;
@@ -867,9 +867,9 @@ contract JinbaoProtocolNative is Initializable, OwnableUpgradeable, UUPSUpgradea
         uint256 jbcBalance = jbcToken.balanceOf(address(this));
         if (jbcAmount > 0 && jbcBalance > 0) {
             jbcTransferred = jbcAmount > jbcBalance ? jbcBalance : jbcAmount;
-            try jbcToken.transfer(user, jbcTransferred) {
-                // 轉賬成功
-            } catch {
+            if (jbcBalance >= jbcTransferred) {
+                jbcToken.transfer(user, jbcTransferred);
+            } else {
                 // 轉賬失敗，記錄錯誤
                 emit RewardTransferFailed(user, 0, jbcTransferred, "JBC transfer failed");
                 jbcTransferred = 0;

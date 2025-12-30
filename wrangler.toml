@@ -1,12 +1,21 @@
-# Cloudflare Pages 配置文件
+# Cloudflare Pages Configuration
+# Updated to use supported environment names (production, preview)
+# Migration performed: 2025-12-29T14:55:10.227Z
+# 
+# Changes made:
+# - Migrated 'staging' environment to 'preview'
+# - Removed 'development' environment (unsupported by Cloudflare Pages)
+# - Preserved all environment variables and build settings
+#
+# Supported environments for Cloudflare Pages:
+# - production: Used for main branch deployments
+# - preview: Used for branch preview deployments
+#
+
 name = "jinbao-protocol"
 compatibility_date = "2024-01-01"
-compatibility_flags = ["nodejs_compat"]
-
-# Pages 配置
 pages_build_output_dir = "dist"
 
-# 生产环境配置
 [env.production]
 name = "jinbao-protocol-prod"
 compatibility_date = "2024-01-01"
@@ -19,37 +28,15 @@ MAX_BURN_AMOUNT = "5000"
 BURN_PERCENTAGE = "0.1"
 MIN_BALANCE_THRESHOLD = "1000"
 
-# 测试环境配置
-[env.staging]
-name = "jinbao-protocol-staging"
+[env.preview]
+name = "jinbao-protocol-preview"
 compatibility_date = "2024-01-01"
 
-[env.staging.vars]
-ENVIRONMENT = "staging"
+[env.preview.vars]
+ENVIRONMENT = "preview"
 NODE_ENV = "development"
 DAILY_BURN_AMOUNT = "10"
 MAX_BURN_AMOUNT = "100"
 BURN_PERCENTAGE = "0.01"
 MIN_BALANCE_THRESHOLD = "50"
 
-# 开发环境配置
-[env.development]
-name = "jinbao-protocol-dev"
-compatibility_date = "2024-01-01"
-
-[env.development.vars]
-ENVIRONMENT = "development"
-NODE_ENV = "development"
-DAILY_BURN_AMOUNT = "1"
-MAX_BURN_AMOUNT = "10"
-BURN_PERCENTAGE = "0.001"
-MIN_BALANCE_THRESHOLD = "5"
-
-# 敏感信息通过 secrets 管理
-# 使用以下命令设置生产环境 secrets:
-# wrangler pages secret put JBC_CONTRACT_ADDRESS --project-name="jinbao-protocol-prod"
-# wrangler pages secret put PROTOCOL_CONTRACT_ADDRESS --project-name="jinbao-protocol-prod"
-# wrangler pages secret put PRIVATE_KEY --project-name="jinbao-protocol-prod"
-# wrangler pages secret put RPC_URL --project-name="jinbao-protocol-prod"
-# wrangler pages secret put TELEGRAM_BOT_TOKEN --project-name="jinbao-protocol-prod"
-# wrangler pages secret put TELEGRAM_CHAT_ID --project-name="jinbao-protocol-prod"

@@ -1,0 +1,24 @@
+{
+  "network": "mc",
+  "chainId": "88813",
+  "timestamp": "2025-12-29T15:56:32.337Z",
+  "deployer": "0x4C10831CBcF9884ba72051b5287b6c87E4F74A48",
+  "targetAddress": "0xdb817e0d21a134f649d24b91e39d42e7eec52a65",
+  "contracts": {
+    "jbcToken": "0x1Bf9ACe2485BC3391150762a109886d0B85f40Da",
+    "protocolProxy": "0x1EC3576609b2E1D834570Bd56A1A51fb24fD7FB5",
+    "protocolImplementation": "0x5b9C26d4D57133f028AB25951588babe54FC7308"
+  },
+  "wallets": {
+    "marketing": "0x4C10831CBcF9884ba72051b5287b6c87E4F74A48",
+    "treasury": "0x4C10831CBcF9884ba72051b5287b6c87E4F74A48",
+    "lpInjection": "0x4C10831CBcF9884ba72051b5287b6c87E4F74A48",
+    "buyback": "0x4C10831CBcF9884ba72051b5287b6c87E4F74A48"
+  },
+  "tokenInfo": {
+    "name": "Jinbao Coin",
+    "symbol": "JBC",
+    "totalSupply": "100000000.0",
+    "targetAddressBalance": "100000000.0"
+  }
+}

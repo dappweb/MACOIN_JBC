@@ -75,8 +75,22 @@ const AdminLiquidityPanel: React.FC = () => {
   const handleAddLiquidity = async () => {
     if (!protocolContract || !jbcContract) return;
     
-    const mcAmountWei = mcAmount ? ethers.parseEther(mcAmount) : 0n;
-    const jbcAmountWei = jbcAmount ? ethers.parseEther(jbcAmount) : 0n;
+    // 确保输入值是有效的数字字符串
+    const mcAmountStr = mcAmount?.trim() || '0';
+    const jbcAmountStr = jbcAmount?.trim() || '0';
+    
+    // 验证输入格式
+    if (mcAmountStr && isNaN(parseFloat(mcAmountStr))) {
+      toast.error('MC数量格式无效');
+      return;
+    }
+    if (jbcAmountStr && isNaN(parseFloat(jbcAmountStr))) {
+      toast.error('JBC数量格式无效');
+      return;
+    }
+    
+    const mcAmountWei = mcAmountStr !== '0' ? ethers.parseEther(mcAmountStr) : 0n;
+    const jbcAmountWei = jbcAmountStr !== '0' ? ethers.parseEther(jbcAmountStr) : 0n;
     
     if (mcAmountWei === 0n && jbcAmountWei === 0n) {
       toast.error('请输入要添加的流动性数量');
@@ -87,8 +101,8 @@ const AdminLiquidityPanel: React.FC = () => {
     try {
       console.log('🔍 [AdminLiquidityPanel] 开始添加流动性');
       console.log('   账户地址:', account);
-      console.log('   MC 数量:', mcAmount, 'Wei:', mcAmountWei.toString());
-      console.log('   JBC 数量:', jbcAmount, 'Wei:', jbcAmountWei.toString());
+      console.log('   MC 数量:', mcAmountStr, 'Wei:', mcAmountWei.toString());
+      console.log('   JBC 数量:', jbcAmountStr, 'Wei:', jbcAmountWei.toString());
       console.log('   合约地址:', CONTRACT_ADDRESSES.PROTOCOL);
       
       // 检查原生MC余额
@@ -115,11 +129,20 @@ const AdminLiquidityPanel: React.FC = () => {
 
       // 添加流动性 - 原生MC版本
       console.log('💧 [AdminLiquidityPanel] 调用 addLiquidity');
+      console.log('   参数: jbcAmount =', jbcAmountWei.toString());
+      console.log('   value: mcAmount =', mcAmountWei.toString());
+      
       toast.loading('正在添加流动性...', { id: 'add-liquidity' });
+      
+      // 构建交易参数
+      const txParams: any = {};
+      if (mcAmountWei > 0n) {
+        txParams.value = mcAmountWei;
+      }
       
       // 先尝试静态调用
       try {
-        await protocolContract.addLiquidity.staticCall(jbcAmountWei, { value: mcAmountWei });
+        await protocolContract.addLiquidity.staticCall(jbcAmountWei, txParams);
         console.log('✅ [AdminLiquidityPanel] 静态调用成功');
       } catch (staticError) {
         console.error('❌ [AdminLiquidityPanel] 静态调用失败:', staticError);
@@ -127,7 +150,7 @@ const AdminLiquidityPanel: React.FC = () => {
       }
       
       // 执行交易 - 原生MC作为value发送，JBC作为参数
-      const tx = await protocolContract.addLiquidity(jbcAmountWei, { value: mcAmountWei });
+      const tx = await protocolContract.addLiquidity(jbcAmountWei, txParams);
       console.log('📝 [AdminLiquidityPanel] 交易哈希:', tx.hash);
       
       await tx.wait();
@@ -159,6 +182,8 @@ const AdminLiquidityPanel: React.FC = () => {
       let errorMessage = '添加流动性失败';
       if (error.message.includes('OwnableUnauthorizedAccount')) {
         errorMessage = '权限错误：您不是合约拥有者';
+      } else if (error.message.includes('invalid BigNumberish value')) {
+        errorMessage = '参数格式错误，请检查输入的数量';
       } else if (error.reason) {
         errorMessage = `失败原因: ${error.reason}`;
       } else if (error.message) {

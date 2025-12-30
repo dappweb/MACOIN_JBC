@@ -1,57 +1,43 @@
-# Cloudflare Pages 配置文件
+# Cloudflare Pages Configuration
+# Updated to use supported environment names (production, preview)
+# Migration performed: 2025-12-29T14:55:10.228Z
+# 
+# Changes made:
+# - Migrated 'staging' environment to 'preview'
+# - Removed 'development' environment (unsupported by Cloudflare Pages)
+# - Preserved all environment variables and build settings
+#
+# Supported environments for Cloudflare Pages:
+# - production: Used for main branch deployments
+# - preview: Used for branch preview deployments
+#
+
 name = "jinbao-protocol"
 compatibility_date = "2024-01-01"
-compatibility_flags = ["nodejs_compat"]
-
-# Pages 特定配置
 pages_build_output_dir = "dist"
 
-# 公共环境变量 (非敏感信息)
 [vars]
 JBC_CONTRACT_ADDRESS = "0x你的JBC代币合约地址"
-DAILY_BURN_AMOUNT = "1000"  # 每日固定燃烧1000个JBC，设为空或0则使用百分比燃烧
-MAX_BURN_AMOUNT = "10000"   # 最大燃烧限制，防止意外大额燃烧
+DAILY_BURN_AMOUNT = ""1000"  # 每日固定燃烧1000个JBC，设为空或0则使用百分比燃烧"
+MAX_BURN_AMOUNT = ""10000"   # 最大燃烧限制，防止意外大额燃烧"
 
-# 生产环境配置
 [env.production]
 name = "jinbao-protocol-prod"
 
 [env.production.vars]
 JBC_CONTRACT_ADDRESS = "0x实际的JBC代币合约地址"
-DAILY_BURN_AMOUNT = "500"   # 生产环境每日燃烧500个JBC
-MAX_BURN_AMOUNT = "5000"    # 生产环境最大燃烧限制
+DAILY_BURN_AMOUNT = ""500"   # 生产环境每日燃烧500个JBC"
+MAX_BURN_AMOUNT = ""5000"    # 生产环境最大燃烧限制"
 
-# 测试环境配置
-[env.staging]
-name = "jinbao-protocol-staging"
+[env.preview]
+name = "jinbao-protocol-preview"
 
-[env.staging.vars]
+[env.preview.vars]
 JBC_CONTRACT_ADDRESS = "0x测试网JBC代币合约地址"
-DAILY_BURN_AMOUNT = "10"    # 测试环境每日燃烧10个JBC
-MAX_BURN_AMOUNT = "100"     # 测试环境最大燃烧限制
+DAILY_BURN_AMOUNT = ""10"    # 测试环境每日燃烧10个JBC"
+MAX_BURN_AMOUNT = ""100"     # 测试环境最大燃烧限制"
 
-# 敏感信息使用 Cloudflare Pages 环境变量管理
-# 在 Cloudflare Pages Dashboard 中设置以下变量:
-#
-# 必需的环境变量:
-# - PRIVATE_KEY: 燃烧钱包的私钥
-# - RPC_URL: 区块链RPC节点地址
-#
-# 可选的环境变量:
-# - API_SECRET: API访问密钥 (推荐设置)
-# - TELEGRAM_BOT_TOKEN: Telegram机器人Token
-# - TELEGRAM_CHAT_ID: Telegram聊天ID
-#
-# 设置方法:
-# 1. 登录 Cloudflare Dashboard
-# 2. 进入 Pages → 选择项目 → Settings → Environment variables
-# 3. 分别为 Production 和 Preview 环境添加上述变量
-
-# Functions 配置
 [build]
 command = "npm run build"
 publish = "dist"
 
-# 兼容性设置
-[compatibility_flags]
-nodejs_compat = true

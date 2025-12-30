@@ -287,11 +287,21 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
         try {
           if (provider) {
             const currentBlock = await provider.getBlockNumber()
-            const fromBlock = Math.max(0, currentBlock - 100000)
+            // 统一查询范围到 50,000 区块，与 EarningsDetail 保持一致
+            const fromBlock = Math.max(0, currentBlock - 50000)
+            
+            console.log('🔍 [StatsPanel] Querying events from block', fromBlock, 'to', currentBlock);
+            
             const [referralEvents, rewardEvents] = await Promise.all([
               protocolContract.queryFilter(protocolContract.filters.ReferralRewardPaid(account), fromBlock),
               protocolContract.queryFilter(protocolContract.filters.RewardClaimed(account), fromBlock),
             ])
+            
+            console.log('🔍 [StatsPanel] Found events:', {
+              referralEvents: referralEvents.length,
+              rewardEvents: rewardEvents.length
+            });
+            
             for (const event of referralEvents) {
               if (event.args) {
                 referralRevenue += parseFloat(ethers.formatEther(event.args[2]))
@@ -303,9 +313,17 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
                 rewardJbc += parseFloat(ethers.formatEther(event.args[2]))
               }
             }
+            
+            console.log('🔍 [StatsPanel] Calculated rewards:', {
+              referralRevenue,
+              rewardMc,
+              rewardJbc
+            });
           }
         } catch (err) {
           console.error("Failed to fetch referral rewards", err)
+          // 不要因为事件查询失败就阻止整个数据更新
+          console.log('⚠️ [StatsPanel] Event query failed, continuing with contract state only');
         }
 
         const baseRevenue = parseFloat(ethers.formatEther(userInfo[3]))
@@ -547,26 +565,40 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
           </div>
         </div>
 
-        {/* Stat 3 */}
+        {/* Stat 3 - 修正累计收益显示 */}
         <div className="glass-panel p-4 md:p-6 rounded-xl md:rounded-2xl hover:border-neon-500/40 transition-colors bg-black/60 border border-gray-700 backdrop-blur-sm">
           <div className="flex items-center justify-between mb-3 md:mb-4">
             <span className="text-gray-300 text-xs md:text-sm font-medium">{t.stats.revenue}</span>
             <TrendingUp className="text-neon-400" size={18} />
           </div>
-          <div className="flex flex-col gap-2 mb-2">
-            <div className="flex items-center justify-between">
-              <span className="text-neon-400 font-bold text-sm">MC</span>
-              <span className="text-xl md:text-2xl font-bold text-white">{rewardTotals.mc.toLocaleString()}</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-amber-400 font-bold text-sm">JBC</span>
-              <span className="text-xl md:text-2xl font-bold text-white">{rewardTotals.jbc.toLocaleString()}</span>
+          
+          {/* 显示真实的累计收益 */}
+          <div className="text-2xl md:text-3xl font-bold text-white mb-2">
+            {displayStats.totalRevenue.toFixed(4)} MC
+          </div>
+          <div className="text-xs text-gray-400 mb-3">
+            来自合约状态的真实累计收益
+          </div>
+          
+          {/* 历史奖励统计（作为补充信息） */}
+          <div className="border-t border-gray-600/50 pt-3">
+            <div className="text-xs text-gray-400 mb-2">历史奖励统计 (事件)</div>
+            <div className="flex flex-col gap-1">
+              <div className="flex items-center justify-between">
+                <span className="text-neon-400 font-bold text-xs">MC</span>
+                <span className="text-sm font-bold text-white">{rewardTotals.mc.toFixed(2)}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-amber-400 font-bold text-xs">JBC</span>
+                <span className="text-sm font-bold text-white">{rewardTotals.jbc.toFixed(2)}</span>
+              </div>
             </div>
           </div>
-          <div className="text-xs text-gray-300 flex justify-end items-center">
+          
+          <div className="text-xs text-gray-300 flex justify-end items-center mt-2">
             {mcUsdtPrice > 0 && (
               <span className="text-neon-400">
-                ≈${((rewardTotals.mc + rewardTotals.jbc * parseFloat(jbcPrice)) * mcUsdtPrice).toFixed(2)}
+                ≈${(displayStats.totalRevenue * mcUsdtPrice).toFixed(2)}
               </span>
             )}
           </div>

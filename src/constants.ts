@@ -35,5 +35,5 @@ export const MOCK_USER_STATS = {
   pendingRewards: 45.2,
 };
 
-// Cloudflare Worker API URL (Replace with actual deployed URL)
-export const API_BASE_URL = "https://api.macoin-jbc.com"; 
+// Cloudflare Pages Functions API URL
+export const API_BASE_URL = window.location.origin; 

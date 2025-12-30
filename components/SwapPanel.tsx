@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useLanguage } from '../src/LanguageContext';
 import { useWeb3, CONTRACT_ADDRESSES } from '../src/Web3Context';
 import { useGlobalRefresh, useEventRefresh } from '../hooks/useGlobalRefresh';
-import { ArrowLeftRight, RotateCw } from 'lucide-react';
+import { ArrowLeftRight, RotateCw, Loader2 } from 'lucide-react';
 import { ethers } from 'ethers';
 import toast from 'react-hot-toast';
 import { formatContractError } from '../utils/errorFormatter';
@@ -11,6 +11,9 @@ import SwapErrorModal from './SwapErrorModal';
 import SwapValidationAlert from './SwapValidationAlert';
 import AdminLiquidityPanel from './AdminLiquidityPanel';
 import DailyBurnPanel from './DailyBurnPanel';
+import { SkeletonSwapPanel } from './LoadingSkeletons';
+import ToastEnhancer from '../utils/toastEnhancer';
+import AnimatedButton from './AnimatedButton';
 
 const SwapPanel: React.FC = () => {
   const { t } = useLanguage();
@@ -26,6 +29,10 @@ const SwapPanel: React.FC = () => {
   const [poolJBC, setPoolJBC] = useState<string>('0.0');
   const [isLoading, setIsLoading] = useState(false);
   const [isRotated, setIsRotated] = useState(false);
+  
+  // Enhanced loading states
+  const [isInitializing, setIsInitializing] = useState(true);
+  const [isLoadingPoolData, setIsLoadingPoolData] = useState(false);
   
   // 新增状态：错误处理和验证
   const [validationResult, setValidationResult] = useState<SwapValidationResult>({ isValid: true });
@@ -52,6 +59,7 @@ const SwapPanel: React.FC = () => {
   // 提取池子数据获取逻辑
   const fetchPoolData = async () => {
     if (protocolContract) {
+        setIsLoadingPoolData(true);
         try {
             console.log('💰 [SwapPanel] 正在获取池子储备量...')
             
@@ -77,6 +85,9 @@ const SwapPanel: React.FC = () => {
             console.log('📊 [SwapPanel] =====================================')
         } catch (err) {
             console.error("❌ [SwapPanel] 获取池子余额失败:", err);
+            ToastEnhancer.error('Failed to load pool data. Please refresh the page.');
+        } finally {
+            setIsLoadingPoolData(false);
         }
     } else {
          console.log('⚠️ [SwapPanel] protocolContract 未初始化')
@@ -93,7 +104,13 @@ const SwapPanel: React.FC = () => {
   };
 
   useEffect(() => {
-    fetchBalances();
+    const initializeSwapPanel = async () => {
+      setIsInitializing(true);
+      await fetchBalances();
+      setIsInitializing(false);
+    };
+    
+    initializeSwapPanel();
     const interval = setInterval(fetchPoolData, 30000); // 只刷新池子数据，余额由全局状态管理
     return () => clearInterval(interval);
   }, [isConnected, account, jbcContract, protocolContract, provider]);
@@ -235,7 +252,7 @@ const SwapPanel: React.FC = () => {
 
       // 检查授权状态 - 只有JBC需要授权，原生MC不需要
       if (isSelling && !approvalStatus.isApproved) {
-        toast.error('请先授权JBC代币使用权限');
+        ToastEnhancer.error('请先授权JBC代币使用权限');
         return;
       }
 
@@ -246,16 +263,16 @@ const SwapPanel: React.FC = () => {
 
           if (isSelling) {
               // Sell JBC -> SwapJBCToMC (保持不变)
-              toast.loading('正在执行JBC兑换...', { id: 'swap' });
+              ToastEnhancer.transaction.pending('正在执行JBC兑换...', 'swap');
               tx = await protocolContract.swapJBCToMC(amount);
           } else {
               // Buy JBC -> SwapMCToJBC (使用原生MC - payable)
-              toast.loading('正在执行MC兑换...', { id: 'swap' });
+              ToastEnhancer.transaction.pending('正在执行MC兑换...', 'swap');
               
               // 检查原生MC余额和Gas费用
               const currentMcBalance = mcBalance || 0n;
               if (currentMcBalance < amount) {
-                toast.error(`MC余额不足，需要 ${payAmount} MC`);
+                ToastEnhancer.error(`MC余额不足，需要 ${payAmount} MC`);
                 return;
               }
               
@@ -268,7 +285,7 @@ const SwapPanel: React.FC = () => {
                 
                 if (currentMcBalance < totalRequired) {
                   const shortfall = ethers.formatEther(totalRequired - currentMcBalance);
-                  toast.error(`余额不足，还需要 ${shortfall} MC 作为Gas费用`);
+                  ToastEnhancer.error(`余额不足，还需要 ${shortfall} MC 作为Gas费用`);
                   return;
                 }
               } catch (error) {
@@ -280,7 +297,7 @@ const SwapPanel: React.FC = () => {
           }
           
           await tx.wait();
-          toast.success("兑换成功！", { id: 'swap' });
+          ToastEnhancer.transaction.success("兑换成功！", 'swap');
           setPayAmount('');
           setGetAmount('');
           setValidationResult({ isValid: true });
@@ -290,9 +307,9 @@ const SwapPanel: React.FC = () => {
           await onTransactionSuccess('swap');
       } catch (err: any) {
           console.error('兑换失败:', err);
-          toast.dismiss('swap');
           
           const errorDetails = SwapErrorHandler.formatSwapError(err);
+          ToastEnhancer.transaction.error(errorDetails.message, 'swap');
           setErrorDetails(errorDetails);
           setShowErrorModal(true);
       } finally {
@@ -369,7 +386,18 @@ const SwapPanel: React.FC = () => {
       setIsRotated(!isRotated);
       setPayAmount('');
       setGetAmount('');
+      setValidationResult({ isValid: true });
+      setApprovalStatus({ isApproved: false, isChecking: false, isApproving: false });
   };
+
+  // Show loading skeleton during initialization
+  if (isInitializing) {
+    return (
+      <div className="max-w-md mx-auto mt-4 md:mt-10">
+        <SkeletonSwapPanel />
+      </div>
+    );
+  }
 
   return (
     <>
@@ -430,7 +458,7 @@ const SwapPanel: React.FC = () => {
             <div className="flex justify-center -my-1.5 md:-my-2 relative z-20">
                 <button
                     onClick={toggleDirection}
-                    className={`bg-gray-900 border-2 border-neon-500 p-1.5 md:p-2 rounded-full text-neon-400 transition-transform duration-500 shadow-lg shadow-neon-500/30 hover:shadow-neon-500/50 ${isRotated ? 'rotate-180' : ''}`}
+                    className={`bg-gray-900 border-2 border-neon-500 p-1.5 md:p-2 rounded-full text-neon-400 transition-all duration-500 shadow-lg shadow-neon-500/30 hover:shadow-neon-500/50 transform active:scale-95 hover:scale-110 ${isRotated ? 'rotate-180' : ''}`}
                 >
                     <ArrowLeftRight size={18} className="md:w-5 md:h-5" />
                 </button>
@@ -480,10 +508,19 @@ const SwapPanel: React.FC = () => {
 
             {/* Pool Liquidity Info */}
             <div className="bg-gray-800/50 p-3 rounded-lg text-xs text-gray-400 flex justify-between items-center border border-gray-700">
-                <span className="font-bold">{t.swap.poolLiquidity}:</span>
+                <span className="font-bold flex items-center gap-2">
+                    {isLoadingPoolData && <Loader2 className="animate-spin w-3 h-3" />}
+                    {t.swap.poolLiquidity}:
+                </span>
                 <div className="flex gap-3">
-                    <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-neon-500"></div> {parseFloat(poolMC).toLocaleString()} MC</span>
-                    <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-amber-500"></div> {parseFloat(poolJBC).toLocaleString()} JBC</span>
+                    <span className="flex items-center gap-1">
+                        <div className="w-2 h-2 rounded-full bg-neon-500"></div> 
+                        {isLoadingPoolData ? '...' : parseFloat(poolMC).toLocaleString()} MC
+                    </span>
+                    <span className="flex items-center gap-1">
+                        <div className="w-2 h-2 rounded-full bg-amber-500"></div> 
+                        {isLoadingPoolData ? '...' : parseFloat(poolJBC).toLocaleString()} JBC
+                    </span>
                 </div>
             </div>
 
@@ -572,39 +609,64 @@ const SwapPanel: React.FC = () => {
 
             {/* Action Button */}
             {!isConnected ? (
-                 <button disabled className="w-full py-4 bg-gray-800 text-gray-500 font-bold text-lg rounded-xl cursor-not-allowed border border-gray-700">
+                 <AnimatedButton 
+                    disabled 
+                    variant="secondary" 
+                    size="lg" 
+                    fullWidth
+                 >
                     Connect Wallet
-                </button>
+                 </AnimatedButton>
             ) : !hasReferrer && !isOwner ? (
-                <button disabled className="w-full py-4 bg-amber-900/30 text-amber-400 font-bold text-lg rounded-xl cursor-not-allowed border border-amber-500/50">
+                <AnimatedButton 
+                    disabled 
+                    variant="warning" 
+                    size="lg" 
+                    fullWidth
+                >
                     ⚠️ {t.referrer.noReferrer}
-                </button>
+                </AnimatedButton>
             ) : !payAmount || parseFloat(payAmount) <= 0 ? (
-                <button disabled className="w-full py-4 bg-gray-800 text-gray-500 font-bold text-lg rounded-xl cursor-not-allowed border border-gray-700">
+                <AnimatedButton 
+                    disabled 
+                    variant="secondary" 
+                    size="lg" 
+                    fullWidth
+                >
                     请输入兑换数量
-                </button>
+                </AnimatedButton>
             ) : !validationResult.isValid ? (
-                <button disabled className="w-full py-4 bg-red-900/30 text-red-400 font-bold text-lg rounded-xl cursor-not-allowed border border-red-500/50">
+                <AnimatedButton 
+                    disabled 
+                    variant="danger" 
+                    size="lg" 
+                    fullWidth
+                >
                     {validationResult.error}
-                </button>
+                </AnimatedButton>
             ) : !approvalStatus.isApproved && !approvalStatus.isChecking ? (
-                <button 
+                <AnimatedButton 
                     onClick={handleApproval}
-                    disabled={approvalStatus.isApproving}
-                    className="w-full py-4 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black font-bold text-lg rounded-xl transition-colors shadow-lg shadow-amber-500/40 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    loading={approvalStatus.isApproving}
+                    variant="warning"
+                    size="lg"
+                    fullWidth
+                    icon={approvalStatus.isApproving ? undefined : <RotateCw size={20} />}
                 >
-                    {approvalStatus.isApproving && <RotateCw className="animate-spin" size={20} />}
                     {approvalStatus.isApproving ? '授权中...' : `授权 ${isSelling ? 'JBC' : 'MC'} 代币`}
-                </button>
+                </AnimatedButton>
             ) : (
-                <button 
+                <AnimatedButton 
                     onClick={handleSwap}
-                    disabled={isLoading || !approvalStatus.isApproved}
-                    className="w-full py-4 bg-gradient-to-r from-neon-500 to-neon-600 hover:from-neon-400 hover:to-neon-500 text-black font-bold text-lg rounded-xl transition-colors shadow-lg shadow-neon-500/40 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    loading={isLoading}
+                    disabled={!approvalStatus.isApproved}
+                    variant="primary"
+                    size="lg"
+                    fullWidth
+                    icon={isLoading ? undefined : <ArrowLeftRight size={20} />}
                 >
-                    {isLoading && <RotateCw className="animate-spin" size={20} />}
                     {isLoading ? '兑换中...' : t.swap.confirm}
-                </button>
+                </AnimatedButton>
             )}
         </div>
 

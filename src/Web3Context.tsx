@@ -37,7 +37,7 @@ export const PROTOCOL_ABI = [
   "function setSwapTaxes(uint256 _buyTax, uint256 _sellTax) external",
   "function setRedemptionFeePercent(uint256 _fee) external",
   "function setWallets(address _marketing, address _treasury, address _lpInjection, address _buyback) external",
-  "function addLiquidity(uint256 mcAmount, uint256 jbcAmount) external",
+  "function addLiquidity(uint256 jbcAmount) external payable",
   "function withdrawSwapReserves(address _toMC, uint256 _amountMC, address _toJBC, uint256 _amountJBC) external",
   "function rescueTokens(address token, address to, uint256 amount) external",
   "function transferOwnership(address newOwner) external",
@@ -74,8 +74,8 @@ export const DAILY_BURN_MANAGER_ABI = [
 // Contract Addresses - MC Chain Testnet (Native MC Version)
 export const CONTRACT_ADDRESSES = {
   // MC_TOKEN: "0xB2B8777BcBc7A8DEf49F022773d392a8787cf9EF", // No longer needed
-  JBC_TOKEN: "0xA743cB357a9f59D349efB7985072779a094658dD",
-  PROTOCOL: "0x515871E9eADbF976b546113BbD48964383f86E61", // Will be updated with native MC version
+  JBC_TOKEN: "0x1Bf9ACe2485BC3391150762a109886d0B85f40Da",
+  PROTOCOL: "0x1EC3576609b2E1D834570Bd56A1A51fb24fD7FB5", // Will be updated with native MC version
   DAILY_BURN_MANAGER: "0x6C2FdDEb939D92E0dde178845F570FC4E0d213bc"
 };
 

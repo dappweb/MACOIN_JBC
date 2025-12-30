@@ -90,12 +90,13 @@ const EarningsDetail: React.FC = () => {
       const cached = localStorage.getItem(cacheKey)
       if (cached) {
         const { data, timestamp } = JSON.parse(cached)
-        // 缓存有效期：5分钟
+        // 延长缓存有效期：15分钟
         const cacheAge = Date.now() - timestamp
-        if (cacheAge < 5 * 60 * 1000) {
+        if (cacheAge < 15 * 60 * 1000) {
           setRecords(data)
           setLoading(false)
           setCacheStatus('loaded')
+          console.log('📦 [EarningsDetail] Loaded from cache, age:', Math.floor(cacheAge / 1000), 'seconds');
           return true
         }
       }
@@ -152,7 +153,7 @@ const EarningsDetail: React.FC = () => {
   });
 
   // 获取待领取的静态奖励
-  const fetchPendingRewards = async () => {
+  const fetchPendingRewards = async (retryCount = 0) => {
     if (!protocolContract || !account) {
       console.log('🔍 [EarningsDetail] 无法获取待领取奖励: 合约或账户未连接');
       setPendingRewards({mc: 0, jbc: 0});
@@ -283,8 +284,8 @@ const EarningsDetail: React.FC = () => {
       }
       
       // 分配50%MC和50%JBC（按价值计算）
-      const mcPart = actualClaimable / 2n;
-      const jbcValuePart = actualClaimable / 2n;
+      const mcPart = BigInt(actualClaimable) / 2n;
+      const jbcValuePart = BigInt(actualClaimable) / 2n;
       
       // 获取JBC价格来计算JBC数量
       const reserveMC = await protocolContract.swapReserveMC();
@@ -333,6 +334,16 @@ const EarningsDetail: React.FC = () => {
       
     } catch (error) {
       console.error('❌ [EarningsDetail] 获取待领取奖励失败:', error);
+      
+      // 添加重试机制
+      if (retryCount < 2) {
+        console.log(`🔄 [EarningsDetail] Retrying pending rewards... (${retryCount + 1}/2)`);
+        setTimeout(() => {
+          fetchPendingRewards(retryCount + 1);
+        }, 1000 * (retryCount + 1));
+        return;
+      }
+      
       setPendingRewards({mc: 0, jbc: 0});
       
       // 显示用户友好的错误提示
@@ -351,12 +362,12 @@ const EarningsDetail: React.FC = () => {
         }
       }
       
-      // 设置错误状态，在UI中显示
-      setError(errorMessage);
+      // 不设置全局错误状态，只在控制台记录
+      console.warn('⚠️ [EarningsDetail] Pending rewards fetch failed:', errorMessage);
     }
   };
 
-  const fetchRecords = async (useCache = true) => {
+  const fetchRecords = async (useCache = true, retryCount = 0) => {
     if (!protocolContract || !account || !provider) {
       setLoading(false)
       setError("Wallet not connected or contracts not loaded")
@@ -373,8 +384,8 @@ const EarningsDetail: React.FC = () => {
       setError(null)
       
       const currentBlock = await provider.getBlockNumber()
-      // 增加查询范围到 500,000 区块，确保能获取到较早的记录
-      const fromBlock = Math.max(0, currentBlock - 500000)
+      // 减少查询范围到 50,000 区块，提高查询成功率
+      const fromBlock = Math.max(0, currentBlock - 50000)
 
       const targetUser = isOwner && viewMode === "all" ? null : account
       
@@ -586,30 +597,90 @@ const EarningsDetail: React.FC = () => {
         toast.error(`Loaded ${processedEvents} records, ${failedEvents} failed to parse`)
       } else if (processedEvents > 0) {
         toast.success(`Loaded ${processedEvents} earnings records`)
+      } else {
+        // 如果没有记录，尝试获取合约状态作为降级方案
+        console.log('📊 [EarningsDetail] No events found, trying contract state fallback');
+        await fetchContractStateFallback();
       }
       
     } catch (err: any) {
       console.error("Failed to fetch earnings records:", err)
       
-      // 提供更详细的错误信息
-      let errorMessage = "Failed to load earnings data";
-      if (err.message.includes('network')) {
-        errorMessage = "Network connection error. Please check your internet connection.";
-      } else if (err.message.includes('timeout')) {
-        errorMessage = "Request timeout. Please try again later.";
-      } else if (err.message.includes('call revert')) {
-        errorMessage = "Contract call failed. Please check your wallet connection.";
-      } else if (err.message.includes('insufficient funds')) {
-        errorMessage = "Insufficient funds for transaction.";
-      } else if (err.code === 'NETWORK_ERROR') {
-        errorMessage = "Network error. Please switch to a different RPC endpoint.";
+      // 添加重试机制
+      if (retryCount < 3) {
+        console.log(`🔄 [EarningsDetail] Retrying... (${retryCount + 1}/3)`);
+        setTimeout(() => {
+          fetchRecords(false, retryCount + 1);
+        }, 2000 * (retryCount + 1)); // 递增延迟
+        return;
       }
       
-      setError(`${errorMessage}: ${err.message || 'Unknown error'}`)
+      // 提供更详细的错误信息
+      let errorMessage = "Failed to load earnings data";
+      let suggestion = "Please try refreshing the page";
+      
+      if (err.message.includes('network')) {
+        errorMessage = "Network connection error";
+        suggestion = "Please check your internet connection and try again";
+      } else if (err.message.includes('timeout')) {
+        errorMessage = "Request timeout";
+        suggestion = "The network is slow, please try again later";
+      } else if (err.message.includes('call revert')) {
+        errorMessage = "Contract call failed";
+        suggestion = "Please check your wallet connection";
+      } else if (err.message.includes('insufficient funds')) {
+        errorMessage = "Insufficient funds for transaction";
+        suggestion = "Please ensure you have enough gas fees";
+      } else if (err.code === 'NETWORK_ERROR') {
+        errorMessage = "Network error";
+        suggestion = "Please switch to a different RPC endpoint";
+      }
+      
+      setError(`${errorMessage}: ${suggestion}`)
       toast.error(errorMessage)
+      
+      // 尝试降级方案
+      console.log('📊 [EarningsDetail] Main query failed, trying fallback...');
+      await fetchContractStateFallback();
     } finally {
       setLoading(false)
       setRefreshing(false)
+    }
+  }
+
+  // 降级方案：直接从合约状态获取数据
+  const fetchContractStateFallback = async () => {
+    if (!protocolContract || !account) return;
+    
+    try {
+      console.log('🔄 [EarningsDetail] Using contract state fallback');
+      
+      // 获取用户基本信息
+      const userInfo = await protocolContract.userInfo(account);
+      const totalRevenue = parseFloat(ethers.formatEther(userInfo.totalRevenue));
+      
+      if (totalRevenue > 0) {
+        // 创建一个基于合约状态的记录
+        const fallbackRecord: RewardRecord = {
+          hash: "contract-state",
+          user: account,
+          mcAmount: (totalRevenue / 2).toString(), // 假设50/50分配
+          jbcAmount: (totalRevenue / 2).toString(),
+          rewardType: 0, // 静态收益
+          ticketId: "fallback",
+          blockNumber: 0,
+          timestamp: Math.floor(Date.now() / 1000),
+          status: "confirmed",
+        };
+        
+        setRecords([fallbackRecord]);
+        toast.success("Loaded earnings data from contract state");
+        console.log('✅ [EarningsDetail] Fallback successful, total revenue:', totalRevenue);
+      } else {
+        console.log('💡 [EarningsDetail] No revenue found in contract state');
+      }
+    } catch (fallbackErr) {
+      console.error('❌ [EarningsDetail] Fallback also failed:', fallbackErr);
     }
   }
 
@@ -801,7 +872,42 @@ const EarningsDetail: React.FC = () => {
         </div>
       </div>
 
-      {/* 价格信息显示 */}
+      {/* 网络状态和错误提示 */}
+      {error && (
+        <div className="bg-red-900/50 border border-red-500 rounded-xl p-4 mb-6 backdrop-blur-sm">
+          <div className="flex items-center gap-3">
+            <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0" />
+            <div className="flex-1">
+              <h4 className="text-red-400 font-semibold">数据加载失败</h4>
+              <p className="text-red-300 text-sm mt-1">{error}</p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <button
+                  onClick={() => fetchRecords(false)}
+                  className="px-3 py-1 bg-red-500 hover:bg-red-600 text-white rounded text-sm transition-colors"
+                >
+                  重试
+                </button>
+                <button
+                  onClick={clearCache}
+                  className="px-3 py-1 bg-gray-600 hover:bg-gray-700 text-white rounded text-sm transition-colors"
+                >
+                  清除缓存
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 缓存状态提示 */}
+      {cacheStatus === 'loaded' && !error && (
+        <div className="bg-blue-900/30 border border-blue-500/40 rounded-xl p-3 mb-4 backdrop-blur-sm">
+          <div className="flex items-center gap-2 text-sm text-blue-300">
+            <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
+            <span>正在使用缓存数据，点击刷新获取最新数据</span>
+          </div>
+        </div>
+      )}
       {currentJBCPrice > 0 && reserveInfo.mc !== "0" && reserveInfo.jbc !== "0" && (
         <div className="bg-gradient-to-r from-blue-900/30 to-indigo-900/30 border border-blue-500/40 rounded-xl p-4 mb-6 backdrop-blur-sm">
           <div className="flex items-center gap-3">

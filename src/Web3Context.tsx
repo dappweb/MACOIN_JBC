@@ -163,11 +163,28 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const checkOwner = async () => {
     if (protocolContract && address) {
       try {
+        console.log("🔍 [Web3Context] 检查owner状态...", {
+          address,
+          contractAddress: await protocolContract.getAddress().catch(() => "Unknown")
+        });
+        
         const owner = await protocolContract.owner()
-        setIsOwner(owner.toLowerCase() === address.toLowerCase())
+        const isOwnerAccount = owner.toLowerCase() === address.toLowerCase()
+        
+        console.log("✅ [Web3Context] Owner检查结果:", {
+          contractOwner: owner,
+          userAddress: address,
+          isOwner: isOwnerAccount
+        });
+        
+        setIsOwner(isOwnerAccount)
       } catch (e) {
-        console.error("Failed to check owner in Web3Context", e)
+        console.error("❌ [Web3Context] Failed to check owner:", e)
+        setIsOwner(false)
       }
+    } else {
+      console.log("⚠️ [Web3Context] 无法检查owner - 缺少合约或地址");
+      setIsOwner(false)
     }
   }
 

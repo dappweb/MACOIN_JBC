@@ -68,7 +68,7 @@ contract JinbaoProtocolNative is Initializable, OwnableUpgradeable, UUPSUpgradea
     address public lpInjectionWallet;
     address public buybackWallet;
     
-    uint256 public constant SECONDS_IN_UNIT = 86400; // 生产环境使用天数
+    uint256 public constant SECONDS_IN_UNIT = 60; // 测试环境使用分钟
     
     uint256 public directRewardPercent;
     uint256 public levelRewardPercent;

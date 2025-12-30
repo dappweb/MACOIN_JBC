@@ -3,6 +3,7 @@ import { ethers } from 'ethers';
 import { Clock, TrendingUp, AlertCircle, RefreshCw, ArrowRight } from 'lucide-react';
 import { useWeb3 } from '../src/Web3Context';
 import { useLanguage } from '../src/LanguageContext';
+import { detectTimeConfig, TimeUtils, type TimeConfig } from '../src/utils/timeUtils';
 import GoldenProgressBar from './GoldenProgressBar';
 import toast from 'react-hot-toast';
 import { formatContractError } from '../utils/errorFormatter';
@@ -53,9 +54,10 @@ const LiquidityPositions: React.FC = () => {
   const [rawPositions, setRawPositions] = useState<RawStakePosition[]>([]);
   const [loading, setLoading] = useState(false);
   const [currentTime, setCurrentTime] = useState(Math.floor(Date.now() / 1000));
-  // Default to 86400 (1 day) to match production contract SECONDS_IN_UNIT constant.
+  // Default to 60 (1 minute) to match test contract SECONDS_IN_UNIT constant.
   // This ensures correct static reward calculations even if contract fetch fails.
-  const [secondsInUnit, setSecondsInUnit] = useState(86400);
+  const [secondsInUnit, setSecondsInUnit] = useState(60);
+  const [timeConfig, setTimeConfig] = useState<TimeConfig | null>(null); // 时间配置
   const [redeemingId, setRedeemingId] = useState<string | null>(null);
   const [reserves, setReserves] = useState<{mc: bigint, jbc: bigint}>({ mc: 0n, jbc: 0n });
 
@@ -67,15 +69,27 @@ const LiquidityPositions: React.FC = () => {
     return () => clearInterval(timer);
   }, []);
 
-  // Fetch SECONDS_IN_UNIT and Reserves from contract
+  // Fetch time config and reserves from contract
   useEffect(() => {
     const fetchConstants = async () => {
       if (protocolContract) {
         try {
-          const s = await protocolContract.SECONDS_IN_UNIT();
-          setSecondsInUnit(Number(s));
+          const config = await detectTimeConfig(protocolContract);
+          setTimeConfig(config);
+          setSecondsInUnit(config.SECONDS_IN_UNIT);
+          console.log('🕒 [LiquidityPositions] 时间配置:', config);
         } catch (e) {
-          console.warn("Failed to fetch SECONDS_IN_UNIT", e);
+          console.warn("Failed to fetch time config", e);
+          // 默认使用测试环境配置
+          const defaultConfig: TimeConfig = {
+            SECONDS_IN_UNIT: 60,
+            TIME_UNIT: 'minutes',
+            RATE_UNIT: 'per minute',
+            UNIT_LABEL: '分钟',
+            SHORT_UNIT: '分'
+          };
+          setTimeConfig(defaultConfig);
+          setSecondsInUnit(60);
         }
 
         try {
@@ -441,7 +455,9 @@ const LiquidityPositions: React.FC = () => {
             <div className="grid grid-cols-2 gap-2 text-sm">
                <div className="bg-black/20 rounded p-2">
                  <span className="text-gray-500 text-xs block">{t.mining?.cycle || "Cycle"}</span>
-                 <span className="text-gray-300">{pos.cycleDays} {t.mining?.days || "天"}</span>
+                 <span className="text-gray-300">
+                   {pos.cycleDays} {timeConfig ? timeConfig.UNIT_LABEL : (t.mining?.days || "天")}
+                 </span>
                </div>
                <div className="bg-black/20 rounded p-2">
                  <span className="text-gray-500 text-xs block">{t.mining?.countdown || "倒计时"}</span>

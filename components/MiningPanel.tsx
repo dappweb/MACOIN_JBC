@@ -8,6 +8,7 @@ import { useGlobalRefresh, useEventRefresh } from '../hooks/useGlobalRefresh';
 import { ethers } from 'ethers';
 import toast from 'react-hot-toast';
 import { formatContractError } from '../utils/errorFormatter';
+import { detectTimeConfig, TimeUtils, type TimeConfig } from '../src/utils/timeUtils';
 import LiquidityPositions from './LiquidityPositions';
 import GoldenProgressBar from './GoldenProgressBar';
 
@@ -102,6 +103,7 @@ const MiningPanel: React.FC = () => {
   const [stakeAmount, setStakeAmount] = useState<bigint>(0n);
   const [ticketFlexibilityDuration, setTicketFlexibilityDuration] = useState<number>(72 * 3600);
   const [secondsInUnit, setSecondsInUnit] = useState<number>(60); // 从合约获取的时间单位
+  const [timeConfig, setTimeConfig] = useState<TimeConfig | null>(null); // 时间配置
   const [currentTime, setCurrentTime] = useState(Math.floor(Date.now() / 1000)); // 用于倒计时
   
   const { t, language } = useLanguage();
@@ -384,20 +386,38 @@ const MiningPanel: React.FC = () => {
     return new Date(timestamp * 1000).toLocaleString();
   };
 
-  // 倒计时格式化函数
+  // 倒计时格式化函数 - 根据时间配置动态调整
   const formatCountdown = (endTime: number): string => {
     const remaining = endTime - currentTime;
     if (remaining <= 0) return t.mining?.redeemable || "质押可赎回";
     
-    const days = Math.floor(remaining / 86400);
-    const hours = Math.floor((remaining % 86400) / 3600);
-    const minutes = Math.floor((remaining % 3600) / 60);
-    const seconds = remaining % 60;
-    
-    if (days > 0) {
-      return `${days}${t.mining?.dayUnit || '天'} ${hours}${t.mining?.hourUnit || '时'} ${minutes}${t.mining?.minUnit || '分'}`;
+    if (!timeConfig) {
+      // 如果时间配置还未加载，使用默认格式
+      const hours = Math.floor(remaining / 3600);
+      const minutes = Math.floor((remaining % 3600) / 60);
+      const seconds = remaining % 60;
+      return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
     }
-    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+
+    const totalUnits = Math.floor(remaining / timeConfig.SECONDS_IN_UNIT);
+    const remainingSeconds = remaining % timeConfig.SECONDS_IN_UNIT;
+    const hours = Math.floor(remainingSeconds / 3600);
+    const minutes = Math.floor((remainingSeconds % 3600) / 60);
+    const seconds = remainingSeconds % 60;
+    
+    if (timeConfig.TIME_UNIT === 'minutes') {
+      // 测试环境：显示分钟和秒
+      if (totalUnits > 0) {
+        return `${totalUnits}${t.mining?.minUnit || '分'} ${seconds}秒`;
+      }
+      return `${seconds}秒`;
+    } else {
+      // 生产环境：显示天、小时、分钟
+      if (totalUnits > 0) {
+        return `${totalUnits}${t.mining?.dayUnit || '天'} ${hours}${t.mining?.hourUnit || '时'} ${minutes}${t.mining?.minUnit || '分'}`;
+      }
+      return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    }
   };
 
   const getTicketStatus = () => {
@@ -592,18 +612,30 @@ const MiningPanel: React.FC = () => {
     fetchFlexDuration()
   }, [protocolContract])
 
-  // 获取合约中的 SECONDS_IN_UNIT 常量
+  // 获取合约中的时间配置
   useEffect(() => {
-    const fetchSecondsInUnit = async () => {
+    const fetchTimeConfig = async () => {
       if (!protocolContract) return;
       try {
-        const s = await protocolContract.SECONDS_IN_UNIT();
-        setSecondsInUnit(Number(s));
+        const config = await detectTimeConfig(protocolContract);
+        setTimeConfig(config);
+        setSecondsInUnit(config.SECONDS_IN_UNIT);
+        console.log('🕒 [MiningPanel] 时间配置:', config);
       } catch (e) {
-        console.warn("Failed to fetch SECONDS_IN_UNIT, using default 60", e);
+        console.warn("Failed to fetch time config, using default", e);
+        // 默认使用测试环境配置
+        const defaultConfig: TimeConfig = {
+          SECONDS_IN_UNIT: 60,
+          TIME_UNIT: 'minutes',
+          RATE_UNIT: 'per minute',
+          UNIT_LABEL: '分钟',
+          SHORT_UNIT: '分'
+        };
+        setTimeConfig(defaultConfig);
+        setSecondsInUnit(60);
       }
     };
-    fetchSecondsInUnit();
+    fetchTimeConfig();
   }, [protocolContract]);
 
   // 每秒更新 currentTime 用于倒计时显示
@@ -1279,7 +1311,11 @@ const MiningPanel: React.FC = () => {
                                 : 'bg-gray-900/50 border-gray-700 hover:border-amber-500/50 text-gray-300'
                             }`}
                         >
-                            <div className="text-xl md:text-2xl font-bold mb-0.5 md:mb-1">{plan.days} <span className="text-xs md:text-sm font-normal opacity-80">{t.mining.days}</span></div>
+                            <div className="text-xl md:text-2xl font-bold mb-0.5 md:mb-1">
+                                {plan.days} <span className="text-xs md:text-sm font-normal opacity-80">
+                                    {timeConfig ? timeConfig.UNIT_LABEL : (t.mining.days || '天')}
+                                </span>
+                            </div>
                         </button>
                     ))}
                 </div>

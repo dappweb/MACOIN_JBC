@@ -448,7 +448,7 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
             </button>
             <button
               onClick={handleBuyTicketClick}
-              className="px-5 py-2.5 md:px-6 md:py-3 bg-gradient-to-r from-neon-500 to-neon-600 hover:from-neon-400 hover:to-neon-500 text-black font-bold rounded-lg shadow-xl transition-all transform hover:-translate-y-1 text-sm md:text-base flex items-center gap-2"
+              className="px-5 py-2.5 md:px-6 md:py-3 bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-400 hover:to-yellow-500 text-black font-bold rounded-lg shadow-xl transition-all transform hover:-translate-y-1 text-sm md:text-base flex items-center gap-2"
             >
               <Ticket size={16} className="md:w-5 md:h-5" />
               {t.stats.buyTicket}

@@ -1,0 +1,64 @@
+name: Deploy Test Branch (Simple)
+
+on:
+  push:
+    branches: [ test ]
+  workflow_dispatch:
+
+env:
+  NODE_VERSION: '18'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 📥 Checkout Code
+      uses: actions/checkout@v4
+
+    - name: 🔧 Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+
+    - name: 📦 Install Dependencies
+      run: npm ci
+
+    - name: 🔨 Build Frontend
+      run: npm run build
+
+    - name: 🔧 Setup Wrangler
+      run: npm install -g wrangler
+
+    - name: 🚀 Deploy to Cloudflare Pages
+      env:
+        CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      run: |
+        echo "🚀 Deploying to Cloudflare Pages..."
+        
+        # 使用简单的项目名称
+        PROJECT_NAME="jinbao-test"
+        
+        echo "📋 Project: $PROJECT_NAME"
+        echo "🌿 Branch: ${{ github.ref_name }}"
+        
+        # 直接部署，让 Cloudflare 自动创建项目
+        wrangler pages deploy dist \
+          --project-name="$PROJECT_NAME" \
+          --compatibility-date="2024-01-01"
+        
+        echo "✅ Deployment completed!"
+        echo "🌐 URL: https://$PROJECT_NAME.pages.dev"
+
+    - name: 📊 Deployment Summary
+      run: |
+        echo "📊 ================================"
+        echo "🎉 TEST DEPLOYMENT COMPLETED"
+        echo "📊 ================================"
+        echo "⏰ Time: $(date -u)"
+        echo "🌿 Branch: ${{ github.ref_name }}"
+        echo "📝 Commit: ${{ github.sha }}"
+        echo "🌐 URL: https://jinbao-test.pages.dev"
+        echo "📊 ================================"

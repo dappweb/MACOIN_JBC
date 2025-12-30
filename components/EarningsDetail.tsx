@@ -4,6 +4,7 @@ import { Clock, ExternalLink, Gift, RefreshCw, Filter, X, ChevronRight, Copy, Ch
 import { useWeb3 } from "../src/Web3Context"
 import { useLanguage } from "../src/LanguageContext"
 import { useEventRefresh } from "../hooks/useGlobalRefresh"
+import { AppTab } from "../src/types"
 import toast from "react-hot-toast"
 
 interface RewardRecord {
@@ -19,7 +20,7 @@ interface RewardRecord {
   status: "confirmed" | "pending"
 }
 
-const EarningsDetail: React.FC = () => {
+const EarningsDetail: React.FC<{ onNavigateToMining?: () => void }> = ({ onNavigateToMining }) => {
   const { protocolContract, account, provider } = useWeb3()
   const { t } = useLanguage()
   const [records, setRecords] = useState<RewardRecord[]>([])
@@ -45,7 +46,6 @@ const EarningsDetail: React.FC = () => {
   
   // 强制刷新函数
   const forceRefresh = async () => {
-    console.log('🔄 [EarningsDetail] 强制刷新所有数据');
     clearCache();
     setError(null);
     await Promise.all([
@@ -96,7 +96,6 @@ const EarningsDetail: React.FC = () => {
           setRecords(data)
           setLoading(false)
           setCacheStatus('loaded')
-          console.log('📦 [EarningsDetail] Loaded from cache, age:', Math.floor(cacheAge / 1000), 'seconds');
           return true
         }
       }
@@ -141,13 +140,11 @@ const EarningsDetail: React.FC = () => {
 
   // 监听收益相关事件，自动刷新收益记录
   useEventRefresh('rewardsChanged', () => {
-    console.log('🎁 [EarningsDetail] 收益变化，刷新收益记录');
     fetchRecords(false); // 强制刷新，不使用缓存
     fetchPendingRewards(); // 同时刷新待领取奖励
   });
 
   useEventRefresh('ticketStatusChanged', () => {
-    console.log('🎫 [EarningsDetail] 门票状态变化，刷新收益记录');
     fetchRecords(false); // 强制刷新，不使用缓存
     fetchPendingRewards(); // 同时刷新待领取奖励
   });
@@ -155,23 +152,15 @@ const EarningsDetail: React.FC = () => {
   // 获取待领取的静态奖励
   const fetchPendingRewards = async (retryCount = 0) => {
     if (!protocolContract || !account) {
-      console.log('🔍 [EarningsDetail] 无法获取待领取奖励: 合约或账户未连接');
       setPendingRewards({mc: 0, jbc: 0});
       return;
     }
 
     try {
-      console.log('🔍 [EarningsDetail] 开始获取待领取静态奖励...');
-      
       // 检查用户门票状态
       const ticket = await protocolContract.userTicket(account);
-      console.log('🎫 [EarningsDetail] 门票状态:', {
-        amount: ethers.formatEther(ticket.amount),
-        exited: ticket.exited
-      });
       
       if (ticket.amount === 0n || ticket.exited) {
-        console.log('❌ [EarningsDetail] 用户没有有效门票，无法获得静态奖励');
         setPendingRewards({mc: 0, jbc: 0});
         return;
       }
@@ -179,14 +168,8 @@ const EarningsDetail: React.FC = () => {
       // 检查收益上限
       const userInfo = await protocolContract.userInfo(account);
       const remainingCap = userInfo.currentCap - userInfo.totalRevenue;
-      console.log('📊 [EarningsDetail] 收益状态:', {
-        totalRevenue: ethers.formatEther(userInfo.totalRevenue),
-        currentCap: ethers.formatEther(userInfo.currentCap),
-        remainingCap: ethers.formatEther(remainingCap)
-      });
       
       if (remainingCap <= 0n) {
-        console.log('⚠️ [EarningsDetail] 用户已达到收益上限');
         setPendingRewards({mc: 0, jbc: 0});
         return;
       }
@@ -200,10 +183,6 @@ const EarningsDetail: React.FC = () => {
       }
       
       const currentTime = Math.floor(Date.now() / 1000);
-      console.log('⏰ [EarningsDetail] 时间参数:', {
-        secondsInUnit: Number(secondsInUnit),
-        currentTime
-      });
       
       let totalPendingRewards = 0n;
       let activeStakesCount = 0;
@@ -264,21 +243,10 @@ const EarningsDetail: React.FC = () => {
         }
       }
       
-      console.log('📊 [EarningsDetail] 质押汇总:', {
-        activeStakesCount,
-        totalPendingRewards: ethers.formatEther(totalPendingRewards)
-      });
-      
       // 应用收益上限约束
       const actualClaimable = totalPendingRewards > remainingCap ? remainingCap : totalPendingRewards;
-      console.log('🎯 [EarningsDetail] 应用收益上限约束:', {
-        totalPending: ethers.formatEther(totalPendingRewards),
-        remainingCap: ethers.formatEther(remainingCap),
-        actualClaimable: ethers.formatEther(actualClaimable)
-      });
       
       if (actualClaimable === 0n) {
-        console.log('💡 [EarningsDetail] 无待领取奖励');
         setPendingRewards({mc: 0, jbc: 0});
         return;
       }
@@ -290,11 +258,6 @@ const EarningsDetail: React.FC = () => {
       // 获取JBC价格来计算JBC数量
       const reserveMC = await protocolContract.swapReserveMC();
       const reserveJBC = await protocolContract.swapReserveJBC();
-      
-      console.log('💱 [EarningsDetail] 流动性储备:', {
-        reserveMC: ethers.formatEther(reserveMC),
-        reserveJBC: ethers.formatEther(reserveJBC)
-      });
       
       // 更新储备信息状态
       setReserveInfo({
@@ -309,16 +272,10 @@ const EarningsDetail: React.FC = () => {
         const jbcAmountBigInt = (jbcValuePart * 1000000000000000000n) / jbcPrice;
         jbcAmount = Number(ethers.formatEther(jbcAmountBigInt));
         calculatedJBCPrice = Number(ethers.formatEther(jbcPrice));
-        
-        console.log('💱 [EarningsDetail] JBC价格计算:', {
-          jbcPrice: ethers.formatEther(jbcPrice),
-          jbcAmount
-        });
       } else {
         // 如果没有流动性，按1:1计算
         jbcAmount = Number(ethers.formatEther(jbcValuePart));
         calculatedJBCPrice = 1;
-        console.log('💱 [EarningsDetail] 无流动性，使用1:1比例');
       }
       
       // 更新JBC价格状态
@@ -329,7 +286,6 @@ const EarningsDetail: React.FC = () => {
         jbc: jbcAmount
       };
       
-      console.log('✅ [EarningsDetail] 待领取奖励计算完成:', result);
       setPendingRewards(result);
       
     } catch (error) {
@@ -337,7 +293,6 @@ const EarningsDetail: React.FC = () => {
       
       // 添加重试机制
       if (retryCount < 2) {
-        console.log(`🔄 [EarningsDetail] Retrying pending rewards... (${retryCount + 1}/2)`);
         setTimeout(() => {
           fetchPendingRewards(retryCount + 1);
         }, 1000 * (retryCount + 1));
@@ -351,10 +306,8 @@ const EarningsDetail: React.FC = () => {
       if (error instanceof Error) {
         if (error.message.includes('call revert')) {
           errorMessage = '合约调用失败，请检查网络连接或稍后重试';
-          console.log('💡 [EarningsDetail] 可能的原因: 合约函数调用失败，请检查网络连接');
         } else if (error.message.includes('network')) {
           errorMessage = '网络连接问题，请检查网络设置';
-          console.log('💡 [EarningsDetail] 可能的原因: 网络连接问题');
         } else if (error.message.includes('timeout')) {
           errorMessage = '请求超时，请稍后重试';
         } else if (error.message.includes('insufficient funds')) {
@@ -363,7 +316,9 @@ const EarningsDetail: React.FC = () => {
       }
       
       // 不设置全局错误状态，只在控制台记录
-      console.warn('⚠️ [EarningsDetail] Pending rewards fetch failed:', errorMessage);
+      if (process.env.NODE_ENV === 'development') {
+        console.warn('⚠️ [EarningsDetail] Pending rewards fetch failed:', errorMessage);
+      }
     }
   };
 
@@ -388,8 +343,6 @@ const EarningsDetail: React.FC = () => {
       const fromBlock = Math.max(0, currentBlock - 50000)
 
       const targetUser = isOwner && viewMode === "all" ? null : account
-      
-      console.log(`🔍 [EarningsDetail] Querying events from block ${fromBlock} to ${currentBlock}`)
 
       // 并行查询四种事件
       // 使用 Promise.allSettled 避免其中一个失败导致整体失败
@@ -599,7 +552,6 @@ const EarningsDetail: React.FC = () => {
         toast.success(`Loaded ${processedEvents} earnings records`)
       } else {
         // 如果没有记录，尝试获取合约状态作为降级方案
-        console.log('📊 [EarningsDetail] No events found, trying contract state fallback');
         await fetchContractStateFallback();
       }
       
@@ -608,39 +560,14 @@ const EarningsDetail: React.FC = () => {
       
       // 添加重试机制
       if (retryCount < 3) {
-        console.log(`🔄 [EarningsDetail] Retrying... (${retryCount + 1}/3)`);
         setTimeout(() => {
           fetchRecords(false, retryCount + 1);
         }, 2000 * (retryCount + 1)); // 递增延迟
         return;
       }
       
-      // 提供更详细的错误信息
-      let errorMessage = "Failed to load earnings data";
-      let suggestion = "Please try refreshing the page";
-      
-      if (err.message.includes('network')) {
-        errorMessage = "Network connection error";
-        suggestion = "Please check your internet connection and try again";
-      } else if (err.message.includes('timeout')) {
-        errorMessage = "Request timeout";
-        suggestion = "The network is slow, please try again later";
-      } else if (err.message.includes('call revert')) {
-        errorMessage = "Contract call failed";
-        suggestion = "Please check your wallet connection";
-      } else if (err.message.includes('insufficient funds')) {
-        errorMessage = "Insufficient funds for transaction";
-        suggestion = "Please ensure you have enough gas fees";
-      } else if (err.code === 'NETWORK_ERROR') {
-        errorMessage = "Network error";
-        suggestion = "Please switch to a different RPC endpoint";
-      }
-      
-      setError(`${errorMessage}: ${suggestion}`)
-      toast.error(errorMessage)
-      
+      // 静默处理错误，不显示用户错误提示
       // 尝试降级方案
-      console.log('📊 [EarningsDetail] Main query failed, trying fallback...');
       await fetchContractStateFallback();
     } finally {
       setLoading(false)
@@ -653,8 +580,6 @@ const EarningsDetail: React.FC = () => {
     if (!protocolContract || !account) return;
     
     try {
-      console.log('🔄 [EarningsDetail] Using contract state fallback');
-      
       // 获取用户基本信息
       const userInfo = await protocolContract.userInfo(account);
       const totalRevenue = parseFloat(ethers.formatEther(userInfo.totalRevenue));
@@ -675,9 +600,8 @@ const EarningsDetail: React.FC = () => {
         
         setRecords([fallbackRecord]);
         toast.success("Loaded earnings data from contract state");
-        console.log('✅ [EarningsDetail] Fallback successful, total revenue:', totalRevenue);
       } else {
-        console.log('💡 [EarningsDetail] No revenue found in contract state');
+        // No revenue found in contract state
       }
     } catch (fallbackErr) {
       console.error('❌ [EarningsDetail] Fallback also failed:', fallbackErr);
@@ -1020,7 +944,15 @@ const EarningsDetail: React.FC = () => {
             </div>
             <div className="flex flex-col gap-2">
               <button
-                onClick={() => window.location.href = '#/mining'}
+                onClick={() => {
+                  if (onNavigateToMining) {
+                    onNavigateToMining();
+                  } else {
+                    // 降级方案：使用自定义事件通知父组件
+                    const event = new CustomEvent('navigateToMining');
+                    window.dispatchEvent(event);
+                  }
+                }}
                 className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm font-medium transition-colors"
               >
                 {ui.goToStake || "去质押"}

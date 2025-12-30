@@ -200,7 +200,7 @@ const AppContent: React.FC = () => {
 
           {currentTab === AppTab.EARNINGS && (
             <ErrorBoundary onError={handleAppError}>
-              <EarningsDetail />
+              <EarningsDetail onNavigateToMining={() => setCurrentTab(AppTab.MINING)} />
             </ErrorBoundary>
           )}
 

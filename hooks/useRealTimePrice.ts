@@ -65,7 +65,6 @@ export const useRealTimePrice = () => {
     
     setCurrentPrice(price);
     
-    console.log('📈 [RealTimePrice] 新价格点:', { timestamp, price });
   }, [calculatePriceStats]);
 
   // 从兑换事件计算价格
@@ -89,15 +88,11 @@ export const useRealTimePrice = () => {
   useEffect(() => {
     if (!protocolContract || !provider) return;
 
-    console.log('🎧 [RealTimePrice] 开始监听兑换事件...');
-
     const handleSwapMCToJBC = (user: string, mcAmount: any, jbcAmount: any, event: any) => {
-      console.log('🔄 [RealTimePrice] MC->JBC 兑换事件:', { user, mcAmount: mcAmount.toString(), jbcAmount: jbcAmount.toString() });
       calculatePriceFromSwap(mcAmount, jbcAmount);
     };
 
     const handleSwapJBCToMC = (user: string, jbcAmount: any, mcAmount: any, event: any) => {
-      console.log('🔄 [RealTimePrice] JBC->MC 兑换事件:', { user, jbcAmount: jbcAmount.toString(), mcAmount: mcAmount.toString() });
       calculatePriceFromSwap(mcAmount, jbcAmount);
     };
 
@@ -107,7 +102,6 @@ export const useRealTimePrice = () => {
 
     // 清理监听器
     return () => {
-      console.log('🔇 [RealTimePrice] 停止监听兑换事件');
       protocolContract.removeListener("SwappedMCToJBC", handleSwapMCToJBC);
       protocolContract.removeListener("SwappedJBCToMC", handleSwapJBCToMC);
     };
@@ -119,8 +113,6 @@ export const useRealTimePrice = () => {
       if (!protocolContract || !provider) return;
 
       try {
-        console.log('📊 [RealTimePrice] 初始化价格历史数据...');
-        
         const currentBlock = await provider.getBlockNumber();
         const fromBlock = Math.max(0, currentBlock - 50000); // 减少查询范围提高性能
 
@@ -195,7 +187,6 @@ export const useRealTimePrice = () => {
           setCurrentPrice(pricePoints[pricePoints.length - 1].price);
         }
 
-        console.log('✅ [RealTimePrice] 价格历史数据初始化完成:', pricePoints.length, '个数据点');
       } catch (error) {
         console.error('❌ [RealTimePrice] 初始化价格历史失败:', error);
       }

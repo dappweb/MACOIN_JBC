@@ -38,7 +38,8 @@ export default defineConfig(({ mode }) => {
           }
         },
         commonjsOptions: {
-          transformMixedEsModules: true
+          transformMixedEsModules: true,
+          include: [/ethers/, /node_modules/]
         },
         target: 'esnext'
       },
@@ -55,7 +56,8 @@ export default defineConfig(({ mode }) => {
                 global: 'globalThis'
             },
             target: 'esnext'
-        }
+        },
+        force: true
       },
       resolve: {
         alias: {

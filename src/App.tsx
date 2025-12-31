@@ -18,6 +18,7 @@ import { ArrowLeftRight } from "lucide-react"
 import { LanguageProvider, useLanguage } from "./LanguageContext"
 import { Web3Provider, useWeb3 } from "./Web3Context"
 import { GlobalRefreshProvider } from "../hooks/useGlobalRefresh"
+import { disableErrorNotifications } from "../utils/toastConfig"
 
 import { WagmiProvider } from "wagmi"
 import { RainbowKitProvider } from "@rainbow-me/rainbowkit"
@@ -46,6 +47,9 @@ const AppContent: React.FC = () => {
   }
 
   useEffect(() => {
+    // Initialize toast configuration - disable error notifications by default
+    disableErrorNotifications();
+    
     // Simulate initial loading with better UX
     const timer = setTimeout(() => {
       setLoading(false)

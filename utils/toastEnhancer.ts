@@ -8,6 +8,13 @@ export interface EnhancedToastOptions {
 }
 
 export class ToastEnhancer {
+  // Global flag to control error notifications
+  private static errorNotificationsEnabled = false;
+
+  static enableErrorNotifications(enabled: boolean = true) {
+    this.errorNotificationsEnabled = enabled;
+  }
+
   static success(message: string, options: EnhancedToastOptions = {}) {
     return toast.success(message, {
       duration: options.duration || 4000,
@@ -24,6 +31,12 @@ export class ToastEnhancer {
   }
 
   static error(message: string, options: EnhancedToastOptions = {}) {
+    // Check if error notifications are disabled
+    if (!this.errorNotificationsEnabled) {
+      console.warn('Error notification suppressed:', message);
+      return null;
+    }
+
     return toast.error(message, {
       duration: options.duration || 5000,
       icon: options.icon || '❌',
@@ -86,7 +99,13 @@ export class ToastEnhancer {
   static transaction = {
     pending: (message: string, id: string) => this.loading(`⏳ ${message}`, { id }),
     success: (message: string, id: string) => toast.success(`🎉 ${message}`, { id }),
-    error: (message: string, id: string) => toast.error(`❌ ${message}`, { id })
+    error: (message: string, id: string) => {
+      if (!this.errorNotificationsEnabled) {
+        console.warn('Transaction error notification suppressed:', message);
+        return null;
+      }
+      return toast.error(`❌ ${message}`, { id });
+    }
   };
 }
 

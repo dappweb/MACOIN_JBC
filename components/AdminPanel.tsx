@@ -12,6 +12,7 @@ import AdminUserManager from './AdminUserManager';
 import LevelDisplay from './LevelDisplay';
 import LevelSystemInfo from './LevelSystemInfo';
 import AdminLevelDisplay from './AdminLevelDisplay';
+import NotificationSettings from './NotificationSettings';
 
 const AdminPanel: React.FC = () => {
   const { t } = useLanguage();
@@ -638,6 +639,17 @@ const AdminPanel: React.FC = () => {
             <Crown className="inline mr-2" size={16} />
             等级系统
           </button>
+          <button
+            onClick={() => setActiveTab('settings')}
+            className={`px-6 py-3 rounded-lg font-bold text-sm transition-all ${
+              activeTab === 'settings'
+                ? 'bg-orange-600 text-white shadow-lg'
+                : 'text-gray-400 hover:text-white hover:bg-gray-800/50'
+            }`}
+          >
+            <Settings className="inline mr-2" size={16} />
+            通知设置
+          </button>
         </div>
       </div>
 
@@ -698,6 +710,10 @@ const AdminPanel: React.FC = () => {
               <AdminLevelDisplay account={account} />
             </div>
           )}
+        </div>
+      ) : activeTab === 'settings' ? (
+        <div className="space-y-6">
+          <NotificationSettings />
         </div>
       ) : (
         <>

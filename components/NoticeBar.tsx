@@ -14,12 +14,12 @@ const NoticeBar: React.FC = () => {
   const demoAnnouncements: Record<string, string[]> = {
     zh: [
       "🎉 金宝协议正式上线！DeFi 4.0 创新双币模型，开启财富新篇章。",
-      "⚠️ 请注意：购买门票后可随时提供流动性，无时间限制。",
+      // "⚠️ 请注意：购买门票后可随时提供流动性，无时间限制。", // 已移除红色警告
       "📢 邀请好友加入可享丰厚极差奖励，最高可达 45%！"
     ],
     en: [
       "🎉 Jinbao Protocol is live! DeFi 4.0 Dual-Token Model.",
-      "⚠️ Notice: Liquidity can be provided at any time after ticket purchase.",
+      // "⚠️ Notice: Liquidity can be provided at any time after ticket purchase.", // Removed warning
       "📢 Invite friends to earn up to 45% differential rewards!"
     ]
   };
@@ -100,6 +100,9 @@ const NoticeBar: React.FC = () => {
   };
 
   if (!isVisible || announcements.length === 0) return null;
+
+  // 临时禁用公告栏 - 如需重新启用，请删除下面这行
+  return null;
 
   return (
     <>

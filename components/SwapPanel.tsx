@@ -72,6 +72,10 @@ const SwapPanel: React.FC = () => {
             const mcAmount = parseFloat(poolMcFormatted);
             const jbcAmount = parseFloat(poolJbcFormatted);
             const totalLpTokens = mcAmount + jbcAmount;
+            
+            // 数据加载成功，不显示错误提醒
+        } catch (error) {
+            console.error('Failed to load pool data:', error);
             ToastEnhancer.error('Failed to load pool data. Please refresh the page.');
         } finally {
             setIsLoadingPoolData(false);

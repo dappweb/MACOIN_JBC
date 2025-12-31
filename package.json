@@ -3,6 +3,10 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "engines": {
+    "node": ">=20.0.0",
+    "npm": ">=10.0.0"
+  },
   "scripts": {
     "dev": "vite",
     "build": "vite build",
@@ -37,6 +41,7 @@
     "setup:secrets:prod": "./scripts/setup-secrets.sh production",
     "setup:secrets:staging": "./scripts/setup-secrets.sh staging",
     "validate:prod": "node scripts/validate-production-config.mjs",
+    "validate:env": "node scripts/validate-environment.js",
     "pages:deploy:prod": "npm run build && wrangler pages deploy dist --project-name=jbc-ac-production",
     "pages:deploy:staging": "npm run build && wrangler pages deploy dist --project-name=jbc-ac-preview",
     "secrets:list:prod": "wrangler pages secret list --project-name=jbc-ac-production",

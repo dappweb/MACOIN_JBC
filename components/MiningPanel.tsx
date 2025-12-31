@@ -8,6 +8,8 @@ import { useGlobalRefresh, useEventRefresh } from '../hooks/useGlobalRefresh';
 import { ethers } from 'ethers';
 import toast from 'react-hot-toast';
 import { formatContractError } from '../utils/errorFormatter';
+import { useChineseErrorFormatter } from '../utils/chineseErrorFormatter';
+import { showFriendlyError, showInsufficientBalanceError } from './ErrorToast';
 import { detectTimeConfig, TimeUtils, type TimeConfig } from '../src/utils/timeUtils';
 import LiquidityPositions from './LiquidityPositions';
 import GoldenProgressBar from './GoldenProgressBar';
@@ -107,6 +109,7 @@ const MiningPanel: React.FC = () => {
   const [currentTime, setCurrentTime] = useState(Math.floor(Date.now() / 1000)); // 用于倒计时
   
   const { t, language } = useLanguage();
+  const { formatError, getSuggestion } = useChineseErrorFormatter();
   const { protocolContract, account, isConnected, hasReferrer, isOwner, referrerAddress, checkReferrerStatus, provider, mcBalance } = useWeb3();
   
   // 使用全局刷新机制
@@ -710,7 +713,9 @@ const MiningPanel: React.FC = () => {
           const currentMcBalance = mcBalance || 0n;
           
           if (currentMcBalance < amountWei) {
-              toast.error(`${t.mining.insufficientMC} ${t.mining.needsMC} ${selectedTicket.amount} MC，${t.mining.currentBalance}: ${ethers.formatEther(currentMcBalance)} MC`);
+              const required = ethers.formatEther(amountWei);
+              const current = ethers.formatEther(currentMcBalance);
+              showInsufficientBalanceError(required, current);
               return;
           }
 
@@ -730,16 +735,9 @@ const MiningPanel: React.FC = () => {
       } catch (err: any) {
           console.error(err);
           toast.dismiss('buy-ticket');
-          // Special handling for active ticket using the new formatter context if needed, 
-          // or just rely on formatter. For now, let's use the formatter which handles most cases nicely.
-          // If we want to preserve the specific "Active ticket" hint for missing revert data in buyTicket:
-          const formatted = formatContractError(err);
-          if (formatted.includes('Contract execution error') || formatted.includes('missing revert data')) {
-             // In buyTicket context, this often means active ticket exists
-             toast.error(t.mining.activeTicketExists || "Transaction failed: You may already have an active ticket.");
-          } else {
-             toast.error(formatted);
-          }
+          
+          // 使用友好的错误提示
+          showFriendlyError(err, 'buyTicket');
       } finally {
           setTxPending(false);
       }
@@ -795,7 +793,7 @@ const MiningPanel: React.FC = () => {
           setCurrentStep(3);
       } catch (err: any) {
           console.error(t.mining.stakeFailed, err);
-          toast.error(formatContractError(err), { id: "stake-liquidity" });
+          showFriendlyError(err, 'stakeLiquidity');
       } finally {
           setTxPending(false);
       }
@@ -813,7 +811,7 @@ const MiningPanel: React.FC = () => {
           await onTransactionSuccess('claim');
       } catch (err: any) {
           console.error(err);
-          toast.error(formatContractError(err));
+          showFriendlyError(err, 'claimRewards');
       } finally {
           setTxPending(false);
       }
@@ -831,7 +829,7 @@ const MiningPanel: React.FC = () => {
           await onTransactionSuccess('redeem');
       } catch (err: any) {
           console.error(err);
-          toast.error(formatContractError(err));
+          showFriendlyError(err, 'redeem');
       } finally {
           setTxPending(false);
       }
@@ -893,7 +891,7 @@ const MiningPanel: React.FC = () => {
           await checkReferrerStatus();
       } catch (err: any) {
           console.error(err);
-          toast.error(formatContractError(err));
+          showFriendlyError(err, 'bindReferrer');
       } finally {
           // 无论成功或失败，都重置加载状态
           // Reset loading state regardless of success or failure

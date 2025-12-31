@@ -4,7 +4,18 @@ import { useAccount, useChainId, useDisconnect } from "wagmi"
 import { useEthersProvider, useEthersSigner } from "./wagmi-adapters"
 import { useConnectModal } from "@rainbow-me/rainbowkit"
 
-// Native MC Protocol ABI - No MC token contract needed
+/**
+ * JinbaoProtocol V4 ABI
+ * ═══════════════════════════════════════════════════════════════════════
+ * 原生 MC 代币版本 - 与 TokenomicsLib 集成
+ * 
+ * 主要功能:
+ * - buyTicket(): 购买门票 (100/300/500/1000 MC)
+ * - stakeLiquidity(): 质押流动性 (门票 × 1.5)
+ * - claimRewards(): 领取收益 (50% MC + 50% JBC)
+ * - redeem(): 赎回流动性 (周期到期后)
+ * - swapMCToJBC/swapJBCToMC(): AMM 交换
+ */
 export const PROTOCOL_ABI = [
   "function bindReferrer(address _referrer) external",
   "function buyTicket() external payable",

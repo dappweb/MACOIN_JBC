@@ -146,6 +146,10 @@ export const translations = {
       totalPaid: "已获收益",
       pending: "待领取",
       estPendingReward: "预计待领取奖励",
+      exited: "已出局",
+      canStake: "可质押",
+      invalidAmount: "无效金额",
+      redeemInstruction: "请在下方流动性仓位列表中管理您的仓位",
     },
     team: {
       title: "V系列 极差裂变机制",
@@ -582,6 +586,9 @@ export const translations = {
       expiredTicketWarning:
         "You have an expired ticket and cannot buy a new one! Please contact admin to handle expired tickets",
       totalPaid: "Total Paid",
+      exited: "Exited",
+      canStake: "Can Stake",
+      invalidAmount: "Invalid Amount",
     },
     team: {
       title: "V-Series Differential Mechanism",

@@ -7,7 +7,7 @@ import { useWeb3 } from '../src/Web3Context';
 import { useGlobalRefresh, useEventRefresh } from '../hooks/useGlobalRefresh';
 import { ethers } from 'ethers';
 import toast from 'react-hot-toast';
-import { formatContractError } from '../utils/errorFormatter';
+import { showFriendlyError } from '../components/ErrorToast';
 import LiquidityPositions from './LiquidityPositions';
 import GoldenProgressBar from './GoldenProgressBar';
 
@@ -698,16 +698,9 @@ const MiningPanel: React.FC = () => {
       } catch (err: any) {
           console.error(err);
           toast.dismiss('buy-ticket');
-          // Special handling for active ticket using the new formatter context if needed, 
-          // or just rely on formatter. For now, let's use the formatter which handles most cases nicely.
-          // If we want to preserve the specific "Active ticket" hint for missing revert data in buyTicket:
-          const formatted = formatContractError(err);
-          if (formatted.includes('Contract execution error') || formatted.includes('missing revert data')) {
-             // In buyTicket context, this often means active ticket exists
-             toast.error(t.mining.activeTicketExists || "Transaction failed: You may already have an active ticket.");
-          } else {
-             toast.error(formatted);
-          }
+          
+          // 使用新的中文友好错误处理系统
+          showFriendlyError(err, 'buyTicket');
       } finally {
           setTxPending(false);
       }
@@ -763,7 +756,10 @@ const MiningPanel: React.FC = () => {
           setCurrentStep(3);
       } catch (err: any) {
           console.error(t.mining.stakeFailed, err);
-          toast.error(formatContractError(err), { id: "stake-liquidity" });
+          toast.dismiss("stake-liquidity");
+          
+          // 使用新的中文友好错误处理系统
+          showFriendlyError(err, 'stakeLiquidity');
       } finally {
           setTxPending(false);
       }
@@ -781,7 +777,7 @@ const MiningPanel: React.FC = () => {
           await onTransactionSuccess('claim');
       } catch (err: any) {
           console.error(err);
-          toast.error(formatContractError(err));
+          showFriendlyError(err, 'claimRewards');
       } finally {
           setTxPending(false);
       }
@@ -799,7 +795,7 @@ const MiningPanel: React.FC = () => {
           await onTransactionSuccess('redeem');
       } catch (err: any) {
           console.error(err);
-          toast.error(formatContractError(err));
+          showFriendlyError(err, 'redeem');
       } finally {
           setTxPending(false);
       }
@@ -861,7 +857,7 @@ const MiningPanel: React.FC = () => {
           await checkReferrerStatus();
       } catch (err: any) {
           console.error(err);
-          toast.error(formatContractError(err));
+          showFriendlyError(err, 'bindReferrer');
       } finally {
           // 无论成功或失败，都重置加载状态
           // Reset loading state regardless of success or failure

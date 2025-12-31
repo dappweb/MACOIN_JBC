@@ -76,6 +76,11 @@ const getContextualMessage = (message: string, context?: string, language: 'zh' 
     },
     'redeem': {
       '交易失败，请重试': '赎回失败：请确认质押周期已结束',
+    },
+    'bindReferrer': {
+      'MC余额不足，请检查钱包余额后重试': '绑定推荐人失败：Gas费不足，请确保钱包有足够的MC支付手续费',
+      '交易失败，请重试': '绑定推荐人失败：请检查推荐人地址是否正确',
+      '用户取消了交易': '推荐人绑定已取消',
     }
   };
   

@@ -206,7 +206,20 @@ export const translations = {
         gasInsufficient: "Gas费不足",
         userRejected: "用户取消",
         priceImpactHigh: "价格影响过大",
-        validationFailed: "验证失败"
+        validationFailed: "验证失败",
+        // 具体场景错误
+        buyTicketFailed: "购买门票失败",
+        stakeFailed: "提供流动性失败",
+        claimFailed: "领取奖励失败",
+        redeemFailed: "赎回失败",
+        // 余额相关
+        insufficientMC: "MC余额不足",
+        needMoreMC: "需要更多MC代币",
+        checkBalance: "请检查余额",
+        // 网络相关
+        wrongNetwork: "网络错误",
+        switchToMCChain: "请切换到MC Chain",
+        networkConnection: "网络连接问题"
       },
       suggestions: {
         reduceAmount: "请减少兑换数量",
@@ -215,7 +228,13 @@ export const translations = {
         increaseGas: "请增加Gas费用",
         checkNetwork: "请检查网络连接",
         contactSupport: "请联系技术支持",
-        retryLater: "请稍后重试"
+        retryLater: "请稍后重试",
+        // 具体建议
+        getMCTokens: "请先获取足够的MC代币",
+        switchNetwork: "请在钱包中切换到MC Chain网络（链ID：88813）",
+        waitForConfirmation: "请在钱包中确认交易",
+        checkGasPrice: "请检查Gas费设置是否合理",
+        ensureConnection: "请确保钱包连接正常"
       }
     },
     admin: {

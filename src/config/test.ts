@@ -46,8 +46,8 @@ export const TEST_CONFIG = {
   NETWORK: {
     CHAIN_ID: 88813,
     CHAIN_NAME: 'MC Chain Testnet',
-    RPC_URL: 'https://rpc.mcchain.io',
-    EXPLORER_URL: 'https://scan.mcchain.io'
+    RPC_URL: 'https://chain.mcerscan.com/',
+    EXPLORER_URL: 'https://mcerscan.com'
   }
 };
 

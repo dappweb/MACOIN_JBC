@@ -660,35 +660,82 @@ const MiningPanel: React.FC = () => {
   };
 
   const handleBuyTicket = async () => {
-      if (!protocolContract) return;
+      if (!protocolContract || !provider) return;
 
-      // Guard removed: Allow buying multiple tickets or overwriting
-      /*
-      // Guard: Check if user already has an active ticket
-      if (ticketInfo && ticketInfo.amount > 0n && !ticketInfo.exited) {
-          toast.error(t.mining.activeTicketExists || "You already have a ticket. Please stake or redeem first.");
-          return;
-      }
-      */
-      
       setTxPending(true);
       try {
-          // 检查原生MC余额
-          const amountWei = ethers.parseEther(selectedTicket.amount.toString());
-          const currentMcBalance = mcBalance || 0n;
-          
-          if (currentMcBalance < amountWei) {
-              toast.error(`${t.mining.insufficientMC} ${t.mining.needsMC} ${selectedTicket.amount} MC，${t.mining.currentBalance}: ${ethers.formatEther(currentMcBalance)} MC`);
+          // 1. 网络检查
+          const network = await provider.getNetwork();
+          if (network.chainId !== 88813n) {
+              toast.error('请切换到MC Chain网络 (Chain ID: 88813)');
               return;
           }
 
-          // 使用原生MC购买门票
-          const tx = await protocolContract.buyTicket({ value: amountWei });
+          // 2. 推荐人检查（非管理员用户必须绑定推荐人）
+          if (!hasReferrer && !isOwner) {
+              toast.error('请先绑定推荐人后再购买门票');
+              return;
+          }
+
+          // 3. 详细余额检查
+          const amountWei = ethers.parseEther(selectedTicket.amount.toString());
+          const currentMcBalance = mcBalance || 0n;
+          
+          // 预估Gas费用
+          let gasEstimate = 300000n; // 默认Gas limit
+          let gasCost = 0n;
+          
+          try {
+              gasEstimate = await protocolContract.buyTicket.estimateGas({ value: amountWei });
+              const feeData = await provider.getFeeData();
+              gasCost = gasEstimate * (feeData.gasPrice || 0n);
+          } catch (error) {
+              console.warn("Gas estimation failed, using default:", error);
+              gasCost = ethers.parseEther('0.01'); // 默认预留0.01 MC作为Gas费
+          }
+          
+          const totalRequired = amountWei + gasCost;
+          
+          if (currentMcBalance < totalRequired) {
+              const shortfall = ethers.formatEther(totalRequired - currentMcBalance);
+              toast.error(`MC余额不足！需要 ${selectedTicket.amount} MC + Gas费，还缺 ${shortfall} MC`);
+              
+              // 显示详细余额信息
+              setTimeout(() => {
+                  toast(`当前余额: ${ethers.formatEther(currentMcBalance)} MC\n需要金额: ${ethers.formatEther(totalRequired)} MC`, {
+                      icon: '💰',
+                      duration: 6000,
+                      style: {
+                          background: '#1f2937',
+                          color: '#fbbf24',
+                          border: '1px solid #fbbf24',
+                          borderRadius: '12px',
+                          padding: '16px',
+                          fontSize: '14px',
+                          maxWidth: '400px'
+                      }
+                  });
+              }, 1500);
+              return;
+          }
+
+          // 4. 合约状态检查
+          const isPaused = await protocolContract.paused();
+          if (isPaused) {
+              toast.error('合约暂时暂停维护，请稍后重试');
+              return;
+          }
+
+          // 5. 执行购票 - 使用原生MC
+          const tx = await protocolContract.buyTicket({ 
+              value: amountWei,
+              gasLimit: gasEstimate + 50000n // 增加50k gas buffer
+          });
           
           // Enhanced loading feedback
-          toast.loading('🎫 Processing ticket purchase...', { id: 'buy-ticket' });
+          toast.loading('🎫 正在购买门票，请在钱包中确认交易...', { id: 'buy-ticket' });
           await tx.wait();
-          toast.success('🎉 Ticket purchased successfully!', { id: 'buy-ticket' });
+          toast.success('🎉 门票购买成功！', { id: 'buy-ticket' });
           
           // 使用全局刷新机制
           await onTransactionSuccess('ticket_purchase');
@@ -696,11 +743,24 @@ const MiningPanel: React.FC = () => {
           // 购买成功后自动跳转到提供流动性页面
           setCurrentStep(2);
       } catch (err: any) {
-          console.error(err);
+          console.error('购票失败详情:', err);
           toast.dismiss('buy-ticket');
           
-          // 使用新的中文友好错误处理系统
-          showFriendlyError(err, 'buyTicket');
+          // 详细错误处理
+          if (err.code === 'INSUFFICIENT_FUNDS') {
+              toast.error(`MC余额不足！需要 ${selectedTicket.amount} MC + Gas费`);
+          } else if (err.code === 'ACTION_REJECTED' || err.code === 4001) {
+              toast.error('交易已取消');
+          } else if (err.message?.includes('InvalidAmount')) {
+              toast.error('无效的门票金额，请选择100/300/500/1000 MC');
+          } else if (err.message?.includes('paused')) {
+              toast.error('合约暂时暂停，请稍后重试');
+          } else if (err.message?.includes('missing revert data')) {
+              toast.error('交易失败：请检查MC余额是否足够，或网络是否稳定');
+          } else {
+              // 使用新的中文友好错误处理系统
+              showFriendlyError(err, 'buyTicket');
+          }
       } finally {
           setTxPending(false);
       }
@@ -1102,6 +1162,12 @@ const MiningPanel: React.FC = () => {
               </div>
             </div>
           )}
+
+          {/* 购票前检查清单 */}
+          <PurchaseChecklist 
+            selectedAmount={selectedTicket.amount}
+            onAllChecksPass={() => console.log('All checks passed')}
+          />
 
           <div className="space-y-4 max-w-md mx-auto">
             {!isApproved ? (
@@ -1658,6 +1724,171 @@ const MiningPanel: React.FC = () => {
 
       {/* Mobile Sticky Footer Removed */}
 
+    </div>
+  );
+};
+
+// 购票前检查清单组件
+const PurchaseChecklist: React.FC<{
+  selectedAmount: number;
+  onAllChecksPass: () => void;
+}> = ({ selectedAmount, onAllChecksPass }) => {
+  const [checks, setChecks] = useState({
+    network: false,
+    balance: false,
+    referrer: false,
+    contract: false
+  });
+  const [isChecking, setIsChecking] = useState(false);
+  
+  const { provider, account, hasReferrer, isOwner, mcBalance, protocolContract } = useWeb3();
+  
+  const runChecks = async () => {
+    if (!provider || !account || !protocolContract) return;
+    
+    setIsChecking(true);
+    try {
+      // 检查网络
+      const network = await provider.getNetwork();
+      const networkOk = network.chainId === 88813n;
+      
+      // 检查余额（包含Gas费预留）
+      const requiredAmount = ethers.parseEther(selectedAmount.toString());
+      const gasReserve = ethers.parseEther('0.01'); // 预留Gas费
+      const totalRequired = requiredAmount + gasReserve;
+      const currentBalance = mcBalance || 0n;
+      const balanceOk = currentBalance >= totalRequired;
+      
+      // 检查推荐人
+      const referrerOk = hasReferrer || isOwner;
+      
+      // 检查合约状态
+      const isPaused = await protocolContract.paused();
+      const contractOk = !isPaused;
+      
+      const newChecks = {
+        network: networkOk,
+        balance: balanceOk,
+        referrer: referrerOk,
+        contract: contractOk
+      };
+      
+      setChecks(newChecks);
+      
+      // 如果所有检查都通过，调用回调
+      if (Object.values(newChecks).every(Boolean)) {
+        onAllChecksPass();
+      }
+    } catch (error) {
+      console.error('检查失败:', error);
+    } finally {
+      setIsChecking(false);
+    }
+  };
+  
+  useEffect(() => {
+    if (account && protocolContract) {
+      runChecks();
+    }
+  }, [account, selectedAmount, protocolContract, mcBalance]);
+  
+  const allChecksPassed = Object.values(checks).every(Boolean);
+  
+  return (
+    <div className="bg-gray-900/30 border border-gray-700 rounded-xl p-4 mb-6">
+      <div className="flex items-center justify-between mb-3">
+        <h4 className="font-bold text-white flex items-center gap-2">
+          <ShieldCheck className="text-neon-400" size={16} />
+          购票前检查
+        </h4>
+        <button
+          onClick={runChecks}
+          disabled={isChecking}
+          className="text-xs px-2 py-1 bg-gray-700 hover:bg-gray-600 text-gray-300 rounded border border-gray-600 disabled:opacity-50"
+        >
+          {isChecking ? <Loader2 className="animate-spin" size={12} /> : '重新检查'}
+        </button>
+      </div>
+      
+      <div className="space-y-2">
+        <CheckItem 
+          label="网络连接 (MC Chain)" 
+          checked={checks.network}
+          loading={isChecking}
+          description={checks.network ? "已连接到MC Chain" : "请切换到MC Chain网络"}
+        />
+        <CheckItem 
+          label={`MC余额 (需要${selectedAmount} MC + Gas费)`} 
+          checked={checks.balance}
+          loading={isChecking}
+          description={
+            checks.balance 
+              ? `余额充足: ${ethers.formatEther(mcBalance || 0n)} MC` 
+              : `余额不足，需要至少 ${selectedAmount + 0.01} MC`
+          }
+        />
+        <CheckItem 
+          label="推荐人绑定" 
+          checked={checks.referrer}
+          loading={isChecking}
+          description={
+            isOwner 
+              ? "管理员账户，无需绑定推荐人" 
+              : checks.referrer 
+                ? "已绑定推荐人" 
+                : "请先绑定推荐人"
+          }
+        />
+        <CheckItem 
+          label="合约状态" 
+          checked={checks.contract}
+          loading={isChecking}
+          description={checks.contract ? "合约正常运行" : "合约暂时暂停"}
+        />
+      </div>
+      
+      {allChecksPassed && (
+        <div className="mt-3 p-2 bg-green-900/20 border border-green-500/30 rounded-lg">
+          <div className="flex items-center gap-2 text-green-400 text-sm">
+            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+            所有检查通过，可以购买门票
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// 检查项组件
+const CheckItem: React.FC<{
+  label: string;
+  checked: boolean;
+  loading?: boolean;
+  description?: string;
+}> = ({ label, checked, loading, description }) => {
+  return (
+    <div className="flex items-start gap-3 p-2 rounded-lg hover:bg-gray-800/30 transition-colors">
+      <div className="mt-0.5">
+        {loading ? (
+          <Loader2 className="animate-spin text-gray-400" size={16} />
+        ) : checked ? (
+          <div className="w-4 h-4 bg-green-500 rounded-full flex items-center justify-center">
+            <div className="w-2 h-2 bg-white rounded-full"></div>
+          </div>
+        ) : (
+          <div className="w-4 h-4 border-2 border-gray-600 rounded-full"></div>
+        )}
+      </div>
+      <div className="flex-1">
+        <div className={`text-sm font-medium ${checked ? 'text-green-400' : 'text-gray-400'}`}>
+          {label}
+        </div>
+        {description && (
+          <div className="text-xs text-gray-500 mt-0.5">
+            {description}
+          </div>
+        )}
+      </div>
     </div>
   );
 };

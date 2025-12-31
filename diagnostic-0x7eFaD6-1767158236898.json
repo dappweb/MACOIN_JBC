@@ -1,0 +1,73 @@
+{
+  "userAddress": "0x7eFaD6Bef04631BE34De71b2Df9378C727f185b7",
+  "timestamp": "2025-12-31T05:17:16.787Z",
+  "checks": {
+    "network": {
+      "success": false,
+      "error": "getaddrinfo ENOTFOUND rpc.mcchain.io"
+    },
+    "balance": {
+      "success": false,
+      "error": "getaddrinfo ENOTFOUND rpc.mcchain.io"
+    },
+    "contract": {
+      "success": false,
+      "error": "getaddrinfo ENOTFOUND rpc.mcchain.io",
+      "isAccessible": false
+    },
+    "userProtocolStatus": {
+      "success": true,
+      "userInfo": null,
+      "userTicket": null,
+      "isOwner": false,
+      "canPurchase": false
+    },
+    "transactionSimulation": {
+      "success": false,
+      "ticketAmount": "100",
+      "gasEstimate": null,
+      "gasError": "getaddrinfo ENOTFOUND rpc.mcchain.io",
+      "canSimulate": false
+    }
+  },
+  "summary": {
+    "totalIssues": 5,
+    "criticalIssues": 3,
+    "highIssues": 1,
+    "issues": [
+      {
+        "type": "network",
+        "severity": "critical",
+        "description": "无法连接到MC Chain网络"
+      },
+      {
+        "type": "balance",
+        "severity": "critical",
+        "description": "无法获取用户余额"
+      },
+      {
+        "type": "contract",
+        "severity": "critical",
+        "description": "无法访问协议合约"
+      },
+      {
+        "type": "referrer",
+        "severity": "high",
+        "description": "用户未绑定推荐人且非合约拥有者"
+      },
+      {
+        "type": "transaction",
+        "severity": "medium",
+        "description": "购票交易模拟失败"
+      }
+    ],
+    "solutions": [
+      "请检查网络连接，确保钱包已连接到MC Chain (Chain ID: 88813)",
+      "合约可能暂时不可用，请稍后重试或联系技术支持",
+      "请先绑定推荐人后再尝试购买门票",
+      "交易预检查失败: getaddrinfo ENOTFOUND rpc.mcchain.io"
+    ],
+    "canPurchaseTicket": false,
+    "recommendedAction": "立即检查网络连接和钱包配置"
+  }
+}

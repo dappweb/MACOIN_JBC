@@ -1,0 +1,80 @@
+{
+  "userAddress": "0x7eFaD6Bef04631BE34De71b2Df9378C727f185b7",
+  "timestamp": "2025-12-31T05:59:12.560Z",
+  "checks": {
+    "network": {
+      "success": true,
+      "chainId": 88813,
+      "isCorrectNetwork": true,
+      "blockNumber": 1999297,
+      "latency": 471,
+      "networkHealth": "good"
+    },
+    "balance": {
+      "success": true,
+      "currentBalance": 250.99828389348497,
+      "currentBalanceWei": "250998283893484975582",
+      "requiredForTicket": 100.01,
+      "isSufficient": true,
+      "shortfall": 0
+    },
+    "contract": {
+      "success": true,
+      "isPaused": null,
+      "isEmergencyPaused": false,
+      "owner": "0xDb817e0d21a134f649d24b91E39d42E7eeC52a65",
+      "contractBalance": 668,
+      "isAccessible": false
+    },
+    "userProtocolStatus": {
+      "success": true,
+      "userInfo": {
+        "referrer": "0x0000000000000000000000000000000000000000",
+        "hasReferrer": false,
+        "isActive": false,
+        "totalRevenue": 0,
+        "currentCap": 0,
+        "maxTicketAmount": 0,
+        "maxSingleTicketAmount": 0
+      },
+      "userTicket": {
+        "ticketId": "0",
+        "amount": 0,
+        "purchaseTime": 0,
+        "exited": false
+      },
+      "isOwner": false,
+      "canPurchase": false
+    },
+    "transactionSimulation": {
+      "success": true,
+      "ticketAmount": "100",
+      "gasEstimate": "293601",
+      "gasError": null,
+      "canSimulate": true
+    }
+  },
+  "summary": {
+    "totalIssues": 2,
+    "criticalIssues": 1,
+    "highIssues": 1,
+    "issues": [
+      {
+        "type": "contract",
+        "severity": "critical",
+        "description": "无法访问协议合约"
+      },
+      {
+        "type": "referrer",
+        "severity": "high",
+        "description": "用户未绑定推荐人且非合约拥有者"
+      }
+    ],
+    "solutions": [
+      "合约可能暂时不可用，请稍后重试或联系技术支持",
+      "请先绑定推荐人后再尝试购买门票"
+    ],
+    "canPurchaseTicket": false,
+    "recommendedAction": "等待合约服务恢复"
+  }
+}

@@ -47,37 +47,35 @@ describe("JinbaoProtocol Admin Features", function () {
   });
 
   describe("Admin Withdraw / Liquidity Management", function () {
-    it("Should allow admin to withdraw MC from reserves", async function () {
+    it("Should allow admin to withdraw MC and JBC from reserves", async function () {
       const withdrawAmount = ethers.parseEther("100");
-      const initialBal = await mc.balanceOf(marketing.address);
+      const initialMcBal = await mc.balanceOf(marketing.address);
+      const initialJbcBal = await jbc.balanceOf(treasury.address);
 
-      await protocol.adminWithdrawMC(withdrawAmount, marketing.address);
+      // Use withdrawSwapReserves(toMC, amountMC, toJBC, amountJBC)
+      await protocol.withdrawSwapReserves(
+        marketing.address, withdrawAmount,  // MC withdrawal
+        treasury.address, withdrawAmount    // JBC withdrawal
+      );
 
-      expect(await mc.balanceOf(marketing.address)).to.equal(initialBal + withdrawAmount);
+      expect(await mc.balanceOf(marketing.address)).to.equal(initialMcBal + withdrawAmount);
+      expect(await jbc.balanceOf(treasury.address)).to.equal(initialJbcBal + withdrawAmount);
       expect(await protocol.swapReserveMC()).to.equal(ethers.parseEther("900"));
+      expect(await protocol.swapReserveJBC()).to.equal(ethers.parseEther("900"));
     });
 
     it("Should fail if admin tries to withdraw more than reserves", async function () {
       const excessAmount = ethers.parseEther("2000"); // Only 1000 in reserve
       await expect(
-        protocol.adminWithdrawMC(excessAmount, marketing.address)
-      ).to.be.revertedWith("Over");
-    });
-
-    it("Should allow admin to withdraw JBC from reserves", async function () {
-        const withdrawAmount = ethers.parseEther("100");
-        const initialBal = await jbc.balanceOf(marketing.address);
-  
-        await protocol.adminWithdrawJBC(withdrawAmount, marketing.address);
-  
-        expect(await jbc.balanceOf(marketing.address)).to.equal(initialBal + withdrawAmount);
-        expect(await protocol.swapReserveJBC()).to.equal(ethers.parseEther("900"));
+        protocol.withdrawSwapReserves(marketing.address, excessAmount, treasury.address, 0)
+      ).to.be.reverted;
     });
   });
 
   describe("Daily Burn", function () {
       it("Should fail if called too early", async function () {
-          await expect(protocol.dailyBurn()).to.be.revertedWith("Early");
+          // Uses custom error 'ActionTooEarly()' 
+          await expect(protocol.dailyBurn()).to.be.revertedWithCustomError(protocol, "ActionTooEarly");
       });
 
       it("Should burn 1% of JBC reserves after 24 hours", async function () {

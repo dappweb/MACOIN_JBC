@@ -1,7 +1,9 @@
 const { expect } = require("chai");
 const { ethers, upgrades } = require("hardhat");
 
-describe("JBCv2 Token Tests", function () {
+// Skip this test suite - JBCv2 contract no longer exists
+// Using simplified JBC.sol contract now
+describe.skip("JBCv2 Token Tests", function () {
   let jbcv2;
   let owner, treasury, marketing, liquidity, user1, user2;
   let jbcv2Address;

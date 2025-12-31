@@ -1,7 +1,9 @@
 const { expect } = require("chai");
 const { ethers, upgrades } = require("hardhat");
 
-describe("JBC Migration Tests", function () {
+// Skip this test suite - JBCv2 contract no longer exists
+// Migration was for legacy v1->v2 upgrade which is complete
+describe.skip("JBC Migration Tests", function () {
   let oldJBC, newJBC, migration;
   let owner, user1, user2;
   let migrationAddress;

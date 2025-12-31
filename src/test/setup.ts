@@ -1,8 +1,35 @@
 import '@testing-library/jest-dom'
 import { vi } from 'vitest'
 
+// Add jest as alias to vi for compatibility
+// @ts-ignore
+globalThis.jest = vi
+
+// Mock matchMedia for responsive tests
+Object.defineProperty(window, 'matchMedia', {
+  writable: true,
+  value: vi.fn().mockImplementation((query: string) => ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addListener: vi.fn(),
+    removeListener: vi.fn(),
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+    dispatchEvent: vi.fn(),
+  })),
+})
+
+// Mock ResizeObserver
+class ResizeObserverMock {
+  observe = vi.fn()
+  unobserve = vi.fn()
+  disconnect = vi.fn()
+}
+window.ResizeObserver = ResizeObserverMock
+
 // Mock Web3 providers
-global.window = Object.assign(global.window, {
+Object.assign(window, {
   ethereum: {
     request: vi.fn(),
     on: vi.fn(),
@@ -30,19 +57,31 @@ vi.mock('react-hot-toast', () => ({
   },
 }))
 
-// Mock Lucide React icons
+// Mock Lucide React icons - return null for all icons (no JSX in .ts file)
 vi.mock('lucide-react', () => ({
-  Zap: () => <div data-testid="zap-icon" />,
-  Clock: () => <div data-testid="clock-icon" />,
-  TrendingUp: () => <div data-testid="trending-up-icon" />,
-  AlertCircle: () => <div data-testid="alert-circle-icon" />,
-  ArrowRight: () => <div data-testid="arrow-right-icon" />,
-  ShieldCheck: () => <div data-testid="shield-check-icon" />,
-  Lock: () => <div data-testid="lock-icon" />,
-  Package: () => <div data-testid="package-icon" />,
-  History: () => <div data-testid="history-icon" />,
-  ChevronDown: () => <div data-testid="chevron-down-icon" />,
-  ChevronUp: () => <div data-testid="chevron-up-icon" />,
+  Zap: () => null,
+  Clock: () => null,
+  TrendingUp: () => null,
+  AlertCircle: () => null,
+  ArrowRight: () => null,
+  ShieldCheck: () => null,
+  Lock: () => null,
+  Package: () => null,
+  History: () => null,
+  ChevronDown: () => null,
+  ChevronUp: () => null,
+  CheckCircle: () => null,
+  XCircle: () => null,
+  Info: () => null,
+  Wallet: () => null,
+  Users: () => null,
+  RefreshCw: () => null,
+  Settings: () => null,
+  Menu: () => null,
+  X: () => null,
+  Copy: () => null,
+  ExternalLink: () => null,
+  Loader2: () => null,
 }))
 
 // Global test utilities

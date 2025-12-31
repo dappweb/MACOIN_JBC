@@ -1175,3 +1175,4 @@ contract JinbaoProtocolV4 is Initializable, OwnableUpgradeable, UUPSUpgradeable,
         emit NativeMCWithdrawn(_to, _amount);
     }
 }
+

@@ -82,12 +82,11 @@ export const DAILY_BURN_MANAGER_ABI = [
   "event DailyBurnExecuted(uint256 burnAmount, uint256 timestamp, address executor)"
 ]
 
-// Contract Addresses - MC Chain Testnet (Native MC Version)
+// Contract Addresses - MC Chain V4 (Native MC Version)
 export const CONTRACT_ADDRESSES = {
-  // MC_TOKEN: "0xB2B8777BcBc7A8DEf49F022773d392a8787cf9EF", // No longer needed
-  JBC_TOKEN: "0x1Bf9ACe2485BC3391150762a109886d0B85f40Da",
-  PROTOCOL: "0x1EC3576609b2E1D834570Bd56A1A51fb24fD7FB5", // Will be updated with native MC version
-  DAILY_BURN_MANAGER: "0x6C2FdDEb939D92E0dde178845F570FC4E0d213bc"
+  JBC_TOKEN: "0xAAb88c0Bc9f4A73019e4Dbfc5c8De82A8dCb970D",
+  PROTOCOL: "0x77601aC473dB1195A1A9c82229C9bD008a69987A",
+  // DAILY_BURN_MANAGER: "待部署"
 };
 
 interface Web3ContextType {

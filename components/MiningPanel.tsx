@@ -104,6 +104,15 @@ const MiningPanel: React.FC = () => {
   const [secondsInUnit, setSecondsInUnit] = useState<number>(60); // 从合约获取的时间单位
   const [currentTime, setCurrentTime] = useState(Math.floor(Date.now() / 1000)); // 用于倒计时
   
+  // 动态奖励状态
+  const [dynamicRewards, setDynamicRewards] = useState({
+    totalEarned: 0,
+    totalClaimed: 0,
+    pendingAmount: 0,
+    claimableAmount: 0
+  });
+  const [isClaimingDynamic, setIsClaimingDynamic] = useState(false);
+  
   const { t, language } = useLanguage();
   const { protocolContract, account, isConnected, hasReferrer, isOwner, referrerAddress, checkReferrerStatus, provider, mcBalance } = useWeb3();
   
@@ -126,6 +135,19 @@ const MiningPanel: React.FC = () => {
 
   useEventRefresh('rewardsChanged', () => {
     checkTicketStatus();
+  });
+
+  // 监听动态奖励相关事件
+  useEventRefresh('dynamic_claim', () => {
+    fetchDynamicRewards();
+  });
+
+  useEventRefresh('ticket_purchase', () => {
+    fetchDynamicRewards(); // 购买门票可能触发动态奖励
+  });
+
+  useEventRefresh('liquidity_stake', () => {
+    fetchDynamicRewards(); // 质押流动性可能触发动态奖励
   });
   // Auto-select ticket tier if user has bought one
   useEffect(() => {
@@ -433,12 +455,36 @@ const MiningPanel: React.FC = () => {
               maxTicketAmount: userInfo.maxTicketAmount,
               maxSingleTicketAmount: maxSingleTicket
           });
+
+          // 获取动态奖励数据 (V3合约功能)
+          await fetchDynamicRewards();
       } catch (err) {
           console.error('Failed to check ticket status', err);
           toast.error('Failed to load ticket information. Please try again.');
       } finally {
           setIsLoadingTicketStatus(false);
       }
+  };
+
+  // 获取动态奖励数据
+  const fetchDynamicRewards = async () => {
+    if (!protocolContract || !account) return;
+    
+    try {
+      // 检查合约是否支持V3功能
+      if (protocolContract.getUserDynamicRewards) {
+        const dynamicRewardsData = await protocolContract.getUserDynamicRewards(account);
+        setDynamicRewards({
+          totalEarned: parseFloat(ethers.formatEther(dynamicRewardsData.totalEarned)),
+          totalClaimed: parseFloat(ethers.formatEther(dynamicRewardsData.totalClaimed)),
+          pendingAmount: parseFloat(ethers.formatEther(dynamicRewardsData.pendingAmount)),
+          claimableAmount: parseFloat(ethers.formatEther(dynamicRewardsData.claimableAmount))
+        });
+      }
+    } catch (err) {
+      console.warn("Dynamic rewards not available (V2 contract or error):", err);
+      // V2合约或其他错误，保持默认值
+    }
   };
 
   const fetchHistory = async () => {
@@ -557,7 +603,18 @@ const MiningPanel: React.FC = () => {
     };
     
     initializeData();
-  }, [protocolContract, account]);
+
+    // 定期刷新动态奖励数据
+    const dynamicRewardsTimer = setInterval(() => {
+      if (isConnected && account) {
+        fetchDynamicRewards();
+      }
+    }, 10000); // 每10秒刷新一次动态奖励
+
+    return () => {
+      clearInterval(dynamicRewardsTimer);
+    };
+  }, [protocolContract, account, isConnected]);
 
   useEffect(() => {
     const fetchFlexDuration = async () => {
@@ -780,6 +837,35 @@ const MiningPanel: React.FC = () => {
           showFriendlyError(err, 'claimRewards');
       } finally {
           setTxPending(false);
+      }
+  };
+
+  // 提取动态奖励
+  const handleClaimDynamicRewards = async () => {
+      if (!protocolContract) return;
+      if (dynamicRewards.claimableAmount <= 0) {
+          toast.error('没有可提取的动态奖励');
+          return;
+      }
+
+      setIsClaimingDynamic(true);
+      try {
+          const tx = await protocolContract.claimDynamicRewards();
+          toast.loading('🎯 提取动态奖励中...', { id: 'claim-dynamic' });
+          await tx.wait();
+          toast.success('🎉 动态奖励提取成功！', { id: 'claim-dynamic' });
+          
+          // 刷新动态奖励数据
+          await fetchDynamicRewards();
+          
+          // 使用全局刷新机制
+          await onTransactionSuccess('dynamic_claim');
+      } catch (err: any) {
+          console.error('Failed to claim dynamic rewards', err);
+          toast.dismiss('claim-dynamic');
+          showFriendlyError(err, 'claimDynamicRewards');
+      } finally {
+          setIsClaimingDynamic(false);
       }
   };
 
@@ -1509,6 +1595,74 @@ const MiningPanel: React.FC = () => {
         )}
       </div>
     )}
+
+      {/* 动态奖励面板 - V3新功能 */}
+      {currentStep === 3 && isConnected && (dynamicRewards.totalEarned > 0 || dynamicRewards.claimableAmount > 0) && (
+        <div className="glass-panel p-4 md:p-6 rounded-xl border-2 border-purple-500/50 animate-fade-in backdrop-blur-sm bg-gray-900/50 mt-6 shadow-xl shadow-purple-500/20">
+          <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+            <div className="flex items-center gap-2">
+              <div className="bg-purple-500/20 p-2 rounded-lg text-purple-400 border border-purple-500/30">
+                <TrendingUp size={20} />
+              </div>
+              <h3 className="text-lg font-bold text-white">动态奖励 (纯MC)</h3>
+            </div>
+            <div className="px-3 py-1 rounded-full text-sm font-bold border bg-purple-500/20 text-purple-400 border-purple-500/30">
+              V3 新功能
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+            <div className="bg-gray-800/50 p-3 rounded-lg border border-gray-700">
+              <div className="text-gray-400 mb-1 text-xs">总获得</div>
+              <div className="text-lg font-bold text-purple-400 font-mono">{dynamicRewards.totalEarned.toFixed(4)} MC</div>
+            </div>
+            <div className="bg-gray-800/50 p-3 rounded-lg border border-gray-700">
+              <div className="text-gray-400 mb-1 text-xs">已提取</div>
+              <div className="text-lg font-bold text-gray-300 font-mono">{dynamicRewards.totalClaimed.toFixed(4)} MC</div>
+            </div>
+            <div className="bg-gray-800/50 p-3 rounded-lg border border-gray-700">
+              <div className="text-gray-400 mb-1 text-xs">可提取</div>
+              <div className="text-lg font-bold text-green-400 font-mono">{dynamicRewards.claimableAmount.toFixed(4)} MC</div>
+            </div>
+            <div className="bg-gray-800/50 p-3 rounded-lg border border-gray-700">
+              <div className="text-gray-400 mb-1 text-xs">待解锁</div>
+              <div className="text-lg font-bold text-orange-400 font-mono">{dynamicRewards.pendingAmount.toFixed(4)} MC</div>
+            </div>
+          </div>
+
+          {/* 动态奖励说明 */}
+          <div className="bg-purple-900/10 border border-purple-500/20 rounded-lg p-3 mb-4">
+            <div className="text-xs text-purple-200/80">
+              <p className="font-bold mb-1 text-purple-300">动态奖励说明</p>
+              <ul className="list-disc pl-4 space-y-0.5">
+                <li>直推奖励：推荐用户购买门票时即时获得 (25% MC)</li>
+                <li>层级奖励：多层级推荐奖励，根据活跃直推数决定层数 (纯MC)</li>
+                <li>极差奖励：基于V等级的团队奖励，30天后解锁 (纯MC)</li>
+              </ul>
+            </div>
+          </div>
+
+          {/* 提取按钮 */}
+          {dynamicRewards.claimableAmount > 0 && (
+            <button
+              onClick={handleClaimDynamicRewards}
+              disabled={isClaimingDynamic}
+              className="w-full py-3 bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-400 hover:to-purple-500 text-white font-bold rounded-lg shadow-lg shadow-purple-500/30 transition-all transform hover:scale-[1.02] active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            >
+              {isClaimingDynamic && <Loader2 className="animate-spin" size={20} />}
+              {isClaimingDynamic ? '提取中...' : `提取动态奖励 (${dynamicRewards.claimableAmount.toFixed(4)} MC)`}
+            </button>
+          )}
+
+          {dynamicRewards.claimableAmount === 0 && dynamicRewards.pendingAmount > 0 && (
+            <div className="text-center py-2">
+              <p className="text-sm text-gray-400">
+                所有动态奖励正在解锁中，请等待解锁后提取
+              </p>
+            </div>
+          )}
+        </div>
+      )}
       {/* 3x Cap Section */}
       {isConnected && (
         <div className="glass-panel p-4 md:p-6 rounded-xl border border-gray-800 bg-gray-900/50 mt-8 animate-fade-in">

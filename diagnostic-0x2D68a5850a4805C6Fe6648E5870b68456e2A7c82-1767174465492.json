@@ -1,0 +1,71 @@
+{
+  "userAddress": "0x2D68a5850a4805C6Fe6648E5870b68456e2A7c82",
+  "timestamp": "2025-12-31T09:47:44.733Z",
+  "issues": [
+    {
+      "type": "contract",
+      "severity": "critical",
+      "description": "无法访问协议合约",
+      "error": "bad address checksum (argument=\"address\", value=\"0x742d35Cc6634C0532925a3b8D4C9db96C4b5Da5C\", code=INVALID_ARGUMENT, version=6.16.0)"
+    },
+    {
+      "type": "user_state",
+      "severity": "high",
+      "description": "无法获取用户信息",
+      "error": "bad address checksum (argument=\"address\", value=\"0x742d35Cc6634C0532925a3b8D4C9db96C4b5Da5C\", code=INVALID_ARGUMENT, version=6.16.0)"
+    },
+    {
+      "type": "user_state",
+      "severity": "high",
+      "description": "无法获取门票信息",
+      "error": "bad address checksum (argument=\"address\", value=\"0x742d35Cc6634C0532925a3b8D4C9db96C4b5Da5C\", code=INVALID_ARGUMENT, version=6.16.0)"
+    },
+    {
+      "type": "user_state",
+      "severity": "medium",
+      "description": "无法获取用户等级",
+      "error": "bad address checksum (argument=\"address\", value=\"0x742d35Cc6634C0532925a3b8D4C9db96C4b5Da5C\", code=INVALID_ARGUMENT, version=6.16.0)"
+    },
+    {
+      "type": "user_state",
+      "severity": "medium",
+      "description": "无法获取质押信息",
+      "error": "Cannot read properties of undefined (reading 'isActive')"
+    },
+    {
+      "type": "user_state",
+      "severity": "medium",
+      "description": "没有找到任何奖励记录"
+    },
+    {
+      "type": "component",
+      "severity": "high",
+      "description": "奖励事件查询失败",
+      "error": "Cannot read properties of undefined (reading 'isActive')"
+    }
+  ],
+  "solutions": [
+    "合约可能暂时不可用，请稍后重试或联系技术支持",
+    "用户可能还没有产生奖励，或者奖励事件查询失败"
+  ],
+  "network": {
+    "chainId": 88813,
+    "blockNumber": 2003868,
+    "latency": 721,
+    "isCorrectNetwork": true
+  },
+  "contract": {
+    "isAccessible": false,
+    "error": "bad address checksum (argument=\"address\", value=\"0x742d35Cc6634C0532925a3b8D4C9db96C4b5Da5C\", code=INVALID_ARGUMENT, version=6.16.0)"
+  },
+  "userStakes": [],
+  "rewardEvents": {
+    "rewardClaimed": 0,
+    "rewardPaid": 0,
+    "referralReward": 0,
+    "differentialReward": 0,
+    "differentialReleased": 0
+  },
+  "recommendedAction": "存在严重问题，需要立即处理",
+  "canPurchaseTicket": false
+}

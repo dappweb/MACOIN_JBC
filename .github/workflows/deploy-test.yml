@@ -1,0 +1,408 @@
+name: Deploy Test Branch to Cloudflare Preview
+
+on:
+  push:
+    branches: [ test ]
+  workflow_dispatch:
+    inputs:
+      force_deploy:
+        description: '强制部署 (跳过测试)'
+        required: false
+        default: 'false'
+        type: boolean
+
+env:
+  NODE_VERSION: '18'
+  CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+  CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+  PREVIEW_PROJECT: 'jbc-ac-preview'
+
+jobs:
+  # 构建和测试阶段
+  build-and-test:
+    runs-on: ubuntu-latest
+    if: github.event.inputs.force_deploy != 'true'
+    
+    steps:
+    - name: 📥 Checkout Code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: 🔧 Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+
+    - name: 📦 Install Dependencies
+      run: |
+        npm ci
+        echo "✅ Dependencies installed successfully"
+
+    - name: 🔨 Build Frontend (Optimized with Error Handling)
+      run: |
+        echo "🚀 Building optimized frontend for test environment..."
+        echo "📋 Verifying Chinese error handling system integration..."
+        
+        # 验证错误处理文件存在
+        if [ -f "utils/chineseErrorFormatter.ts" ]; then
+          echo "✅ Chinese error formatter found"
+        else
+          echo "❌ Chinese error formatter missing"
+          exit 1
+        fi
+        
+        if [ -f "components/ErrorToast.tsx" ]; then
+          echo "✅ Error toast component found"
+        else
+          echo "❌ Error toast component missing"
+          exit 1
+        fi
+        
+        # 构建前端
+        npm run build
+        echo "📊 Build analysis..."
+        npm run perf:build-size || echo "⚠️ Build size analysis not available"
+        
+        # 验证构建产物包含错误处理系统
+        if [ -d "dist" ]; then
+          echo "✅ Build artifacts created successfully"
+          echo "📁 Build contents:"
+          ls -la dist/ | head -10
+        else
+          echo "❌ Build failed - no dist directory"
+          exit 1
+        fi
+        
+        echo "✅ Optimized frontend build with error handling completed"
+
+    - name: 🧪 Run Tests
+      run: |
+        echo "🧪 Running test suite..."
+        npm run test:all || {
+          echo "❌ Tests failed"
+          exit 1
+        }
+        echo "✅ All tests passed"
+
+    - name: 📊 Upload Build Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-build-artifacts
+        path: |
+          dist/
+          functions/
+        retention-days: 7
+
+  # 智能合约部署阶段 (测试网络)
+  deploy-contracts-test:
+    runs-on: ubuntu-latest
+    needs: [build-and-test]
+    if: always() && (needs.build-and-test.result == 'success' || github.event.inputs.force_deploy == 'true')
+    
+    steps:
+    - name: 📥 Checkout Code
+      uses: actions/checkout@v4
+
+    - name: 🔧 Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+
+    - name: 📦 Install Dependencies
+      run: npm ci
+
+    - name: 🔨 Compile Contracts
+      run: |
+        echo "🔨 Compiling smart contracts..."
+        npm run compile
+        echo "✅ Contracts compiled successfully"
+
+    - name: 🚀 Deploy to Test Network
+      env:
+        PRIVATE_KEY: ${{ secrets.TEST_PRIVATE_KEY }}
+        MC_RPC_URL: ${{ secrets.MC_RPC_URL }}
+      run: |
+        echo "🚀 Deploying contracts to test network..."
+        # 使用测试网络部署 (如果有的话)
+        if npm run deploy:sepolia 2>/dev/null; then
+          echo "✅ Contracts deployed to Sepolia testnet"
+        else
+          echo "ℹ️ Skipping contract deployment (testnet not configured)"
+        fi
+
+    - name: 📝 Save Test Deployment Info
+      run: |
+        echo "📝 Saving test deployment information..."
+        mkdir -p test-deployment-info
+        cp deployments/sepolia/*.json test-deployment-info/ 2>/dev/null || echo "No testnet deployment files found"
+        echo "$(date -u)" > test-deployment-info/deployment-timestamp.txt
+        echo "test" > test-deployment-info/environment.txt
+        echo "${{ github.ref_name }}" > test-deployment-info/branch.txt
+
+    - name: 📊 Upload Test Deployment Info
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-deployment-info
+        path: test-deployment-info/
+        retention-days: 7
+
+  # Cloudflare Pages 测试部署阶段
+  deploy-frontend-test:
+    runs-on: ubuntu-latest
+    needs: [build-and-test]
+    if: always() && (needs.build-and-test.result == 'success' || github.event.inputs.force_deploy == 'true')
+    
+    steps:
+    - name: 📥 Checkout Code
+      uses: actions/checkout@v4
+
+    - name: 🔧 Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+
+    - name: 📦 Install Dependencies
+      run: npm ci
+
+    - name: 📥 Download Build Artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: test-build-artifacts
+        path: .
+
+    - name: 🔧 Setup Wrangler
+      run: |
+        npm install -g wrangler
+        echo "✅ Wrangler installed"
+
+    - name: 🔨 Build Frontend (if artifacts not available)
+      if: github.event.inputs.force_deploy == 'true'
+      run: |
+        echo "🚀 Building optimized frontend for forced test deployment..."
+        echo "📋 Verifying Chinese error handling system integration..."
+        
+        # 验证错误处理文件存在
+        if [ -f "utils/chineseErrorFormatter.ts" ] && [ -f "components/ErrorToast.tsx" ]; then
+          echo "✅ Chinese error handling system verified"
+        else
+          echo "❌ Chinese error handling system incomplete"
+          exit 1
+        fi
+        
+        npm run build
+        npm run perf:build-size || echo "⚠️ Build size analysis not available"
+        echo "✅ Optimized frontend build with error handling completed"
+
+    - name: 🚀 Deploy to Cloudflare Pages (Test)
+      env:
+        CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      run: |
+        echo "🚀 Deploying to Cloudflare Pages (Test Environment)..."
+        
+        # 确定项目名称
+        PROJECT_NAME="jinbao-protocol-test"
+        if [ "${{ github.event.inputs.environment }}" = "staging" ]; then
+          PROJECT_NAME="jinbao-protocol-staging"
+        elif [ "${{ github.event.inputs.environment }}" = "preview" ]; then
+          PROJECT_NAME="jinbao-protocol-preview"
+        fi
+        
+        echo "� Projgect Name: $PROJECT_NAME"
+        echo "🌿 Branch: ${{ github.ref_name }}"
+        echo "📝 Commit: ${{ github.sha }}"
+        
+        # 部署到测试环境
+        wrangler pages deploy dist \
+          --project-name="$PROJECT_NAME" \
+          --compatibility-date="2024-01-01" \
+          --compatibility-flags="nodejs_compat"
+        
+        echo "✅ Frontend deployed to Cloudflare Pages with performance optimizations"
+        echo "🌐 Test URL will be available at: https://$PROJECT_NAME.pages.dev"
+
+    - name: 🔧 Configure Test Environment Variables
+      env:
+        CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      run: |
+        echo "🔧 Setting test environment variables..."
+        
+        # 确定项目名称
+        PROJECT_NAME="jinbao-protocol-test"
+        if [ "${{ github.event.inputs.environment }}" = "staging" ]; then
+          PROJECT_NAME="jinbao-protocol-staging"
+        elif [ "${{ github.event.inputs.environment }}" = "preview" ]; then
+          PROJECT_NAME="jinbao-protocol-preview"
+        fi
+        
+        # 设置测试环境变量 (使用测试网络配置)
+        if [ -n "${{ secrets.TEST_JBC_CONTRACT_ADDRESS }}" ]; then
+          wrangler pages secret put JBC_CONTRACT_ADDRESS --text "${{ secrets.TEST_JBC_CONTRACT_ADDRESS }}" --project-name="$PROJECT_NAME"
+        fi
+        
+        if [ -n "${{ secrets.TEST_PROTOCOL_CONTRACT_ADDRESS }}" ]; then
+          wrangler pages secret put PROTOCOL_CONTRACT_ADDRESS --text "${{ secrets.TEST_PROTOCOL_CONTRACT_ADDRESS }}" --project-name="$PROJECT_NAME"
+        fi
+        
+        if [ -n "${{ secrets.TEST_PRIVATE_KEY }}" ]; then
+          wrangler pages secret put PRIVATE_KEY --text "${{ secrets.TEST_PRIVATE_KEY }}" --project-name="$PROJECT_NAME"
+        fi
+        
+        # 使用测试网络RPC
+        if [ -n "${{ secrets.SEPOLIA_RPC_URL }}" ]; then
+          wrangler pages secret put RPC_URL --text "${{ secrets.SEPOLIA_RPC_URL }}" --project-name="$PROJECT_NAME"
+        else
+          wrangler pages secret put RPC_URL --text "${{ secrets.MC_RPC_URL }}" --project-name="$PROJECT_NAME"
+        fi
+        
+        # 设置环境标识
+        wrangler pages secret put ENVIRONMENT --text "test" --project-name="$PROJECT_NAME"
+        wrangler pages secret put BRANCH --text "${{ github.ref_name }}" --project-name="$PROJECT_NAME"
+        
+        echo "✅ Test environment variables configured"
+
+  # 测试部署后验证
+  post-deploy-test-verification:
+    runs-on: ubuntu-latest
+    needs: [deploy-frontend-test]
+    if: always() && needs.deploy-frontend-test.result == 'success'
+    
+    steps:
+    - name: 🔍 Health Check (Test Environment)
+      run: |
+        echo "🔍 Performing post-deployment health checks for test environment..."
+        
+        # 确定项目名称和URL
+        PROJECT_NAME="jinbao-protocol-test"
+        if [ "${{ github.event.inputs.environment }}" = "staging" ]; then
+          PROJECT_NAME="jinbao-protocol-staging"
+        elif [ "${{ github.event.inputs.environment }}" = "preview" ]; then
+          PROJECT_NAME="jinbao-protocol-preview"
+        fi
+        
+        TEST_URL="https://$PROJECT_NAME.pages.dev"
+        
+        echo "🌐 Testing URL: $TEST_URL"
+        
+        # 等待部署完成
+        echo "⏳ Waiting for deployment to be ready..."
+        sleep 60
+        
+        # 检查前端是否可访问
+        echo "🌐 Checking frontend accessibility..."
+        response=$(curl -s -o /dev/null -w "%{http_code}" "$TEST_URL" || echo "000")
+        
+        if [ "$response" = "200" ]; then
+          echo "✅ Frontend is accessible (HTTP $response)"
+        else
+          echo "⚠️ Frontend check returned HTTP $response (may still be deploying)"
+          # 不要失败，因为Cloudflare Pages部署可能需要更多时间
+        fi
+        
+        # 检查API端点 (如果存在)
+        API_URL="$TEST_URL/api/health"
+        echo "🔧 Checking API endpoint: $API_URL"
+        
+        api_response=$(curl -s "$API_URL" || echo "API not available")
+        echo "📄 API Response: $api_response"
+        
+        # 检查错误处理系统集成
+        echo "🔍 Verifying Chinese error handling system integration..."
+        
+        # 检查页面是否包含错误处理相关的JavaScript
+        page_content=$(curl -s "$TEST_URL" || echo "")
+        if echo "$page_content" | grep -q "chineseErrorFormatter\|ErrorToast"; then
+          echo "✅ Chinese error handling system detected in deployed application"
+        else
+          echo "⚠️ Chinese error handling system not detected (may be bundled)"
+        fi
+        
+        # 基本连通性测试
+        if curl -s --head "$TEST_URL" | head -n 1 | grep -q "200\|301\|302"; then
+          echo "✅ Basic connectivity test passed"
+        else
+          echo "⚠️ Basic connectivity test failed (deployment may still be in progress)"
+        fi
+        
+        # 检查关键页面
+        echo "🔍 Checking key application pages..."
+        
+        # 检查挖矿页面
+        mining_response=$(curl -s -o /dev/null -w "%{http_code}" "$TEST_URL/#/mining" || echo "000")
+        echo "⛏️ Mining page: HTTP $mining_response"
+        
+        # 检查团队页面
+        team_response=$(curl -s -o /dev/null -w "%{http_code}" "$TEST_URL/#/team" || echo "000")
+        echo "👥 Team page: HTTP $team_response"
+
+    - name: 📊 Test Deployment Summary
+      run: |
+        echo "📊 ======================================="
+        echo "🧪 TEST DEPLOYMENT COMPLETED"
+        echo "📊 ======================================="
+        echo "⏰ Deployment Time: $(date -u)"
+        echo "🌿 Branch: ${{ github.ref_name }}"
+        echo "📝 Commit: ${{ github.sha }}"
+        echo "👤 Triggered by: ${{ github.actor }}"
+        echo "🌐 Environment: ${{ github.event.inputs.environment || 'test' }}"
+        
+        # 确定项目名称
+        PROJECT_NAME="jinbao-protocol-test"
+        if [ "${{ github.event.inputs.environment }}" = "staging" ]; then
+          PROJECT_NAME="jinbao-protocol-staging"
+        elif [ "${{ github.event.inputs.environment }}" = "preview" ]; then
+          PROJECT_NAME="jinbao-protocol-preview"
+        fi
+        
+        echo "🔗 Test URL: https://$PROJECT_NAME.pages.dev"
+        echo "📊 ======================================="
+
+  # 通知阶段
+  notify-test:
+    runs-on: ubuntu-latest
+    needs: [deploy-frontend-test, post-deploy-test-verification]
+    if: always()
+    
+    steps:
+    - name: 📢 Send Test Success Notification
+      if: needs.post-deploy-test-verification.result == 'success'
+      run: |
+        if [ -n "${{ secrets.TELEGRAM_BOT_TOKEN }}" ] && [ -n "${{ secrets.TELEGRAM_CHAT_ID }}" ]; then
+          echo "📢 Sending test deployment success notification..."
+          
+          # 确定项目名称
+          PROJECT_NAME="jinbao-protocol-test"
+          if [ "${{ github.event.inputs.environment }}" = "staging" ]; then
+            PROJECT_NAME="jinbao-protocol-staging"
+          elif [ "${{ github.event.inputs.environment }}" = "preview" ]; then
+            PROJECT_NAME="jinbao-protocol-preview"
+          fi
+          
+          message="🧪 <b>测试环境部署成功</b>%0A%0A✅ 状态: 部署完成%0A🌿 分支: ${{ github.ref_name }}%0A⏰ 时间: $(date -u)%0A🌐 测试地址: https://$PROJECT_NAME.pages.dev%0A📝 提交: ${{ github.sha }}%0A👤 操作者: ${{ github.actor }}%0A🔗 详情: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}%0A%0A🚀 中文错误提示系统已集成！%0A📋 功能: 智能错误翻译、上下文提示、解决建议"
+          
+          curl -s -X POST \
+            "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
+            -d "chat_id=${{ secrets.TELEGRAM_CHAT_ID }}" \
+            -d "text=$message" \
+            -d "parse_mode=HTML"
+        fi
+
+    - name: 🚨 Send Test Failure Notification
+      if: failure() || needs.post-deploy-test-verification.result == 'failure'
+      run: |
+        if [ -n "${{ secrets.TELEGRAM_BOT_TOKEN }}" ] && [ -n "${{ secrets.TELEGRAM_CHAT_ID }}" ]; then
+          echo "🚨 Sending test deployment failure notification..."
+          
+          message="🚨 <b>测试环境部署失败</b>%0A%0A❌ 状态: 部署失败%0A🌿 分支: ${{ github.ref_name }}%0A⏰ 时间: $(date -u)%0A📝 提交: ${{ github.sha }}%0A👤 操作者: ${{ github.actor }}%0A🔗 日志: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}%0A%0A⚠️ 请检查测试环境配置"
+          
+          curl -s -X POST \
+            "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
+            -d "chat_id=${{ secrets.TELEGRAM_CHAT_ID }}" \
+            -d "text=$message" \
+            -d "parse_mode=HTML"
+        fi

@@ -1,0 +1,31 @@
+# Cloudflare Pages Configuration - 简化修复版本
+# 移除复杂配置，专注于基本部署功能
+
+name = "jbc-ac"
+compatibility_date = "2024-01-01"
+pages_build_output_dir = "dist"
+
+# 基本构建配置
+[build]
+command = "npm run build"
+cwd = "."
+
+# 生产环境基本配置
+[env.production]
+name = "jbc-ac-production"
+compatibility_date = "2024-01-01"
+compatibility_flags = ["nodejs_compat"]
+
+[env.production.vars]
+ENVIRONMENT = "production"
+NODE_ENV = "production"
+
+# 预览环境基本配置  
+[env.preview]
+name = "jbc-ac-preview"
+compatibility_date = "2024-01-01"
+compatibility_flags = ["nodejs_compat"]
+
+[env.preview.vars]
+ENVIRONMENT = "preview"
+NODE_ENV = "development"

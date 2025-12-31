@@ -1,0 +1,269 @@
+name: Deploy P-Prod Branch to Production (jbc.ac)
+
+on:
+  push:
+    branches: [ p-prod ]
+  workflow_dispatch:
+    inputs:
+      force_deploy:
+        description: '强制部署到生产环境 (jbc.ac)'
+        required: false
+        default: 'false'
+        type: boolean
+
+env:
+  NODE_VERSION: '18'
+  CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+  CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+  PRODUCTION_PROJECT: 'jbc-ac-production'
+  PRODUCTION_DOMAIN: 'jbc.ac'
+
+jobs:
+  # 构建和测试阶段
+  build-and-test:
+    runs-on: ubuntu-latest
+    if: github.event.inputs.force_deploy != 'true'
+    
+    steps:
+    - name: 📥 Checkout Code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: 🔧 Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+
+    - name: 📦 Install Dependencies
+      run: |
+        npm ci
+        echo "✅ Dependencies installed successfully"
+
+    - name: 🔨 Build Frontend (Optimized)
+      run: |
+        echo "🚀 Building optimized frontend for production environment..."
+        npm run build
+        echo "📊 Build analysis..."
+        npm run perf:build-size
+        echo "✅ Optimized frontend build completed"
+
+    - name: 🧪 Run Tests
+      run: |
+        echo "🧪 Running test suite..."
+        npm run test:all || {
+          echo "❌ Tests failed"
+          exit 1
+        }
+        echo "✅ All tests passed"
+
+    - name: 📊 Upload Build Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: production-build-artifacts
+        path: |
+          dist/
+          functions/
+        retention-days: 7
+
+  # Cloudflare Pages 生产部署阶段
+  deploy-frontend-production:
+    runs-on: ubuntu-latest
+    needs: [build-and-test]
+    if: always() && (needs.build-and-test.result == 'success' || github.event.inputs.force_deploy == 'true')
+    
+    steps:
+    - name: 📥 Checkout Code
+      uses: actions/checkout@v4
+
+    - name: 🔧 Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+
+    - name: 📦 Install Dependencies
+      run: npm ci
+
+    - name: 📥 Download Build Artifacts
+      if: github.event.inputs.force_deploy != 'true'
+      uses: actions/download-artifact@v4
+      with:
+        name: production-build-artifacts
+        path: .
+
+    - name: 🔨 Build Frontend (Force Deploy - Optimized)
+      if: github.event.inputs.force_deploy == 'true'
+      run: |
+        echo "🚀 Building optimized frontend for forced production deployment..."
+        npm run build
+        npm run perf:build-size
+        echo "✅ Optimized frontend build completed"
+
+    - name: 🔧 Setup Wrangler
+      run: |
+        npm install -g wrangler
+        echo "✅ Wrangler installed"
+
+    - name: 🚀 Deploy to Cloudflare Pages (Production)
+      env:
+        CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      run: |
+        echo "🚀 Deploying to Cloudflare Pages (Production Environment - jbc.ac)..."
+        
+        PROJECT_NAME="${{ env.PRODUCTION_PROJECT }}"
+        
+        echo "🏭 Project Name: $PROJECT_NAME"
+        echo "🌐 Production Domain: ${{ env.PRODUCTION_DOMAIN }}"
+        echo "🌿 Branch: ${{ github.ref_name }}"
+        echo "📝 Commit: ${{ github.sha }}"
+        
+        # 部署到生产环境
+        wrangler pages deploy dist \
+          --project-name="$PROJECT_NAME" \
+          --compatibility-date="2024-01-01" \
+          --compatibility-flags="nodejs_compat"
+        
+        echo "✅ Frontend deployed to Cloudflare Pages Production with performance optimizations"
+        echo "🌐 Production URL: https://${{ env.PRODUCTION_DOMAIN }}"
+        echo "📦 Backup URL: https://$PROJECT_NAME.pages.dev"
+
+    - name: 🔧 Configure Production Environment Variables
+      env:
+        CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      run: |
+        echo "🔧 Setting production environment variables..."
+        
+        PROJECT_NAME="${{ env.PRODUCTION_PROJECT }}"
+        
+        # 设置生产环境变量
+        if [ -n "${{ secrets.PROD_JBC_CONTRACT_ADDRESS }}" ]; then
+          wrangler pages secret put JBC_CONTRACT_ADDRESS --text "${{ secrets.PROD_JBC_CONTRACT_ADDRESS }}" --project-name="$PROJECT_NAME"
+        fi
+        
+        if [ -n "${{ secrets.PROD_PROTOCOL_CONTRACT_ADDRESS }}" ]; then
+          wrangler pages secret put PROTOCOL_CONTRACT_ADDRESS --text "${{ secrets.PROD_PROTOCOL_CONTRACT_ADDRESS }}" --project-name="$PROJECT_NAME"
+        fi
+        
+        if [ -n "${{ secrets.PROD_PRIVATE_KEY }}" ]; then
+          wrangler pages secret put PRIVATE_KEY --text "${{ secrets.PROD_PRIVATE_KEY }}" --project-name="$PROJECT_NAME"
+        fi
+        
+        # 使用生产网络RPC
+        if [ -n "${{ secrets.MC_RPC_URL }}" ]; then
+          wrangler pages secret put RPC_URL --text "${{ secrets.MC_RPC_URL }}" --project-name="$PROJECT_NAME"
+        fi
+        
+        # 设置环境标识
+        wrangler pages secret put ENVIRONMENT --text "production" --project-name="$PROJECT_NAME"
+        wrangler pages secret put BRANCH --text "${{ github.ref_name }}" --project-name="$PROJECT_NAME"
+        wrangler pages secret put DOMAIN --text "${{ env.PRODUCTION_DOMAIN }}" --project-name="$PROJECT_NAME"
+        
+        # 性能优化配置
+        wrangler pages secret put CACHE_TTL --text "3600" --project-name="$PROJECT_NAME"
+        wrangler pages secret put MAX_CONCURRENT_REQUESTS --text "100" --project-name="$PROJECT_NAME"
+        wrangler pages secret put RATE_LIMIT_PER_MINUTE --text "1000" --project-name="$PROJECT_NAME"
+        wrangler pages secret put ENABLE_COMPRESSION --text "true" --project-name="$PROJECT_NAME"
+        wrangler pages secret put ENABLE_MINIFICATION --text "true" --project-name="$PROJECT_NAME"
+        
+        echo "✅ Production environment variables configured"
+
+  # 生产部署后验证
+  post-deploy-production-verification:
+    runs-on: ubuntu-latest
+    needs: [deploy-frontend-production]
+    if: always() && needs.deploy-frontend-production.result == 'success'
+    
+    steps:
+    - name: 🔍 Health Check (Production Environment)
+      run: |
+        echo "🔍 Performing post-deployment health checks for production environment..."
+        
+        PROJECT_NAME="${{ env.PRODUCTION_PROJECT }}"
+        PROD_URL="https://${{ env.PRODUCTION_DOMAIN }}"
+        BACKUP_URL="https://$PROJECT_NAME.pages.dev"
+        
+        echo "🌐 Primary URL: $PROD_URL"
+        echo "📦 Backup URL: $BACKUP_URL"
+        
+        # 等待部署完成
+        echo "⏳ Waiting for deployment to be ready..."
+        sleep 60
+        
+        # 检查主域名是否可访问
+        echo "🌐 Checking primary domain accessibility..."
+        response=$(curl -s -o /dev/null -w "%{http_code}" "$PROD_URL" || echo "000")
+        
+        if [ "$response" = "200" ]; then
+          echo "✅ Production domain is accessible (HTTP $response)"
+        else
+          echo "⚠️ Primary domain check returned HTTP $response, trying backup URL..."
+          
+          # 检查备用URL
+          backup_response=$(curl -s -o /dev/null -w "%{http_code}" "$BACKUP_URL" || echo "000")
+          if [ "$backup_response" = "200" ]; then
+            echo "✅ Backup URL is accessible (HTTP $backup_response)"
+          else
+            echo "⚠️ Both URLs returned non-200 responses (may still be deploying)"
+          fi
+        fi
+        
+        # 检查API端点 (如果存在)
+        API_URL="$PROD_URL/api/health"
+        echo "🔧 Checking API endpoint: $API_URL"
+        
+        api_response=$(curl -s "$API_URL" || echo "API not available")
+        echo "📄 API Response: $api_response"
+
+    - name: 📊 Production Deployment Summary
+      run: |
+        echo "📊 ======================================="
+        echo "🏭 PRODUCTION DEPLOYMENT COMPLETED"
+        echo "📊 ======================================="
+        echo "⏰ Deployment Time: $(date -u)"
+        echo "🌿 Branch: ${{ github.ref_name }}"
+        echo "📝 Commit: ${{ github.sha }}"
+        echo "👤 Triggered by: ${{ github.actor }}"
+        echo "🌐 Production URL: https://${{ env.PRODUCTION_DOMAIN }}"
+        echo "📦 Backup URL: https://${{ env.PRODUCTION_PROJECT }}.pages.dev"
+        echo "📊 ======================================="
+
+  # 通知阶段
+  notify-production:
+    runs-on: ubuntu-latest
+    needs: [deploy-frontend-production, post-deploy-production-verification]
+    if: always()
+    
+    steps:
+    - name: 📢 Send Production Success Notification
+      if: needs.post-deploy-production-verification.result == 'success'
+      run: |
+        if [ -n "${{ secrets.TELEGRAM_BOT_TOKEN }}" ] && [ -n "${{ secrets.TELEGRAM_CHAT_ID }}" ]; then
+          echo "📢 Sending production deployment success notification..."
+          
+          message="🏭 <b>生产环境部署成功 (jbc.ac)</b>%0A%0A✅ 状态: 部署完成%0A🌿 分支: ${{ github.ref_name }}%0A⏰ 时间: $(date -u)%0A🌐 生产地址: https://${{ env.PRODUCTION_DOMAIN }}%0A📦 备用地址: https://${{ env.PRODUCTION_PROJECT }}.pages.dev%0A📝 提交: ${{ github.sha }}%0A👤 操作者: ${{ github.actor }}%0A🔗 详情: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          
+          curl -s -X POST \
+            "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
+            -d "chat_id=${{ secrets.TELEGRAM_CHAT_ID }}" \
+            -d "text=$message" \
+            -d "parse_mode=HTML"
+        fi
+
+    - name: 🚨 Send Production Failure Notification
+      if: failure() || needs.post-deploy-production-verification.result == 'failure'
+      run: |
+        if [ -n "${{ secrets.TELEGRAM_BOT_TOKEN }}" ] && [ -n "${{ secrets.TELEGRAM_CHAT_ID }}" ]; then
+          echo "🚨 Sending production deployment failure notification..."
+          
+          message="🚨 <b>生产环境部署失败 (jbc.ac)</b>%0A%0A❌ 状态: 部署失败%0A🌿 分支: ${{ github.ref_name }}%0A⏰ 时间: $(date -u)%0A📝 提交: ${{ github.sha }}%0A👤 操作者: ${{ github.actor }}%0A🔗 日志: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}%0A%0A⚠️ 请立即检查生产环境配置"
+          
+          curl -s -X POST \
+            "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
+            -d "chat_id=${{ secrets.TELEGRAM_CHAT_ID }}" \
+            -d "text=$message" \
+            -d "parse_mode=HTML"
+        fi

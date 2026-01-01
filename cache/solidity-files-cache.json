@@ -284,6 +284,44 @@
         "IERC20"
       ]
     },
+    "/home/zyj_dev/.cursor/worktrees/MACOIN_JBC/rev/node_modules/@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol": {
+      "lastModificationDate": 1767206365357,
+      "contentHash": "2acae54ad209714bca07edf4bae32f72",
+      "sourceName": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol",
+      "solcConfig": {
+        "version": "0.8.22",
+        "settings": {
+          "viaIR": true,
+          "optimizer": {
+            "enabled": true,
+            "runs": 1
+          },
+          "evmVersion": "paris",
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata",
+                "storageLayout"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.20"
+      ],
+      "artifacts": [
+        "Initializable"
+      ]
+    },
     "/home/zyj_dev/.cursor/worktrees/MACOIN_JBC/rev/node_modules/@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol": {
       "lastModificationDate": 1767206365653,
       "contentHash": "08db0b4bea3d52072346c326c5b857b7",
@@ -324,44 +362,6 @@
       ],
       "artifacts": [
         "UUPSUpgradeable"
-      ]
-    },
-    "/home/zyj_dev/.cursor/worktrees/MACOIN_JBC/rev/node_modules/@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol": {
-      "lastModificationDate": 1767206365357,
-      "contentHash": "2acae54ad209714bca07edf4bae32f72",
-      "sourceName": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol",
-      "solcConfig": {
-        "version": "0.8.22",
-        "settings": {
-          "viaIR": true,
-          "optimizer": {
-            "enabled": true,
-            "runs": 1
-          },
-          "evmVersion": "paris",
-          "outputSelection": {
-            "*": {
-              "*": [
-                "abi",
-                "evm.bytecode",
-                "evm.deployedBytecode",
-                "evm.methodIdentifiers",
-                "metadata",
-                "storageLayout"
-              ],
-              "": [
-                "ast"
-              ]
-            }
-          }
-        }
-      },
-      "imports": [],
-      "versionPragmas": [
-        "^0.8.20"
-      ],
-      "artifacts": [
-        "Initializable"
       ]
     },
     "/home/zyj_dev/.cursor/worktrees/MACOIN_JBC/rev/node_modules/@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol": {
@@ -485,44 +485,6 @@
         "ERC1967Utils"
       ]
     },
-    "/home/zyj_dev/.cursor/worktrees/MACOIN_JBC/rev/node_modules/@openzeppelin/contracts/interfaces/IERC1967.sol": {
-      "lastModificationDate": 1767206367085,
-      "contentHash": "3c9577899f440b0c66e880c96e9250bb",
-      "sourceName": "@openzeppelin/contracts/interfaces/IERC1967.sol",
-      "solcConfig": {
-        "version": "0.8.22",
-        "settings": {
-          "viaIR": true,
-          "optimizer": {
-            "enabled": true,
-            "runs": 1
-          },
-          "evmVersion": "paris",
-          "outputSelection": {
-            "*": {
-              "*": [
-                "abi",
-                "evm.bytecode",
-                "evm.deployedBytecode",
-                "evm.methodIdentifiers",
-                "metadata",
-                "storageLayout"
-              ],
-              "": [
-                "ast"
-              ]
-            }
-          }
-        }
-      },
-      "imports": [],
-      "versionPragmas": [
-        ">=0.4.11"
-      ],
-      "artifacts": [
-        "IERC1967"
-      ]
-    },
     "/home/zyj_dev/.cursor/worktrees/MACOIN_JBC/rev/node_modules/@openzeppelin/contracts/utils/Address.sol": {
       "lastModificationDate": 1767206365597,
       "contentHash": "2a06d82f31f75087bf90231599da4f1c",
@@ -561,6 +523,44 @@
       ],
       "artifacts": [
         "Address"
+      ]
+    },
+    "/home/zyj_dev/.cursor/worktrees/MACOIN_JBC/rev/node_modules/@openzeppelin/contracts/interfaces/IERC1967.sol": {
+      "lastModificationDate": 1767206367085,
+      "contentHash": "3c9577899f440b0c66e880c96e9250bb",
+      "sourceName": "@openzeppelin/contracts/interfaces/IERC1967.sol",
+      "solcConfig": {
+        "version": "0.8.22",
+        "settings": {
+          "viaIR": true,
+          "optimizer": {
+            "enabled": true,
+            "runs": 1
+          },
+          "evmVersion": "paris",
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata",
+                "storageLayout"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        ">=0.4.11"
+      ],
+      "artifacts": [
+        "IERC1967"
       ]
     },
     "/home/zyj_dev/.cursor/worktrees/MACOIN_JBC/rev/node_modules/@openzeppelin/contracts/utils/StorageSlot.sol": {
@@ -1295,8 +1295,8 @@
       ]
     },
     "/home/zyj_dev/.cursor/worktrees/MACOIN_JBC/rev/contracts/JinbaoProtocolNative.sol": {
-      "lastModificationDate": 1767202426904,
-      "contentHash": "86cbb8843151a70944c6d248c029ba25",
+      "lastModificationDate": 1767238404753,
+      "contentHash": "203795a95a04884625e2811c17809790",
       "sourceName": "contracts/JinbaoProtocolNative.sol",
       "solcConfig": {
         "version": "0.8.22",

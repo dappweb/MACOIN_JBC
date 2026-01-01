@@ -298,1321 +298,6 @@
         },
         "solcVersion": "0.8.22"
       },
-      "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol:ReentrancyGuardUpgradeable": {
-        "src": "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol:26",
-        "inherit": [
-          "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:Initializable"
-        ],
-        "libraries": [],
-        "methods": [],
-        "linkReferences": [],
-        "errors": [],
-        "layout": {
-          "storage": [],
-          "types": {
-            "t_bool": {
-              "label": "bool",
-              "numberOfBytes": "1"
-            },
-            "t_struct(InitializableStorage)73_storage": {
-              "label": "struct Initializable.InitializableStorage",
-              "members": [
-                {
-                  "label": "_initialized",
-                  "type": "t_uint64",
-                  "offset": 0,
-                  "slot": "0"
-                },
-                {
-                  "label": "_initializing",
-                  "type": "t_bool",
-                  "offset": 8,
-                  "slot": "0"
-                }
-              ],
-              "numberOfBytes": "32"
-            },
-            "t_struct(ReentrancyGuardStorage)226_storage": {
-              "label": "struct ReentrancyGuardUpgradeable.ReentrancyGuardStorage",
-              "members": [
-                {
-                  "label": "_status",
-                  "type": "t_uint256",
-                  "offset": 0,
-                  "slot": "0"
-                }
-              ],
-              "numberOfBytes": "32"
-            },
-            "t_uint256": {
-              "label": "uint256",
-              "numberOfBytes": "32"
-            },
-            "t_uint64": {
-              "label": "uint64",
-              "numberOfBytes": "8"
-            }
-          },
-          "layoutVersion": "1.2",
-          "flat": false,
-          "namespaces": {
-            "erc7201:openzeppelin.storage.ReentrancyGuard": [
-              {
-                "contract": "ReentrancyGuardUpgradeable",
-                "label": "_status",
-                "type": "t_uint256",
-                "src": "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol:43",
-                "offset": 0,
-                "slot": "0"
-              }
-            ],
-            "erc7201:openzeppelin.storage.Initializable": [
-              {
-                "contract": "Initializable",
-                "label": "_initialized",
-                "type": "t_uint64",
-                "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:69",
-                "offset": 0,
-                "slot": "0"
-              },
-              {
-                "contract": "Initializable",
-                "label": "_initializing",
-                "type": "t_bool",
-                "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:73",
-                "offset": 8,
-                "slot": "0"
-              }
-            ]
-          }
-        },
-        "solcVersion": "0.8.22"
-      },
-      "@openzeppelin/contracts/interfaces/IERC1967.sol:IERC1967": {
-        "src": "@openzeppelin/contracts/interfaces/IERC1967.sol:9",
-        "inherit": [],
-        "libraries": [],
-        "methods": [],
-        "linkReferences": [],
-        "errors": [],
-        "layout": {
-          "storage": [],
-          "types": {},
-          "layoutVersion": "1.2",
-          "flat": false,
-          "namespaces": {}
-        },
-        "solcVersion": "0.8.22"
-      },
-      "@openzeppelin/contracts/interfaces/draft-IERC1822.sol:IERC1822Proxiable": {
-        "src": "@openzeppelin/contracts/interfaces/draft-IERC1822.sol:10",
-        "inherit": [],
-        "libraries": [],
-        "methods": [
-          "proxiableUUID()"
-        ],
-        "linkReferences": [],
-        "errors": [],
-        "layout": {
-          "storage": [],
-          "types": {},
-          "layoutVersion": "1.2",
-          "flat": false,
-          "namespaces": {}
-        },
-        "solcVersion": "0.8.22"
-      },
-      "@openzeppelin/contracts/proxy/ERC1967/ERC1967Utils.sol:ERC1967Utils": {
-        "src": "@openzeppelin/contracts/proxy/ERC1967/ERC1967Utils.sol:15",
-        "version": {
-          "withMetadata": "8982cf12eed9186d25c686050e3fe550220af203a01098c05afb02c731fd3651",
-          "withoutMetadata": "e2a89a66865458f0d9fedd4bc7faf0ee62e4c341d176ab79d29bd77a1bdfc32a",
-          "linkedWithoutMetadata": "e2a89a66865458f0d9fedd4bc7faf0ee62e4c341d176ab79d29bd77a1bdfc32a"
-        },
-        "inherit": [],
-        "libraries": [
-          "@openzeppelin/contracts/utils/StorageSlot.sol:StorageSlot",
-          "@openzeppelin/contracts/utils/Address.sol:Address"
-        ],
-        "methods": [],
-        "linkReferences": [],
-        "errors": [
-          {
-            "kind": "delegatecall",
-            "src": "@openzeppelin/contracts/utils/Address.sol:97"
-          },
-          {
-            "kind": "delegatecall",
-            "src": "@openzeppelin/contracts/utils/Address.sol:97"
-          }
-        ],
-        "layout": {
-          "storage": [],
-          "types": {},
-          "layoutVersion": "1.2",
-          "flat": false,
-          "namespaces": {}
-        },
-        "solcVersion": "0.8.22"
-      },
-      "@openzeppelin/contracts/proxy/beacon/IBeacon.sol:IBeacon": {
-        "src": "@openzeppelin/contracts/proxy/beacon/IBeacon.sol:9",
-        "inherit": [],
-        "libraries": [],
-        "methods": [
-          "implementation()"
-        ],
-        "linkReferences": [],
-        "errors": [],
-        "layout": {
-          "storage": [],
-          "types": {},
-          "layoutVersion": "1.2",
-          "flat": false,
-          "namespaces": {}
-        },
-        "solcVersion": "0.8.22"
-      },
-      "@openzeppelin/contracts/token/ERC20/IERC20.sol:IERC20": {
-        "src": "@openzeppelin/contracts/token/ERC20/IERC20.sol:9",
-        "inherit": [],
-        "libraries": [],
-        "methods": [
-          "totalSupply()",
-          "balanceOf(address)",
-          "transfer(address,uint256)",
-          "allowance(address,address)",
-          "approve(address,uint256)",
-          "transferFrom(address,address,uint256)"
-        ],
-        "linkReferences": [],
-        "errors": [],
-        "layout": {
-          "storage": [],
-          "types": {},
-          "layoutVersion": "1.2",
-          "flat": false,
-          "namespaces": {}
-        },
-        "solcVersion": "0.8.22"
-      },
-      "@openzeppelin/contracts/utils/Address.sol:Address": {
-        "src": "@openzeppelin/contracts/utils/Address.sol:11",
-        "version": {
-          "withMetadata": "9d9bebe55456e962bb8d39493ccf085ffe3061b89a32201478d4ff33e1fe1919",
-          "withoutMetadata": "e2a89a66865458f0d9fedd4bc7faf0ee62e4c341d176ab79d29bd77a1bdfc32a",
-          "linkedWithoutMetadata": "e2a89a66865458f0d9fedd4bc7faf0ee62e4c341d176ab79d29bd77a1bdfc32a"
-        },
-        "inherit": [],
-        "libraries": [
-          "@openzeppelin/contracts/utils/Errors.sol:Errors"
-        ],
-        "methods": [],
-        "linkReferences": [],
-        "errors": [
-          {
-            "kind": "delegatecall",
-            "src": "@openzeppelin/contracts/utils/Address.sol:97"
-          }
-        ],
-        "layout": {
-          "storage": [],
-          "types": {},
-          "layoutVersion": "1.2",
-          "flat": false,
-          "namespaces": {}
-        },
-        "solcVersion": "0.8.22"
-      },
-      "@openzeppelin/contracts/utils/Errors.sol:Errors": {
-        "src": "@openzeppelin/contracts/utils/Errors.sol:14",
-        "version": {
-          "withMetadata": "5d3dc056d3f1e21cb70cb4fd6b55f27f24a74a29a2694774371eb986b33ba971",
-          "withoutMetadata": "e2a89a66865458f0d9fedd4bc7faf0ee62e4c341d176ab79d29bd77a1bdfc32a",
-          "linkedWithoutMetadata": "e2a89a66865458f0d9fedd4bc7faf0ee62e4c341d176ab79d29bd77a1bdfc32a"
-        },
-        "inherit": [],
-        "libraries": [],
-        "methods": [],
-        "linkReferences": [],
-        "errors": [],
-        "layout": {
-          "storage": [],
-          "types": {},
-          "layoutVersion": "1.2",
-          "flat": false,
-          "namespaces": {}
-        },
-        "solcVersion": "0.8.22"
-      },
-      "@openzeppelin/contracts/utils/StorageSlot.sol:StorageSlot": {
-        "src": "@openzeppelin/contracts/utils/StorageSlot.sol:34",
-        "version": {
-          "withMetadata": "e411b9c92770002ec22ec07d147a0a43b56b7dfb13454d50271e61ea602d52ab",
-          "withoutMetadata": "e2a89a66865458f0d9fedd4bc7faf0ee62e4c341d176ab79d29bd77a1bdfc32a",
-          "linkedWithoutMetadata": "e2a89a66865458f0d9fedd4bc7faf0ee62e4c341d176ab79d29bd77a1bdfc32a"
-        },
-        "inherit": [],
-        "libraries": [],
-        "methods": [],
-        "linkReferences": [],
-        "errors": [],
-        "layout": {
-          "storage": [],
-          "types": {},
-          "layoutVersion": "1.2",
-          "flat": false,
-          "namespaces": {}
-        },
-        "solcVersion": "0.8.22"
-      },
-      "contracts/JinbaoProtocolV4.sol:IJBC": {
-        "src": "contracts/JinbaoProtocolV4.sol:11",
-        "inherit": [
-          "@openzeppelin/contracts/token/ERC20/IERC20.sol:IERC20"
-        ],
-        "libraries": [],
-        "methods": [
-          "burn(uint256)"
-        ],
-        "linkReferences": [],
-        "errors": [],
-        "layout": {
-          "storage": [],
-          "types": {},
-          "layoutVersion": "1.2",
-          "flat": false,
-          "namespaces": {}
-        },
-        "solcVersion": "0.8.22"
-      },
-      "contracts/JinbaoProtocolV4.sol:JinbaoProtocolV4": {
-        "src": "contracts/JinbaoProtocolV4.sol:31",
-        "version": {
-          "withMetadata": "8014dc095d5995c964000d190d406348ce99671e2f34d0b1f7dbbcf571702192",
-          "withoutMetadata": "560233c2de9656dcb2176c1cb915b203c3fd4a8b10fc0a093318f234783d4c91",
-          "linkedWithoutMetadata": "560233c2de9656dcb2176c1cb915b203c3fd4a8b10fc0a093318f234783d4c91"
-        },
-        "inherit": [
-          "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol:ReentrancyGuardUpgradeable",
-          "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol:UUPSUpgradeable",
-          "@openzeppelin/contracts/interfaces/draft-IERC1822.sol:IERC1822Proxiable",
-          "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:OwnableUpgradeable",
-          "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol:ContextUpgradeable",
-          "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:Initializable"
-        ],
-        "libraries": [
-          "contracts/Tokenomics.sol:TokenomicsLib"
-        ],
-        "methods": [
-          "()",
-          "initialize(address,address,address,address,address)",
-          "()",
-          "bindReferrer(address)",
-          "buyTicket()",
-          "stakeLiquidity(uint256)",
-          "claimRewards()",
-          "redeem()",
-          "swapMCToJBC()",
-          "swapJBCToMC(uint256)",
-          "dailyBurn()",
-          "getUserLevel(address)",
-          "calculateLevel(uint256)",
-          "getLevelRewardLayers(uint256)",
-          "getDirectReferrals(address)",
-          "emergencyPause()",
-          "emergencyUnpause()",
-          "setWallets(address,address,address,address)",
-          "setDistributionConfig(uint256,uint256,uint256,uint256,uint256,uint256)",
-          "setSwapTaxes(uint256,uint256)",
-          "setRedemptionFeePercent(uint256)",
-          "setOperationalStatus(bool,bool)",
-          "setTicketFlexibilityDuration(uint256)",
-          "addLiquidity(uint256)",
-          "withdrawSwapReserves(address,uint256,address,uint256)",
-          "adminSetReferrer(address,address)",
-          "rescueTokens(address,address,uint256)",
-          "emergencyWithdrawNative(address,uint256)"
-        ],
-        "linkReferences": [],
-        "errors": [],
-        "layout": {
-          "storage": [
-            {
-              "label": "jbcToken",
-              "offset": 0,
-              "slot": "0",
-              "type": "t_contract(IJBC)1654",
-              "contract": "JinbaoProtocolV4",
-              "src": "contracts/JinbaoProtocolV4.sol:108"
-            },
-            {
-              "label": "marketingWallet",
-              "offset": 0,
-              "slot": "1",
-              "type": "t_address",
-              "contract": "JinbaoProtocolV4",
-              "src": "contracts/JinbaoProtocolV4.sol:109"
-            },
-            {
-              "label": "treasuryWallet",
-              "offset": 0,
-              "slot": "2",
-              "type": "t_address",
-              "contract": "JinbaoProtocolV4",
-              "src": "contracts/JinbaoProtocolV4.sol:110"
-            },
-            {
-              "label": "lpInjectionWallet",
-              "offset": 0,
-              "slot": "3",
-              "type": "t_address",
-              "contract": "JinbaoProtocolV4",
-              "src": "contracts/JinbaoProtocolV4.sol:111"
-            },
-            {
-              "label": "buybackWallet",
-              "offset": 0,
-              "slot": "4",
-              "type": "t_address",
-              "contract": "JinbaoProtocolV4",
-              "src": "contracts/JinbaoProtocolV4.sol:111"
-            },
-            {
-              "label": "directRewardPercent",
-              "offset": 0,
-              "slot": "5",
-              "type": "t_uint256",
-              "contract": "JinbaoProtocolV4",
-              "src": "contracts/JinbaoProtocolV4.sol:117"
-            },
-            {
-              "label": "levelRewardPercent",
-              "offset": 0,
-              "slot": "6",
-              "type": "t_uint256",
-              "contract": "JinbaoProtocolV4",
-              "src": "contracts/JinbaoProtocolV4.sol:118"
-            },
-            {
-              "label": "marketingPercent",
-              "offset": 0,
-              "slot": "7",
-              "type": "t_uint256",
-              "contract": "JinbaoProtocolV4",
-              "src": "contracts/JinbaoProtocolV4.sol:119"
-            },
-            {
-              "label": "buybackPercent",
-              "offset": 0,
-              "slot": "8",
-              "type": "t_uint256",
-              "contract": "JinbaoProtocolV4",
-              "src": "contracts/JinbaoProtocolV4.sol:119"
-            },
-            {
-              "label": "lpInjectionPercent",
-              "offset": 0,
-              "slot": "9",
-              "type": "t_uint256",
-              "contract": "JinbaoProtocolV4",
-              "src": "contracts/JinbaoProtocolV4.sol:120"
-            },
-            {
-              "label": "treasuryPercent",
-              "offset": 0,
-              "slot": "10",
-              "type": "t_uint256",
-              "contract": "JinbaoProtocolV4",
-              "src": "contracts/JinbaoProtocolV4.sol:120"
-            },
-            {
-              "label": "redemptionFeePercent",
-              "offset": 0,
-              "slot": "11",
-              "type": "t_uint256",
-              "contract": "JinbaoProtocolV4",
-              "src": "contracts/JinbaoProtocolV4.sol:122"
-            },
-            {
-              "label": "swapBuyTax",
-              "offset": 0,
-              "slot": "12",
-              "type": "t_uint256",
-              "contract": "JinbaoProtocolV4",
-              "src": "contracts/JinbaoProtocolV4.sol:122"
-            },
-            {
-              "label": "swapSellTax",
-              "offset": 0,
-              "slot": "13",
-              "type": "t_uint256",
-              "contract": "JinbaoProtocolV4",
-              "src": "contracts/JinbaoProtocolV4.sol:125"
-            },
-            {
-              "label": "userInfo",
-              "offset": 0,
-              "slot": "14",
-              "type": "t_mapping(t_address,t_struct(UserInfo)1689_storage)",
-              "contract": "JinbaoProtocolV4",
-              "src": "contracts/JinbaoProtocolV4.sol:137"
-            },
-            {
-              "label": "userTicket",
-              "offset": 0,
-              "slot": "15",
-              "type": "t_mapping(t_address,t_struct(Ticket)1711_storage)",
-              "contract": "JinbaoProtocolV4",
-              "src": "contracts/JinbaoProtocolV4.sol:140"
-            },
-            {
-              "label": "userStakes",
-              "offset": 0,
-              "slot": "16",
-              "type": "t_mapping(t_address,t_array(t_struct(Stake)1702_storage)dyn_storage)",
-              "contract": "JinbaoProtocolV4",
-              "src": "contracts/JinbaoProtocolV4.sol:141"
-            },
-            {
-              "label": "directReferrals",
-              "offset": 0,
-              "slot": "17",
-              "type": "t_mapping(t_address,t_array(t_address)dyn_storage)",
-              "contract": "JinbaoProtocolV4",
-              "src": "contracts/JinbaoProtocolV4.sol:144"
-            },
-            {
-              "label": "ticketPendingRewards",
-              "offset": 0,
-              "slot": "18",
-              "type": "t_mapping(t_uint256,t_array(t_struct(PendingReward)1716_storage)dyn_storage)",
-              "contract": "JinbaoProtocolV4",
-              "src": "contracts/JinbaoProtocolV4.sol:146"
-            },
-            {
-              "label": "stakePendingRewards",
-              "offset": 0,
-              "slot": "19",
-              "type": "t_mapping(t_uint256,t_array(t_struct(PendingReward)1716_storage)dyn_storage)",
-              "contract": "JinbaoProtocolV4",
-              "src": "contracts/JinbaoProtocolV4.sol:147"
-            },
-            {
-              "label": "ticketOwner",
-              "offset": 0,
-              "slot": "20",
-              "type": "t_mapping(t_uint256,t_address)",
-              "contract": "JinbaoProtocolV4",
-              "src": "contracts/JinbaoProtocolV4.sol:148"
-            },
-            {
-              "label": "stakeOwner",
-              "offset": 0,
-              "slot": "21",
-              "type": "t_mapping(t_uint256,t_address)",
-              "contract": "JinbaoProtocolV4",
-              "src": "contracts/JinbaoProtocolV4.sol:150"
-            },
-            {
-              "label": "ticketFlexibilityDuration",
-              "offset": 0,
-              "slot": "22",
-              "type": "t_uint256",
-              "contract": "JinbaoProtocolV4",
-              "src": "contracts/JinbaoProtocolV4.sol:153"
-            },
-            {
-              "label": "liquidityEnabled",
-              "offset": 0,
-              "slot": "23",
-              "type": "t_bool",
-              "contract": "JinbaoProtocolV4",
-              "src": "contracts/JinbaoProtocolV4.sol:155"
-            },
-            {
-              "label": "redeemEnabled",
-              "offset": 1,
-              "slot": "23",
-              "type": "t_bool",
-              "contract": "JinbaoProtocolV4",
-              "src": "contracts/JinbaoProtocolV4.sol:157"
-            },
-            {
-              "label": "swapReserveMC",
-              "offset": 0,
-              "slot": "24",
-              "type": "t_uint256",
-              "contract": "JinbaoProtocolV4",
-              "src": "contracts/JinbaoProtocolV4.sol:159"
-            },
-            {
-              "label": "swapReserveJBC",
-              "offset": 0,
-              "slot": "25",
-              "type": "t_uint256",
-              "contract": "JinbaoProtocolV4",
-              "src": "contracts/JinbaoProtocolV4.sol:160"
-            },
-            {
-              "label": "nextTicketId",
-              "offset": 0,
-              "slot": "26",
-              "type": "t_uint256",
-              "contract": "JinbaoProtocolV4",
-              "src": "contracts/JinbaoProtocolV4.sol:162"
-            },
-            {
-              "label": "nextStakeId",
-              "offset": 0,
-              "slot": "27",
-              "type": "t_uint256",
-              "contract": "JinbaoProtocolV4",
-              "src": "contracts/JinbaoProtocolV4.sol:164"
-            },
-            {
-              "label": "lastBurnTime",
-              "offset": 0,
-              "slot": "28",
-              "type": "t_uint256",
-              "contract": "JinbaoProtocolV4",
-              "src": "contracts/JinbaoProtocolV4.sol:164"
-            },
-            {
-              "label": "levelRewardPool",
-              "offset": 0,
-              "slot": "29",
-              "type": "t_uint256",
-              "contract": "JinbaoProtocolV4",
-              "src": "contracts/JinbaoProtocolV4.sol:165"
-            },
-            {
-              "label": "emergencyPaused",
-              "offset": 0,
-              "slot": "30",
-              "type": "t_bool",
-              "contract": "JinbaoProtocolV4",
-              "src": "contracts/JinbaoProtocolV4.sol:167"
-            },
-            {
-              "label": "priceOracle",
-              "offset": 1,
-              "slot": "30",
-              "type": "t_address",
-              "contract": "JinbaoProtocolV4",
-              "src": "contracts/JinbaoProtocolV4.sol:169"
-            },
-            {
-              "label": "__gap",
-              "offset": 0,
-              "slot": "31",
-              "type": "t_array(t_uint256)45_storage",
-              "contract": "JinbaoProtocolV4",
-              "src": "contracts/JinbaoProtocolV4.sol:170"
-            }
-          ],
-          "types": {
-            "t_address": {
-              "label": "address",
-              "numberOfBytes": "20"
-            },
-            "t_bool": {
-              "label": "bool",
-              "numberOfBytes": "1"
-            },
-            "t_struct(InitializableStorage)73_storage": {
-              "label": "struct Initializable.InitializableStorage",
-              "members": [
-                {
-                  "label": "_initialized",
-                  "type": "t_uint64",
-                  "offset": 0,
-                  "slot": "0"
-                },
-                {
-                  "label": "_initializing",
-                  "type": "t_bool",
-                  "offset": 8,
-                  "slot": "0"
-                }
-              ],
-              "numberOfBytes": "32"
-            },
-            "t_struct(OwnableStorage)13_storage": {
-              "label": "struct OwnableUpgradeable.OwnableStorage",
-              "members": [
-                {
-                  "label": "_owner",
-                  "type": "t_address",
-                  "offset": 0,
-                  "slot": "0"
-                }
-              ],
-              "numberOfBytes": "32"
-            },
-            "t_struct(ReentrancyGuardStorage)226_storage": {
-              "label": "struct ReentrancyGuardUpgradeable.ReentrancyGuardStorage",
-              "members": [
-                {
-                  "label": "_status",
-                  "type": "t_uint256",
-                  "offset": 0,
-                  "slot": "0"
-                }
-              ],
-              "numberOfBytes": "32"
-            },
-            "t_uint256": {
-              "label": "uint256",
-              "numberOfBytes": "32"
-            },
-            "t_uint64": {
-              "label": "uint64",
-              "numberOfBytes": "8"
-            },
-            "t_array(t_address)dyn_storage": {
-              "label": "address[]",
-              "numberOfBytes": "32"
-            },
-            "t_array(t_struct(PendingReward)1716_storage)dyn_storage": {
-              "label": "struct JinbaoProtocolV4.PendingReward[]",
-              "numberOfBytes": "32"
-            },
-            "t_array(t_struct(Stake)1702_storage)dyn_storage": {
-              "label": "struct JinbaoProtocolV4.Stake[]",
-              "numberOfBytes": "32"
-            },
-            "t_array(t_uint256)45_storage": {
-              "label": "uint256[45]",
-              "numberOfBytes": "1440"
-            },
-            "t_contract(IJBC)1654": {
-              "label": "contract IJBC",
-              "numberOfBytes": "20"
-            },
-            "t_mapping(t_address,t_array(t_address)dyn_storage)": {
-              "label": "mapping(address => address[])",
-              "numberOfBytes": "32"
-            },
-            "t_mapping(t_address,t_array(t_struct(Stake)1702_storage)dyn_storage)": {
-              "label": "mapping(address => struct JinbaoProtocolV4.Stake[])",
-              "numberOfBytes": "32"
-            },
-            "t_mapping(t_address,t_struct(Ticket)1711_storage)": {
-              "label": "mapping(address => struct JinbaoProtocolV4.Ticket)",
-              "numberOfBytes": "32"
-            },
-            "t_mapping(t_address,t_struct(UserInfo)1689_storage)": {
-              "label": "mapping(address => struct JinbaoProtocolV4.UserInfo)",
-              "numberOfBytes": "32"
-            },
-            "t_mapping(t_uint256,t_address)": {
-              "label": "mapping(uint256 => address)",
-              "numberOfBytes": "32"
-            },
-            "t_mapping(t_uint256,t_array(t_struct(PendingReward)1716_storage)dyn_storage)": {
-              "label": "mapping(uint256 => struct JinbaoProtocolV4.PendingReward[])",
-              "numberOfBytes": "32"
-            },
-            "t_struct(PendingReward)1716_storage": {
-              "label": "struct JinbaoProtocolV4.PendingReward",
-              "members": [
-                {
-                  "label": "upline",
-                  "type": "t_address",
-                  "offset": 0,
-                  "slot": "0"
-                },
-                {
-                  "label": "amount",
-                  "type": "t_uint256",
-                  "offset": 0,
-                  "slot": "1"
-                }
-              ],
-              "numberOfBytes": "64"
-            },
-            "t_struct(Stake)1702_storage": {
-              "label": "struct JinbaoProtocolV4.Stake",
-              "members": [
-                {
-                  "label": "id",
-                  "type": "t_uint256",
-                  "offset": 0,
-                  "slot": "0"
-                },
-                {
-                  "label": "amount",
-                  "type": "t_uint256",
-                  "offset": 0,
-                  "slot": "1"
-                },
-                {
-                  "label": "startTime",
-                  "type": "t_uint256",
-                  "offset": 0,
-                  "slot": "2"
-                },
-                {
-                  "label": "cycleDays",
-                  "type": "t_uint256",
-                  "offset": 0,
-                  "slot": "3"
-                },
-                {
-                  "label": "active",
-                  "type": "t_bool",
-                  "offset": 0,
-                  "slot": "4"
-                },
-                {
-                  "label": "paid",
-                  "type": "t_uint256",
-                  "offset": 0,
-                  "slot": "5"
-                }
-              ],
-              "numberOfBytes": "192"
-            },
-            "t_struct(Ticket)1711_storage": {
-              "label": "struct JinbaoProtocolV4.Ticket",
-              "members": [
-                {
-                  "label": "ticketId",
-                  "type": "t_uint256",
-                  "offset": 0,
-                  "slot": "0"
-                },
-                {
-                  "label": "amount",
-                  "type": "t_uint256",
-                  "offset": 0,
-                  "slot": "1"
-                },
-                {
-                  "label": "purchaseTime",
-                  "type": "t_uint256",
-                  "offset": 0,
-                  "slot": "2"
-                },
-                {
-                  "label": "exited",
-                  "type": "t_bool",
-                  "offset": 0,
-                  "slot": "3"
-                }
-              ],
-              "numberOfBytes": "128"
-            },
-            "t_struct(UserInfo)1689_storage": {
-              "label": "struct JinbaoProtocolV4.UserInfo",
-              "members": [
-                {
-                  "label": "referrer",
-                  "type": "t_address",
-                  "offset": 0,
-                  "slot": "0"
-                },
-                {
-                  "label": "activeDirects",
-                  "type": "t_uint256",
-                  "offset": 0,
-                  "slot": "1"
-                },
-                {
-                  "label": "teamCount",
-                  "type": "t_uint256",
-                  "offset": 0,
-                  "slot": "2"
-                },
-                {
-                  "label": "totalRevenue",
-                  "type": "t_uint256",
-                  "offset": 0,
-                  "slot": "3"
-                },
-                {
-                  "label": "currentCap",
-                  "type": "t_uint256",
-                  "offset": 0,
-                  "slot": "4"
-                },
-                {
-                  "label": "isActive",
-                  "type": "t_bool",
-                  "offset": 0,
-                  "slot": "5"
-                },
-                {
-                  "label": "refundFeeAmount",
-                  "type": "t_uint256",
-                  "offset": 0,
-                  "slot": "6"
-                },
-                {
-                  "label": "teamTotalVolume",
-                  "type": "t_uint256",
-                  "offset": 0,
-                  "slot": "7"
-                },
-                {
-                  "label": "teamTotalCap",
-                  "type": "t_uint256",
-                  "offset": 0,
-                  "slot": "8"
-                },
-                {
-                  "label": "maxTicketAmount",
-                  "type": "t_uint256",
-                  "offset": 0,
-                  "slot": "9"
-                },
-                {
-                  "label": "maxSingleTicketAmount",
-                  "type": "t_uint256",
-                  "offset": 0,
-                  "slot": "10"
-                }
-              ],
-              "numberOfBytes": "352"
-            }
-          },
-          "layoutVersion": "1.2",
-          "flat": true,
-          "namespaces": {
-            "erc7201:openzeppelin.storage.ReentrancyGuard": [
-              {
-                "contract": "ReentrancyGuardUpgradeable",
-                "label": "_status",
-                "type": "t_uint256",
-                "src": "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol:43",
-                "offset": 0,
-                "slot": "0"
-              }
-            ],
-            "erc7201:openzeppelin.storage.Ownable": [
-              {
-                "contract": "OwnableUpgradeable",
-                "label": "_owner",
-                "type": "t_address",
-                "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:24",
-                "offset": 0,
-                "slot": "0"
-              }
-            ],
-            "erc7201:openzeppelin.storage.Initializable": [
-              {
-                "contract": "Initializable",
-                "label": "_initialized",
-                "type": "t_uint64",
-                "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:69",
-                "offset": 0,
-                "slot": "0"
-              },
-              {
-                "contract": "Initializable",
-                "label": "_initializing",
-                "type": "t_bool",
-                "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:73",
-                "offset": 8,
-                "slot": "0"
-              }
-            ]
-          }
-        },
-        "solcVersion": "0.8.22"
-      },
-      "contracts/Tokenomics.sol:ITokenomicsConstants": {
-        "src": "contracts/Tokenomics.sol:34",
-        "inherit": [],
-        "libraries": [],
-        "methods": [],
-        "linkReferences": [],
-        "errors": [],
-        "layout": {
-          "storage": [],
-          "types": {},
-          "layoutVersion": "1.2",
-          "flat": false,
-          "namespaces": {}
-        },
-        "solcVersion": "0.8.22"
-      },
-      "contracts/Tokenomics.sol:JBCTokenParams": {
-        "src": "contracts/Tokenomics.sol:484",
-        "version": {
-          "withMetadata": "c21b3417a30f4e7f8f828b5570c31443c5b28fa65331765b807cf3c1e35de0bd",
-          "withoutMetadata": "e2a89a66865458f0d9fedd4bc7faf0ee62e4c341d176ab79d29bd77a1bdfc32a",
-          "linkedWithoutMetadata": "e2a89a66865458f0d9fedd4bc7faf0ee62e4c341d176ab79d29bd77a1bdfc32a"
-        },
-        "inherit": [],
-        "libraries": [],
-        "methods": [],
-        "linkReferences": [],
-        "errors": [],
-        "layout": {
-          "storage": [],
-          "types": {},
-          "layoutVersion": "1.2",
-          "flat": false,
-          "namespaces": {}
-        },
-        "solcVersion": "0.8.22"
-      },
-      "contracts/Tokenomics.sol:TokenomicsLib": {
-        "src": "contracts/Tokenomics.sol:84",
-        "version": {
-          "withMetadata": "5423ea6421f031a17f46f4e7b2520f267c308ffeaf5e6288d3962a24ffae71d1",
-          "withoutMetadata": "e2a89a66865458f0d9fedd4bc7faf0ee62e4c341d176ab79d29bd77a1bdfc32a",
-          "linkedWithoutMetadata": "e2a89a66865458f0d9fedd4bc7faf0ee62e4c341d176ab79d29bd77a1bdfc32a"
-        },
-        "inherit": [],
-        "libraries": [],
-        "methods": [],
-        "linkReferences": [],
-        "errors": [],
-        "layout": {
-          "storage": [],
-          "types": {},
-          "layoutVersion": "1.2",
-          "flat": false,
-          "namespaces": {}
-        },
-        "solcVersion": "0.8.22"
-      },
-      "contracts/Tokenomics.sol:TokenomicsSummary": {
-        "src": "contracts/Tokenomics.sol:567",
-        "version": {
-          "withMetadata": "248ef083bc6da2ba6688225efad237bdcd678e5973866255d59bcccaeba96e09",
-          "withoutMetadata": "0d9e47180a49a46926e4b3933d93ba18d1f0f4ef26f882d7b81d4da5de783b17",
-          "linkedWithoutMetadata": "0d9e47180a49a46926e4b3933d93ba18d1f0f4ef26f882d7b81d4da5de783b17"
-        },
-        "inherit": [],
-        "libraries": [
-          "contracts/Tokenomics.sol:TokenomicsLib",
-          "contracts/Tokenomics.sol:JBCTokenParams"
-        ],
-        "methods": [
-          "getTicketTiers()",
-          "getTicketDistribution()",
-          "getMiningParams()",
-          "getVLevelConfig(uint256)",
-          "getSwapTaxes()",
-          "getSafetyParams()",
-          "getJBCParams()",
-          "calculateUserLevel(uint256)",
-          "calculateCap(uint256)",
-          "calculateRequiredLiquidity(uint256)"
-        ],
-        "linkReferences": [],
-        "errors": [],
-        "layout": {
-          "storage": [],
-          "types": {},
-          "layoutVersion": "1.2",
-          "flat": false,
-          "namespaces": {}
-        },
-        "solcVersion": "0.8.22"
-      }
-    },
-    {
-      "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:OwnableUpgradeable": {
-        "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:21",
-        "inherit": [
-          "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol:ContextUpgradeable",
-          "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:Initializable"
-        ],
-        "libraries": [],
-        "methods": [
-          "owner()",
-          "renounceOwnership()",
-          "transferOwnership(address)"
-        ],
-        "linkReferences": [],
-        "errors": [],
-        "layout": {
-          "storage": [],
-          "types": {
-            "t_address": {
-              "label": "address",
-              "numberOfBytes": "20"
-            },
-            "t_bool": {
-              "label": "bool",
-              "numberOfBytes": "1"
-            },
-            "t_struct(InitializableStorage)73_storage": {
-              "label": "struct Initializable.InitializableStorage",
-              "members": [
-                {
-                  "label": "_initialized",
-                  "type": "t_uint64",
-                  "offset": 0,
-                  "slot": "0"
-                },
-                {
-                  "label": "_initializing",
-                  "type": "t_bool",
-                  "offset": 8,
-                  "slot": "0"
-                }
-              ],
-              "numberOfBytes": "32"
-            },
-            "t_struct(OwnableStorage)13_storage": {
-              "label": "struct OwnableUpgradeable.OwnableStorage",
-              "members": [
-                {
-                  "label": "_owner",
-                  "type": "t_address",
-                  "offset": 0,
-                  "slot": "0"
-                }
-              ],
-              "numberOfBytes": "32"
-            },
-            "t_uint64": {
-              "label": "uint64",
-              "numberOfBytes": "8"
-            }
-          },
-          "layoutVersion": "1.2",
-          "flat": false,
-          "namespaces": {
-            "erc7201:openzeppelin.storage.Ownable": [
-              {
-                "contract": "OwnableUpgradeable",
-                "label": "_owner",
-                "type": "t_address",
-                "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:24",
-                "offset": 0,
-                "slot": "0"
-              }
-            ],
-            "erc7201:openzeppelin.storage.Initializable": [
-              {
-                "contract": "Initializable",
-                "label": "_initialized",
-                "type": "t_uint64",
-                "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:69",
-                "offset": 0,
-                "slot": "0"
-              },
-              {
-                "contract": "Initializable",
-                "label": "_initializing",
-                "type": "t_bool",
-                "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:73",
-                "offset": 8,
-                "slot": "0"
-              }
-            ]
-          }
-        },
-        "solcVersion": "0.8.22"
-      },
-      "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:Initializable": {
-        "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:56",
-        "inherit": [],
-        "libraries": [],
-        "methods": [],
-        "linkReferences": [],
-        "errors": [],
-        "layout": {
-          "storage": [],
-          "types": {
-            "t_bool": {
-              "label": "bool",
-              "numberOfBytes": "1"
-            },
-            "t_struct(InitializableStorage)73_storage": {
-              "label": "struct Initializable.InitializableStorage",
-              "members": [
-                {
-                  "label": "_initialized",
-                  "type": "t_uint64",
-                  "offset": 0,
-                  "slot": "0"
-                },
-                {
-                  "label": "_initializing",
-                  "type": "t_bool",
-                  "offset": 8,
-                  "slot": "0"
-                }
-              ],
-              "numberOfBytes": "32"
-            },
-            "t_uint64": {
-              "label": "uint64",
-              "numberOfBytes": "8"
-            }
-          },
-          "layoutVersion": "1.2",
-          "flat": false,
-          "namespaces": {
-            "erc7201:openzeppelin.storage.Initializable": [
-              {
-                "contract": "Initializable",
-                "label": "_initialized",
-                "type": "t_uint64",
-                "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:69",
-                "offset": 0,
-                "slot": "0"
-              },
-              {
-                "contract": "Initializable",
-                "label": "_initializing",
-                "type": "t_bool",
-                "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:73",
-                "offset": 8,
-                "slot": "0"
-              }
-            ]
-          }
-        },
-        "solcVersion": "0.8.22"
-      },
-      "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol:UUPSUpgradeable": {
-        "src": "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol:20",
-        "inherit": [
-          "@openzeppelin/contracts/interfaces/draft-IERC1822.sol:IERC1822Proxiable",
-          "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:Initializable"
-        ],
-        "libraries": [
-          "@openzeppelin/contracts/proxy/ERC1967/ERC1967Utils.sol:ERC1967Utils"
-        ],
-        "methods": [
-          "proxiableUUID()",
-          "upgradeToAndCall(address,bytes)"
-        ],
-        "linkReferences": [],
-        "errors": [
-          {
-            "kind": "delegatecall",
-            "src": "@openzeppelin/contracts/utils/Address.sol:97"
-          }
-        ],
-        "layout": {
-          "storage": [],
-          "types": {
-            "t_bool": {
-              "label": "bool",
-              "numberOfBytes": "1"
-            },
-            "t_struct(InitializableStorage)73_storage": {
-              "label": "struct Initializable.InitializableStorage",
-              "members": [
-                {
-                  "label": "_initialized",
-                  "type": "t_uint64",
-                  "offset": 0,
-                  "slot": "0"
-                },
-                {
-                  "label": "_initializing",
-                  "type": "t_bool",
-                  "offset": 8,
-                  "slot": "0"
-                }
-              ],
-              "numberOfBytes": "32"
-            },
-            "t_uint64": {
-              "label": "uint64",
-              "numberOfBytes": "8"
-            }
-          },
-          "layoutVersion": "1.2",
-          "flat": false,
-          "namespaces": {
-            "erc7201:openzeppelin.storage.Initializable": [
-              {
-                "contract": "Initializable",
-                "label": "_initialized",
-                "type": "t_uint64",
-                "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:69",
-                "offset": 0,
-                "slot": "0"
-              },
-              {
-                "contract": "Initializable",
-                "label": "_initializing",
-                "type": "t_bool",
-                "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:73",
-                "offset": 8,
-                "slot": "0"
-              }
-            ]
-          }
-        },
-        "solcVersion": "0.8.22"
-      },
-      "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol:ContextUpgradeable": {
-        "src": "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol:17",
-        "inherit": [
-          "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:Initializable"
-        ],
-        "libraries": [],
-        "methods": [],
-        "linkReferences": [],
-        "errors": [],
-        "layout": {
-          "storage": [],
-          "types": {
-            "t_bool": {
-              "label": "bool",
-              "numberOfBytes": "1"
-            },
-            "t_struct(InitializableStorage)73_storage": {
-              "label": "struct Initializable.InitializableStorage",
-              "members": [
-                {
-                  "label": "_initialized",
-                  "type": "t_uint64",
-                  "offset": 0,
-                  "slot": "0"
-                },
-                {
-                  "label": "_initializing",
-                  "type": "t_bool",
-                  "offset": 8,
-                  "slot": "0"
-                }
-              ],
-              "numberOfBytes": "32"
-            },
-            "t_uint64": {
-              "label": "uint64",
-              "numberOfBytes": "8"
-            }
-          },
-          "layoutVersion": "1.2",
-          "flat": false,
-          "namespaces": {
-            "erc7201:openzeppelin.storage.Initializable": [
-              {
-                "contract": "Initializable",
-                "label": "_initialized",
-                "type": "t_uint64",
-                "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:69",
-                "offset": 0,
-                "slot": "0"
-              },
-              {
-                "contract": "Initializable",
-                "label": "_initializing",
-                "type": "t_bool",
-                "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:73",
-                "offset": 8,
-                "slot": "0"
-              }
-            ]
-          }
-        },
-        "solcVersion": "0.8.22"
-      },
       "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol:PausableUpgradeable": {
         "src": "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol:18",
         "inherit": [
@@ -4696,9 +3381,9 @@
       "contracts/JinbaoProtocolNative.sol:JinbaoProtocolNative": {
         "src": "contracts/JinbaoProtocolNative.sol:20",
         "version": {
-          "withMetadata": "f0d1fb11c1e255225b426ad0f07751a8defc3951dbb3131816c8a2accb35180f",
-          "withoutMetadata": "1cfe5cd6d5a4589f43cb62eacb15e956f7a9de8e77f2df83cf9d47a5ce959801",
-          "linkedWithoutMetadata": "1cfe5cd6d5a4589f43cb62eacb15e956f7a9de8e77f2df83cf9d47a5ce959801"
+          "withMetadata": "b2fd347ad4f13e6cd8c07efcf4a5313191d82c390da72d4289cbe81e91e668ff",
+          "withoutMetadata": "39cdd47fa8ceba1215bfcdff0022e5e6d260daa5d7d3083c482193e59115b4cb",
+          "linkedWithoutMetadata": "39cdd47fa8ceba1215bfcdff0022e5e6d260daa5d7d3083c482193e59115b4cb"
         },
         "inherit": [
           "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol:ReentrancyGuardUpgradeable",
@@ -5030,9 +3715,9 @@
               "label": "_lastDifferentialDistribution",
               "offset": 0,
               "slot": "79",
-              "type": "t_mapping(t_address,t_struct(DifferentialDistribution)17060_storage)",
+              "type": "t_mapping(t_address,t_struct(DifferentialDistribution)17065_storage)",
               "contract": "JinbaoProtocolNative",
-              "src": "contracts/JinbaoProtocolNative.sol:925"
+              "src": "contracts/JinbaoProtocolNative.sol:927"
             }
           ],
           "types": {
@@ -5126,7 +3811,7 @@
               "label": "mapping(address => struct JinbaoProtocolNative.Stake[])",
               "numberOfBytes": "32"
             },
-            "t_mapping(t_address,t_struct(DifferentialDistribution)17060_storage)": {
+            "t_mapping(t_address,t_struct(DifferentialDistribution)17065_storage)": {
               "label": "mapping(address => struct JinbaoProtocolNative.DifferentialDistribution)",
               "numberOfBytes": "32"
             },
@@ -5146,7 +3831,7 @@
               "label": "mapping(uint256 => struct JinbaoProtocolNative.PendingReward[])",
               "numberOfBytes": "32"
             },
-            "t_struct(DifferentialDistribution)17060_storage": {
+            "t_struct(DifferentialDistribution)17065_storage": {
               "label": "struct JinbaoProtocolNative.DifferentialDistribution",
               "members": [
                 {
@@ -5465,7 +4150,7 @@
               "label": "jbcToken",
               "offset": 0,
               "slot": "1",
-              "type": "t_contract(IJBC)19079",
+              "type": "t_contract(IJBC)19084",
               "contract": "JinbaoProtocolProduction",
               "src": "contracts/JinbaoProtocolProduction.sol:64"
             },
@@ -5577,7 +4262,7 @@
               "label": "userInfo",
               "offset": 0,
               "slot": "15",
-              "type": "t_mapping(t_address,t_struct(UserInfo)19111_storage)",
+              "type": "t_mapping(t_address,t_struct(UserInfo)19116_storage)",
               "contract": "JinbaoProtocolProduction",
               "src": "contracts/JinbaoProtocolProduction.sol:90"
             },
@@ -5585,7 +4270,7 @@
               "label": "userTicket",
               "offset": 0,
               "slot": "16",
-              "type": "t_mapping(t_address,t_struct(Ticket)19133_storage)",
+              "type": "t_mapping(t_address,t_struct(Ticket)19138_storage)",
               "contract": "JinbaoProtocolProduction",
               "src": "contracts/JinbaoProtocolProduction.sol:91"
             },
@@ -5593,7 +4278,7 @@
               "label": "userStakes",
               "offset": 0,
               "slot": "17",
-              "type": "t_mapping(t_address,t_array(t_struct(Stake)19124_storage)dyn_storage)",
+              "type": "t_mapping(t_address,t_array(t_struct(Stake)19129_storage)dyn_storage)",
               "contract": "JinbaoProtocolProduction",
               "src": "contracts/JinbaoProtocolProduction.sol:92"
             },
@@ -5609,7 +4294,7 @@
               "label": "ticketPendingRewards",
               "offset": 0,
               "slot": "19",
-              "type": "t_mapping(t_uint256,t_array(t_struct(PendingReward)19138_storage)dyn_storage)",
+              "type": "t_mapping(t_uint256,t_array(t_struct(PendingReward)19143_storage)dyn_storage)",
               "contract": "JinbaoProtocolProduction",
               "src": "contracts/JinbaoProtocolProduction.sol:95"
             },
@@ -5689,7 +4374,7 @@
               "label": "stakePendingRewards",
               "offset": 0,
               "slot": "28",
-              "type": "t_mapping(t_uint256,t_array(t_struct(PendingReward)19138_storage)dyn_storage)",
+              "type": "t_mapping(t_uint256,t_array(t_struct(PendingReward)19143_storage)dyn_storage)",
               "contract": "JinbaoProtocolProduction",
               "src": "contracts/JinbaoProtocolProduction.sol:110"
             },
@@ -5797,11 +4482,11 @@
               "label": "address[]",
               "numberOfBytes": "32"
             },
-            "t_array(t_struct(PendingReward)19138_storage)dyn_storage": {
+            "t_array(t_struct(PendingReward)19143_storage)dyn_storage": {
               "label": "struct JinbaoProtocolProduction.PendingReward[]",
               "numberOfBytes": "32"
             },
-            "t_array(t_struct(Stake)19124_storage)dyn_storage": {
+            "t_array(t_struct(Stake)19129_storage)dyn_storage": {
               "label": "struct JinbaoProtocolProduction.Stake[]",
               "numberOfBytes": "32"
             },
@@ -5813,7 +4498,7 @@
               "label": "contract IERC20",
               "numberOfBytes": "20"
             },
-            "t_contract(IJBC)19079": {
+            "t_contract(IJBC)19084": {
               "label": "contract IJBC",
               "numberOfBytes": "20"
             },
@@ -5821,15 +4506,15 @@
               "label": "mapping(address => address[])",
               "numberOfBytes": "32"
             },
-            "t_mapping(t_address,t_array(t_struct(Stake)19124_storage)dyn_storage)": {
+            "t_mapping(t_address,t_array(t_struct(Stake)19129_storage)dyn_storage)": {
               "label": "mapping(address => struct JinbaoProtocolProduction.Stake[])",
               "numberOfBytes": "32"
             },
-            "t_mapping(t_address,t_struct(Ticket)19133_storage)": {
+            "t_mapping(t_address,t_struct(Ticket)19138_storage)": {
               "label": "mapping(address => struct JinbaoProtocolProduction.Ticket)",
               "numberOfBytes": "32"
             },
-            "t_mapping(t_address,t_struct(UserInfo)19111_storage)": {
+            "t_mapping(t_address,t_struct(UserInfo)19116_storage)": {
               "label": "mapping(address => struct JinbaoProtocolProduction.UserInfo)",
               "numberOfBytes": "32"
             },
@@ -5837,11 +4522,11 @@
               "label": "mapping(uint256 => address)",
               "numberOfBytes": "32"
             },
-            "t_mapping(t_uint256,t_array(t_struct(PendingReward)19138_storage)dyn_storage)": {
+            "t_mapping(t_uint256,t_array(t_struct(PendingReward)19143_storage)dyn_storage)": {
               "label": "mapping(uint256 => struct JinbaoProtocolProduction.PendingReward[])",
               "numberOfBytes": "32"
             },
-            "t_struct(PendingReward)19138_storage": {
+            "t_struct(PendingReward)19143_storage": {
               "label": "struct JinbaoProtocolProduction.PendingReward",
               "members": [
                 {
@@ -5859,7 +4544,7 @@
               ],
               "numberOfBytes": "64"
             },
-            "t_struct(Stake)19124_storage": {
+            "t_struct(Stake)19129_storage": {
               "label": "struct JinbaoProtocolProduction.Stake",
               "members": [
                 {
@@ -5901,7 +4586,7 @@
               ],
               "numberOfBytes": "192"
             },
-            "t_struct(Ticket)19133_storage": {
+            "t_struct(Ticket)19138_storage": {
               "label": "struct JinbaoProtocolProduction.Ticket",
               "members": [
                 {
@@ -5931,7 +4616,7 @@
               ],
               "numberOfBytes": "128"
             },
-            "t_struct(UserInfo)19111_storage": {
+            "t_struct(UserInfo)19116_storage": {
               "label": "struct JinbaoProtocolProduction.UserInfo",
               "members": [
                 {
@@ -6112,7 +4797,7 @@
               "label": "jbcToken",
               "offset": 0,
               "slot": "1",
-              "type": "t_contract(IJBC)20087",
+              "type": "t_contract(IJBC)20092",
               "contract": "JinbaoProtocolV2",
               "src": "contracts/JinbaoProtocolV2.sol:52"
             },
@@ -6224,7 +4909,7 @@
               "label": "userInfo",
               "offset": 0,
               "slot": "15",
-              "type": "t_mapping(t_address,t_struct(UserInfo)20118_storage)",
+              "type": "t_mapping(t_address,t_struct(UserInfo)20123_storage)",
               "contract": "JinbaoProtocolV2",
               "src": "contracts/JinbaoProtocolV2.sol:78"
             },
@@ -6232,7 +4917,7 @@
               "label": "userTicket",
               "offset": 0,
               "slot": "16",
-              "type": "t_mapping(t_address,t_struct(Ticket)20140_storage)",
+              "type": "t_mapping(t_address,t_struct(Ticket)20145_storage)",
               "contract": "JinbaoProtocolV2",
               "src": "contracts/JinbaoProtocolV2.sol:79"
             },
@@ -6240,7 +4925,7 @@
               "label": "userStakes",
               "offset": 0,
               "slot": "17",
-              "type": "t_mapping(t_address,t_array(t_struct(Stake)20131_storage)dyn_storage)",
+              "type": "t_mapping(t_address,t_array(t_struct(Stake)20136_storage)dyn_storage)",
               "contract": "JinbaoProtocolV2",
               "src": "contracts/JinbaoProtocolV2.sol:80"
             },
@@ -6256,7 +4941,7 @@
               "label": "ticketPendingRewards",
               "offset": 0,
               "slot": "19",
-              "type": "t_mapping(t_uint256,t_array(t_struct(PendingReward)20145_storage)dyn_storage)",
+              "type": "t_mapping(t_uint256,t_array(t_struct(PendingReward)20150_storage)dyn_storage)",
               "contract": "JinbaoProtocolV2",
               "src": "contracts/JinbaoProtocolV2.sol:82"
             },
@@ -6336,7 +5021,7 @@
               "label": "stakePendingRewards",
               "offset": 0,
               "slot": "28",
-              "type": "t_mapping(t_uint256,t_array(t_struct(PendingReward)20145_storage)dyn_storage)",
+              "type": "t_mapping(t_uint256,t_array(t_struct(PendingReward)20150_storage)dyn_storage)",
               "contract": "JinbaoProtocolV2",
               "src": "contracts/JinbaoProtocolV2.sol:98"
             },
@@ -6444,11 +5129,11 @@
               "label": "address[]",
               "numberOfBytes": "32"
             },
-            "t_array(t_struct(PendingReward)20145_storage)dyn_storage": {
+            "t_array(t_struct(PendingReward)20150_storage)dyn_storage": {
               "label": "struct JinbaoProtocolV2.PendingReward[]",
               "numberOfBytes": "32"
             },
-            "t_array(t_struct(Stake)20131_storage)dyn_storage": {
+            "t_array(t_struct(Stake)20136_storage)dyn_storage": {
               "label": "struct JinbaoProtocolV2.Stake[]",
               "numberOfBytes": "32"
             },
@@ -6460,7 +5145,7 @@
               "label": "contract IERC20",
               "numberOfBytes": "20"
             },
-            "t_contract(IJBC)20087": {
+            "t_contract(IJBC)20092": {
               "label": "contract IJBC",
               "numberOfBytes": "20"
             },
@@ -6468,15 +5153,15 @@
               "label": "mapping(address => address[])",
               "numberOfBytes": "32"
             },
-            "t_mapping(t_address,t_array(t_struct(Stake)20131_storage)dyn_storage)": {
+            "t_mapping(t_address,t_array(t_struct(Stake)20136_storage)dyn_storage)": {
               "label": "mapping(address => struct JinbaoProtocolV2.Stake[])",
               "numberOfBytes": "32"
             },
-            "t_mapping(t_address,t_struct(Ticket)20140_storage)": {
+            "t_mapping(t_address,t_struct(Ticket)20145_storage)": {
               "label": "mapping(address => struct JinbaoProtocolV2.Ticket)",
               "numberOfBytes": "32"
             },
-            "t_mapping(t_address,t_struct(UserInfo)20118_storage)": {
+            "t_mapping(t_address,t_struct(UserInfo)20123_storage)": {
               "label": "mapping(address => struct JinbaoProtocolV2.UserInfo)",
               "numberOfBytes": "32"
             },
@@ -6484,11 +5169,11 @@
               "label": "mapping(uint256 => address)",
               "numberOfBytes": "32"
             },
-            "t_mapping(t_uint256,t_array(t_struct(PendingReward)20145_storage)dyn_storage)": {
+            "t_mapping(t_uint256,t_array(t_struct(PendingReward)20150_storage)dyn_storage)": {
               "label": "mapping(uint256 => struct JinbaoProtocolV2.PendingReward[])",
               "numberOfBytes": "32"
             },
-            "t_struct(PendingReward)20145_storage": {
+            "t_struct(PendingReward)20150_storage": {
               "label": "struct JinbaoProtocolV2.PendingReward",
               "members": [
                 {
@@ -6506,7 +5191,7 @@
               ],
               "numberOfBytes": "64"
             },
-            "t_struct(Stake)20131_storage": {
+            "t_struct(Stake)20136_storage": {
               "label": "struct JinbaoProtocolV2.Stake",
               "members": [
                 {
@@ -6548,7 +5233,7 @@
               ],
               "numberOfBytes": "192"
             },
-            "t_struct(Ticket)20140_storage": {
+            "t_struct(Ticket)20145_storage": {
               "label": "struct JinbaoProtocolV2.Ticket",
               "members": [
                 {
@@ -6578,7 +5263,7 @@
               ],
               "numberOfBytes": "128"
             },
-            "t_struct(UserInfo)20118_storage": {
+            "t_struct(UserInfo)20123_storage": {
               "label": "struct JinbaoProtocolV2.UserInfo",
               "members": [
                 {
@@ -6780,7 +5465,7 @@
               "label": "mcToken",
               "offset": 0,
               "slot": "0",
-              "type": "t_contract(IERC20)20705",
+              "type": "t_contract(IERC20)20710",
               "contract": "JinbaoProtocolV3Standalone",
               "src": "contracts/JinbaoProtocolV3Standalone.sol:79"
             },
@@ -6788,7 +5473,7 @@
               "label": "jbcToken",
               "offset": 0,
               "slot": "1",
-              "type": "t_contract(IERC20)20705",
+              "type": "t_contract(IERC20)20710",
               "contract": "JinbaoProtocolV3Standalone",
               "src": "contracts/JinbaoProtocolV3Standalone.sol:80"
             },
@@ -6796,7 +5481,7 @@
               "label": "userInfo",
               "offset": 0,
               "slot": "2",
-              "type": "t_mapping(t_address,t_struct(UserInfo)20813_storage)",
+              "type": "t_mapping(t_address,t_struct(UserInfo)20818_storage)",
               "contract": "JinbaoProtocolV3Standalone",
               "src": "contracts/JinbaoProtocolV3Standalone.sol:109"
             },
@@ -6804,7 +5489,7 @@
               "label": "tickets",
               "offset": 0,
               "slot": "3",
-              "type": "t_mapping(t_address,t_array(t_struct(Ticket)20820_storage)dyn_storage)",
+              "type": "t_mapping(t_address,t_array(t_struct(Ticket)20825_storage)dyn_storage)",
               "contract": "JinbaoProtocolV3Standalone",
               "src": "contracts/JinbaoProtocolV3Standalone.sol:110"
             },
@@ -6812,7 +5497,7 @@
               "label": "stakes",
               "offset": 0,
               "slot": "4",
-              "type": "t_mapping(t_address,t_array(t_struct(Stake)20831_storage)dyn_storage)",
+              "type": "t_mapping(t_address,t_array(t_struct(Stake)20836_storage)dyn_storage)",
               "contract": "JinbaoProtocolV3Standalone",
               "src": "contracts/JinbaoProtocolV3Standalone.sol:111"
             },
@@ -6836,7 +5521,7 @@
               "label": "userDynamicRewards",
               "offset": 0,
               "slot": "7",
-              "type": "t_mapping(t_address,t_array(t_struct(DynamicReward)20792_storage)dyn_storage)",
+              "type": "t_mapping(t_address,t_array(t_struct(DynamicReward)20797_storage)dyn_storage)",
               "contract": "JinbaoProtocolV3Standalone",
               "src": "contracts/JinbaoProtocolV3Standalone.sol:117"
             },
@@ -6940,15 +5625,15 @@
               "label": "address[]",
               "numberOfBytes": "32"
             },
-            "t_array(t_struct(DynamicReward)20792_storage)dyn_storage": {
+            "t_array(t_struct(DynamicReward)20797_storage)dyn_storage": {
               "label": "struct JinbaoProtocolV3Standalone.DynamicReward[]",
               "numberOfBytes": "32"
             },
-            "t_array(t_struct(Stake)20831_storage)dyn_storage": {
+            "t_array(t_struct(Stake)20836_storage)dyn_storage": {
               "label": "struct JinbaoProtocolV3Standalone.Stake[]",
               "numberOfBytes": "32"
             },
-            "t_array(t_struct(Ticket)20820_storage)dyn_storage": {
+            "t_array(t_struct(Ticket)20825_storage)dyn_storage": {
               "label": "struct JinbaoProtocolV3Standalone.Ticket[]",
               "numberOfBytes": "32"
             },
@@ -6956,7 +5641,7 @@
               "label": "uint256[44]",
               "numberOfBytes": "1408"
             },
-            "t_contract(IERC20)20705": {
+            "t_contract(IERC20)20710": {
               "label": "contract IERC20",
               "numberOfBytes": "20"
             },
@@ -6964,19 +5649,19 @@
               "label": "mapping(address => address[])",
               "numberOfBytes": "32"
             },
-            "t_mapping(t_address,t_array(t_struct(DynamicReward)20792_storage)dyn_storage)": {
+            "t_mapping(t_address,t_array(t_struct(DynamicReward)20797_storage)dyn_storage)": {
               "label": "mapping(address => struct JinbaoProtocolV3Standalone.DynamicReward[])",
               "numberOfBytes": "32"
             },
-            "t_mapping(t_address,t_array(t_struct(Stake)20831_storage)dyn_storage)": {
+            "t_mapping(t_address,t_array(t_struct(Stake)20836_storage)dyn_storage)": {
               "label": "mapping(address => struct JinbaoProtocolV3Standalone.Stake[])",
               "numberOfBytes": "32"
             },
-            "t_mapping(t_address,t_array(t_struct(Ticket)20820_storage)dyn_storage)": {
+            "t_mapping(t_address,t_array(t_struct(Ticket)20825_storage)dyn_storage)": {
               "label": "mapping(address => struct JinbaoProtocolV3Standalone.Ticket[])",
               "numberOfBytes": "32"
             },
-            "t_mapping(t_address,t_struct(UserInfo)20813_storage)": {
+            "t_mapping(t_address,t_struct(UserInfo)20818_storage)": {
               "label": "mapping(address => struct JinbaoProtocolV3Standalone.UserInfo)",
               "numberOfBytes": "32"
             },
@@ -6984,7 +5669,7 @@
               "label": "mapping(address => uint256)",
               "numberOfBytes": "32"
             },
-            "t_struct(DynamicReward)20792_storage": {
+            "t_struct(DynamicReward)20797_storage": {
               "label": "struct JinbaoProtocolV3Standalone.DynamicReward",
               "members": [
                 {
@@ -7026,7 +5711,7 @@
               ],
               "numberOfBytes": "128"
             },
-            "t_struct(Stake)20831_storage": {
+            "t_struct(Stake)20836_storage": {
               "label": "struct JinbaoProtocolV3Standalone.Stake",
               "members": [
                 {
@@ -7062,7 +5747,7 @@
               ],
               "numberOfBytes": "160"
             },
-            "t_struct(Ticket)20820_storage": {
+            "t_struct(Ticket)20825_storage": {
               "label": "struct JinbaoProtocolV3Standalone.Ticket",
               "members": [
                 {
@@ -7086,7 +5771,7 @@
               ],
               "numberOfBytes": "96"
             },
-            "t_struct(UserInfo)20813_storage": {
+            "t_struct(UserInfo)20818_storage": {
               "label": "struct JinbaoProtocolV3Standalone.UserInfo",
               "members": [
                 {
@@ -7217,7 +5902,7 @@
       "contracts/JinbaoProtocolV4.sol:JinbaoProtocolV4": {
         "src": "contracts/JinbaoProtocolV4.sol:31",
         "version": {
-          "withMetadata": "b17792e3243a59e346827727b43afede2f2e89acdafa98269dc7312165439832",
+          "withMetadata": "8014dc095d5995c964000d190d406348ce99671e2f34d0b1f7dbbcf571702192",
           "withoutMetadata": "560233c2de9656dcb2176c1cb915b203c3fd4a8b10fc0a093318f234783d4c91",
           "linkedWithoutMetadata": "560233c2de9656dcb2176c1cb915b203c3fd4a8b10fc0a093318f234783d4c91"
         },
@@ -7270,7 +5955,7 @@
               "label": "jbcToken",
               "offset": 0,
               "slot": "0",
-              "type": "t_contract(IJBC)21747",
+              "type": "t_contract(IJBC)21752",
               "contract": "JinbaoProtocolV4",
               "src": "contracts/JinbaoProtocolV4.sol:108"
             },
@@ -7382,7 +6067,7 @@
               "label": "userInfo",
               "offset": 0,
               "slot": "14",
-              "type": "t_mapping(t_address,t_struct(UserInfo)21782_storage)",
+              "type": "t_mapping(t_address,t_struct(UserInfo)21787_storage)",
               "contract": "JinbaoProtocolV4",
               "src": "contracts/JinbaoProtocolV4.sol:137"
             },
@@ -7390,7 +6075,7 @@
               "label": "userTicket",
               "offset": 0,
               "slot": "15",
-              "type": "t_mapping(t_address,t_struct(Ticket)21804_storage)",
+              "type": "t_mapping(t_address,t_struct(Ticket)21809_storage)",
               "contract": "JinbaoProtocolV4",
               "src": "contracts/JinbaoProtocolV4.sol:140"
             },
@@ -7398,7 +6083,7 @@
               "label": "userStakes",
               "offset": 0,
               "slot": "16",
-              "type": "t_mapping(t_address,t_array(t_struct(Stake)21795_storage)dyn_storage)",
+              "type": "t_mapping(t_address,t_array(t_struct(Stake)21800_storage)dyn_storage)",
               "contract": "JinbaoProtocolV4",
               "src": "contracts/JinbaoProtocolV4.sol:141"
             },
@@ -7414,7 +6099,7 @@
               "label": "ticketPendingRewards",
               "offset": 0,
               "slot": "18",
-              "type": "t_mapping(t_uint256,t_array(t_struct(PendingReward)21809_storage)dyn_storage)",
+              "type": "t_mapping(t_uint256,t_array(t_struct(PendingReward)21814_storage)dyn_storage)",
               "contract": "JinbaoProtocolV4",
               "src": "contracts/JinbaoProtocolV4.sol:146"
             },
@@ -7422,7 +6107,7 @@
               "label": "stakePendingRewards",
               "offset": 0,
               "slot": "19",
-              "type": "t_mapping(t_uint256,t_array(t_struct(PendingReward)21809_storage)dyn_storage)",
+              "type": "t_mapping(t_uint256,t_array(t_struct(PendingReward)21814_storage)dyn_storage)",
               "contract": "JinbaoProtocolV4",
               "src": "contracts/JinbaoProtocolV4.sol:147"
             },
@@ -7602,11 +6287,11 @@
               "label": "address[]",
               "numberOfBytes": "32"
             },
-            "t_array(t_struct(PendingReward)21809_storage)dyn_storage": {
+            "t_array(t_struct(PendingReward)21814_storage)dyn_storage": {
               "label": "struct JinbaoProtocolV4.PendingReward[]",
               "numberOfBytes": "32"
             },
-            "t_array(t_struct(Stake)21795_storage)dyn_storage": {
+            "t_array(t_struct(Stake)21800_storage)dyn_storage": {
               "label": "struct JinbaoProtocolV4.Stake[]",
               "numberOfBytes": "32"
             },
@@ -7614,7 +6299,7 @@
               "label": "uint256[45]",
               "numberOfBytes": "1440"
             },
-            "t_contract(IJBC)21747": {
+            "t_contract(IJBC)21752": {
               "label": "contract IJBC",
               "numberOfBytes": "20"
             },
@@ -7622,15 +6307,15 @@
               "label": "mapping(address => address[])",
               "numberOfBytes": "32"
             },
-            "t_mapping(t_address,t_array(t_struct(Stake)21795_storage)dyn_storage)": {
+            "t_mapping(t_address,t_array(t_struct(Stake)21800_storage)dyn_storage)": {
               "label": "mapping(address => struct JinbaoProtocolV4.Stake[])",
               "numberOfBytes": "32"
             },
-            "t_mapping(t_address,t_struct(Ticket)21804_storage)": {
+            "t_mapping(t_address,t_struct(Ticket)21809_storage)": {
               "label": "mapping(address => struct JinbaoProtocolV4.Ticket)",
               "numberOfBytes": "32"
             },
-            "t_mapping(t_address,t_struct(UserInfo)21782_storage)": {
+            "t_mapping(t_address,t_struct(UserInfo)21787_storage)": {
               "label": "mapping(address => struct JinbaoProtocolV4.UserInfo)",
               "numberOfBytes": "32"
             },
@@ -7638,11 +6323,11 @@
               "label": "mapping(uint256 => address)",
               "numberOfBytes": "32"
             },
-            "t_mapping(t_uint256,t_array(t_struct(PendingReward)21809_storage)dyn_storage)": {
+            "t_mapping(t_uint256,t_array(t_struct(PendingReward)21814_storage)dyn_storage)": {
               "label": "mapping(uint256 => struct JinbaoProtocolV4.PendingReward[])",
               "numberOfBytes": "32"
             },
-            "t_struct(PendingReward)21809_storage": {
+            "t_struct(PendingReward)21814_storage": {
               "label": "struct JinbaoProtocolV4.PendingReward",
               "members": [
                 {
@@ -7660,7 +6345,7 @@
               ],
               "numberOfBytes": "64"
             },
-            "t_struct(Stake)21795_storage": {
+            "t_struct(Stake)21800_storage": {
               "label": "struct JinbaoProtocolV4.Stake",
               "members": [
                 {
@@ -7702,7 +6387,7 @@
               ],
               "numberOfBytes": "192"
             },
-            "t_struct(Ticket)21804_storage": {
+            "t_struct(Ticket)21809_storage": {
               "label": "struct JinbaoProtocolV4.Ticket",
               "members": [
                 {
@@ -7732,7 +6417,7 @@
               ],
               "numberOfBytes": "128"
             },
-            "t_struct(UserInfo)21782_storage": {
+            "t_struct(UserInfo)21787_storage": {
               "label": "struct JinbaoProtocolV4.UserInfo",
               "members": [
                 {

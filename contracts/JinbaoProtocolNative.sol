@@ -545,6 +545,8 @@ contract JinbaoProtocolNative is Initializable, OwnableUpgradeable, UUPSUpgradea
      * @dev 质押流动性 - 使用原生MC代币 (payable)
      */
     function stakeLiquidity(uint256 cycleDays) external payable nonReentrant whenNotPaused {
+        require(liquidityEnabled, "Liquidity disabled");
+        
         uint256 amount = msg.value;
         Ticket storage ticket = userTicket[msg.sender];
         

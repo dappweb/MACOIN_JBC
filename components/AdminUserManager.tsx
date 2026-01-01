@@ -107,8 +107,20 @@ const AdminUserManager: React.FC = () => {
     };
 
     const handleSaveChanges = async () => {
-        if (!protocolContract || !userInfo) {
-            toast.error('合约未连接或用户信息未加载');
+        console.log('🔍 [AdminUserManager] handleSaveChanges called');
+        console.log('📋 [AdminUserManager] protocolContract:', protocolContract);
+        console.log('📋 [AdminUserManager] userInfo:', userInfo);
+        console.log('📋 [AdminUserManager] editData:', editData);
+        
+        if (!protocolContract) {
+            console.error('❌ [AdminUserManager] protocolContract is null');
+            toast.error('合约未连接，请检查钱包连接');
+            return;
+        }
+
+        if (!userInfo) {
+            console.error('❌ [AdminUserManager] userInfo is null');
+            toast.error('用户信息未加载，请先搜索用户');
             return;
         }
 
@@ -119,8 +131,19 @@ const AdminUserManager: React.FC = () => {
 
             // 更新活跃直推数量
             const newActiveDirects = parseInt(editData.activeDirects);
+            console.log('📊 [AdminUserManager] Active Directs - Current:', userInfo.activeDirects, 'New:', newActiveDirects);
             if (!isNaN(newActiveDirects) && newActiveDirects !== userInfo.activeDirects) {
                 hasUpdates = true;
+                console.log('✅ [AdminUserManager] Will update activeDirects to:', newActiveDirects);
+                
+                // 检查函数是否存在
+                if (!protocolContract.adminSetActiveDirects) {
+                    console.error('❌ [AdminUserManager] adminSetActiveDirects function not found in contract');
+                    toast.error('合约函数不存在，请确认合约已升级');
+                    setLoading(false);
+                    return;
+                }
+                
                 updates.push(
                     protocolContract.adminSetActiveDirects(userInfo.address, newActiveDirects)
                 );
@@ -128,38 +151,67 @@ const AdminUserManager: React.FC = () => {
 
             // 更新团队成员数量
             const newTeamCount = parseInt(editData.teamCount);
+            console.log('📊 [AdminUserManager] Team Count - Current:', userInfo.teamCount, 'New:', newTeamCount);
             if (!isNaN(newTeamCount) && newTeamCount !== userInfo.teamCount) {
                 hasUpdates = true;
+                console.log('✅ [AdminUserManager] Will update teamCount to:', newTeamCount);
+                
+                // 检查函数是否存在
+                if (!protocolContract.adminSetTeamCount) {
+                    console.error('❌ [AdminUserManager] adminSetTeamCount function not found in contract');
+                    toast.error('合约函数不存在，请确认合约已升级');
+                    setLoading(false);
+                    return;
+                }
+                
                 updates.push(
                     protocolContract.adminSetTeamCount(userInfo.address, newTeamCount)
                 );
             }
 
             if (!hasUpdates) {
+                console.log('ℹ️ [AdminUserManager] No updates needed');
                 toast('没有需要更新的数据', {
                     icon: 'ℹ️',
                     duration: 3000,
                 });
                 setEditMode(false);
+                setLoading(false);
                 return;
             }
 
+            console.log('🚀 [AdminUserManager] Executing', updates.length, 'update(s)...');
+            
             // 执行所有更新
             const results = await Promise.all(updates);
+            console.log('✅ [AdminUserManager] Transactions sent:', results);
             
             // 等待交易确认
-            for (const tx of results) {
-                await tx.wait();
+            for (let i = 0; i < results.length; i++) {
+                const tx = results[i];
+                console.log(`⏳ [AdminUserManager] Waiting for transaction ${i + 1} confirmation...`);
+                const receipt = await tx.wait();
+                console.log(`✅ [AdminUserManager] Transaction ${i + 1} confirmed:`, receipt.transactionHash);
             }
 
             toast.success('用户数据更新成功！');
             
             // 重新加载用户信息
+            console.log('🔄 [AdminUserManager] Reloading user info...');
             await searchUser();
             setEditMode(false);
         } catch (error: any) {
-            console.error('Update user data error:', error);
-            toast.error(formatContractError(error));
+            console.error('❌ [AdminUserManager] Update user data error:', error);
+            console.error('❌ [AdminUserManager] Error details:', {
+                message: error?.message,
+                code: error?.code,
+                reason: error?.reason,
+                data: error?.data
+            });
+            
+            const errorMessage = formatContractError(error);
+            console.error('❌ [AdminUserManager] Formatted error:', errorMessage);
+            toast.error(errorMessage);
         } finally {
             setLoading(false);
         }
@@ -244,9 +296,15 @@ const AdminUserManager: React.FC = () => {
                             ) : (
                                 <>
                                     <button
-                                        onClick={handleSaveChanges}
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            e.stopPropagation();
+                                            console.log('🔘 [AdminUserManager] Save button clicked');
+                                            handleSaveChanges();
+                                        }}
                                         disabled={loading}
-                                        className="px-4 py-2 bg-green-600/20 text-green-400 border border-green-500/30 rounded-lg hover:bg-green-600/30 disabled:opacity-50 font-bold flex items-center gap-2"
+                                        className="px-4 py-2 bg-green-600/20 text-green-400 border border-green-500/30 rounded-lg hover:bg-green-600/30 disabled:opacity-50 disabled:cursor-not-allowed font-bold flex items-center gap-2 transition-all"
+                                        type="button"
                                     >
                                         {loading ? <RefreshCw className="animate-spin" size={16} /> : <Save size={16} />}
                                         保存更改

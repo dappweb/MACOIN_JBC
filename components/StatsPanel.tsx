@@ -185,6 +185,12 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
   
   const [displayStats, setDisplayStats] = useState<UserStats>(initialStats)
   const [rewardTotals, setRewardTotals] = useState({ mc: 0, jbc: 0 })
+  const [dynamicRewards, setDynamicRewards] = useState({
+    totalEarned: 0,
+    totalClaimed: 0,
+    pendingAmount: 0,
+    claimableAmount: 0
+  })
 
   // 从全局状态获取价格数据
   const jbcPrice = priceData.jbcPrice.toString()
@@ -297,6 +303,23 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
         } catch (err) {
           console.error("Failed to fetch referral rewards", err)
           // 不要因为事件查询失败就阻止整个数据更新
+        }
+
+        // 获取动态奖励数据 (V3合约功能)
+        try {
+          // 检查合约是否支持V3功能
+          if (protocolContract.getUserDynamicRewards) {
+            const dynamicRewardsData = await protocolContract.getUserDynamicRewards(account)
+            setDynamicRewards({
+              totalEarned: parseFloat(ethers.formatEther(dynamicRewardsData.totalEarned)),
+              totalClaimed: parseFloat(ethers.formatEther(dynamicRewardsData.totalClaimed)),
+              pendingAmount: parseFloat(ethers.formatEther(dynamicRewardsData.pendingAmount)),
+              claimableAmount: parseFloat(ethers.formatEther(dynamicRewardsData.claimableAmount))
+            })
+          }
+        } catch (err) {
+          console.warn("Dynamic rewards not available (V2 contract or error):", err)
+          // V2合约或其他错误，保持默认值
         }
 
         const baseRevenue = parseFloat(ethers.formatEther(userInfo[3]))
@@ -554,6 +577,29 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
               </div>
             </div>
           </div>
+          
+          {/* 动态奖励统计 (V3新功能) */}
+          {(dynamicRewards.totalEarned > 0 || dynamicRewards.claimableAmount > 0) && (
+            <div className="border-t border-gray-600/50 pt-3 mt-3">
+              <div className="text-xs text-gray-400 mb-2">动态奖励 (纯MC)</div>
+              <div className="flex flex-col gap-1">
+                <div className="flex items-center justify-between">
+                  <span className="text-purple-400 font-bold text-xs">总获得</span>
+                  <span className="text-sm font-bold text-white">{dynamicRewards.totalEarned.toFixed(2)}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-green-400 font-bold text-xs">可提取</span>
+                  <span className="text-sm font-bold text-white">{dynamicRewards.claimableAmount.toFixed(2)}</span>
+                </div>
+                {dynamicRewards.pendingAmount > 0 && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-orange-400 font-bold text-xs">待解锁</span>
+                    <span className="text-sm font-bold text-white">{dynamicRewards.pendingAmount.toFixed(2)}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
           
           <div className="text-xs text-gray-300 flex justify-end items-center mt-2">
             {mcUsdtPrice > 0 && (

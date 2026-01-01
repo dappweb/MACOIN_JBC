@@ -1,149 +1,64 @@
-const hre = require("hardhat");
-const { upgrades } = require("hardhat");
+const { ethers, upgrades } = require("hardhat");
 
 async function main() {
-  console.log("🚀 强制升级部署（跳过安全检查）...\n");
-
-  const [deployer] = await hre.ethers.getSigners();
-  console.log("📍 部署账户:", deployer.address);
-  
-  const balance = await hre.ethers.provider.getBalance(deployer.address);
-  console.log("💰 账户余额:", hre.ethers.formatEther(balance), "MC");
-
-  const proxyAddress = process.env.PROXY_ADDRESS;
-  
-  if (!proxyAddress) {
-    throw new Error("❌ 请在 .env 文件中设置 PROXY_ADDRESS");
-  }
-
-  console.log("🏠 代理合约地址:", proxyAddress);
-
-  try {
-    console.log("📦 编译最小化合约...");
-    const JinbaoProtocol = await hre.ethers.getContractFactory("JinbaoProtocolMinimal");
+    console.log("🚀 强制执行P-prod环境时间单位修复升级...");
     
-    console.log("🔄 强制导入现有代理...");
-    
-    // 强制导入现有代理，跳过所有安全检查
-    await upgrades.forceImport(proxyAddress, JinbaoProtocol, {
-      kind: 'uups'
-    });
-    
-    console.log("✅ 代理导入成功");
-    
-    console.log("🔄 开始强制升级合约...");
-    
-    // 使用最宽松的设置进行升级
-    const upgraded = await upgrades.upgradeProxy(proxyAddress, JinbaoProtocol, {
-      timeout: 300000,
-      unsafeAllow: [
-        'external-library-linking', 
-        'struct-definition', 
-        'enum-definition',
-        'state-variable-assignment',
-        'state-variable-immutable',
-        'constructor',
-        'missing-public-upgradeto',
-        'delegatecall',
-        'selfdestruct'
-      ],
-      unsafeAllowLinkedLibraries: true,
-      unsafeSkipStorageCheck: true,
-      unsafeAllowCustomTypes: true
-    });
-    
-    console.log("⏳ 等待升级交易确认...");
-    await upgraded.waitForDeployment();
-    
-    const newImplAddress = await upgrades.erc1967.getImplementationAddress(proxyAddress);
-    
-    console.log("\n✅ 强制升级成功!");
-    console.log("📍 代理地址:", proxyAddress);
-    console.log("📍 新实现地址:", newImplAddress);
-    
-    // 验证升级
-    console.log("\n🔍 验证升级...");
-    const upgradedContract = await hre.ethers.getContractAt("JinbaoProtocolMinimal", proxyAddress);
+    const PROXY_ADDRESS = "0x1EC3576609b2E1D834570Bd56A1A51fb24fD7FB5";
     
     try {
-      // 测试基本功能
-      const owner = await upgradedContract.owner();
-      console.log("✅ 合约所有者:", owner);
-      
-      // 测试新的等级功能
-      console.log("✅ 测试新的V等级系统:");
-      
-      const levels = [
-        { count: 10, expected: "V1 (5%)" },
-        { count: 30, expected: "V2 (10%)" },
-        { count: 100, expected: "V3 (15%)" },
-        { count: 300, expected: "V4 (20%)" },
-        { count: 1000, expected: "V5 (25%)" },
-        { count: 3000, expected: "V6 (30%)" },
-        { count: 10000, expected: "V7 (35%)" },
-        { count: 30000, expected: "V8 (40%)" },
-        { count: 100000, expected: "V9 (45%)" }
-      ];
-      
-      for (const test of levels) {
-        const result = await upgradedContract.calculateLevel(test.count);
-        console.log(`   ${test.count}人团队 → V${result.level} (${result.percent}%) ✓`);
-      }
-      
+        // 获取合约工厂
+        const JinbaoProtocolV3TimeUnitFix = await ethers.getContractFactory("JinbaoProtocolV3TimeUnitFix");
+        
+        console.log("📦 强制导入现有代理...");
+        
+        // 强制导入现有代理
+        await upgrades.forceImport(PROXY_ADDRESS, JinbaoProtocolV3TimeUnitFix, {
+            kind: 'uups'
+        });
+        
+        console.log("🔧 执行强制升级...");
+        
+        // 执行升级，跳过所有安全检查
+        const upgradedContract = await upgrades.upgradeProxy(
+            PROXY_ADDRESS, 
+            JinbaoProtocolV3TimeUnitFix,
+            {
+                unsafeAllow: ['missing-public-upgradeto', 'delegatecall', 'constructor', 'state-variable-assignment', 'state-variable-immutable', 'external-library-linking'],
+                unsafeSkipStorageCheck: true,
+                timeout: 300000
+            }
+        );
+        
+        await upgradedContract.waitForDeployment();
+        
+        console.log("✅ 强制升级完成！");
+        
+        // 初始化V4
+        console.log("🔧 初始化V4功能...");
+        const tx = await upgradedContract.initializeV4();
+        const receipt = await tx.wait();
+        
+        console.log(`✅ V4初始化完成，交易哈希: ${receipt.hash}`);
+        
+        // 验证升级结果
+        const version = await upgradedContract.getVersionV4();
+        const timeUnitFixed = await upgradedContract.timeUnitFixed();
+        const effectiveSecondsInUnit = await upgradedContract.getEffectiveSecondsInUnit();
+        
+        console.log(`📋 合约版本: ${version}`);
+        console.log(`⏰ 时间单位已修复: ${timeUnitFixed}`);
+        console.log(`⏰ 当前时间单位: ${effectiveSecondsInUnit}秒`);
+        
+        if (timeUnitFixed && effectiveSecondsInUnit === 86400n) {
+            console.log("🎉 P-prod时间单位修复升级成功完成！");
+        } else {
+            console.log("⚠️  升级完成但验证失败");
+        }
+        
     } catch (error) {
-      console.log("⚠️  功能测试失败:", error.message);
+        console.error("❌ 强制升级失败:", error.message);
+        process.exit(1);
     }
-
-    console.log("\n🎉 强制升级完成!");
-    console.log("📋 新功能已激活:");
-    console.log("   ✅ V1-V9等级系统 (10人-100,000人)");
-    console.log("   ✅ 极差收益比例 5%-45%");
-    console.log("   ✅ 增强的等级查询功能");
-    console.log("   ✅ 团队统计优化");
-    console.log("   ✅ 实时等级变化事件");
-
-    // 更新部署配置
-    const fs = require('fs');
-    const deploymentPath = './deployments/latest-mc.json';
-    
-    let deploymentConfig = {};
-    if (fs.existsSync(deploymentPath)) {
-      deploymentConfig = JSON.parse(fs.readFileSync(deploymentPath, 'utf8'));
-    }
-    
-    deploymentConfig.protocolImplementation = newImplAddress;
-    deploymentConfig.lastUpdate = new Date().toISOString();
-    deploymentConfig.upgradeInfo = {
-      version: "v2-minimal-forced",
-      features: [
-        "Updated V-level requirements (10-100,000 addresses)",
-        "New differential reward percentages (5%-45%)",
-        "Enhanced level calculation functions",
-        "Real-time level change events"
-      ],
-      deploymentMethod: "Force upgrade with safety checks bypassed"
-    };
-    
-    fs.writeFileSync(deploymentPath, JSON.stringify(deploymentConfig, null, 2));
-    console.log("\n📝 部署配置已更新:", deploymentPath);
-
-  } catch (error) {
-    console.error("\n❌ 强制升级失败:", error.message);
-    
-    if (error.message.includes("code size")) {
-      console.log("\n💡 合约仍然太大，需要进一步优化");
-    }
-    
-    throw error;
-  }
 }
 
-main()
-  .then(() => {
-    console.log("\n✅ 强制升级脚本完成");
-    process.exit(0);
-  })
-  .catch((error) => {
-    console.error("❌ 强制升级失败:", error);
-    process.exit(1);
-  });
+main().catch(console.error);

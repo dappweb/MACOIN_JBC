@@ -1,7 +1,7 @@
 # 金宝 RWA · DeFi 4.0 项目整体需求清单
 
-**最后更新**: 2025-12-28  
-**版本**: v1.0.0-stable  
+**最后更新**: 2026-01-01  
+**版本**: v1.0.1-stable  
 **项目阶段**: 已发布 (Released)
 
 ---
@@ -31,7 +31,7 @@
 
 ### 核心机制
 - **门票系统**: 4档级别 (100/300/500/1000 MC)
-- **流动性挖矿**: 3周期选项 (7/15/30天，日化2.0%-3.0%)
+- **流动性挖矿**: 3周期选项 (7/15/30天，日化1.33%-2.0%)
 - **动态奖励体系**: 20层推荐链，V0-V9共9等级
 - **自动销毁**: 买卖滑点 + 每日底池销毁
 - **出局保护**: 3倍倍数出局上限
@@ -82,9 +82,9 @@ Pending (0-72h) → Active (流动性到期前) → Redeemable (到期后) → E
 #### 2.1 挖矿周期与收益率 (Plans)
 | 周期 | 日化率 | 收益计算 |
 |:---|:---|:---|
-| **7天** | 2.0% | 本金 × 2.0% × 7 = 14% 总收益 |
-| **15天** | 2.5% | 本金 × 2.5% × 15 = 37.5% 总收益 |
-| **30天** | 3.0% | 本金 × 3.0% × 30 = 90% 总收益 |
+| **7天** | 1.3333334% | 本金 × 1.33% × 7 ≈ 9.33% 总收益 |
+| **15天** | 1.6666667% | 本金 × 1.67% × 15 ≈ 25% 总收益 |
+| **30天** | 2.0% | 本金 × 2.0% × 30 = 60% 总收益 |
 
 #### 2.2 收益结算结构 (Yield Distribution)
 - **50% MC**: 直接发放
@@ -216,7 +216,7 @@ Pending (0-72h) → Active (流动性到期前) → Redeemable (到期后) → E
 - **依赖**:
   - `@openzeppelin/contracts` (v5.4.0) - ERC20, Ownable, ReentrancyGuard
   - Uniswap V2 接口 (AMM)
-- **主合约**: `JinbaoProtocol.sol` (v3.2)
+- **主合约**: `JinbaoProtocolNative.sol` (Native MC 版本)
 - **配置**: `hardhat.config.cjs`
 - **部署网络**: MC Chain, Sepolia, BSC Testnet
 
@@ -415,7 +415,7 @@ Pending (0-72h) → Active (流动性到期前) → Redeemable (到期后) → E
 ```
 MACOIN_JBC/
 ├── contracts/
-│   ├── JinbaoProtocol.sol        # 主合约 v3.2
+│   ├── JinbaoProtocolNative.sol  # 主合约 (Native MC 版本)
 │   ├── JBC.sol                   # JBC ERC20
 │   └── MockMC.sol                # Mock MC
 ├── scripts/

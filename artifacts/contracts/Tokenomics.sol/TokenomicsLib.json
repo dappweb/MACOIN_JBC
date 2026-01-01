@@ -1,0 +1,310 @@
+{
+  "_format": "hh-sol-artifact-1",
+  "contractName": "TokenomicsLib",
+  "sourceName": "contracts/Tokenomics.sol",
+  "abi": [
+    {
+      "inputs": [],
+      "name": "BUYBACK_PERCENT",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "DAILY_BURN_INTERVAL",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "DAILY_BURN_PERCENT",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "DIRECT_REWARD_PERCENT",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "LEVEL_REWARD_PERCENT",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "LEVEL_REWARD_PER_LAYER",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "LP_INJECTION_PERCENT",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "MARKETING_PERCENT",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "MAX_DIFFERENTIAL_LAYERS",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "MAX_LEVEL_LAYERS",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "MAX_PRICE_IMPACT",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "MAX_RECURSION_DEPTH",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "MIN_LIQUIDITY",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "REDEMPTION_FEE_PERCENT",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "SWAP_BUY_TAX",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "SWAP_SELL_TAX",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "TICKET_AMOUNT_1",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "TICKET_AMOUNT_2",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "TICKET_AMOUNT_3",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "TICKET_AMOUNT_4",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "TICKET_FLEXIBILITY_DURATION",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "TREASURY_PERCENT",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "V9_PERCENT",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "bytecode": "0x6080806040523461001a576103069081610020823930815050f35b600080fdfe60806040818152600436101561001457600080fd5b600090813560e01c92836296f5fe1461020a575082630272f340146101f057826316397a6514610125578263176a6e07146101bb57826320b3ca98146101f557826321b77d63146101f057826336b09f53146101505782634dba49a3146101c057826351d572d61461012a5782636500d056146101db5782636839b5fa146101c557826379f95a83146101c057826383d5e726146101bb57826386600fe4146101a457826397eb029f14610187578263b382783c1461016a578263b7b8370914610155578263bd51e0af14610150578263c03c6e011461012f5750508063ca72015c1461012a578063d160ed4d14610125578063eb2e7383146101205763f775da171461012057600080fd5b6102b9565b610246565b6102a2565b8160031936011261014c5760209051681043561a88293000008152f35b5080fd5b610274565b8160031936011261014c576020905160328152f35b8160031936011261014c576020905168056bc75e2d631000008152f35b8160031936011261014c5760209051681b1ae4d6e2ef5000008152f35b8160031936011261014c57602090516203f4808152f35b61025d565b61028b565b8160031936011261014c57602090516103e88152f35b8160031936011261014c5760209051602d8152f35b610222565b8160031936011261014c576020905160058152f35b90508160031936011261014c57806201518060209252f35b6000366003190112610241576020604051683635c9adc5dea000008152f35b600080fd5b600036600319011261024157602060405160148152f35b600036600319011261024157602060405160028152f35b6000366003190112610241576020604051600f8152f35b600036600319011261024157602060405160018152f35b600036600319011261024157602060405160198152f35b600036600319011261024157602060405160038152f3fea264697066735822122061efa2c7264b8a37e87939246a0955f9792611330d3231333d7e3ff3396df48764736f6c63430008160033",
+  "deployedBytecode": "0x60806040818152600436101561001457600080fd5b600090813560e01c92836296f5fe1461020a575082630272f340146101f057826316397a6514610125578263176a6e07146101bb57826320b3ca98146101f557826321b77d63146101f057826336b09f53146101505782634dba49a3146101c057826351d572d61461012a5782636500d056146101db5782636839b5fa146101c557826379f95a83146101c057826383d5e726146101bb57826386600fe4146101a457826397eb029f14610187578263b382783c1461016a578263b7b8370914610155578263bd51e0af14610150578263c03c6e011461012f5750508063ca72015c1461012a578063d160ed4d14610125578063eb2e7383146101205763f775da171461012057600080fd5b6102b9565b610246565b6102a2565b8160031936011261014c5760209051681043561a88293000008152f35b5080fd5b610274565b8160031936011261014c576020905160328152f35b8160031936011261014c576020905168056bc75e2d631000008152f35b8160031936011261014c5760209051681b1ae4d6e2ef5000008152f35b8160031936011261014c57602090516203f4808152f35b61025d565b61028b565b8160031936011261014c57602090516103e88152f35b8160031936011261014c5760209051602d8152f35b610222565b8160031936011261014c576020905160058152f35b90508160031936011261014c57806201518060209252f35b6000366003190112610241576020604051683635c9adc5dea000008152f35b600080fd5b600036600319011261024157602060405160148152f35b600036600319011261024157602060405160028152f35b6000366003190112610241576020604051600f8152f35b600036600319011261024157602060405160018152f35b600036600319011261024157602060405160198152f35b600036600319011261024157602060405160038152f3fea264697066735822122061efa2c7264b8a37e87939246a0955f9792611330d3231333d7e3ff3396df48764736f6c63430008160033",
+  "linkReferences": {},
+  "deployedLinkReferences": {}
+}

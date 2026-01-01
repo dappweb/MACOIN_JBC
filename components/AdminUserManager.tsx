@@ -107,7 +107,17 @@ const AdminUserManager: React.FC = () => {
     };
 
     const handleSaveChanges = async () => {
-        toast.error('User management functions are not available in the minimal contract version. Please use the full contract for admin functions.');
+        // Show a more user-friendly message instead of an error
+        toast('用户管理功能在当前合约版本中不可用', {
+            icon: 'ℹ️',
+            duration: 4000,
+            style: {
+                background: 'rgba(59, 130, 246, 0.1)',
+                border: '1px solid rgba(59, 130, 246, 0.3)',
+                color: '#3b82f6',
+                backdropFilter: 'blur(8px)',
+            }
+        });
         return;
     };
 
@@ -127,6 +137,17 @@ const AdminUserManager: React.FC = () => {
 
     return (
         <div className="space-y-6">
+            {/* Information Notice */}
+            <div className="glass-panel p-4 rounded-xl bg-blue-900/30 border border-blue-500/50">
+                <div className="flex items-start gap-3">
+                    <AlertTriangle className="text-blue-400 mt-0.5 flex-shrink-0" size={20} />
+                    <div className="text-sm text-blue-200">
+                        <div className="font-bold mb-1">当前合约版本说明</div>
+                        <p>当前使用的是精简版合约，用户管理功能仅供查看和演示。实际的用户数据修改需要完整版合约支持。</p>
+                    </div>
+                </div>
+            </div>
+
             {/* Search Section */}
             <div className="glass-panel p-6 rounded-xl bg-gray-900/50 border border-blue-500/30">
                 <div className="flex items-center gap-3 mb-4">
@@ -169,7 +190,7 @@ const AdminUserManager: React.FC = () => {
                                         className="px-4 py-2 bg-blue-600/20 text-blue-400 border border-blue-500/30 rounded-lg hover:bg-blue-600/30 font-bold flex items-center gap-2"
                                     >
                                         <Edit3 size={16} />
-                                        编辑
+                                        编辑 (演示)
                                     </button>
                                 </>
                             ) : (
@@ -177,10 +198,10 @@ const AdminUserManager: React.FC = () => {
                                     <button
                                         onClick={handleSaveChanges}
                                         disabled={loading}
-                                        className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-500 disabled:opacity-50 font-bold flex items-center gap-2"
+                                        className="px-4 py-2 bg-blue-600/20 text-blue-400 border border-blue-500/30 rounded-lg hover:bg-blue-600/30 disabled:opacity-50 font-bold flex items-center gap-2"
                                     >
                                         <Save size={16} />
-                                        保存
+                                        保存 (演示)
                                     </button>
                                     <button
                                         onClick={() => {

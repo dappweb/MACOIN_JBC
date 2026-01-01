@@ -6,7 +6,7 @@
 | **激活时效** | 72小时内需质押，超时作废不退款 | `_expireTicketIfNeeded` 检查时间戳，超时重置为0 | `MiningPanel` 显示过期状态，允许购买新票覆盖 | ✅ 对齐 |
 | **流动性要求** | 门票金额的 1.5 倍 | `_requiredLiquidity` = amount * 1.5 | `MiningPanel` 自动计算并填充 1.5 倍金额 | ✅ 对齐 |
 | **资金分配** | 直推25%, 层级15%, 市场5%, 回购5%, LP25%, 国库25% | `buyTicket` 实时分账，支持 `setDistributionPercents` | `AdminPanel` 支持查看与配置分配比例 | ✅ 对齐 |
-| **挖矿周期** | 7/15/30 天，日化 2.0%/2.5%/3.0% | `stakeLiquidity` 校验周期，`claimRewards` 按周期计算收益 | `MiningPanel` 提供 7/15/30 选项，展示日化率 | ✅ 对齐 |
+| **挖矿周期** | 7/15/30 天，日化 1.33%/1.67%/2.0% | `stakeLiquidity` 校验周期，`claimRewards` 按周期计算收益 | `MiningPanel` 提供 7/15/30 选项，展示日化率 | ✅ 对齐 |
 | **收益结算** | 50% MC + 50% JBC | `claimRewards` 计算总额后按 50/50 分发 | `MiningPanel` 调用领取，`EarningsDetail` 展示明细 | ✅ 对齐 |
 | **SWAP** | 买入滑点 50% (销毁)，卖出滑点 25% (销毁) | `swapMCToJBC` (50% tax), `swapJBCToMC` (25% tax) | `SwapPanel` 估算滑点提示，调用合约交换 | ✅ 对齐 |
 | **赎回机制** | 到期赎回本金，扣除 1% 手续费 (下次质押退还) | `redeem` 扣除手续费并记录，`stakeLiquidity` 退还 | `MiningPanel` 支持赎回操作 | ✅ 对齐 |

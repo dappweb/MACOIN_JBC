@@ -1,8 +1,8 @@
 # 智能合约与前端功能对齐报告 (Frontend-Contract Alignment Report)
 
-**文档版本**: v1.0
-**日期**: 2025-12-24
-**基准合约**: `JinbaoProtocol.sol` (v3.2 Final)
+**文档版本**: v1.1
+**日期**: 2026-01-01
+**基准合约**: `JinbaoProtocolNative.sol` (Native MC 版本)
 **基准前端**: `components/` & `Web3Context.tsx`
 
 ---
@@ -31,8 +31,8 @@
     *   **结论**: ✅ 一致。
 
 *   **Mining Plans (挖矿周期)**
-    *   **合约**: 7天(2.0%), 15天(2.5%), 30天(3.0%)。
-    *   **前端**: `constants.ts` 原为 3/5/7 天，**已在本次更新中修正为 7/15/30 天**。
+    *   **合约**: 7天(1.3333334%), 15天(1.6666667%), 30天(2.0%)。
+    *   **前端**: `constants.ts` 和 `production.ts` 已配置为 7/15/30 天，收益率与合约一致。
     *   **结论**: ✅ 已修复并对齐。
 
 ### 2. 核心交互 (Core Interactions)

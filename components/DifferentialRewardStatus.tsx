@@ -264,7 +264,7 @@ const DifferentialRewardStatus: React.FC<DifferentialRewardStatusProps> = ({ cla
                   <Info className="w-8 h-8 text-gray-400 mx-auto mb-2" />
                   <p className="text-gray-400 text-sm">暂无极差奖励记录</p>
                   <p className="text-gray-500 text-xs mt-1">
-                    当您的下级进行质押时，将自动获得极差奖励
+                    当您的下级赎回流动性时，将基于其静态收益获得极差奖励
                   </p>
                 </div>
               )}
@@ -279,10 +279,10 @@ const DifferentialRewardStatus: React.FC<DifferentialRewardStatusProps> = ({ cla
             <div className="text-sm text-amber-300">
               <p className="font-semibold mb-1">极差奖励机制说明：</p>
               <ul className="space-y-1 text-amber-300/80">
-                <li>• 当您的下级用户进行质押时，系统会自动计算极差奖励</li>
-                <li>• 奖励金额 = 质押金额 × (您的等级比例 - 下级等级比例)</li>
+                <li>• 当您的下级用户赎回流动性时，系统会基于其静态收益计算极差奖励</li>
+                <li>• 奖励金额 = 静态收益 × (您的等级比例 - 下级等级比例)</li>
                 <li>• 建设更大的团队可以获得更高的V等级和更多极差奖励</li>
-                <li>• 极差奖励会在下级质押时立即发放到您的账户</li>
+                <li>• 极差奖励会在下级赎回时立即发放到您的账户 (50% MC + 50% JBC)</li>
               </ul>
             </div>
           </div>

@@ -1,0 +1,16 @@
+{
+  "timestamp": "2025-12-31T14:53:17.430Z",
+  "network": {
+    "name": "mc",
+    "chainId": "88813"
+  },
+  "proxyAddress": "0x1EC3576609b2E1D834570Bd56A1A51fb24fD7FB5",
+  "implementationAddress": "0x25F2e55d2AA13ae3B5EA0103535aD1Ffe47A992c",
+  "contractData": {
+    "version": "3.0.0",
+    "paused": false,
+    "owner": "0x4C10831CBcF9884ba72051b5287b6c87E4F74A48"
+  },
+  "blockNumber": 2009979,
+  "blockHash": "0x95c5c1cc23140b1d7e005c1150272285fec201283b14d4aa7e1e4a6c3f17a4cc"
+}

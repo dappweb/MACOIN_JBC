@@ -79,7 +79,7 @@ export const CONTRACT_ADDRESSES = {
     : "0x1Bf9ACe2485BC3391150762a109886d0B85f40Da", // Test JBC
   
   PROTOCOL: process.env.NODE_ENV === 'production'
-    ? "0x515871E9eADbF976b546113BbD48964383f86E61"  // P-prod Protocol (86400s)
+    ? "0x0d861bbfB27E51A52799870F85d0a4881899Dc24"  // P-prod Protocol V4 (级差奖励基于静态收益)
     : "0xD437e63c2A76e0237249eC6070Bef9A2484C4302", // Test Protocol (60s)
     
   DAILY_BURN_MANAGER: "0x6C2FdDEb939D92E0dde178845F570FC4E0d213bc"

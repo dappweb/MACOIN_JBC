@@ -1,0 +1,25 @@
+{
+  "network": "MC Chain",
+  "chainId": 88813,
+  "type": "deployment",
+  "timestamp": "2026-01-01T08:09:36.066Z",
+  "proxyAddress": "0x0d861bbfB27E51A52799870F85d0a4881899Dc24",
+  "implementationAddress": "0x1b09668b3503a5D231ccFD8824501B314BbF1887",
+  "deployer": "0x4C10831CBcF9884ba72051b5287b6c87E4F74A48",
+  "mcToken": "0xB2B8777BcBc7A8DEf49F022773d392a8787cf9EF",
+  "jbcToken": "0xA743cB357a9f59D349efB7985072779a094658dD",
+  "wallets": {
+    "marketing": "0xdb817e0d21a134f649d24b91e39d42e7eec52a65",
+    "treasury": "0x5067d182d5f15511f0c71194a25cc67b05c20b02",
+    "lpInjection": "0x03c5d3cf3e358a00fa446e3376eab047d1ce46f2",
+    "buyback": "0x979373c675c25e6cb2fd49b571dcadcb15a5a6d8"
+  },
+  "features": [
+    "级差奖励基于赎回时的静态收益计算",
+    "级差奖励的MC和JBC从静态奖励的MC和JBC中按比例分配",
+    "50% MC + 50% JBC 双币奖励分配",
+    "V0-V9 等级系统",
+    "静态奖励、直推奖励、层级奖励、级差奖励",
+    "JBC通过AMM交换获得（如果余额不足）"
+  ]
+}

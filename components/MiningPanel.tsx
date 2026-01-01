@@ -104,6 +104,15 @@ const MiningPanel: React.FC = () => {
   const [secondsInUnit, setSecondsInUnit] = useState<number>(60); // 从合约获取的时间单位
   const [currentTime, setCurrentTime] = useState(Math.floor(Date.now() / 1000)); // 用于倒计时
   
+  // 动态奖励状态
+  const [dynamicRewards, setDynamicRewards] = useState({
+    totalEarned: 0,
+    totalClaimed: 0,
+    pendingAmount: 0,
+    claimableAmount: 0
+  });
+  const [isClaimingDynamic, setIsClaimingDynamic] = useState(false);
+  
   const { t, language } = useLanguage();
   const { protocolContract, account, isConnected, hasReferrer, isOwner, referrerAddress, checkReferrerStatus, provider, mcBalance } = useWeb3();
   
@@ -126,6 +135,19 @@ const MiningPanel: React.FC = () => {
 
   useEventRefresh('rewardsChanged', () => {
     checkTicketStatus();
+  });
+
+  // 监听动态奖励相关事件
+  useEventRefresh('dynamic_claim', () => {
+    fetchDynamicRewards();
+  });
+
+  useEventRefresh('ticket_purchase', () => {
+    fetchDynamicRewards(); // 购买门票可能触发动态奖励
+  });
+
+  useEventRefresh('liquidity_stake', () => {
+    fetchDynamicRewards(); // 质押流动性可能触发动态奖励
   });
   // Auto-select ticket tier if user has bought one
   useEffect(() => {
@@ -433,12 +455,36 @@ const MiningPanel: React.FC = () => {
               maxTicketAmount: userInfo.maxTicketAmount,
               maxSingleTicketAmount: maxSingleTicket
           });
+
+          // 获取动态奖励数据 (V3合约功能)
+          await fetchDynamicRewards();
       } catch (err) {
           console.error('Failed to check ticket status', err);
           toast.error('Failed to load ticket information. Please try again.');
       } finally {
           setIsLoadingTicketStatus(false);
       }
+  };
+
+  // 获取动态奖励数据
+  const fetchDynamicRewards = async () => {
+    if (!protocolContract || !account) return;
+    
+    try {
+      // 检查合约是否支持V3功能
+      if (protocolContract.getUserDynamicRewards) {
+        const dynamicRewardsData = await protocolContract.getUserDynamicRewards(account);
+        setDynamicRewards({
+          totalEarned: parseFloat(ethers.formatEther(dynamicRewardsData.totalEarned)),
+          totalClaimed: parseFloat(ethers.formatEther(dynamicRewardsData.totalClaimed)),
+          pendingAmount: parseFloat(ethers.formatEther(dynamicRewardsData.pendingAmount)),
+          claimableAmount: parseFloat(ethers.formatEther(dynamicRewardsData.claimableAmount))
+        });
+      }
+    } catch (err) {
+      console.warn("Dynamic rewards not available (V2 contract or error):", err);
+      // V2合约或其他错误，保持默认值
+    }
   };
 
   const fetchHistory = async () => {
@@ -557,7 +603,18 @@ const MiningPanel: React.FC = () => {
     };
     
     initializeData();
-  }, [protocolContract, account]);
+
+    // 定期刷新动态奖励数据
+    const dynamicRewardsTimer = setInterval(() => {
+      if (isConnected && account) {
+        fetchDynamicRewards();
+      }
+    }, 10000); // 每10秒刷新一次动态奖励
+
+    return () => {
+      clearInterval(dynamicRewardsTimer);
+    };
+  }, [protocolContract, account, isConnected]);
 
   useEffect(() => {
     const fetchFlexDuration = async () => {
@@ -660,82 +717,35 @@ const MiningPanel: React.FC = () => {
   };
 
   const handleBuyTicket = async () => {
-      if (!protocolContract || !provider) return;
+      if (!protocolContract) return;
 
+      // Guard removed: Allow buying multiple tickets or overwriting
+      /*
+      // Guard: Check if user already has an active ticket
+      if (ticketInfo && ticketInfo.amount > 0n && !ticketInfo.exited) {
+          toast.error(t.mining.activeTicketExists || "You already have a ticket. Please stake or redeem first.");
+          return;
+      }
+      */
+      
       setTxPending(true);
       try {
-          // 1. 网络检查
-          const network = await provider.getNetwork();
-          if (network.chainId !== 88813n) {
-              toast.error('请切换到MC Chain网络 (Chain ID: 88813)');
-              return;
-          }
-
-          // 2. 推荐人检查（非管理员用户必须绑定推荐人）
-          if (!hasReferrer && !isOwner) {
-              toast.error('请先绑定推荐人后再购买门票');
-              return;
-          }
-
-          // 3. 详细余额检查
+          // 检查原生MC余额
           const amountWei = ethers.parseEther(selectedTicket.amount.toString());
           const currentMcBalance = mcBalance || 0n;
           
-          // 预估Gas费用
-          let gasEstimate = 300000n; // 默认Gas limit
-          let gasCost = 0n;
-          
-          try {
-              gasEstimate = await protocolContract.buyTicket.estimateGas({ value: amountWei });
-              const feeData = await provider.getFeeData();
-              gasCost = gasEstimate * (feeData.gasPrice || 0n);
-          } catch (error) {
-              console.warn("Gas estimation failed, using default:", error);
-              gasCost = ethers.parseEther('0.01'); // 默认预留0.01 MC作为Gas费
-          }
-          
-          const totalRequired = amountWei + gasCost;
-          
-          if (currentMcBalance < totalRequired) {
-              const shortfall = ethers.formatEther(totalRequired - currentMcBalance);
-              toast.error(`MC余额不足！需要 ${selectedTicket.amount} MC + Gas费，还缺 ${shortfall} MC`);
-              
-              // 显示详细余额信息
-              setTimeout(() => {
-                  toast(`当前余额: ${ethers.formatEther(currentMcBalance)} MC\n需要金额: ${ethers.formatEther(totalRequired)} MC`, {
-                      icon: '💰',
-                      duration: 6000,
-                      style: {
-                          background: '#1f2937',
-                          color: '#fbbf24',
-                          border: '1px solid #fbbf24',
-                          borderRadius: '12px',
-                          padding: '16px',
-                          fontSize: '14px',
-                          maxWidth: '400px'
-                      }
-                  });
-              }, 1500);
+          if (currentMcBalance < amountWei) {
+              toast.error(`${t.mining.insufficientMC} ${t.mining.needsMC} ${selectedTicket.amount} MC，${t.mining.currentBalance}: ${ethers.formatEther(currentMcBalance)} MC`);
               return;
           }
 
-          // 4. 合约状态检查
-          const isPaused = await protocolContract.paused();
-          if (isPaused) {
-              toast.error('合约暂时暂停维护，请稍后重试');
-              return;
-          }
-
-          // 5. 执行购票 - 使用原生MC
-          const tx = await protocolContract.buyTicket({ 
-              value: amountWei,
-              gasLimit: gasEstimate + 50000n // 增加50k gas buffer
-          });
+          // 使用原生MC购买门票
+          const tx = await protocolContract.buyTicket({ value: amountWei });
           
           // Enhanced loading feedback
-          toast.loading('🎫 正在购买门票，请在钱包中确认交易...', { id: 'buy-ticket' });
+          toast.loading('🎫 Processing ticket purchase...', { id: 'buy-ticket' });
           await tx.wait();
-          toast.success('🎉 门票购买成功！', { id: 'buy-ticket' });
+          toast.success('🎉 Ticket purchased successfully!', { id: 'buy-ticket' });
           
           // 使用全局刷新机制
           await onTransactionSuccess('ticket_purchase');
@@ -743,24 +753,11 @@ const MiningPanel: React.FC = () => {
           // 购买成功后自动跳转到提供流动性页面
           setCurrentStep(2);
       } catch (err: any) {
-          console.error('购票失败详情:', err);
+          console.error(err);
           toast.dismiss('buy-ticket');
           
-          // 详细错误处理
-          if (err.code === 'INSUFFICIENT_FUNDS') {
-              toast.error(`MC余额不足！需要 ${selectedTicket.amount} MC + Gas费`);
-          } else if (err.code === 'ACTION_REJECTED' || err.code === 4001) {
-              toast.error('交易已取消');
-          } else if (err.message?.includes('InvalidAmount')) {
-              toast.error('无效的门票金额，请选择100/300/500/1000 MC');
-          } else if (err.message?.includes('paused')) {
-              toast.error('合约暂时暂停，请稍后重试');
-          } else if (err.message?.includes('missing revert data')) {
-              toast.error('交易失败：请检查MC余额是否足够，或网络是否稳定');
-          } else {
-              // 使用新的中文友好错误处理系统
-              showFriendlyError(err, 'buyTicket');
-          }
+          // 使用新的中文友好错误处理系统
+          showFriendlyError(err, 'buyTicket');
       } finally {
           setTxPending(false);
       }
@@ -840,6 +837,35 @@ const MiningPanel: React.FC = () => {
           showFriendlyError(err, 'claimRewards');
       } finally {
           setTxPending(false);
+      }
+  };
+
+  // 提取动态奖励
+  const handleClaimDynamicRewards = async () => {
+      if (!protocolContract) return;
+      if (dynamicRewards.claimableAmount <= 0) {
+          toast.error('没有可提取的动态奖励');
+          return;
+      }
+
+      setIsClaimingDynamic(true);
+      try {
+          const tx = await protocolContract.claimDynamicRewards();
+          toast.loading('🎯 提取动态奖励中...', { id: 'claim-dynamic' });
+          await tx.wait();
+          toast.success('🎉 动态奖励提取成功！', { id: 'claim-dynamic' });
+          
+          // 刷新动态奖励数据
+          await fetchDynamicRewards();
+          
+          // 使用全局刷新机制
+          await onTransactionSuccess('dynamic_claim');
+      } catch (err: any) {
+          console.error('Failed to claim dynamic rewards', err);
+          toast.dismiss('claim-dynamic');
+          showFriendlyError(err, 'claimDynamicRewards');
+      } finally {
+          setIsClaimingDynamic(false);
       }
   };
 
@@ -1162,12 +1188,6 @@ const MiningPanel: React.FC = () => {
               </div>
             </div>
           )}
-
-          {/* 购票前检查清单 */}
-          <PurchaseChecklist 
-            selectedAmount={selectedTicket.amount}
-            onAllChecksPass={() => console.log('All checks passed')}
-          />
 
           <div className="space-y-4 max-w-md mx-auto">
             {!isApproved ? (
@@ -1575,6 +1595,74 @@ const MiningPanel: React.FC = () => {
         )}
       </div>
     )}
+
+      {/* 动态奖励面板 - V3新功能 */}
+      {currentStep === 3 && isConnected && (dynamicRewards.totalEarned > 0 || dynamicRewards.claimableAmount > 0) && (
+        <div className="glass-panel p-4 md:p-6 rounded-xl border-2 border-purple-500/50 animate-fade-in backdrop-blur-sm bg-gray-900/50 mt-6 shadow-xl shadow-purple-500/20">
+          <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+            <div className="flex items-center gap-2">
+              <div className="bg-purple-500/20 p-2 rounded-lg text-purple-400 border border-purple-500/30">
+                <TrendingUp size={20} />
+              </div>
+              <h3 className="text-lg font-bold text-white">动态奖励 (纯MC)</h3>
+            </div>
+            <div className="px-3 py-1 rounded-full text-sm font-bold border bg-purple-500/20 text-purple-400 border-purple-500/30">
+              V3 新功能
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+            <div className="bg-gray-800/50 p-3 rounded-lg border border-gray-700">
+              <div className="text-gray-400 mb-1 text-xs">总获得</div>
+              <div className="text-lg font-bold text-purple-400 font-mono">{dynamicRewards.totalEarned.toFixed(4)} MC</div>
+            </div>
+            <div className="bg-gray-800/50 p-3 rounded-lg border border-gray-700">
+              <div className="text-gray-400 mb-1 text-xs">已提取</div>
+              <div className="text-lg font-bold text-gray-300 font-mono">{dynamicRewards.totalClaimed.toFixed(4)} MC</div>
+            </div>
+            <div className="bg-gray-800/50 p-3 rounded-lg border border-gray-700">
+              <div className="text-gray-400 mb-1 text-xs">可提取</div>
+              <div className="text-lg font-bold text-green-400 font-mono">{dynamicRewards.claimableAmount.toFixed(4)} MC</div>
+            </div>
+            <div className="bg-gray-800/50 p-3 rounded-lg border border-gray-700">
+              <div className="text-gray-400 mb-1 text-xs">待解锁</div>
+              <div className="text-lg font-bold text-orange-400 font-mono">{dynamicRewards.pendingAmount.toFixed(4)} MC</div>
+            </div>
+          </div>
+
+          {/* 动态奖励说明 */}
+          <div className="bg-purple-900/10 border border-purple-500/20 rounded-lg p-3 mb-4">
+            <div className="text-xs text-purple-200/80">
+              <p className="font-bold mb-1 text-purple-300">动态奖励说明</p>
+              <ul className="list-disc pl-4 space-y-0.5">
+                <li>直推奖励：推荐用户购买门票时即时获得 (25% MC)</li>
+                <li>层级奖励：多层级推荐奖励，根据活跃直推数决定层数 (纯MC)</li>
+                <li>极差奖励：基于V等级的团队奖励，在下级赎回时基于静态收益计算 (50% MC + 50% JBC)</li>
+              </ul>
+            </div>
+          </div>
+
+          {/* 提取按钮 */}
+          {dynamicRewards.claimableAmount > 0 && (
+            <button
+              onClick={handleClaimDynamicRewards}
+              disabled={isClaimingDynamic}
+              className="w-full py-3 bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-400 hover:to-purple-500 text-white font-bold rounded-lg shadow-lg shadow-purple-500/30 transition-all transform hover:scale-[1.02] active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            >
+              {isClaimingDynamic && <Loader2 className="animate-spin" size={20} />}
+              {isClaimingDynamic ? '提取中...' : `提取动态奖励 (${dynamicRewards.claimableAmount.toFixed(4)} MC)`}
+            </button>
+          )}
+
+          {dynamicRewards.claimableAmount === 0 && dynamicRewards.pendingAmount > 0 && (
+            <div className="text-center py-2">
+              <p className="text-sm text-gray-400">
+                所有动态奖励正在解锁中，请等待解锁后提取
+              </p>
+            </div>
+          )}
+        </div>
+      )}
       {/* 3x Cap Section */}
       {isConnected && (
         <div className="glass-panel p-4 md:p-6 rounded-xl border border-gray-800 bg-gray-900/50 mt-8 animate-fade-in">
@@ -1724,171 +1812,6 @@ const MiningPanel: React.FC = () => {
 
       {/* Mobile Sticky Footer Removed */}
 
-    </div>
-  );
-};
-
-// 购票前检查清单组件
-const PurchaseChecklist: React.FC<{
-  selectedAmount: number;
-  onAllChecksPass: () => void;
-}> = ({ selectedAmount, onAllChecksPass }) => {
-  const [checks, setChecks] = useState({
-    network: false,
-    balance: false,
-    referrer: false,
-    contract: false
-  });
-  const [isChecking, setIsChecking] = useState(false);
-  
-  const { provider, account, hasReferrer, isOwner, mcBalance, protocolContract } = useWeb3();
-  
-  const runChecks = async () => {
-    if (!provider || !account || !protocolContract) return;
-    
-    setIsChecking(true);
-    try {
-      // 检查网络
-      const network = await provider.getNetwork();
-      const networkOk = network.chainId === 88813n;
-      
-      // 检查余额（包含Gas费预留）
-      const requiredAmount = ethers.parseEther(selectedAmount.toString());
-      const gasReserve = ethers.parseEther('0.01'); // 预留Gas费
-      const totalRequired = requiredAmount + gasReserve;
-      const currentBalance = mcBalance || 0n;
-      const balanceOk = currentBalance >= totalRequired;
-      
-      // 检查推荐人
-      const referrerOk = hasReferrer || isOwner;
-      
-      // 检查合约状态
-      const isPaused = await protocolContract.paused();
-      const contractOk = !isPaused;
-      
-      const newChecks = {
-        network: networkOk,
-        balance: balanceOk,
-        referrer: referrerOk,
-        contract: contractOk
-      };
-      
-      setChecks(newChecks);
-      
-      // 如果所有检查都通过，调用回调
-      if (Object.values(newChecks).every(Boolean)) {
-        onAllChecksPass();
-      }
-    } catch (error) {
-      console.error('检查失败:', error);
-    } finally {
-      setIsChecking(false);
-    }
-  };
-  
-  useEffect(() => {
-    if (account && protocolContract) {
-      runChecks();
-    }
-  }, [account, selectedAmount, protocolContract, mcBalance]);
-  
-  const allChecksPassed = Object.values(checks).every(Boolean);
-  
-  return (
-    <div className="bg-gray-900/30 border border-gray-700 rounded-xl p-4 mb-6">
-      <div className="flex items-center justify-between mb-3">
-        <h4 className="font-bold text-white flex items-center gap-2">
-          <ShieldCheck className="text-neon-400" size={16} />
-          购票前检查
-        </h4>
-        <button
-          onClick={runChecks}
-          disabled={isChecking}
-          className="text-xs px-2 py-1 bg-gray-700 hover:bg-gray-600 text-gray-300 rounded border border-gray-600 disabled:opacity-50"
-        >
-          {isChecking ? <Loader2 className="animate-spin" size={12} /> : '重新检查'}
-        </button>
-      </div>
-      
-      <div className="space-y-2">
-        <CheckItem 
-          label="网络连接 (MC Chain)" 
-          checked={checks.network}
-          loading={isChecking}
-          description={checks.network ? "已连接到MC Chain" : "请切换到MC Chain网络"}
-        />
-        <CheckItem 
-          label={`MC余额 (需要${selectedAmount} MC + Gas费)`} 
-          checked={checks.balance}
-          loading={isChecking}
-          description={
-            checks.balance 
-              ? `余额充足: ${ethers.formatEther(mcBalance || 0n)} MC` 
-              : `余额不足，需要至少 ${selectedAmount + 0.01} MC`
-          }
-        />
-        <CheckItem 
-          label="推荐人绑定" 
-          checked={checks.referrer}
-          loading={isChecking}
-          description={
-            isOwner 
-              ? "管理员账户，无需绑定推荐人" 
-              : checks.referrer 
-                ? "已绑定推荐人" 
-                : "请先绑定推荐人"
-          }
-        />
-        <CheckItem 
-          label="合约状态" 
-          checked={checks.contract}
-          loading={isChecking}
-          description={checks.contract ? "合约正常运行" : "合约暂时暂停"}
-        />
-      </div>
-      
-      {allChecksPassed && (
-        <div className="mt-3 p-2 bg-green-900/20 border border-green-500/30 rounded-lg">
-          <div className="flex items-center gap-2 text-green-400 text-sm">
-            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-            所有检查通过，可以购买门票
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
-
-// 检查项组件
-const CheckItem: React.FC<{
-  label: string;
-  checked: boolean;
-  loading?: boolean;
-  description?: string;
-}> = ({ label, checked, loading, description }) => {
-  return (
-    <div className="flex items-start gap-3 p-2 rounded-lg hover:bg-gray-800/30 transition-colors">
-      <div className="mt-0.5">
-        {loading ? (
-          <Loader2 className="animate-spin text-gray-400" size={16} />
-        ) : checked ? (
-          <div className="w-4 h-4 bg-green-500 rounded-full flex items-center justify-center">
-            <div className="w-2 h-2 bg-white rounded-full"></div>
-          </div>
-        ) : (
-          <div className="w-4 h-4 border-2 border-gray-600 rounded-full"></div>
-        )}
-      </div>
-      <div className="flex-1">
-        <div className={`text-sm font-medium ${checked ? 'text-green-400' : 'text-gray-400'}`}>
-          {label}
-        </div>
-        {description && (
-          <div className="text-xs text-gray-500 mt-0.5">
-            {description}
-          </div>
-        )}
-      </div>
     </div>
   );
 };

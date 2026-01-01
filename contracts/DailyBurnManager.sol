@@ -2,14 +2,30 @@
 pragma solidity ^0.8.20;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "./JinbaoProtocol.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
+/**
+ * @title IJinbaoProtocol
+ * @dev Interface for Jinbao Protocol
+ */
+interface IJinbaoProtocol {
+    function swapReserveJBC() external view returns (uint256);
+}
+
+/**
+ * @title IJBC
+ * @dev Interface for JBC token with burn
+ */
+interface IJBC is IERC20 {
+    function burn(uint256 amount) external;
+}
 
 /**
  * @title DailyBurnManager
  * @dev 独立的每日燃烧管理合约，与主协议合约交互
  */
 contract DailyBurnManager is Ownable {
-    JinbaoProtocol public immutable protocol;
+    IJinbaoProtocol public immutable protocol;
     IJBC public immutable jbcToken;
     
     uint256 public lastBurnTime;
@@ -20,7 +36,7 @@ contract DailyBurnManager is Ownable {
     event BurnParametersUpdated(uint256 newInterval, uint256 newPercentage);
     
     constructor(address _protocol, address _jbcToken) Ownable(msg.sender) {
-        protocol = JinbaoProtocol(_protocol);
+        protocol = IJinbaoProtocol(_protocol);
         jbcToken = IJBC(_jbcToken);
         lastBurnTime = block.timestamp;
     }

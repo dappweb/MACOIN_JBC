@@ -1,3 +1,5 @@
+// This is a wrapper that forwards to the config in the config/ directory
+// but runs from the project root for proper path resolution
 require("@nomicfoundation/hardhat-toolbox");
 require('@openzeppelin/hardhat-upgrades');
 require("dotenv").config();
@@ -9,21 +11,21 @@ module.exports = {
       {
         version: "0.8.20",
         settings: {
+          viaIR: true,
           optimizer: {
             enabled: true,
-            runs: 50, // 平衡优化：合约大小与gas效率
+            runs: 1,
           },
-          viaIR: true,
         },
       },
       {
         version: "0.8.22",
         settings: {
+          viaIR: true,
           optimizer: {
             enabled: true,
-            runs: 50, // 平衡优化：合约大小与gas效率
+            runs: 1,
           },
-          viaIR: true,
         },
       },
     ],
@@ -40,7 +42,7 @@ module.exports = {
     sepolia: {
       url: "https://sepolia.infura.io/v3/1a10a13df2cc454ead9480743d1c09e1",
       accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
-      timeout: 60000, // Increase timeout to 60 seconds
+      timeout: 60000,
     },
     bscTestnet: {
       url: "https://data-seed-prebsc-1-s1.binance.org:8545",

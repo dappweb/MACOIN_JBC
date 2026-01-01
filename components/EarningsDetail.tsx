@@ -339,8 +339,28 @@ const EarningsDetail: React.FC<{ onNavigateToMining?: () => void }> = ({ onNavig
       setError(null)
       
       const currentBlock = await provider.getBlockNumber()
-      // 减少查询范围到 50,000 区块，提高查询成功率
-      const fromBlock = Math.max(0, currentBlock - 50000)
+      // 根据时间单位动态调整查询范围
+      let blockRange = 100000; // 默认范围
+      
+      try {
+        const secondsInUnit = await protocolContract.SECONDS_IN_UNIT();
+        const timeUnit = Number(secondsInUnit);
+        
+        if (timeUnit === 60) {
+          // 测试环境 (分钟单位) - 较小范围即可
+          blockRange = 100000; // 增加到100K以确保不遗漏
+          console.log('🔍 [EarningsDetail] 检测到测试环境 (60s单位)，使用100K区块范围');
+        } else if (timeUnit === 86400) {
+          // 生产环境 (天单位) - 需要更大范围
+          blockRange = 500000; // 增加到500K以确保不遗漏历史数据
+          console.log('🔍 [EarningsDetail] 检测到生产环境 (86400s单位)，使用500K区块范围');
+        }
+      } catch (e) {
+        console.warn('⚠️ [EarningsDetail] 无法检测时间单位，使用默认范围');
+      }
+      
+      const fromBlock = Math.max(0, currentBlock - blockRange)
+      console.log(`🔍 [EarningsDetail] 查询范围: 区块 ${fromBlock} 到 ${currentBlock} (共 ${currentBlock - fromBlock} 个区块)`)
 
       const targetUser = isOwner && viewMode === "all" ? null : account
 
@@ -402,12 +422,57 @@ const EarningsDetail: React.FC<{ onNavigateToMining?: () => void }> = ({ onNavig
       let processedEvents = 0
       let failedEvents = 0
 
-      // 处理RewardPaid事件（包含静态收益）
-      for (const event of rewardPaidEvents) {
+      // 使用 Map 来跟踪已处理的事件，避免重复
+      // key: transactionHash-blockNumber-rewardType
+      const processedEventsMap = new Map<string, boolean>()
+
+      // 优先处理 RewardClaimed 事件（包含准确的 MC 和 JBC 金额）
+      for (const event of rewardClaimedEvents) {
         try {
           const block = await provider.getBlock(event.blockNumber)
-          const amount = event.args ? ethers.formatEther(event.args[1]) : "0"
+          const mcAmount = event.args ? ethers.formatEther(event.args[1]) : "0"
+          const jbcAmount = event.args ? ethers.formatEther(event.args[2]) : "0"
+          const rewardType = event.args ? Number(event.args[3]) : 0
+          const ticketId = event.args ? event.args[4].toString() : ""
+
+          // 创建唯一键来避免重复
+          const eventKey = `${event.transactionHash}-${event.blockNumber}-${rewardType}-claimed`
+          
+          if (!processedEventsMap.has(eventKey)) {
+            rows.push({
+              hash: event.transactionHash,
+              user: event.args ? event.args[0] : "",
+              mcAmount,
+              jbcAmount,
+              rewardType,
+              ticketId,
+              blockNumber: event.blockNumber,
+              timestamp: block ? block.timestamp : 0,
+              status: "confirmed",
+            })
+            processedEventsMap.set(eventKey, true)
+            processedEvents++
+          }
+        } catch (err) {
+          console.error("Error parsing RewardClaimed event:", err, event)
+          failedEvents++
+        }
+      }
+
+      // 处理 RewardPaid 事件（作为补充，只处理没有对应 RewardClaimed 的事件）
+      // 因为 RewardPaid 和 RewardClaimed 通常在同一个交易中成对出现
+      for (const event of rewardPaidEvents) {
+        try {
           const rewardType = event.args ? Number(event.args[2]) : 0
+          const eventKey = `${event.transactionHash}-${event.blockNumber}-${rewardType}-claimed`
+          
+          // 如果已经有对应的 RewardClaimed 事件，跳过 RewardPaid
+          if (processedEventsMap.has(eventKey)) {
+            continue
+          }
+
+          const block = await provider.getBlock(event.blockNumber)
+          const amount = event.args ? ethers.formatEther(event.args[1]) : "0"
 
           // RewardPaid事件只有总金额，需要根据类型判断是MC还是JBC
           // 对于静态收益，通常是50%MC + 50%JBC
@@ -422,47 +487,24 @@ const EarningsDetail: React.FC<{ onNavigateToMining?: () => void }> = ({ onNavig
             mcAmount = amount
           }
 
-          rows.push({
-            hash: event.transactionHash,
-            user: event.args ? event.args[0] : "",
-            mcAmount,
-            jbcAmount,
-            rewardType,
-            ticketId: "", // RewardPaid事件没有ticketId
-            blockNumber: event.blockNumber,
-            timestamp: block ? block.timestamp : 0,
-            status: "confirmed",
-          })
-          processedEvents++
+          const paidEventKey = `${event.transactionHash}-${event.blockNumber}-${rewardType}-paid`
+          if (!processedEventsMap.has(paidEventKey)) {
+            rows.push({
+              hash: event.transactionHash,
+              user: event.args ? event.args[0] : "",
+              mcAmount,
+              jbcAmount,
+              rewardType,
+              ticketId: "", // RewardPaid事件没有ticketId
+              blockNumber: event.blockNumber,
+              timestamp: block ? block.timestamp : 0,
+              status: "confirmed",
+            })
+            processedEventsMap.set(paidEventKey, true)
+            processedEvents++
+          }
         } catch (err) {
           console.error("Error parsing RewardPaid event:", err, event)
-          failedEvents++
-        }
-      }
-
-      // 处理RewardClaimed事件
-      for (const event of rewardClaimedEvents) {
-        try {
-          const block = await provider.getBlock(event.blockNumber)
-          const mcAmount = event.args ? ethers.formatEther(event.args[1]) : "0"
-          const jbcAmount = event.args ? ethers.formatEther(event.args[2]) : "0"
-          const rewardType = event.args ? Number(event.args[3]) : 0
-          const ticketId = event.args ? event.args[4].toString() : ""
-
-          rows.push({
-            hash: event.transactionHash,
-            user: event.args ? event.args[0] : "",
-            mcAmount,
-            jbcAmount,
-            rewardType,
-            ticketId,
-            blockNumber: event.blockNumber,
-            timestamp: block ? block.timestamp : 0,
-            status: "confirmed",
-          })
-          processedEvents++
-        } catch (err) {
-          console.error("Error parsing RewardClaimed event:", err, event)
           failedEvents++
         }
       }
@@ -546,11 +588,15 @@ const EarningsDetail: React.FC<{ onNavigateToMining?: () => void }> = ({ onNavig
       saveToCache(rows)
       
       // 显示处理结果
+      console.log(`📊 [EarningsDetail] 事件处理完成: 成功 ${processedEvents} 条, 失败 ${failedEvents} 条`)
+      console.log(`📊 [EarningsDetail] 事件统计: RewardPaid=${rewardPaidEvents.length}, RewardClaimed=${rewardClaimedEvents.length}, Referral=${referralEvents.length}, Differential=${differentialEvents.length}`)
+      
       if (failedEvents > 0) {
         toast.error(`Loaded ${processedEvents} records, ${failedEvents} failed to parse`)
       } else if (processedEvents > 0) {
         toast.success(`Loaded ${processedEvents} earnings records`)
       } else {
+        console.warn('⚠️ [EarningsDetail] 没有找到任何收益记录，尝试降级方案')
         // 如果没有记录，尝试获取合约状态作为降级方案
         await fetchContractStateFallback();
       }

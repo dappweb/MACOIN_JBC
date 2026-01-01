@@ -485,6 +485,44 @@
         "ERC1967Utils"
       ]
     },
+    "/home/zyj_dev/.cursor/worktrees/MACOIN_JBC/rev/node_modules/@openzeppelin/contracts/interfaces/IERC1967.sol": {
+      "lastModificationDate": 1767206367085,
+      "contentHash": "3c9577899f440b0c66e880c96e9250bb",
+      "sourceName": "@openzeppelin/contracts/interfaces/IERC1967.sol",
+      "solcConfig": {
+        "version": "0.8.22",
+        "settings": {
+          "viaIR": true,
+          "optimizer": {
+            "enabled": true,
+            "runs": 1
+          },
+          "evmVersion": "paris",
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata",
+                "storageLayout"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        ">=0.4.11"
+      ],
+      "artifacts": [
+        "IERC1967"
+      ]
+    },
     "/home/zyj_dev/.cursor/worktrees/MACOIN_JBC/rev/node_modules/@openzeppelin/contracts/utils/Address.sol": {
       "lastModificationDate": 1767206365597,
       "contentHash": "2a06d82f31f75087bf90231599da4f1c",
@@ -525,10 +563,10 @@
         "Address"
       ]
     },
-    "/home/zyj_dev/.cursor/worktrees/MACOIN_JBC/rev/node_modules/@openzeppelin/contracts/interfaces/IERC1967.sol": {
-      "lastModificationDate": 1767206367085,
-      "contentHash": "3c9577899f440b0c66e880c96e9250bb",
-      "sourceName": "@openzeppelin/contracts/interfaces/IERC1967.sol",
+    "/home/zyj_dev/.cursor/worktrees/MACOIN_JBC/rev/node_modules/@openzeppelin/contracts/proxy/beacon/IBeacon.sol": {
+      "lastModificationDate": 1767206367021,
+      "contentHash": "ee2e46607ed2be58bd554306d068acba",
+      "sourceName": "@openzeppelin/contracts/proxy/beacon/IBeacon.sol",
       "solcConfig": {
         "version": "0.8.22",
         "settings": {
@@ -557,10 +595,10 @@
       },
       "imports": [],
       "versionPragmas": [
-        ">=0.4.11"
+        ">=0.4.16"
       ],
       "artifacts": [
-        "IERC1967"
+        "IBeacon"
       ]
     },
     "/home/zyj_dev/.cursor/worktrees/MACOIN_JBC/rev/node_modules/@openzeppelin/contracts/utils/StorageSlot.sol": {
@@ -599,44 +637,6 @@
       ],
       "artifacts": [
         "StorageSlot"
-      ]
-    },
-    "/home/zyj_dev/.cursor/worktrees/MACOIN_JBC/rev/node_modules/@openzeppelin/contracts/proxy/beacon/IBeacon.sol": {
-      "lastModificationDate": 1767206367021,
-      "contentHash": "ee2e46607ed2be58bd554306d068acba",
-      "sourceName": "@openzeppelin/contracts/proxy/beacon/IBeacon.sol",
-      "solcConfig": {
-        "version": "0.8.22",
-        "settings": {
-          "viaIR": true,
-          "optimizer": {
-            "enabled": true,
-            "runs": 1
-          },
-          "evmVersion": "paris",
-          "outputSelection": {
-            "*": {
-              "*": [
-                "abi",
-                "evm.bytecode",
-                "evm.deployedBytecode",
-                "evm.methodIdentifiers",
-                "metadata",
-                "storageLayout"
-              ],
-              "": [
-                "ast"
-              ]
-            }
-          }
-        }
-      },
-      "imports": [],
-      "versionPragmas": [
-        ">=0.4.16"
-      ],
-      "artifacts": [
-        "IBeacon"
       ]
     },
     "/home/zyj_dev/.cursor/worktrees/MACOIN_JBC/rev/node_modules/@openzeppelin/contracts/utils/Errors.sol": {
@@ -1295,8 +1295,8 @@
       ]
     },
     "/home/zyj_dev/.cursor/worktrees/MACOIN_JBC/rev/contracts/JinbaoProtocolNative.sol": {
-      "lastModificationDate": 1767238404753,
-      "contentHash": "203795a95a04884625e2811c17809790",
+      "lastModificationDate": 1767238903632,
+      "contentHash": "0bd0eb9fc3684f217a854b608bf88bbf",
       "sourceName": "contracts/JinbaoProtocolNative.sol",
       "solcConfig": {
         "version": "0.8.22",

@@ -6,12 +6,14 @@
   "contracts": {
     "JBC": "0xAAb88c0Bc9f4A73019e4Dbfc5c8De82A8dCb970D",
     "Protocol": "0x77601aC473dB1195A1A9c82229C9bD008a69987A",
-    "ProtocolImplementation": "0x07dbBe0f629e63E55AD06b98FAc8a0d3Dd4b184C"
+    "ProtocolImplementation": "0x07dbBe0f629e63E55AD06b98FAc8a0d3Dd4b184C",
+    "DailyBurnManager": "0x298578A691f10A85f027BDD2D9a8D007540FCBB4"
   },
   "wallets": {
     "marketing": "0xdb817e0d21a134f649d24b91e39d42e7eec52a65",
     "treasury": "0x5067d182d5f15511f0c71194a25cc67b05c20b02",
     "lpInjection": "0x03c5d3cf3e358a00fa446e3376eab047d1ce46f2",
     "buyback": "0x979373c675c25e6cb2fd49b571dcadcb15a5a6d8"
-  }
+  },
+  "lastUpdate": "2026-01-01T03:00:27.359Z"
 }

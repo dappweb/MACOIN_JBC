@@ -1,6 +1,7 @@
 require("@nomicfoundation/hardhat-toolbox");
 require('@openzeppelin/hardhat-upgrades');
 require("dotenv").config();
+const path = require("path");
 
 /** @type import('hardhat/config').HardhatUserConfig */
 module.exports = {
@@ -13,6 +14,7 @@ module.exports = {
             enabled: true,
             runs: 1,
           },
+          viaIR: true, // Enable IR-based code generation to avoid "Stack too deep" errors
         },
       },
       {
@@ -22,15 +24,17 @@ module.exports = {
             enabled: true,
             runs: 1,
           },
+          viaIR: true, // Enable IR-based code generation to avoid "Stack too deep" errors
         },
       },
     ],
   },
   paths: {
-    sources: "../contracts",
-    tests: "../test",
-    cache: "../cache",
-    artifacts: "../artifacts"
+    root: path.resolve(__dirname, ".."),
+    sources: path.resolve(__dirname, "../contracts"),
+    tests: path.resolve(__dirname, "../test"),
+    cache: path.resolve(__dirname, "../cache"),
+    artifacts: path.resolve(__dirname, "../artifacts")
   },
   networks: {
     hardhat: {

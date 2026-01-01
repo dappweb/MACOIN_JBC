@@ -1170,7 +1170,6 @@ contract JinbaoProtocolV4 is Initializable, OwnableUpgradeable, UUPSUpgradeable,
     function adminSetActiveDirects(address user, uint256 newActiveDirects) external onlyOwner {
         if (user == address(0)) revert InvalidAddress();
         
-        uint256 oldActiveDirects = userInfo[user].activeDirects;
         userInfo[user].activeDirects = newActiveDirects;
         
         emit UserDataUpdated(user, newActiveDirects, userInfo[user].totalRevenue, userInfo[user].currentCap, userInfo[user].refundFeeAmount);

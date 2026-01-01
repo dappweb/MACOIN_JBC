@@ -1,0 +1,20 @@
+{
+  "timestamp": "2026-01-01T14:48:39.970Z",
+  "proxyAddress": "0x77601aC473dB1195A1A9c82229C9bD008a69987A",
+  "implementationAddress": "0x15106A34498DBec54151a7fa59115D549Ba38AAd",
+  "deployer": "0x4C10831CBcF9884ba72051b5287b6c87E4F74A48",
+  "upgradeName": "admin-directs-teamcount",
+  "newFeatures": [
+    "adminSetActiveDirects - 管理员修改用户活跃直推数量",
+    "adminSetTeamCount - 管理员修改用户团队成员数量"
+  ],
+  "events": [
+    "UserDataUpdated - 用户数据更新事件（包含活跃直推数）",
+    "TeamCountUpdated - 团队成员数更新事件",
+    "UserLevelChanged - 用户等级变化事件（当团队成员数改变时）"
+  ],
+  "gasUsed": "TBD",
+  "blockNumber": 2038686,
+  "network": "mc",
+  "chainId": "88813"
+}

@@ -107,18 +107,57 @@ const AdminUserManager: React.FC = () => {
     };
 
     const handleSaveChanges = async () => {
-        // Show a more user-friendly message instead of an error
-        toast('用户管理功能在当前合约版本中不可用', {
-            icon: 'ℹ️',
-            duration: 4000,
-            style: {
-                background: 'rgba(59, 130, 246, 0.1)',
-                border: '1px solid rgba(59, 130, 246, 0.3)',
-                color: '#3b82f6',
-                backdropFilter: 'blur(8px)',
+        if (!protocolContract || !userInfo) {
+            toast.error('合约未连接或用户信息不存在');
+            return;
+        }
+
+        setLoading(true);
+        try {
+            // 检查是否有推荐人变更
+            const newReferrer = editData.referrer.trim();
+            const oldReferrer = userInfo.referrer;
+
+            if (newReferrer !== oldReferrer) {
+                // 验证新推荐人地址
+                if (!ethers.isAddress(newReferrer)) {
+                    toast.error('请输入有效的推荐人地址');
+                    setLoading(false);
+                    return;
+                }
+
+                if (newReferrer.toLowerCase() === userInfo.address.toLowerCase()) {
+                    toast.error('不能将自己设置为推荐人');
+                    setLoading(false);
+                    return;
+                }
+
+                // 调用合约的 adminSetReferrer 函数
+                const tx = await protocolContract.adminSetReferrer(userInfo.address, newReferrer);
+                toast.success('交易已提交，等待确认...', { duration: 3000 });
+                
+                // 等待交易确认
+                await tx.wait();
+                
+                toast.success('推荐人修改成功！', { duration: 3000 });
+                
+                // 重新加载用户信息
+                await searchUser();
+                setEditMode(false);
+            } else {
+                toast.info('推荐人地址未变更', { duration: 2000 });
             }
-        });
-        return;
+
+            // 注意：其他字段（activeDirects, teamCount, totalRevenue, currentCap, refundFeeAmount）
+            // 在当前合约版本中无法直接修改，这些数据由系统自动计算和维护
+            // 如果需要修改这些字段，需要合约添加相应的管理员函数
+
+        } catch (error: any) {
+            console.error('Save changes error:', error);
+            toast.error(formatContractError(error));
+        } finally {
+            setLoading(false);
+        }
     };
 
     if (!isOwner) {
@@ -142,8 +181,13 @@ const AdminUserManager: React.FC = () => {
                 <div className="flex items-start gap-3">
                     <AlertTriangle className="text-blue-400 mt-0.5 flex-shrink-0" size={20} />
                     <div className="text-sm text-blue-200">
-                        <div className="font-bold mb-1">当前合约版本说明</div>
-                        <p>当前使用的是精简版合约，用户管理功能仅供查看和演示。实际的用户数据修改需要完整版合约支持。</p>
+                        <div className="font-bold mb-1">管理员功能说明</div>
+                        <ul className="list-disc list-inside space-y-1 text-xs">
+                            <li><strong>推荐人（Referrer）</strong>：可以修改，修改后会自动更新推荐链和团队统计</li>
+                            <li><strong>等级（Level）</strong>：根据团队人数（teamCount）自动计算，无法直接修改</li>
+                            <li><strong>其他字段</strong>：活跃直推、团队人数、总收益等由系统自动维护，无法手动修改</li>
+                            <li>修改推荐人可能会影响用户的等级，因为等级是基于团队人数计算的</li>
+                        </ul>
                     </div>
                 </div>
             </div>
@@ -190,7 +234,7 @@ const AdminUserManager: React.FC = () => {
                                         className="px-4 py-2 bg-blue-600/20 text-blue-400 border border-blue-500/30 rounded-lg hover:bg-blue-600/30 font-bold flex items-center gap-2"
                                     >
                                         <Edit3 size={16} />
-                                        编辑 (演示)
+                                        编辑推荐人
                                     </button>
                                 </>
                             ) : (
@@ -198,10 +242,10 @@ const AdminUserManager: React.FC = () => {
                                     <button
                                         onClick={handleSaveChanges}
                                         disabled={loading}
-                                        className="px-4 py-2 bg-blue-600/20 text-blue-400 border border-blue-500/30 rounded-lg hover:bg-blue-600/30 disabled:opacity-50 font-bold flex items-center gap-2"
+                                        className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-500 disabled:opacity-50 font-bold flex items-center gap-2"
                                     >
-                                        <Save size={16} />
-                                        保存 (演示)
+                                        {loading ? <RefreshCw className="animate-spin" size={16} /> : <Save size={16} />}
+                                        保存更改
                                     </button>
                                     <button
                                         onClick={() => {
@@ -256,34 +300,18 @@ const AdminUserManager: React.FC = () => {
 
                             <div>
                                 <label className="block text-sm font-medium text-gray-400 mb-1">活跃直推数量</label>
-                                {editMode ? (
-                                    <input
-                                        type="number"
-                                        value={editData.activeDirects}
-                                        onChange={(e) => setEditData({...editData, activeDirects: e.target.value})}
-                                        className="w-full p-3 border border-gray-700 bg-gray-900/50 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50"
-                                    />
-                                ) : (
-                                    <div className="p-3 bg-gray-800/50 rounded-lg border border-gray-700">
-                                        <span className="text-white font-bold">{userInfo.activeDirects}</span>
-                                    </div>
-                                )}
+                                <div className="p-3 bg-gray-800/50 rounded-lg border border-gray-700">
+                                    <span className="text-white font-bold">{userInfo.activeDirects}</span>
+                                    <span className="text-xs text-gray-500 ml-2">(系统自动计算，不可修改)</span>
+                                </div>
                             </div>
 
                             <div>
                                 <label className="block text-sm font-medium text-gray-400 mb-1">团队人数</label>
-                                {editMode ? (
-                                    <input
-                                        type="number"
-                                        value={editData.teamCount}
-                                        onChange={(e) => setEditData({...editData, teamCount: e.target.value})}
-                                        className="w-full p-3 border border-gray-700 bg-gray-900/50 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50"
-                                    />
-                                ) : (
-                                    <div className="p-3 bg-gray-800/50 rounded-lg border border-gray-700">
-                                        <span className="text-white font-bold">{userInfo.teamCount}</span>
-                                    </div>
-                                )}
+                                <div className="p-3 bg-gray-800/50 rounded-lg border border-gray-700">
+                                    <span className="text-white font-bold">{userInfo.teamCount}</span>
+                                    <span className="text-xs text-gray-500 ml-2">(系统自动计算，不可修改)</span>
+                                </div>
                             </div>
                         </div>
 
@@ -291,53 +319,26 @@ const AdminUserManager: React.FC = () => {
                         <div className="space-y-4">
                             <div>
                                 <label className="block text-sm font-medium text-gray-400 mb-1">总收益 (MC)</label>
-                                {editMode ? (
-                                    <input
-                                        type="number"
-                                        step="0.01"
-                                        value={editData.totalRevenue}
-                                        onChange={(e) => setEditData({...editData, totalRevenue: e.target.value})}
-                                        className="w-full p-3 border border-gray-700 bg-gray-900/50 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50"
-                                    />
-                                ) : (
-                                    <div className="p-3 bg-gray-800/50 rounded-lg border border-gray-700">
-                                        <span className="text-green-400 font-bold">{parseFloat(userInfo.totalRevenue).toFixed(4)} MC</span>
-                                    </div>
-                                )}
+                                <div className="p-3 bg-gray-800/50 rounded-lg border border-gray-700">
+                                    <span className="text-green-400 font-bold">{parseFloat(userInfo.totalRevenue).toFixed(4)} MC</span>
+                                    <span className="text-xs text-gray-500 ml-2">(只读)</span>
+                                </div>
                             </div>
 
                             <div>
                                 <label className="block text-sm font-medium text-gray-400 mb-1">当前上限 (MC)</label>
-                                {editMode ? (
-                                    <input
-                                        type="number"
-                                        step="0.01"
-                                        value={editData.currentCap}
-                                        onChange={(e) => setEditData({...editData, currentCap: e.target.value})}
-                                        className="w-full p-3 border border-gray-700 bg-gray-900/50 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50"
-                                    />
-                                ) : (
-                                    <div className="p-3 bg-gray-800/50 rounded-lg border border-gray-700">
-                                        <span className="text-blue-400 font-bold">{parseFloat(userInfo.currentCap).toFixed(4)} MC</span>
-                                    </div>
-                                )}
+                                <div className="p-3 bg-gray-800/50 rounded-lg border border-gray-700">
+                                    <span className="text-blue-400 font-bold">{parseFloat(userInfo.currentCap).toFixed(4)} MC</span>
+                                    <span className="text-xs text-gray-500 ml-2">(只读)</span>
+                                </div>
                             </div>
 
                             <div>
                                 <label className="block text-sm font-medium text-gray-400 mb-1">退款费用 (MC)</label>
-                                {editMode ? (
-                                    <input
-                                        type="number"
-                                        step="0.01"
-                                        value={editData.refundFeeAmount}
-                                        onChange={(e) => setEditData({...editData, refundFeeAmount: e.target.value})}
-                                        className="w-full p-3 border border-gray-700 bg-gray-900/50 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50"
-                                    />
-                                ) : (
-                                    <div className="p-3 bg-gray-800/50 rounded-lg border border-gray-700">
-                                        <span className="text-yellow-400 font-bold">{parseFloat(userInfo.refundFeeAmount).toFixed(4)} MC</span>
-                                    </div>
-                                )}
+                                <div className="p-3 bg-gray-800/50 rounded-lg border border-gray-700">
+                                    <span className="text-yellow-400 font-bold">{parseFloat(userInfo.refundFeeAmount).toFixed(4)} MC</span>
+                                    <span className="text-xs text-gray-500 ml-2">(只读)</span>
+                                </div>
                             </div>
 
                             <div>
@@ -346,6 +347,7 @@ const AdminUserManager: React.FC = () => {
                                     <span className="text-purple-400 font-bold">
                                         V{userInfo.level} ({userInfo.levelPercent}%)
                                     </span>
+                                    <span className="text-xs text-gray-500 ml-2">(根据团队人数自动计算)</span>
                                 </div>
                             </div>
                         </div>
@@ -387,12 +389,13 @@ const AdminUserManager: React.FC = () => {
                             <div className="flex items-start gap-3">
                                 <AlertTriangle className="text-yellow-400 mt-0.5 flex-shrink-0" size={20} />
                                 <div className="text-sm text-yellow-200">
-                                    <div className="font-bold mb-1">修改用户数据注意事项：</div>
+                                    <div className="font-bold mb-1">修改推荐人注意事项：</div>
                                     <ul className="list-disc list-inside space-y-1 text-xs">
-                                        <li>修改推荐人将重新计算整个推荐链的团队人数</li>
-                                        <li>修改收益数据可能影响用户的出局状态</li>
-                                        <li>请确保数据的准确性，错误的修改可能影响系统稳定性</li>
-                                        <li>建议在修改前备份相关数据</li>
+                                        <li>修改推荐人将重新计算整个推荐链的团队人数（teamCount）</li>
+                                        <li>团队人数的变化会自动影响用户的等级（Level）</li>
+                                        <li>新推荐人不能是用户自己，也不能形成循环引用</li>
+                                        <li>修改后，原推荐人的团队人数会减少，新推荐人的团队人数会增加</li>
+                                        <li>此操作不可逆，请谨慎操作</li>
                                     </ul>
                                 </div>
                             </div>

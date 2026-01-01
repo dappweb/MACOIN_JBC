@@ -605,18 +605,6 @@ const SwapPanel: React.FC = () => {
               </div>
             )}
 
-            {/* Non-Owner Liquidity Notice */}
-            {isConnected && !isOwner && (
-              <div className="bg-amber-900/20 border-2 border-amber-500/50 rounded-xl p-4 mb-4 relative z-10 backdrop-blur-sm">
-                <p className="text-amber-300 text-sm font-bold text-center">
-                  ℹ️ 流动性管理仅限合约拥有者
-                </p>
-                <p className="text-amber-200/80 text-xs text-center mt-1">
-                  Only contract owner (0x4C...4A48) can add liquidity to the pool
-                </p>
-              </div>
-            )}
-
             {/* Action Button */}
             {!isConnected ? (
                  <AnimatedButton 

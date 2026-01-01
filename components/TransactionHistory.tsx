@@ -4,7 +4,6 @@ import { useLanguage } from '../src/LanguageContext';
 import { useEventRefresh } from '../hooks/useGlobalRefresh';
 import { FileText, X, Copy, ExternalLink, Filter, RefreshCw, Clock, TrendingUp, TrendingDown, ChevronRight, Package, Lock, Gift, Unlock, Calendar, DollarSign, ChevronDown, CheckCircle } from 'lucide-react';
 import { ethers } from 'ethers';
-import { formatMC, formatJBC, formatPrice, formatAmount, formatDateTime, formatAddress, formatTxHash, formatBlockNumber } from '../utils/formatUtils';
 
 interface Transaction {
   hash: string;
@@ -227,7 +226,7 @@ const TransactionHistory: React.FC = () => {
         <>
           <p className={`text-sm ${isCompact ? 'text-right' : 'text-gray-400'}`}>
             {!isCompact && `${t.history.amount || "Amount"}: `}
-            <span className="font-semibold text-emerald-400">{formatMC(tx.amount)} MC</span>
+            <span className="font-semibold text-emerald-400">{parseFloat(tx.amount).toFixed(4)} MC</span>
           </p>
           {!isCompact && (
             <p className="text-sm text-gray-400">
@@ -241,11 +240,11 @@ const TransactionHistory: React.FC = () => {
         <>
           <p className={`text-sm ${isCompact ? 'text-right' : 'text-gray-400'}`}>
             {!isCompact && `${t.history.mcReward}: `}
-            <span className="font-semibold text-neon-400">{formatMC(tx.amount, 2)} MC</span>
+            <span className="font-semibold text-neon-400">{parseFloat(tx.amount).toFixed(2)} MC</span>
           </p>
           <p className={`text-sm ${isCompact ? 'text-right' : 'text-gray-400'}`}>
             {!isCompact && `${t.history.jbcReward}: `}
-            <span className="font-semibold text-amber-400">{formatJBC(tx.amount2 || '0', 2)} JBC</span>
+            <span className="font-semibold text-amber-400">{parseFloat(tx.amount2 || '0').toFixed(2)} JBC</span>
           </p>
         </>
       );
@@ -254,12 +253,12 @@ const TransactionHistory: React.FC = () => {
         <>
           <p className={`text-sm ${isCompact ? 'text-right' : 'text-gray-400'}`}>
             {!isCompact && `${t.history.amount}: `}
-            <span className="font-semibold text-neon-400">{formatMC(tx.amount, 2)} MC</span>
+            <span className="font-semibold text-neon-400">{parseFloat(tx.amount).toFixed(2)} MC</span>
           </p>
           {tx.amount3 && parseFloat(tx.amount3) > 0 && (
             <p className={`text-sm ${isCompact ? 'text-right' : 'text-gray-400'}`}>
               {!isCompact && `${t.history.jbcQuantity || "JBC Quantity"}: `}
-              <span className="font-semibold text-amber-400">{formatJBC(tx.amount3, 2)} JBC</span>
+              <span className="font-semibold text-amber-400">{parseFloat(tx.amount3).toFixed(2)} JBC</span>
             </p>
           )}
           {!isCompact && (
@@ -274,11 +273,11 @@ const TransactionHistory: React.FC = () => {
         <>
           <p className={`text-sm ${isCompact ? 'text-right' : 'text-gray-400'}`}>
             {!isCompact && `${t.history.paid}: `}
-            <span className="font-semibold text-red-400">-{formatMC(tx.amount, 2)} MC</span>
+            <span className="font-semibold text-red-400">-{parseFloat(tx.amount).toFixed(2)} MC</span>
           </p>
           <p className={`text-sm ${isCompact ? 'text-right' : 'text-gray-400'}`}>
             {!isCompact && `${t.history.received}: `}
-            <span className="font-semibold text-neon-400">+{formatJBC(tx.amount2 || '0', 2)} JBC</span>
+            <span className="font-semibold text-neon-400">+{parseFloat(tx.amount2 || '0').toFixed(2)} JBC</span>
           </p>
         </>
       );
@@ -287,11 +286,11 @@ const TransactionHistory: React.FC = () => {
         <>
           <p className={`text-sm ${isCompact ? 'text-right' : 'text-gray-400'}`}>
             {!isCompact && `${t.history.paid}: `}
-            <span className="font-semibold text-red-400">-{formatMC(tx.amount, 2)} JBC</span>
+            <span className="font-semibold text-red-400">-{parseFloat(tx.amount).toFixed(2)} JBC</span>
           </p>
           <p className={`text-sm ${isCompact ? 'text-right' : 'text-gray-400'}`}>
             {!isCompact && `${t.history.received}: `}
-            <span className="font-semibold text-neon-400">+{formatJBC(tx.amount2 || '0', 2)} MC</span>
+            <span className="font-semibold text-neon-400">+{parseFloat(tx.amount2 || '0').toFixed(2)} MC</span>
           </p>
         </>
       );
@@ -299,7 +298,7 @@ const TransactionHistory: React.FC = () => {
       return (
         <p className={`text-sm ${isCompact ? 'text-right' : 'text-gray-400'}`}>
           {!isCompact && `${t.history.amount}: `}
-          <span className="font-semibold text-neon-400">{formatMC(tx.amount, 2)} MC</span>
+          <span className="font-semibold text-neon-400">{parseFloat(tx.amount).toFixed(2)} MC</span>
         </p>
       );
     }

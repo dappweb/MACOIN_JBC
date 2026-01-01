@@ -30,10 +30,6 @@ const SwapPanel: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isRotated, setIsRotated] = useState(false);
   
-  // Tax rates from contract
-  const [buyTax, setBuyTax] = useState<number>(50); // Default 50% (0.5 * 100)
-  const [sellTax, setSellTax] = useState<number>(25); // Default 25% (0.25 * 100)
-  
   // Enhanced loading states
   const [isInitializing, setIsInitializing] = useState(true);
   const [isLoadingPoolData, setIsLoadingPoolData] = useState(false);
@@ -64,22 +60,13 @@ const SwapPanel: React.FC = () => {
     if (protocolContract) {
         setIsLoadingPoolData(true);
         try {
-            const [poolMcBal, poolJbcBal, buyTaxRate, sellTaxRate] = await Promise.all([
-                protocolContract.swapReserveMC(),
-                protocolContract.swapReserveJBC(),
-                protocolContract.swapBuyTax().catch(() => 50), // Default 50 if fails
-                protocolContract.swapSellTax().catch(() => 25)  // Default 25 if fails
-            ]);
-            
+            const poolMcBal = await protocolContract.swapReserveMC();
             const poolMcFormatted = ethers.formatEther(poolMcBal);
             setPoolMC(poolMcFormatted);
 
+            const poolJbcBal = await protocolContract.swapReserveJBC();
             const poolJbcFormatted = ethers.formatEther(poolJbcBal);
             setPoolJBC(poolJbcFormatted);
-            
-            // Update tax rates from contract
-            setBuyTax(Number(buyTaxRate));
-            setSellTax(Number(sellTaxRate));
             
             // 计算 LP 总量
             const mcAmount = parseFloat(poolMcFormatted);
@@ -342,9 +329,8 @@ const SwapPanel: React.FC = () => {
       
       if (isSelling) {
           // Sell JBC (Input JBC) -> Get MC
-          // 1. Tax on Input (sellTax is percentage, e.g., 25 = 25%)
-          const taxPercent = sellTax / 100;
-          const tax = amount * taxPercent;
+          // 1. Tax 25% on Input
+          const tax = amount * 0.25;
           const amountToSwap = amount - tax;
           
           // 2. AMM Swap (Input JBC, Output MC)
@@ -362,9 +348,8 @@ const SwapPanel: React.FC = () => {
               outPreTax = (amount * rJbc) / (rMc + amount);
           }
           
-          // 2. Tax on Output (buyTax is percentage, e.g., 50 = 50%)
-          const taxPercent = buyTax / 100;
-          const tax = outPreTax * taxPercent;
+          // 2. Tax 50% on Output
+          const tax = outPreTax * 0.50;
           received = outPreTax - tax;
       }
       
@@ -499,21 +484,16 @@ const SwapPanel: React.FC = () => {
                 </div>
             </div>
 
-            {/* Tax Info */}
+            {/* Slippage Info */}
             <div className="bg-red-900/20 border border-red-500/30 p-3 rounded-lg text-xs text-red-300 flex flex-col gap-1 backdrop-blur-sm">
                 <div className={`flex justify-between ${isSelling ? 'font-bold' : 'opacity-50'}`}>
-                    <span>{t.swap.slipSell || '卖出税率'}</span>
-                    <span>{isSelling ? `(${sellTax}% - Active)` : `${sellTax}%`}</span>
+                    <span>{t.swap.slipSell}</span>
+                    {isSelling && <span>(Active)</span>}
                 </div>
                 <div className={`flex justify-between ${!isSelling ? 'font-bold' : 'opacity-50'}`}>
-                    <span>{t.swap.slipBuy || '买入税率'}</span>
-                    <span>{!isSelling ? `(${buyTax}% - Active)` : `${buyTax}%`}</span>
+                    <span>{t.swap.slipBuy}</span>
+                    {!isSelling && <span>(Active)</span>}
                 </div>
-                {isOwner && (
-                    <div className="mt-2 pt-2 border-t border-red-500/20 text-xs text-red-400">
-                        👑 管理员提示：税率可在 AdminPanel 中修改
-                    </div>
-                )}
             </div>
 
             {/* Pool Liquidity Info */}
@@ -601,6 +581,18 @@ const SwapPanel: React.FC = () => {
                 </p>
                 <p className="text-blue-200/80 text-xs text-center mt-1">
                   As contract owner, you have access to liquidity management functions
+                </p>
+              </div>
+            )}
+
+            {/* Non-Owner Liquidity Notice */}
+            {isConnected && !isOwner && (
+              <div className="bg-amber-900/20 border-2 border-amber-500/50 rounded-xl p-4 mb-4 relative z-10 backdrop-blur-sm">
+                <p className="text-amber-300 text-sm font-bold text-center">
+                  ℹ️ 流动性管理仅限合约拥有者
+                </p>
+                <p className="text-amber-200/80 text-xs text-center mt-1">
+                  Only contract owner (0x4C...4A48) can add liquidity to the pool
                 </p>
               </div>
             )}

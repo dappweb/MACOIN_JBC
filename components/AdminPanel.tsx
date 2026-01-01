@@ -144,17 +144,13 @@ const AdminPanel: React.FC = () => {
   const [ticketFlexibility, setTicketFlexibility] = useState('0');
   const [liquidityEnabled, setLiquidityEnabled] = useState(true);
   const [redeemEnabled, setRedeemEnabled] = useState(true);
-  const [emergencyPaused, setEmergencyPaused] = useState(false);
 
-  // Load current configuration from contract
   useEffect(() => {
     if (protocolContract) {
-      // Load operational status
+      // Check if functions exist to avoid errors on old deployments if not fully updated
+      // But we assume we updated the contract
       protocolContract.liquidityEnabled().then(setLiquidityEnabled).catch(console.error);
       protocolContract.redeemEnabled().then(setRedeemEnabled).catch(console.error);
-      protocolContract.emergencyPaused().then(setEmergencyPaused).catch(console.error);
-      
-      // Load ticket flexibility duration
       protocolContract.ticketFlexibilityDuration().then((d: any) => setTicketFlexibility((Number(d) / 3600).toString())).catch(console.error);
 
       // Fetch current wallet addresses
@@ -162,21 +158,6 @@ const AdminPanel: React.FC = () => {
       protocolContract.treasuryWallet().then(setCurrentTreasury).catch(console.error);
       protocolContract.lpInjectionWallet().then(setCurrentLp).catch(console.error);
       protocolContract.buybackWallet().then(setCurrentBuyback).catch(console.error);
-
-      // Fetch current distribution config
-      protocolContract.directRewardPercent().then((val: any) => setDirect(Number(val).toString())).catch(console.error);
-      protocolContract.levelRewardPercent().then((val: any) => setLevel(Number(val).toString())).catch(console.error);
-      protocolContract.marketingPercent().then((val: any) => setMarketing(Number(val).toString())).catch(console.error);
-      protocolContract.buybackPercent().then((val: any) => setBuyback(Number(val).toString())).catch(console.error);
-      protocolContract.lpInjectionPercent().then((val: any) => setLp(Number(val).toString())).catch(console.error);
-      protocolContract.treasuryPercent().then((val: any) => setTreasury(Number(val).toString())).catch(console.error);
-
-      // Fetch current swap taxes
-      protocolContract.swapBuyTax().then((val: any) => setBuyTax(Number(val).toString())).catch(console.error);
-      protocolContract.swapSellTax().then((val: any) => setSellTax(Number(val).toString())).catch(console.error);
-
-      // Fetch current redemption fee
-      protocolContract.redemptionFeePercent().then((val: any) => setRedeemFee(Number(val).toString())).catch(console.error);
 
       // Fetch level reward pool balance
       protocolContract.levelRewardPool().then((balance: any) => {
@@ -223,23 +204,6 @@ const AdminPanel: React.FC = () => {
       await tx.wait();
       setRedeemEnabled(!redeemEnabled);
       toast.success(t.admin.success);
-    } catch (err: any) {
-      toast.error(formatContractError(err));
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const toggleEmergencyPause = async () => {
-    if (!protocolContract) return;
-    setLoading(true);
-    try {
-      const tx = emergencyPaused 
-        ? await protocolContract.emergencyUnpause()
-        : await protocolContract.emergencyPause();
-      await tx.wait();
-      setEmergencyPaused(!emergencyPaused);
-      toast.success(emergencyPaused ? '合约已恢复运行' : '合约已紧急暂停');
     } catch (err: any) {
       toast.error(formatContractError(err));
     } finally {
@@ -539,11 +503,19 @@ const AdminPanel: React.FC = () => {
     }
   };
 
-  // Note: updateTeamCount is not available - team counts are automatically calculated
-  // This function is kept for UI compatibility but will show an error
   const updateTeamCount = async () => {
     if (!protocolContract || !searchUserAddress) return;
-    toast.error('团队人数无法直接修改。团队人数由推荐链自动计算。如需修改，请使用"用户管理"标签页中的"修改推荐人"功能。');
+    setLoading(true);
+    try {
+        // Note: Direct team count update is not available in the current contract
+        // Team counts are automatically calculated based on referral relationships
+        toast.error('Direct team count update is not supported. Team counts are automatically calculated based on referral relationships.');
+    } catch (err: any) {
+        console.error(err);
+        toast.error(formatContractError(err));
+    } finally {
+        setLoading(false);
+    }
   };
 
   const fundUser = async () => {
@@ -552,32 +524,9 @@ const AdminPanel: React.FC = () => {
 
       setLoading(true);
       try {
-          if (fundToken === 'JBC') {
-              // JBC cannot be rescued - contract prevents it
-              toast.error('无法救援 JBC 代币。合约限制：rescueTokens 函数不能用于 JBC 代币。');
-              setLoading(false);
-              return;
-          }
-
-          // For MC (native), use emergencyWithdrawNative if available
-          // Otherwise, rescueTokens can only rescue non-JBC tokens
-          // Since we're using native MC, we need to check if there's a token contract
-          // For now, show an error that this feature is not available for native MC
-          if (fundToken === 'MC') {
-              toast.error('原生 MC 无法通过 rescueTokens 提取。请使用"紧急提取"功能。');
-              setLoading(false);
-              return;
-          }
-
-          // For other ERC20 tokens (if any)
-          const tokenAddress = CONTRACT_ADDRESSES.MC_TOKEN || '';
-          if (!tokenAddress || tokenAddress === '') {
-              toast.error('未配置 MC 代币地址。当前合约使用原生 MC。');
-              setLoading(false);
-              return;
-          }
-
+          const tokenAddress = fundToken === 'MC' ? CONTRACT_ADDRESSES.MC_TOKEN : CONTRACT_ADDRESSES.JBC_TOKEN;
           const amount = ethers.parseEther(fundAmount);
+          
           const tx = await protocolContract.rescueTokens(tokenAddress, searchUserAddress, amount);
           await tx.wait();
           
@@ -592,61 +541,50 @@ const AdminPanel: React.FC = () => {
   };
 
   const withdrawAll = async (tokenType: 'MC' | 'JBC') => {
-      if (!protocolContract || !account || !provider) return;
+      if (!protocolContract || !jbcContract) return;
       if (!window.confirm(t.admin.confirmWithdraw)) return;
       
       setLoading(true);
       try {
-          if (tokenType === 'MC') {
-              // For native MC, use emergencyWithdrawNative
+          // 1. Withdraw Swap Reserves first (for accounting)
+          const reserveMC = await protocolContract.swapReserveMC();
+          const reserveJBC = await protocolContract.swapReserveJBC();
+          
+          if (reserveMC > 0 || reserveJBC > 0) {
+             const tx1 = await protocolContract.withdrawSwapReserves(
+                 account, 
+                 reserveMC, 
+                 account, 
+                 reserveJBC
+             );
+             await tx1.wait();
+          }
+          
+          // 2. Rescue remaining tokens
+          if (tokenType === 'JBC') {
+              const balance = await jbcContract.balanceOf(CONTRACT_ADDRESSES.PROTOCOL);
+              
+              if (balance > 0) {
+                  const tx2 = await protocolContract.rescueTokens(await jbcContract.getAddress(), account, balance);
+                  await tx2.wait();
+              }
+          } else if (tokenType === 'MC') {
+              // For native MC, we need to rescue any remaining native balance in the contract
+              // This would be done through a special function if available, or manual withdrawal
               const contractBalance = await provider.getBalance(CONTRACT_ADDRESSES.PROTOCOL);
               
               if (contractBalance > 0) {
-                  // First withdraw swap reserves
-                  const reserveMC = await protocolContract.swapReserveMC();
-                  if (reserveMC > 0) {
-                      const tx1 = await protocolContract.withdrawSwapReserves(
-                          account, 
-                          reserveMC, 
-                          ethers.ZeroAddress, 
-                          0
-                      );
-                      await tx1.wait();
-                  }
-                  
-                  // Then use emergencyWithdrawNative for remaining balance
-                  const remainingBalance = contractBalance - reserveMC;
-                  if (remainingBalance > 0) {
-                      const tx2 = await protocolContract.emergencyWithdrawNative(account, remainingBalance);
-                      await tx2.wait();
-                  }
-                  
-                  toast.success(t.admin.withdrawSuccess);
-                  await refreshMcBalance();
-              } else {
-                  toast.info('合约中没有原生 MC 余额');
+                  // Note: This requires a special function in the contract to withdraw native MC
+                  // For now, we'll show a message that manual intervention is needed
+                  toast.warning('原生MC提取需要特殊处理，请联系技术支持');
               }
-          } else if (tokenType === 'JBC') {
-              // For JBC, withdraw swap reserves first
-              const reserveJBC = await protocolContract.swapReserveJBC();
-              
-              if (reserveJBC > 0) {
-                  const tx1 = await protocolContract.withdrawSwapReserves(
-                      ethers.ZeroAddress, 
-                      0, 
-                      account, 
-                      reserveJBC
-                  );
-                  await tx1.wait();
-              }
-              
-              // Note: JBC cannot be rescued via rescueTokens (contract restriction)
-              // Only swap reserves can be withdrawn
-              if (reserveJBC > 0) {
-                  toast.success(t.admin.withdrawSuccess);
-              } else {
-                  toast.info('交换池中没有 JBC 余额');
-              }
+          }
+          
+          toast.success(t.admin.withdrawSuccess);
+          
+          // 刷新原生MC余额
+          if (tokenType === 'MC') {
+              await refreshMcBalance();
           }
       } catch (err: any) {
           console.error(err);
@@ -914,33 +852,36 @@ const AdminPanel: React.FC = () => {
                     </div>
                     
                     <div className="pt-3 border-t border-gray-700">
-                        <label className="block text-sm font-medium text-gray-300 mb-2">团队人数</label>
-                        <div className="p-2 bg-gray-800/50 rounded border border-gray-700">
-                            <span className="text-white font-bold">{searchedUserInfo.teamCount}</span>
-                            <span className="text-xs text-gray-500 ml-2">(系统自动计算，不可修改)</span>
+                        <label className="block text-sm font-medium text-gray-300 mb-2">{t.admin.updateTeamCount}</label>
+                        <div className="flex gap-2">
+                            <input 
+                                type="number" 
+                                value={newTeamCount} 
+                                onChange={e => setNewTeamCount(e.target.value)} 
+                                className="w-24 p-2 border border-gray-700 bg-gray-900/50 rounded text-white text-sm" 
+                            />
+                            <button 
+                                onClick={updateTeamCount} 
+                                disabled={loading} 
+                                className="px-4 py-2 bg-blue-600/20 text-blue-400 border border-blue-500/30 rounded hover:bg-blue-600/30 disabled:opacity-50 text-sm font-bold"
+                            >
+                                {t.admin.update}
+                            </button>
                         </div>
-                        <p className="text-xs text-gray-500 mt-1">
-                            提示：团队人数由推荐链自动计算。如需修改，请使用"用户管理"标签页中的"修改推荐人"功能。
-                        </p>
+                        <p className="text-xs text-gray-500 mt-1">{t.admin.teamCountNote}</p>
                     </div>
 
                     <div className="pt-3 border-t border-gray-700">
                         <label className="block text-sm font-medium text-gray-300 mb-2">{t.admin.fundUser}</label>
-                        <p className="text-xs text-red-400 mb-2">
-                            ⚠️ 注意：当前合约使用原生 MC，无法通过 rescueTokens 提取。JBC 代币也无法救援（合约限制）。
-                        </p>
-                        <p className="text-xs text-gray-500 mb-2">
-                            如需向用户转账，请直接使用钱包转账功能。
-                        </p>
+                        <p className="text-xs text-red-400 mb-2">{t.admin.fundWarning}</p>
                         <div className="flex gap-2">
                             <select 
                                 value={fundToken}
                                 onChange={(e) => setFundToken(e.target.value as 'MC' | 'JBC')}
                                 className="p-2 border border-gray-700 bg-gray-900/50 rounded text-white text-sm"
-                                disabled
                             >
-                                <option value="MC">MC (不可用)</option>
-                                <option value="JBC">JBC (不可用)</option>
+                                <option value="MC">MC</option>
+                                <option value="JBC">JBC</option>
                             </select>
                             <input 
                                 type="number" 
@@ -948,13 +889,11 @@ const AdminPanel: React.FC = () => {
                                 onChange={e => setFundAmount(e.target.value)} 
                                 className="flex-1 p-2 border border-gray-700 bg-gray-900/50 rounded text-white text-sm" 
                                 placeholder="Amount"
-                                disabled
                             />
                             <button 
                                 onClick={fundUser} 
-                                disabled={true}
-                                className="px-4 py-2 bg-gray-600/20 text-gray-400 border border-gray-500/30 rounded cursor-not-allowed text-sm font-bold"
-                                title="此功能在当前合约版本中不可用"
+                                disabled={loading || !fundAmount} 
+                                className="px-4 py-2 bg-green-600/20 text-green-400 border border-green-500/30 rounded hover:bg-green-600/30 disabled:opacity-50 text-sm font-bold"
                             >
                                 {t.admin.transfer}
                             </button>
@@ -1076,17 +1015,6 @@ const AdminPanel: React.FC = () => {
                       >
                           {redeemEnabled ? <CheckCircle size={14} /> : <XCircle size={14} />}
                           {redeemEnabled ? t.admin.enabled : t.admin.disabled}
-                      </button>
-                  </div>
-                  <div className="flex items-center justify-between p-3 border border-red-700 rounded bg-red-900/20">
-                      <span className="text-gray-300 text-sm">紧急暂停</span>
-                      <button 
-                          onClick={toggleEmergencyPause}
-                          disabled={loading}
-                          className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold transition-colors ${emergencyPaused ? 'bg-red-500/20 text-red-400 border border-red-500/30' : 'bg-green-500/20 text-green-400 border border-green-500/30'}`}
-                      >
-                          {emergencyPaused ? <XCircle size={14} /> : <CheckCircle size={14} />}
-                          {emergencyPaused ? '已暂停' : '运行中'}
                       </button>
                   </div>
               </div>

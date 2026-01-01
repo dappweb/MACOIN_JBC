@@ -6,7 +6,6 @@ import { useLanguage } from "../src/LanguageContext"
 import { useEventRefresh } from "../hooks/useGlobalRefresh"
 import { AppTab } from "../src/types"
 import toast from "react-hot-toast"
-import { formatMC, formatJBC, formatPrice, formatAmount, formatTotalValue, formatDateTime, formatAddress, formatTxHash, formatBlockNumber, parseTokenAmount } from "../utils/formatUtils"
 
 interface RewardRecord {
   hash: string
@@ -340,28 +339,8 @@ const EarningsDetail: React.FC<{ onNavigateToMining?: () => void }> = ({ onNavig
       setError(null)
       
       const currentBlock = await provider.getBlockNumber()
-      // 根据时间单位动态调整查询范围
-      let blockRange = 100000; // 默认范围
-      
-      try {
-        const secondsInUnit = await protocolContract.SECONDS_IN_UNIT();
-        const timeUnit = Number(secondsInUnit);
-        
-        if (timeUnit === 60) {
-          // 测试环境 (分钟单位) - 较小范围即可
-          blockRange = 100000; // 增加到100K以确保不遗漏
-          console.log('🔍 [EarningsDetail] 检测到测试环境 (60s单位)，使用100K区块范围');
-        } else if (timeUnit === 86400) {
-          // 生产环境 (天单位) - 需要更大范围
-          blockRange = 500000; // 增加到500K以确保不遗漏历史数据
-          console.log('🔍 [EarningsDetail] 检测到生产环境 (86400s单位)，使用500K区块范围');
-        }
-      } catch (e) {
-        console.warn('⚠️ [EarningsDetail] 无法检测时间单位，使用默认范围');
-      }
-      
-      const fromBlock = Math.max(0, currentBlock - blockRange)
-      console.log(`🔍 [EarningsDetail] 查询范围: 区块 ${fromBlock} 到 ${currentBlock} (共 ${currentBlock - fromBlock} 个区块)`)
+      // 减少查询范围到 50,000 区块，提高查询成功率
+      const fromBlock = Math.max(0, currentBlock - 50000)
 
       const targetUser = isOwner && viewMode === "all" ? null : account
 
@@ -423,57 +402,12 @@ const EarningsDetail: React.FC<{ onNavigateToMining?: () => void }> = ({ onNavig
       let processedEvents = 0
       let failedEvents = 0
 
-      // 使用 Map 来跟踪已处理的事件，避免重复
-      // key: transactionHash-blockNumber-rewardType
-      const processedEventsMap = new Map<string, boolean>()
-
-      // 优先处理 RewardClaimed 事件（包含准确的 MC 和 JBC 金额）
-      for (const event of rewardClaimedEvents) {
-        try {
-          const block = await provider.getBlock(event.blockNumber)
-          const mcAmount = event.args ? ethers.formatEther(event.args[1]) : "0"
-          const jbcAmount = event.args ? ethers.formatEther(event.args[2]) : "0"
-          const rewardType = event.args ? Number(event.args[3]) : 0
-          const ticketId = event.args ? event.args[4].toString() : ""
-
-          // 创建唯一键来避免重复
-          const eventKey = `${event.transactionHash}-${event.blockNumber}-${rewardType}-claimed`
-          
-          if (!processedEventsMap.has(eventKey)) {
-            rows.push({
-              hash: event.transactionHash,
-              user: event.args ? event.args[0] : "",
-              mcAmount,
-              jbcAmount,
-              rewardType,
-              ticketId,
-              blockNumber: event.blockNumber,
-              timestamp: block ? block.timestamp : 0,
-              status: "confirmed",
-            })
-            processedEventsMap.set(eventKey, true)
-            processedEvents++
-          }
-        } catch (err) {
-          console.error("Error parsing RewardClaimed event:", err, event)
-          failedEvents++
-        }
-      }
-
-      // 处理 RewardPaid 事件（作为补充，只处理没有对应 RewardClaimed 的事件）
-      // 因为 RewardPaid 和 RewardClaimed 通常在同一个交易中成对出现
+      // 处理RewardPaid事件（包含静态收益）
       for (const event of rewardPaidEvents) {
         try {
-          const rewardType = event.args ? Number(event.args[2]) : 0
-          const eventKey = `${event.transactionHash}-${event.blockNumber}-${rewardType}-claimed`
-          
-          // 如果已经有对应的 RewardClaimed 事件，跳过 RewardPaid
-          if (processedEventsMap.has(eventKey)) {
-            continue
-          }
-
           const block = await provider.getBlock(event.blockNumber)
           const amount = event.args ? ethers.formatEther(event.args[1]) : "0"
+          const rewardType = event.args ? Number(event.args[2]) : 0
 
           // RewardPaid事件只有总金额，需要根据类型判断是MC还是JBC
           // 对于静态收益，通常是50%MC + 50%JBC
@@ -488,24 +422,47 @@ const EarningsDetail: React.FC<{ onNavigateToMining?: () => void }> = ({ onNavig
             mcAmount = amount
           }
 
-          const paidEventKey = `${event.transactionHash}-${event.blockNumber}-${rewardType}-paid`
-          if (!processedEventsMap.has(paidEventKey)) {
-            rows.push({
-              hash: event.transactionHash,
-              user: event.args ? event.args[0] : "",
-              mcAmount,
-              jbcAmount,
-              rewardType,
-              ticketId: "", // RewardPaid事件没有ticketId
-              blockNumber: event.blockNumber,
-              timestamp: block ? block.timestamp : 0,
-              status: "confirmed",
-            })
-            processedEventsMap.set(paidEventKey, true)
-            processedEvents++
-          }
+          rows.push({
+            hash: event.transactionHash,
+            user: event.args ? event.args[0] : "",
+            mcAmount,
+            jbcAmount,
+            rewardType,
+            ticketId: "", // RewardPaid事件没有ticketId
+            blockNumber: event.blockNumber,
+            timestamp: block ? block.timestamp : 0,
+            status: "confirmed",
+          })
+          processedEvents++
         } catch (err) {
           console.error("Error parsing RewardPaid event:", err, event)
+          failedEvents++
+        }
+      }
+
+      // 处理RewardClaimed事件
+      for (const event of rewardClaimedEvents) {
+        try {
+          const block = await provider.getBlock(event.blockNumber)
+          const mcAmount = event.args ? ethers.formatEther(event.args[1]) : "0"
+          const jbcAmount = event.args ? ethers.formatEther(event.args[2]) : "0"
+          const rewardType = event.args ? Number(event.args[3]) : 0
+          const ticketId = event.args ? event.args[4].toString() : ""
+
+          rows.push({
+            hash: event.transactionHash,
+            user: event.args ? event.args[0] : "",
+            mcAmount,
+            jbcAmount,
+            rewardType,
+            ticketId,
+            blockNumber: event.blockNumber,
+            timestamp: block ? block.timestamp : 0,
+            status: "confirmed",
+          })
+          processedEvents++
+        } catch (err) {
+          console.error("Error parsing RewardClaimed event:", err, event)
           failedEvents++
         }
       }
@@ -589,15 +546,11 @@ const EarningsDetail: React.FC<{ onNavigateToMining?: () => void }> = ({ onNavig
       saveToCache(rows)
       
       // 显示处理结果
-      console.log(`📊 [EarningsDetail] 事件处理完成: 成功 ${processedEvents} 条, 失败 ${failedEvents} 条`)
-      console.log(`📊 [EarningsDetail] 事件统计: RewardPaid=${rewardPaidEvents.length}, RewardClaimed=${rewardClaimedEvents.length}, Referral=${referralEvents.length}, Differential=${differentialEvents.length}`)
-      
       if (failedEvents > 0) {
         toast.error(`Loaded ${processedEvents} records, ${failedEvents} failed to parse`)
       } else if (processedEvents > 0) {
         toast.success(`Loaded ${processedEvents} earnings records`)
       } else {
-        console.warn('⚠️ [EarningsDetail] 没有找到任何收益记录，尝试降级方案')
         // 如果没有记录，尝试获取合约状态作为降级方案
         await fetchContractStateFallback();
       }
@@ -727,7 +680,9 @@ const EarningsDetail: React.FC<{ onNavigateToMining?: () => void }> = ({ onNavig
     return stats
   }, [records, viewMode, account])
 
-  // formatDate 已从 formatUtils 导入
+  const formatDate = (timestamp: number) => {
+    return new Date(timestamp * 1000).toLocaleString()
+  }
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text)
@@ -888,15 +843,15 @@ const EarningsDetail: React.FC<{ onNavigateToMining?: () => void }> = ({ onNavig
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div className="bg-blue-800/30 rounded-lg p-3">
                   <div className="text-xs text-blue-400 mb-1">JBC 价格</div>
-                  <div className="font-bold text-blue-300">1 JBC = {formatPrice(currentJBCPrice)} MC</div>
+                  <div className="font-bold text-blue-300">1 JBC = {currentJBCPrice.toFixed(6)} MC</div>
                 </div>
                 <div className="bg-blue-800/30 rounded-lg p-3">
                   <div className="text-xs text-blue-400 mb-1">MC 储备</div>
-                  <div className="font-bold text-blue-300">{formatMC(reserveInfo.mc, 2)}</div>
+                  <div className="font-bold text-blue-300">{parseFloat(reserveInfo.mc).toFixed(2)} MC</div>
                 </div>
                 <div className="bg-blue-800/30 rounded-lg p-3">
                   <div className="text-xs text-blue-400 mb-1">JBC 储备</div>
-                  <div className="font-bold text-blue-300">{formatJBC(reserveInfo.jbc, 2)}</div>
+                  <div className="font-bold text-blue-300">{parseFloat(reserveInfo.jbc).toFixed(2)} JBC</div>
                 </div>
               </div>
               <p className="text-xs text-blue-400 mt-2">
@@ -925,11 +880,11 @@ const EarningsDetail: React.FC<{ onNavigateToMining?: () => void }> = ({ onNavig
                 <div className="grid grid-cols-2 gap-3">
                   <div className="bg-green-800/30 rounded-lg p-2">
                     <div className="text-xs text-green-400 mb-1">MC 部分 (50%)</div>
-                    <div className="font-bold text-green-300">{formatMC(pendingRewards.mc)}</div>
+                    <div className="font-bold text-green-300">{pendingRewards.mc.toFixed(4)} MC</div>
                   </div>
                   <div className="bg-yellow-800/30 rounded-lg p-2">
                     <div className="text-xs text-yellow-400 mb-1">JBC 部分 (50%)</div>
-                    <div className="font-bold text-yellow-300">{formatJBC(pendingRewards.jbc)}</div>
+                    <div className="font-bold text-yellow-300">{pendingRewards.jbc.toFixed(4)} JBC</div>
                   </div>
                 </div>
                 
@@ -937,10 +892,10 @@ const EarningsDetail: React.FC<{ onNavigateToMining?: () => void }> = ({ onNavig
                 {currentJBCPrice > 0 && (
                   <div className="mt-2 pt-2 border-t border-green-500/20">
                     <div className="text-xs text-green-400">
-                      💱 当前汇率: 1 JBC = {formatPrice(currentJBCPrice)} MC
+                      💱 当前汇率: 1 JBC = {currentJBCPrice.toFixed(6)} MC
                     </div>
                     <div className="text-xs text-green-400">
-                      💰 总价值: {formatTotalValue(pendingRewards.mc, pendingRewards.jbc, currentJBCPrice)} MC
+                      💰 总价值: {(pendingRewards.mc + pendingRewards.jbc * currentJBCPrice).toFixed(4)} MC
                     </div>
                   </div>
                 )}
@@ -949,7 +904,7 @@ const EarningsDetail: React.FC<{ onNavigateToMining?: () => void }> = ({ onNavig
                 {reserveInfo.mc !== "0" && reserveInfo.jbc !== "0" && (
                   <div className="mt-2 pt-2 border-t border-green-500/20">
                     <div className="text-xs text-green-400">
-                      🏊 流动性池: {formatMC(reserveInfo.mc, 2)} / {formatJBC(reserveInfo.jbc, 2)}
+                      🏊 流动性池: {parseFloat(reserveInfo.mc).toFixed(2)} MC / {parseFloat(reserveInfo.jbc).toFixed(2)} JBC
                     </div>
                   </div>
                 )}
@@ -1011,11 +966,11 @@ const EarningsDetail: React.FC<{ onNavigateToMining?: () => void }> = ({ onNavig
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
         <div className="bg-gray-900/80 border border-gray-700 rounded-xl shadow-md p-5 backdrop-blur-sm">
           <div className="text-sm text-gray-200 mb-2">{ui.totalMc || "Total MC Rewards"}</div>
-          <div className="text-2xl font-bold text-neon-400 drop-shadow-lg">{formatMC(totals.mc)}</div>
+          <div className="text-2xl font-bold text-neon-400 drop-shadow-lg">{totals.mc.toFixed(4)} MC</div>
         </div>
         <div className="bg-gray-900/80 border border-gray-700 rounded-xl shadow-md p-5 backdrop-blur-sm">
           <div className="text-sm text-gray-200 mb-2">{ui.totalJbc || "Total JBC Rewards"}</div>
-          <div className="text-2xl font-bold text-amber-400 drop-shadow-lg">{formatJBC(totals.jbc)}</div>
+          <div className="text-2xl font-bold text-amber-400 drop-shadow-lg">{totals.jbc.toFixed(4)} JBC</div>
         </div>
       </div>
 
@@ -1024,13 +979,13 @@ const EarningsDetail: React.FC<{ onNavigateToMining?: () => void }> = ({ onNavig
         <div className="bg-gray-900/80 border border-gray-700 rounded-xl shadow-md p-4 backdrop-blur-sm">
           <div className="text-sm text-gray-200 mb-2">{ui.staticReward || "Static Reward"} (24h)</div>
           <div className="space-y-1">
-            <div className="text-lg font-bold text-neon-400 drop-shadow-md">{formatMC(dailyStats.static.mc, 2)}</div>
-            <div className="text-lg font-bold text-amber-400 drop-shadow-md">{formatJBC(dailyStats.static.jbc, 2)}</div>
+            <div className="text-lg font-bold text-neon-400 drop-shadow-md">{dailyStats.static.mc.toFixed(2)} MC</div>
+            <div className="text-lg font-bold text-amber-400 drop-shadow-md">{dailyStats.static.jbc.toFixed(2)} JBC</div>
             
             {/* 显示总价值 */}
             {currentJBCPrice > 0 && (dailyStats.static.mc > 0 || dailyStats.static.jbc > 0) && (
               <div className="text-sm text-gray-400 mt-2 pt-2 border-t border-gray-600/50">
-                💰 总价值: {formatTotalValue(dailyStats.static.mc, dailyStats.static.jbc, currentJBCPrice)} MC
+                💰 总价值: {(dailyStats.static.mc + dailyStats.static.jbc * currentJBCPrice).toFixed(4)} MC
               </div>
             )}
             
@@ -1046,11 +1001,11 @@ const EarningsDetail: React.FC<{ onNavigateToMining?: () => void }> = ({ onNavig
           {viewMode === "self" && (pendingRewards.mc > 0 || pendingRewards.jbc > 0) && (
             <div className="mt-2 pt-2 border-t border-gray-600/50">
               <div className="text-xs text-gray-400 mb-1">待领取 (Pending)</div>
-              <div className="text-sm font-bold text-green-400">+{formatMC(pendingRewards.mc)}</div>
-              <div className="text-sm font-bold text-yellow-400">+{formatJBC(pendingRewards.jbc)}</div>
+              <div className="text-sm font-bold text-green-400">+{pendingRewards.mc.toFixed(4)} MC</div>
+              <div className="text-sm font-bold text-yellow-400">+{pendingRewards.jbc.toFixed(4)} JBC</div>
               {currentJBCPrice > 0 && (
                 <div className="text-xs text-gray-500 mt-1">
-                  价值: +{formatTotalValue(pendingRewards.mc, pendingRewards.jbc, currentJBCPrice)} MC
+                  价值: +{(pendingRewards.mc + pendingRewards.jbc * currentJBCPrice).toFixed(4)} MC
                 </div>
               )}
             </div>
@@ -1058,16 +1013,16 @@ const EarningsDetail: React.FC<{ onNavigateToMining?: () => void }> = ({ onNavig
         </div>
         <div className="bg-gray-900/80 border border-gray-700 rounded-xl shadow-md p-4 backdrop-blur-sm">
           <div className="text-sm text-gray-200 mb-2">{ui.directReward || "Direct Reward"} (24h)</div>
-          <div className="text-lg font-bold text-neon-400 drop-shadow-md">{formatMC(dailyStats.direct.mc, 2)}</div>
+          <div className="text-lg font-bold text-neon-400 drop-shadow-md">{dailyStats.direct.mc.toFixed(2)} MC</div>
           {dailyStats.direct.jbc > 0 && (
-            <div className="text-lg font-bold text-amber-400 drop-shadow-md">{formatJBC(dailyStats.direct.jbc, 2)}</div>
+            <div className="text-lg font-bold text-amber-400 drop-shadow-md">{dailyStats.direct.jbc.toFixed(2)} JBC</div>
           )}
         </div>
         <div className="bg-gray-900/80 border border-gray-700 rounded-xl shadow-md p-4 backdrop-blur-sm">
           <div className="text-sm text-gray-200 mb-2">{ui.levelReward || "Level Reward"} (24h)</div>
-          <div className="text-lg font-bold text-neon-400 drop-shadow-md">{formatMC(dailyStats.level.mc, 2)}</div>
+          <div className="text-lg font-bold text-neon-400 drop-shadow-md">{dailyStats.level.mc.toFixed(2)} MC</div>
           {dailyStats.level.jbc > 0 && (
-            <div className="text-lg font-bold text-amber-400 drop-shadow-md">{formatJBC(dailyStats.level.jbc, 2)}</div>
+            <div className="text-lg font-bold text-amber-400 drop-shadow-md">{dailyStats.level.jbc.toFixed(2)} JBC</div>
           )}
         </div>
         <div className="bg-gray-900/80 border border-gray-700 rounded-xl shadow-md p-4 backdrop-blur-sm">
@@ -1079,13 +1034,13 @@ const EarningsDetail: React.FC<{ onNavigateToMining?: () => void }> = ({ onNavig
             </span>
           </div>
           <div className="space-y-1">
-            <div className="text-lg font-bold text-neon-400 drop-shadow-md">{formatMC(dailyStats.differential.mc)}</div>
-            <div className="text-lg font-bold text-amber-400 drop-shadow-md">{formatJBC(dailyStats.differential.jbc)}</div>
+            <div className="text-lg font-bold text-neon-400 drop-shadow-md">{dailyStats.differential.mc.toFixed(4)} MC</div>
+            <div className="text-lg font-bold text-amber-400 drop-shadow-md">{dailyStats.differential.jbc.toFixed(4)} JBC</div>
             
             {/* 显示总价值 */}
             {currentJBCPrice > 0 && (dailyStats.differential.mc > 0 || dailyStats.differential.jbc > 0) && (
               <div className="text-sm text-gray-400 mt-2 pt-2 border-t border-gray-600/50">
-                💰 总价值: {formatTotalValue(dailyStats.differential.mc, dailyStats.differential.jbc, currentJBCPrice)} MC
+                💰 总价值: {(dailyStats.differential.mc + dailyStats.differential.jbc * currentJBCPrice).toFixed(4)} MC
               </div>
             )}
           </div>
@@ -1198,17 +1153,17 @@ const EarningsDetail: React.FC<{ onNavigateToMining?: () => void }> = ({ onNavig
                             <div className="grid grid-cols-2 gap-2">
                               <div className="bg-neon-500/10 rounded p-2">
                                 <div className="text-xs text-neon-400">MC 部分 (50%)</div>
-                                <div className="font-semibold text-neon-400">{formatMC(row.mcAmount)} MC</div>
+                                <div className="font-semibold text-neon-400">{parseFloat(row.mcAmount).toFixed(4)} MC</div>
                               </div>
                               <div className="bg-amber-500/10 rounded p-2">
                                 <div className="text-xs text-amber-400">JBC 部分 (50%)</div>
-                                <div className="font-semibold text-amber-400">{formatJBC(row.jbcAmount)} JBC</div>
+                                <div className="font-semibold text-amber-400">{parseFloat(row.jbcAmount).toFixed(4)} JBC</div>
                               </div>
                             </div>
                             {currentJBCPrice > 0 && (
                               <div className="text-xs text-gray-400 mt-2 pt-2 border-t border-gray-600/30">
-                                💰 总价值: {formatTotalValue(row.mcAmount, row.jbcAmount, currentJBCPrice)} MC
-                                <span className="ml-2">💱 汇率: 1 JBC = {formatPrice(currentJBCPrice)} MC</span>
+                                💰 总价值: {(parseFloat(row.mcAmount) + parseFloat(row.jbcAmount) * currentJBCPrice).toFixed(4)} MC
+                                <span className="ml-2">💱 汇率: 1 JBC = {currentJBCPrice.toFixed(6)} MC</span>
                               </div>
                             )}
                           </div>
@@ -1224,17 +1179,17 @@ const EarningsDetail: React.FC<{ onNavigateToMining?: () => void }> = ({ onNavig
                             <div className="grid grid-cols-2 gap-2">
                               <div className="bg-neon-500/10 rounded p-2">
                                 <div className="text-xs text-neon-400">MC 部分 (50%)</div>
-                                <div className="font-semibold text-neon-400">{formatMC(row.mcAmount)} MC</div>
+                                <div className="font-semibold text-neon-400">{parseFloat(row.mcAmount).toFixed(4)} MC</div>
                               </div>
                               <div className="bg-amber-500/10 rounded p-2">
                                 <div className="text-xs text-amber-400">JBC 部分 (50%)</div>
-                                <div className="font-semibold text-amber-400">{formatJBC(row.jbcAmount)} JBC</div>
+                                <div className="font-semibold text-amber-400">{parseFloat(row.jbcAmount).toFixed(4)} JBC</div>
                               </div>
                             </div>
                             {currentJBCPrice > 0 && (
                               <div className="text-xs text-gray-400 mt-2 pt-2 border-t border-gray-600/30">
-                                💰 总价值: {formatTotalValue(row.mcAmount, row.jbcAmount, currentJBCPrice)} MC
-                                <span className="ml-2">💱 汇率: 1 JBC = {formatPrice(currentJBCPrice)} MC</span>
+                                💰 总价值: {(parseFloat(row.mcAmount) + parseFloat(row.jbcAmount) * currentJBCPrice).toFixed(4)} MC
+                                <span className="ml-2">💱 汇率: 1 JBC = {currentJBCPrice.toFixed(6)} MC</span>
                               </div>
                             )}
                           </div>
@@ -1246,13 +1201,13 @@ const EarningsDetail: React.FC<{ onNavigateToMining?: () => void }> = ({ onNavig
                             {parseFloat(row.mcAmount) > 0 && (
                               <p className="text-sm text-gray-200">
                                 {ui.mcAmount || "MC Reward"}:{" "}
-                                <span className="font-semibold text-neon-400 drop-shadow-sm">{formatMC(row.mcAmount)}</span>
+                                <span className="font-semibold text-neon-400 drop-shadow-sm">{parseFloat(row.mcAmount).toFixed(4)} MC</span>
                               </p>
                             )}
                             {parseFloat(row.jbcAmount) > 0 && (
                               <p className="text-sm text-gray-200">
                                 {ui.jbcAmount || "JBC Reward"}:{" "}
-                                <span className="font-semibold text-amber-400 drop-shadow-sm">{formatJBC(row.jbcAmount)}</span>
+                                <span className="font-semibold text-amber-400 drop-shadow-sm">{parseFloat(row.jbcAmount).toFixed(4)} JBC</span>
                               </p>
                             )}
                           </>
@@ -1280,7 +1235,7 @@ const EarningsDetail: React.FC<{ onNavigateToMining?: () => void }> = ({ onNavig
                       <div className="flex items-center gap-4 text-xs text-gray-300">
                         <div className="flex items-center gap-1">
                           <Clock className="w-3 h-3" />
-                          {formatDateTime(row.timestamp)}
+                          {formatDate(row.timestamp)}
                         </div>
                         <div>
                           {ui.block || "Block"}: {row.blockNumber}
@@ -1313,7 +1268,7 @@ const EarningsDetail: React.FC<{ onNavigateToMining?: () => void }> = ({ onNavig
                     <div>
                       <h4 className="font-bold text-gray-50 text-sm">{getRewardTypeLabel(row.rewardType)}</h4>
                       <div className="flex items-center gap-2 text-xs text-gray-300 mt-0.5">
-                        <span>{formatDateTime(row.timestamp).split(' ')[0]}</span>
+                        <span>{formatDate(row.timestamp).split(' ')[0]}</span>
                         <span className="px-1.5 py-0.5 rounded text-[10px] bg-neon-500/20 text-neon-300">
                           {t.history.confirmed || "Confirmed"}
                         </span>
@@ -1326,14 +1281,14 @@ const EarningsDetail: React.FC<{ onNavigateToMining?: () => void }> = ({ onNavig
                       <div className="space-y-1">
                         <div className="text-xs text-gray-400 mb-1">50% MC + 50% JBC</div>
                         {parseFloat(row.mcAmount) > 0 && (
-                          <p className="text-sm text-right font-semibold text-neon-400">+{formatMC(row.mcAmount, 2)} MC</p>
+                          <p className="text-sm text-right font-semibold text-neon-400">+{parseFloat(row.mcAmount).toFixed(2)} MC</p>
                         )}
                         {parseFloat(row.jbcAmount) > 0 && (
-                          <p className="text-sm text-right font-semibold text-amber-400">+{formatJBC(row.jbcAmount, 2)} JBC</p>
+                          <p className="text-sm text-right font-semibold text-amber-400">+{parseFloat(row.jbcAmount).toFixed(2)} JBC</p>
                         )}
                         {currentJBCPrice > 0 && (
                           <div className="text-xs text-gray-500">
-                            ≈ {formatTotalValue(row.mcAmount, row.jbcAmount, currentJBCPrice, 2)} MC
+                            ≈ {(parseFloat(row.mcAmount) + parseFloat(row.jbcAmount) * currentJBCPrice).toFixed(2)} MC
                           </div>
                         )}
                       </div>
@@ -1345,24 +1300,24 @@ const EarningsDetail: React.FC<{ onNavigateToMining?: () => void }> = ({ onNavig
                           50% MC + 50% JBC
                         </div>
                         {parseFloat(row.mcAmount) > 0 && (
-                          <p className="text-sm text-right font-semibold text-neon-400">+{formatMC(row.mcAmount, 2)} MC</p>
+                          <p className="text-sm text-right font-semibold text-neon-400">+{parseFloat(row.mcAmount).toFixed(2)} MC</p>
                         )}
                         {parseFloat(row.jbcAmount) > 0 && (
-                          <p className="text-sm text-right font-semibold text-amber-400">+{formatJBC(row.jbcAmount, 2)} JBC</p>
+                          <p className="text-sm text-right font-semibold text-amber-400">+{parseFloat(row.jbcAmount).toFixed(2)} JBC</p>
                         )}
                         {currentJBCPrice > 0 && (
                           <div className="text-xs text-gray-500">
-                            ≈ {formatTotalValue(row.mcAmount, row.jbcAmount, currentJBCPrice, 2)} MC
+                            ≈ {(parseFloat(row.mcAmount) + parseFloat(row.jbcAmount) * currentJBCPrice).toFixed(2)} MC
                           </div>
                         )}
                       </div>
                     ) : (
                       <div className="space-y-0.5">
                         {parseFloat(row.mcAmount) > 0 && (
-                          <p className="text-sm text-right font-semibold text-neon-400">+{formatMC(row.mcAmount, 2)} MC</p>
+                          <p className="text-sm text-right font-semibold text-neon-400">+{parseFloat(row.mcAmount).toFixed(2)} MC</p>
                         )}
                         {parseFloat(row.jbcAmount) > 0 && (
-                          <p className="text-sm text-right font-semibold text-amber-400">+{formatJBC(row.jbcAmount, 2)} JBC</p>
+                          <p className="text-sm text-right font-semibold text-amber-400">+{parseFloat(row.jbcAmount).toFixed(2)} JBC</p>
                         )}
                       </div>
                     )}
@@ -1473,11 +1428,11 @@ const EarningsDetail: React.FC<{ onNavigateToMining?: () => void }> = ({ onNavig
                       <div className="grid grid-cols-2 gap-3">
                         <div className="bg-neon-500/10 rounded-lg p-3 border border-neon-500/20">
                           <div className="text-xs text-neon-400 mb-1">MC 部分 (50%)</div>
-                          <div className="font-bold text-neon-400 text-lg">{formatAmount(selectedRecord.mcAmount)}</div>
+                          <div className="font-bold text-neon-400 text-lg">{parseFloat(selectedRecord.mcAmount).toFixed(4)}</div>
                         </div>
                         <div className="bg-amber-500/10 rounded-lg p-3 border border-amber-500/20">
                           <div className="text-xs text-amber-400 mb-1">JBC 部分 (50%)</div>
-                          <div className="font-bold text-amber-400 text-lg">{formatAmount(selectedRecord.jbcAmount)}</div>
+                          <div className="font-bold text-amber-400 text-lg">{parseFloat(selectedRecord.jbcAmount).toFixed(4)}</div>
                         </div>
                       </div>
                       {currentJBCPrice > 0 && (
@@ -1486,7 +1441,7 @@ const EarningsDetail: React.FC<{ onNavigateToMining?: () => void }> = ({ onNavig
                           <div className="space-y-1 text-sm">
                             <div className="flex justify-between">
                               <span className="text-gray-300">MC 价值:</span>
-                              <span className="text-neon-400">{formatMC(selectedRecord.mcAmount)}</span>
+                              <span className="text-neon-400">{parseFloat(selectedRecord.mcAmount).toFixed(4)} MC</span>
                             </div>
                             <div className="flex justify-between">
                               <span className="text-gray-300">JBC 价值:</span>

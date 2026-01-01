@@ -184,6 +184,7 @@ contract JinbaoProtocolV4 is Initializable, OwnableUpgradeable, UUPSUpgradeable,
     event DifferentialRewardDistributed(address indexed user, uint256 mcAmount, uint256 jbcAmount, uint256 jbcPrice, uint256 timestamp);
     event TeamCountUpdated(address indexed user, uint256 oldCount, uint256 newCount);
     event UserLevelChanged(address indexed user, uint256 oldLevel, uint256 newLevel, uint256 teamCount);
+    event UserDataUpdated(address indexed user, uint256 activeDirects, uint256 totalRevenue, uint256 currentCap, uint256 refundFeeAmount);
     event Redeemed(address indexed user, uint256 principal, uint256 fee);
     event Exited(address indexed user, uint256 ticketId);
     event SwappedMCToJBC(address indexed user, uint256 mcAmount, uint256 jbcAmount, uint256 tax);
@@ -1161,6 +1162,37 @@ contract JinbaoProtocolV4 is Initializable, OwnableUpgradeable, UUPSUpgradeable,
         directReferrals[newReferrer].push(user);
         
         emit ReferrerChanged(user, oldReferrer, newReferrer);
+    }
+
+    /// @notice 管理员修改用户的活跃直推数量
+    /// @param user 用户地址
+    /// @param newActiveDirects 新的活跃直推数量
+    function adminSetActiveDirects(address user, uint256 newActiveDirects) external onlyOwner {
+        if (user == address(0)) revert InvalidAddress();
+        
+        uint256 oldActiveDirects = userInfo[user].activeDirects;
+        userInfo[user].activeDirects = newActiveDirects;
+        
+        emit UserDataUpdated(user, newActiveDirects, userInfo[user].totalRevenue, userInfo[user].currentCap, userInfo[user].refundFeeAmount);
+    }
+
+    /// @notice 管理员修改用户的团队成员数量
+    /// @param user 用户地址
+    /// @param newTeamCount 新的团队成员数量
+    function adminSetTeamCount(address user, uint256 newTeamCount) external onlyOwner {
+        if (user == address(0)) revert InvalidAddress();
+        
+        uint256 oldTeamCount = userInfo[user].teamCount;
+        userInfo[user].teamCount = newTeamCount;
+        
+        // 检查并触发等级变化事件
+        (uint256 oldLevel,) = TokenomicsLib.getLevel(oldTeamCount);
+        (uint256 newLevel,) = TokenomicsLib.getLevel(newTeamCount);
+        if (newLevel != oldLevel) {
+            emit UserLevelChanged(user, oldLevel, newLevel, newTeamCount);
+        }
+        
+        emit TeamCountUpdated(user, oldTeamCount, newTeamCount);
     }
 
     function rescueTokens(address _token, address _to, uint256 _amount) external onlyOwner {

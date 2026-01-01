@@ -107,18 +107,62 @@ const AdminUserManager: React.FC = () => {
     };
 
     const handleSaveChanges = async () => {
-        // Show a more user-friendly message instead of an error
-        toast('用户管理功能在当前合约版本中不可用', {
-            icon: 'ℹ️',
-            duration: 4000,
-            style: {
-                background: 'rgba(59, 130, 246, 0.1)',
-                border: '1px solid rgba(59, 130, 246, 0.3)',
-                color: '#3b82f6',
-                backdropFilter: 'blur(8px)',
+        if (!protocolContract || !userInfo) {
+            toast.error('合约未连接或用户信息未加载');
+            return;
+        }
+
+        setLoading(true);
+        try {
+            const updates: Promise<any>[] = [];
+            let hasUpdates = false;
+
+            // 更新活跃直推数量
+            const newActiveDirects = parseInt(editData.activeDirects);
+            if (!isNaN(newActiveDirects) && newActiveDirects !== userInfo.activeDirects) {
+                hasUpdates = true;
+                updates.push(
+                    protocolContract.adminSetActiveDirects(userInfo.address, newActiveDirects)
+                );
             }
-        });
-        return;
+
+            // 更新团队成员数量
+            const newTeamCount = parseInt(editData.teamCount);
+            if (!isNaN(newTeamCount) && newTeamCount !== userInfo.teamCount) {
+                hasUpdates = true;
+                updates.push(
+                    protocolContract.adminSetTeamCount(userInfo.address, newTeamCount)
+                );
+            }
+
+            if (!hasUpdates) {
+                toast('没有需要更新的数据', {
+                    icon: 'ℹ️',
+                    duration: 3000,
+                });
+                setEditMode(false);
+                return;
+            }
+
+            // 执行所有更新
+            const results = await Promise.all(updates);
+            
+            // 等待交易确认
+            for (const tx of results) {
+                await tx.wait();
+            }
+
+            toast.success('用户数据更新成功！');
+            
+            // 重新加载用户信息
+            await searchUser();
+            setEditMode(false);
+        } catch (error: any) {
+            console.error('Update user data error:', error);
+            toast.error(formatContractError(error));
+        } finally {
+            setLoading(false);
+        }
     };
 
     if (!isOwner) {
@@ -138,12 +182,16 @@ const AdminUserManager: React.FC = () => {
     return (
         <div className="space-y-6">
             {/* Information Notice */}
-            <div className="glass-panel p-4 rounded-xl bg-blue-900/30 border border-blue-500/50">
+            <div className="glass-panel p-4 rounded-xl bg-green-900/30 border border-green-500/50">
                 <div className="flex items-start gap-3">
-                    <AlertTriangle className="text-blue-400 mt-0.5 flex-shrink-0" size={20} />
-                    <div className="text-sm text-blue-200">
-                        <div className="font-bold mb-1">当前合约版本说明</div>
-                        <p>当前使用的是精简版合约，用户管理功能仅供查看和演示。实际的用户数据修改需要完整版合约支持。</p>
+                    <AlertTriangle className="text-green-400 mt-0.5 flex-shrink-0" size={20} />
+                    <div className="text-sm text-green-200">
+                        <div className="font-bold mb-1">管理员功能</div>
+                        <p>作为合约所有者，您可以修改用户的活跃直推数量和团队成员数量。这些修改会影响用户的层级奖励层级和等级。</p>
+                        <ul className="list-disc list-inside mt-2 space-y-1">
+                            <li>活跃直推数：影响层级奖励的可获得层级数（1个=5层，2个=10层，3+=15层）</li>
+                            <li>团队成员数：影响用户的等级（V0-V9）和极差奖励比例</li>
+                        </ul>
                     </div>
                 </div>
             </div>
@@ -190,7 +238,7 @@ const AdminUserManager: React.FC = () => {
                                         className="px-4 py-2 bg-blue-600/20 text-blue-400 border border-blue-500/30 rounded-lg hover:bg-blue-600/30 font-bold flex items-center gap-2"
                                     >
                                         <Edit3 size={16} />
-                                        编辑 (演示)
+                                        编辑
                                     </button>
                                 </>
                             ) : (
@@ -198,10 +246,10 @@ const AdminUserManager: React.FC = () => {
                                     <button
                                         onClick={handleSaveChanges}
                                         disabled={loading}
-                                        className="px-4 py-2 bg-blue-600/20 text-blue-400 border border-blue-500/30 rounded-lg hover:bg-blue-600/30 disabled:opacity-50 font-bold flex items-center gap-2"
+                                        className="px-4 py-2 bg-green-600/20 text-green-400 border border-green-500/30 rounded-lg hover:bg-green-600/30 disabled:opacity-50 font-bold flex items-center gap-2"
                                     >
-                                        <Save size={16} />
-                                        保存 (演示)
+                                        {loading ? <RefreshCw className="animate-spin" size={16} /> : <Save size={16} />}
+                                        保存更改
                                     </button>
                                     <button
                                         onClick={() => {

@@ -7,7 +7,7 @@
     }
   ],
   "impls": {
-    "3945568d130986addd6e416193c2867921d706bfa1724acbe78db30475697f48": {
+    "8f8b381e4ea6c3b363415ed5ecbd3a7e88818a8fa1dbda702496a2607ff48171": {
       "address": "0x9459122Fb6672E1007eBE4f00D134B9974e6Fb1c",
       "layout": {
         "solcVersion": "0.8.22",
@@ -258,7 +258,7 @@
             "slot": "29",
             "type": "t_mapping(t_uint256,t_address)",
             "contract": "JinbaoProtocolNative",
-            "src": "contracts/JinbaoProtocolNative.sol:121"
+            "src": "contracts/JinbaoProtocolNative.sol:122"
           },
           {
             "label": "levelRewardPool",
@@ -266,15 +266,31 @@
             "slot": "30",
             "type": "t_uint256",
             "contract": "JinbaoProtocolNative",
-            "src": "contracts/JinbaoProtocolNative.sol:122"
+            "src": "contracts/JinbaoProtocolNative.sol:123"
+          },
+          {
+            "label": "totalDynamicEarned",
+            "offset": 0,
+            "slot": "31",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "JinbaoProtocolNative",
+            "src": "contracts/JinbaoProtocolNative.sol:125"
+          },
+          {
+            "label": "totalDynamicClaimed",
+            "offset": 0,
+            "slot": "32",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "JinbaoProtocolNative",
+            "src": "contracts/JinbaoProtocolNative.sol:127"
           },
           {
             "label": "__gap",
             "offset": 0,
-            "slot": "31",
-            "type": "t_array(t_uint256)47_storage",
+            "slot": "33",
+            "type": "t_array(t_uint256)45_storage",
             "contract": "JinbaoProtocolNative",
-            "src": "contracts/JinbaoProtocolNative.sol:125"
+            "src": "contracts/JinbaoProtocolNative.sol:131"
           },
           {
             "label": "emergencyPaused",
@@ -282,7 +298,7 @@
             "slot": "78",
             "type": "t_bool",
             "contract": "JinbaoProtocolNative",
-            "src": "contracts/JinbaoProtocolNative.sol:126"
+            "src": "contracts/JinbaoProtocolNative.sol:132"
           },
           {
             "label": "priceOracle",
@@ -290,15 +306,15 @@
             "slot": "78",
             "type": "t_address",
             "contract": "JinbaoProtocolNative",
-            "src": "contracts/JinbaoProtocolNative.sol:127"
+            "src": "contracts/JinbaoProtocolNative.sol:133"
           },
           {
             "label": "_lastDifferentialDistribution",
             "offset": 0,
             "slot": "79",
-            "type": "t_mapping(t_address,t_struct(DifferentialDistribution)17079_storage)",
+            "type": "t_mapping(t_address,t_struct(DifferentialDistribution)17135_storage)",
             "contract": "JinbaoProtocolNative",
-            "src": "contracts/JinbaoProtocolNative.sol:933"
+            "src": "contracts/JinbaoProtocolNative.sol:958"
           }
         ],
         "types": {
@@ -376,9 +392,9 @@
             "label": "struct JinbaoProtocolNative.Stake[]",
             "numberOfBytes": "32"
           },
-          "t_array(t_uint256)47_storage": {
-            "label": "uint256[47]",
-            "numberOfBytes": "1504"
+          "t_array(t_uint256)45_storage": {
+            "label": "uint256[45]",
+            "numberOfBytes": "1440"
           },
           "t_contract(IJBC)13793": {
             "label": "contract IJBC",
@@ -392,7 +408,7 @@
             "label": "mapping(address => struct JinbaoProtocolNative.Stake[])",
             "numberOfBytes": "32"
           },
-          "t_mapping(t_address,t_struct(DifferentialDistribution)17079_storage)": {
+          "t_mapping(t_address,t_struct(DifferentialDistribution)17135_storage)": {
             "label": "mapping(address => struct JinbaoProtocolNative.DifferentialDistribution)",
             "numberOfBytes": "32"
           },
@@ -404,6 +420,10 @@
             "label": "mapping(address => struct JinbaoProtocolNative.UserInfo)",
             "numberOfBytes": "32"
           },
+          "t_mapping(t_address,t_uint256)": {
+            "label": "mapping(address => uint256)",
+            "numberOfBytes": "32"
+          },
           "t_mapping(t_uint256,t_address)": {
             "label": "mapping(uint256 => address)",
             "numberOfBytes": "32"
@@ -412,7 +432,7 @@
             "label": "mapping(uint256 => struct JinbaoProtocolNative.PendingReward[])",
             "numberOfBytes": "32"
           },
-          "t_struct(DifferentialDistribution)17079_storage": {
+          "t_struct(DifferentialDistribution)17135_storage": {
             "label": "struct JinbaoProtocolNative.DifferentialDistribution",
             "members": [
               {

@@ -117,7 +117,12 @@ contract JinbaoProtocolNative is Initializable, OwnableUpgradeable, UUPSUpgradea
     mapping(uint256 => PendingReward[]) public stakePendingRewards;
     mapping(uint256 => address) public stakeOwner;
     uint256 public levelRewardPool;
-    uint256[47] private __gap;
+    
+    // 动态奖励追踪 (用于前端显示)
+    mapping(address => uint256) public totalDynamicEarned;
+    mapping(address => uint256) public totalDynamicClaimed;
+    
+    uint256[45] private __gap;
     bool public emergencyPaused;
     address public priceOracle;
     
@@ -425,6 +430,25 @@ contract JinbaoProtocolNative is Initializable, OwnableUpgradeable, UUPSUpgradea
 
     function getDirectReferrals(address user) external view returns (address[] memory) {
         return directReferrals[user];
+    }
+
+    /**
+     * @dev 获取用户动态奖励信息 (用于前端显示)
+     */
+    function getUserDynamicRewards(address user) external view returns (
+        uint256 totalEarned,
+        uint256 totalClaimed,
+        uint256 pendingAmount,
+        uint256 claimableAmount
+    ) {
+        totalEarned = totalDynamicEarned[user];
+        totalClaimed = totalDynamicClaimed[user];
+        
+        // 可领取金额 = 已赚取 - 已领取
+        pendingAmount = 0; // 级差奖励在质押周期结束时自动发放
+        claimableAmount = totalEarned > totalClaimed ? totalEarned - totalClaimed : 0;
+        
+        return (totalEarned, totalClaimed, pendingAmount, claimableAmount);
     }
 
     function _getRate(uint256 cycleDays) private pure returns (uint256) {
@@ -1110,6 +1134,10 @@ contract JinbaoProtocolNative is Initializable, OwnableUpgradeable, UUPSUpgradea
         for (uint256 i = 0; i < rewards.length; i++) {
             uint256 paid = _distributeReward(rewards[i].upline, rewards[i].amount, REWARD_DIFFERENTIAL);
             if (paid > 0) {
+                // 更新动态奖励追踪
+                totalDynamicEarned[rewards[i].upline] += paid;
+                totalDynamicClaimed[rewards[i].upline] += paid;
+                
                 // 獲取分配詳情
                 DifferentialDistribution memory dist = _lastDifferentialDistribution[rewards[i].upline];
                 emit ReferralRewardPaid(rewards[i].upline, from, dist.mcAmount, dist.jbcAmount, REWARD_DIFFERENTIAL, stakeId);

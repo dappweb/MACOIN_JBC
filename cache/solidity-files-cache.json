@@ -1295,8 +1295,8 @@
       ]
     },
     "/home/zyj_dev/.cursor/worktrees/MACOIN_JBC/rev/contracts/JinbaoProtocolNative.sol": {
-      "lastModificationDate": 1767238903632,
-      "contentHash": "0bd0eb9fc3684f217a854b608bf88bbf",
+      "lastModificationDate": 1767240528801,
+      "contentHash": "cac9926185403445594f6c8cd7c623d9",
       "sourceName": "contracts/JinbaoProtocolNative.sol",
       "solcConfig": {
         "version": "0.8.22",

@@ -101,9 +101,6 @@ const NoticeBar: React.FC = () => {
 
   if (!isVisible || announcements.length === 0) return null;
 
-  // 临时禁用公告栏 - 如需重新启用，请删除下面这行
-  return null;
-
   return (
     <>
       <div className="bg-amber-50/10 border-b border-amber-500/30 text-amber-300 px-4 py-3 relative animate-fade-in backdrop-blur-sm mb-6 rounded-xl border border-amber-500/20 overflow-hidden">

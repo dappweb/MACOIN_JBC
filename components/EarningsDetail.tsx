@@ -936,10 +936,10 @@ const EarningsDetail: React.FC<{ onNavigateToMining?: () => void }> = ({ onNavig
             <div className="flex-1">
               <h3 className="text-lg font-bold text-blue-400 mb-1">{ui.noStakingTitle || "暂无静态奖励"}</h3>
               <p className="text-sm text-blue-300">
-                {ui.noStakingDesc || "您还没有进行质押或质押时间不足。静态奖励需要先购买门票并进行质押。"}
+                {ui.noStakingDesc || "您还没有提供流动性或提供流动性时间不足。静态奖励需要先购买门票并提供流动性。"}
               </p>
               <p className="text-xs text-blue-400 mt-1">
-                💡 {ui.stakingHint || "前往挖矿页面购买门票并进行质押来获得静态奖励"}
+                💡 {ui.stakingHint || "前往挖矿页面购买门票并提供流动性来获得静态奖励"}
               </p>
             </div>
             <div className="flex flex-col gap-2">

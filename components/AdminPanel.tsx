@@ -507,9 +507,33 @@ const AdminPanel: React.FC = () => {
     if (!protocolContract || !searchUserAddress) return;
     setLoading(true);
     try {
-        // Note: Direct team count update is not available in the current contract
-        // Team counts are automatically calculated based on referral relationships
-        toast.error('Direct team count update is not supported. Team counts are automatically calculated based on referral relationships.');
+        const tx = await protocolContract.adminSetTeamCount(
+            searchUserAddress,
+            Number(newTeamCount)
+        );
+        await tx.wait();
+        toast.success(t.admin.success);
+        fetchUserInfo(); // Refresh
+    } catch (err: any) {
+        console.error(err);
+        toast.error(formatContractError(err));
+    } finally {
+        setLoading(false);
+    }
+  };
+
+  const [newActiveDirects, setNewActiveDirects] = useState('');
+  const updateActiveDirects = async () => {
+    if (!protocolContract || !searchUserAddress) return;
+    setLoading(true);
+    try {
+        const tx = await protocolContract.adminSetActiveDirects(
+            searchUserAddress,
+            Number(newActiveDirects)
+        );
+        await tx.wait();
+        toast.success(t.admin.success);
+        fetchUserInfo(); // Refresh
     } catch (err: any) {
         console.error(err);
         toast.error(formatContractError(err));
@@ -851,6 +875,26 @@ const AdminPanel: React.FC = () => {
                         </div>
                     </div>
                     
+                    <div className="pt-3 border-t border-gray-700">
+                        <label className="block text-sm font-medium text-gray-300 mb-2">活跃直推数量 (Active Directs)</label>
+                        <div className="flex gap-2">
+                            <input 
+                                type="number" 
+                                value={newActiveDirects} 
+                                onChange={e => setNewActiveDirects(e.target.value)} 
+                                className="w-24 p-2 border border-gray-700 bg-gray-900/50 rounded text-white text-sm" 
+                            />
+                            <button 
+                                onClick={updateActiveDirects} 
+                                disabled={loading} 
+                                className="px-4 py-2 bg-blue-600/20 text-blue-400 border border-blue-500/30 rounded hover:bg-blue-600/30 disabled:opacity-50 text-sm font-bold"
+                            >
+                                {t.admin.update}
+                            </button>
+                        </div>
+                        <p className="text-xs text-gray-500 mt-1">影响层级奖励 (1个=5层, 2个=10层, 3+=15层)</p>
+                    </div>
+
                     <div className="pt-3 border-t border-gray-700">
                         <label className="block text-sm font-medium text-gray-300 mb-2">{t.admin.updateTeamCount}</label>
                         <div className="flex gap-2">

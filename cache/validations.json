@@ -3,7 +3,7 @@
   "log": [
     {
       "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:OwnableUpgradeable": {
-        "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:21",
+        "src": "@openzeppelin\\contracts-upgradeable\\access\\OwnableUpgradeable.sol:21",
         "inherit": [
           "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol:ContextUpgradeable",
           "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:Initializable"
@@ -70,7 +70,7 @@
                 "contract": "OwnableUpgradeable",
                 "label": "_owner",
                 "type": "t_address",
-                "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:24",
+                "src": "@openzeppelin\\contracts-upgradeable\\access\\OwnableUpgradeable.sol:24",
                 "offset": 0,
                 "slot": "0"
               }
@@ -80,7 +80,7 @@
                 "contract": "Initializable",
                 "label": "_initialized",
                 "type": "t_uint64",
-                "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:69",
+                "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:69",
                 "offset": 0,
                 "slot": "0"
               },
@@ -88,7 +88,7 @@
                 "contract": "Initializable",
                 "label": "_initializing",
                 "type": "t_bool",
-                "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:73",
+                "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:73",
                 "offset": 8,
                 "slot": "0"
               }
@@ -98,7 +98,7 @@
         "solcVersion": "0.8.22"
       },
       "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:Initializable": {
-        "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:56",
+        "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:56",
         "inherit": [],
         "libraries": [],
         "methods": [],
@@ -142,7 +142,7 @@
                 "contract": "Initializable",
                 "label": "_initialized",
                 "type": "t_uint64",
-                "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:69",
+                "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:69",
                 "offset": 0,
                 "slot": "0"
               },
@@ -150,7 +150,7 @@
                 "contract": "Initializable",
                 "label": "_initializing",
                 "type": "t_bool",
-                "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:73",
+                "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:73",
                 "offset": 8,
                 "slot": "0"
               }
@@ -160,7 +160,7 @@
         "solcVersion": "0.8.22"
       },
       "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol:UUPSUpgradeable": {
-        "src": "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol:20",
+        "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\UUPSUpgradeable.sol:20",
         "inherit": [
           "@openzeppelin/contracts/interfaces/draft-IERC1822.sol:IERC1822Proxiable",
           "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:Initializable"
@@ -176,7 +176,7 @@
         "errors": [
           {
             "kind": "delegatecall",
-            "src": "@openzeppelin/contracts/utils/Address.sol:97"
+            "src": "@openzeppelin\\contracts\\utils\\Address.sol:97"
           }
         ],
         "layout": {
@@ -217,7 +217,7 @@
                 "contract": "Initializable",
                 "label": "_initialized",
                 "type": "t_uint64",
-                "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:69",
+                "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:69",
                 "offset": 0,
                 "slot": "0"
               },
@@ -225,7 +225,7 @@
                 "contract": "Initializable",
                 "label": "_initializing",
                 "type": "t_bool",
-                "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:73",
+                "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:73",
                 "offset": 8,
                 "slot": "0"
               }
@@ -235,7 +235,7 @@
         "solcVersion": "0.8.22"
       },
       "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol:ContextUpgradeable": {
-        "src": "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol:17",
+        "src": "@openzeppelin\\contracts-upgradeable\\utils\\ContextUpgradeable.sol:17",
         "inherit": [
           "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:Initializable"
         ],
@@ -281,7 +281,7 @@
                 "contract": "Initializable",
                 "label": "_initialized",
                 "type": "t_uint64",
-                "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:69",
+                "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:69",
                 "offset": 0,
                 "slot": "0"
               },
@@ -289,7 +289,7 @@
                 "contract": "Initializable",
                 "label": "_initializing",
                 "type": "t_bool",
-                "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:73",
+                "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:73",
                 "offset": 8,
                 "slot": "0"
               }
@@ -299,7 +299,7 @@
         "solcVersion": "0.8.22"
       },
       "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol:PausableUpgradeable": {
-        "src": "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol:18",
+        "src": "@openzeppelin\\contracts-upgradeable\\utils\\PausableUpgradeable.sol:18",
         "inherit": [
           "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol:ContextUpgradeable",
           "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:Initializable"
@@ -360,7 +360,7 @@
                 "contract": "PausableUpgradeable",
                 "label": "_paused",
                 "type": "t_bool",
-                "src": "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol:21",
+                "src": "@openzeppelin\\contracts-upgradeable\\utils\\PausableUpgradeable.sol:21",
                 "offset": 0,
                 "slot": "0"
               }
@@ -370,7 +370,7 @@
                 "contract": "Initializable",
                 "label": "_initialized",
                 "type": "t_uint64",
-                "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:69",
+                "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:69",
                 "offset": 0,
                 "slot": "0"
               },
@@ -378,7 +378,7 @@
                 "contract": "Initializable",
                 "label": "_initializing",
                 "type": "t_bool",
-                "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:73",
+                "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:73",
                 "offset": 8,
                 "slot": "0"
               }
@@ -388,7 +388,7 @@
         "solcVersion": "0.8.22"
       },
       "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol:ReentrancyGuardUpgradeable": {
-        "src": "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol:26",
+        "src": "@openzeppelin\\contracts-upgradeable\\utils\\ReentrancyGuardUpgradeable.sol:26",
         "inherit": [
           "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:Initializable"
         ],
@@ -450,7 +450,7 @@
                 "contract": "ReentrancyGuardUpgradeable",
                 "label": "_status",
                 "type": "t_uint256",
-                "src": "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol:43",
+                "src": "@openzeppelin\\contracts-upgradeable\\utils\\ReentrancyGuardUpgradeable.sol:43",
                 "offset": 0,
                 "slot": "0"
               }
@@ -460,7 +460,7 @@
                 "contract": "Initializable",
                 "label": "_initialized",
                 "type": "t_uint64",
-                "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:69",
+                "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:69",
                 "offset": 0,
                 "slot": "0"
               },
@@ -468,7 +468,7 @@
                 "contract": "Initializable",
                 "label": "_initializing",
                 "type": "t_bool",
-                "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:73",
+                "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:73",
                 "offset": 8,
                 "slot": "0"
               }
@@ -478,7 +478,7 @@
         "solcVersion": "0.8.22"
       },
       "@openzeppelin/contracts/access/Ownable.sol:Ownable": {
-        "src": "@openzeppelin/contracts/access/Ownable.sol:20",
+        "src": "@openzeppelin\\contracts\\access\\Ownable.sol:20",
         "inherit": [
           "@openzeppelin/contracts/utils/Context.sol:Context"
         ],
@@ -493,7 +493,7 @@
           {
             "kind": "constructor",
             "contract": "Ownable",
-            "src": "@openzeppelin/contracts/access/Ownable.sol:38"
+            "src": "@openzeppelin\\contracts\\access\\Ownable.sol:38"
           }
         ],
         "layout": {
@@ -504,7 +504,7 @@
               "slot": "0",
               "type": "t_address",
               "contract": "Ownable",
-              "src": "@openzeppelin/contracts/access/Ownable.sol:21"
+              "src": "@openzeppelin\\contracts\\access\\Ownable.sol:21"
             }
           ],
           "types": {
@@ -520,7 +520,7 @@
         "solcVersion": "0.8.22"
       },
       "@openzeppelin/contracts/interfaces/IERC1967.sol:IERC1967": {
-        "src": "@openzeppelin/contracts/interfaces/IERC1967.sol:9",
+        "src": "@openzeppelin\\contracts\\interfaces\\IERC1967.sol:9",
         "inherit": [],
         "libraries": [],
         "methods": [],
@@ -536,7 +536,7 @@
         "solcVersion": "0.8.22"
       },
       "@openzeppelin/contracts/interfaces/draft-IERC1822.sol:IERC1822Proxiable": {
-        "src": "@openzeppelin/contracts/interfaces/draft-IERC1822.sol:10",
+        "src": "@openzeppelin\\contracts\\interfaces\\draft-IERC1822.sol:10",
         "inherit": [],
         "libraries": [],
         "methods": [
@@ -554,7 +554,7 @@
         "solcVersion": "0.8.22"
       },
       "@openzeppelin/contracts/interfaces/draft-IERC6093.sol:IERC1155Errors": {
-        "src": "@openzeppelin/contracts/interfaces/draft-IERC6093.sol:113",
+        "src": "@openzeppelin\\contracts\\interfaces\\draft-IERC6093.sol:113",
         "inherit": [],
         "libraries": [],
         "methods": [],
@@ -570,7 +570,7 @@
         "solcVersion": "0.8.22"
       },
       "@openzeppelin/contracts/interfaces/draft-IERC6093.sol:IERC20Errors": {
-        "src": "@openzeppelin/contracts/interfaces/draft-IERC6093.sol:9",
+        "src": "@openzeppelin\\contracts\\interfaces\\draft-IERC6093.sol:9",
         "inherit": [],
         "libraries": [],
         "methods": [],
@@ -586,7 +586,7 @@
         "solcVersion": "0.8.22"
       },
       "@openzeppelin/contracts/interfaces/draft-IERC6093.sol:IERC721Errors": {
-        "src": "@openzeppelin/contracts/interfaces/draft-IERC6093.sol:55",
+        "src": "@openzeppelin\\contracts\\interfaces\\draft-IERC6093.sol:55",
         "inherit": [],
         "libraries": [],
         "methods": [],
@@ -602,7 +602,7 @@
         "solcVersion": "0.8.22"
       },
       "@openzeppelin/contracts/proxy/ERC1967/ERC1967Utils.sol:ERC1967Utils": {
-        "src": "@openzeppelin/contracts/proxy/ERC1967/ERC1967Utils.sol:15",
+        "src": "@openzeppelin\\contracts\\proxy\\ERC1967\\ERC1967Utils.sol:15",
         "version": {
           "withMetadata": "8982cf12eed9186d25c686050e3fe550220af203a01098c05afb02c731fd3651",
           "withoutMetadata": "e2a89a66865458f0d9fedd4bc7faf0ee62e4c341d176ab79d29bd77a1bdfc32a",
@@ -618,11 +618,11 @@
         "errors": [
           {
             "kind": "delegatecall",
-            "src": "@openzeppelin/contracts/utils/Address.sol:97"
+            "src": "@openzeppelin\\contracts\\utils\\Address.sol:97"
           },
           {
             "kind": "delegatecall",
-            "src": "@openzeppelin/contracts/utils/Address.sol:97"
+            "src": "@openzeppelin\\contracts\\utils\\Address.sol:97"
           }
         ],
         "layout": {
@@ -635,7 +635,7 @@
         "solcVersion": "0.8.22"
       },
       "@openzeppelin/contracts/proxy/beacon/IBeacon.sol:IBeacon": {
-        "src": "@openzeppelin/contracts/proxy/beacon/IBeacon.sol:9",
+        "src": "@openzeppelin\\contracts\\proxy\\beacon\\IBeacon.sol:9",
         "inherit": [],
         "libraries": [],
         "methods": [
@@ -653,7 +653,7 @@
         "solcVersion": "0.8.22"
       },
       "@openzeppelin/contracts/token/ERC20/ERC20.sol:ERC20": {
-        "src": "@openzeppelin/contracts/token/ERC20/ERC20.sol:29",
+        "src": "@openzeppelin\\contracts\\token\\ERC20\\ERC20.sol:29",
         "inherit": [
           "@openzeppelin/contracts/interfaces/draft-IERC6093.sol:IERC20Errors",
           "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol:IERC20Metadata",
@@ -677,7 +677,7 @@
           {
             "kind": "constructor",
             "contract": "ERC20",
-            "src": "@openzeppelin/contracts/token/ERC20/ERC20.sol:44"
+            "src": "@openzeppelin\\contracts\\token\\ERC20\\ERC20.sol:44"
           }
         ],
         "layout": {
@@ -688,7 +688,7 @@
               "slot": "0",
               "type": "t_mapping(t_address,t_uint256)",
               "contract": "ERC20",
-              "src": "@openzeppelin/contracts/token/ERC20/ERC20.sol:30"
+              "src": "@openzeppelin\\contracts\\token\\ERC20\\ERC20.sol:30"
             },
             {
               "label": "_allowances",
@@ -696,7 +696,7 @@
               "slot": "1",
               "type": "t_mapping(t_address,t_mapping(t_address,t_uint256))",
               "contract": "ERC20",
-              "src": "@openzeppelin/contracts/token/ERC20/ERC20.sol:32"
+              "src": "@openzeppelin\\contracts\\token\\ERC20\\ERC20.sol:32"
             },
             {
               "label": "_totalSupply",
@@ -704,7 +704,7 @@
               "slot": "2",
               "type": "t_uint256",
               "contract": "ERC20",
-              "src": "@openzeppelin/contracts/token/ERC20/ERC20.sol:34"
+              "src": "@openzeppelin\\contracts\\token\\ERC20\\ERC20.sol:34"
             },
             {
               "label": "_name",
@@ -712,7 +712,7 @@
               "slot": "3",
               "type": "t_string_storage",
               "contract": "ERC20",
-              "src": "@openzeppelin/contracts/token/ERC20/ERC20.sol:36"
+              "src": "@openzeppelin\\contracts\\token\\ERC20\\ERC20.sol:36"
             },
             {
               "label": "_symbol",
@@ -720,7 +720,7 @@
               "slot": "4",
               "type": "t_string_storage",
               "contract": "ERC20",
-              "src": "@openzeppelin/contracts/token/ERC20/ERC20.sol:37"
+              "src": "@openzeppelin\\contracts\\token\\ERC20\\ERC20.sol:37"
             }
           ],
           "types": {
@@ -752,7 +752,7 @@
         "solcVersion": "0.8.22"
       },
       "@openzeppelin/contracts/token/ERC20/IERC20.sol:IERC20": {
-        "src": "@openzeppelin/contracts/token/ERC20/IERC20.sol:9",
+        "src": "@openzeppelin\\contracts\\token\\ERC20\\IERC20.sol:9",
         "inherit": [],
         "libraries": [],
         "methods": [
@@ -775,7 +775,7 @@
         "solcVersion": "0.8.22"
       },
       "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol:IERC20Metadata": {
-        "src": "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol:11",
+        "src": "@openzeppelin\\contracts\\token\\ERC20\\extensions\\IERC20Metadata.sol:11",
         "inherit": [
           "@openzeppelin/contracts/token/ERC20/IERC20.sol:IERC20"
         ],
@@ -797,7 +797,7 @@
         "solcVersion": "0.8.22"
       },
       "@openzeppelin/contracts/utils/Address.sol:Address": {
-        "src": "@openzeppelin/contracts/utils/Address.sol:11",
+        "src": "@openzeppelin\\contracts\\utils\\Address.sol:11",
         "version": {
           "withMetadata": "9d9bebe55456e962bb8d39493ccf085ffe3061b89a32201478d4ff33e1fe1919",
           "withoutMetadata": "e2a89a66865458f0d9fedd4bc7faf0ee62e4c341d176ab79d29bd77a1bdfc32a",
@@ -812,7 +812,7 @@
         "errors": [
           {
             "kind": "delegatecall",
-            "src": "@openzeppelin/contracts/utils/Address.sol:97"
+            "src": "@openzeppelin\\contracts\\utils\\Address.sol:97"
           }
         ],
         "layout": {
@@ -825,7 +825,7 @@
         "solcVersion": "0.8.22"
       },
       "@openzeppelin/contracts/utils/Context.sol:Context": {
-        "src": "@openzeppelin/contracts/utils/Context.sol:16",
+        "src": "@openzeppelin\\contracts\\utils\\Context.sol:16",
         "inherit": [],
         "libraries": [],
         "methods": [],
@@ -841,7 +841,7 @@
         "solcVersion": "0.8.22"
       },
       "@openzeppelin/contracts/utils/Errors.sol:Errors": {
-        "src": "@openzeppelin/contracts/utils/Errors.sol:14",
+        "src": "@openzeppelin\\contracts\\utils\\Errors.sol:14",
         "version": {
           "withMetadata": "5d3dc056d3f1e21cb70cb4fd6b55f27f24a74a29a2694774371eb986b33ba971",
           "withoutMetadata": "e2a89a66865458f0d9fedd4bc7faf0ee62e4c341d176ab79d29bd77a1bdfc32a",
@@ -862,7 +862,7 @@
         "solcVersion": "0.8.22"
       },
       "@openzeppelin/contracts/utils/ReentrancyGuard.sol:ReentrancyGuard": {
-        "src": "@openzeppelin/contracts/utils/ReentrancyGuard.sol:25",
+        "src": "@openzeppelin\\contracts\\utils\\ReentrancyGuard.sol:25",
         "inherit": [],
         "libraries": [],
         "methods": [],
@@ -871,7 +871,7 @@
           {
             "kind": "constructor",
             "contract": "ReentrancyGuard",
-            "src": "@openzeppelin/contracts/utils/ReentrancyGuard.sol:47"
+            "src": "@openzeppelin\\contracts\\utils\\ReentrancyGuard.sol:47"
           }
         ],
         "layout": {
@@ -882,7 +882,7 @@
               "slot": "0",
               "type": "t_uint256",
               "contract": "ReentrancyGuard",
-              "src": "@openzeppelin/contracts/utils/ReentrancyGuard.sol:40"
+              "src": "@openzeppelin\\contracts\\utils\\ReentrancyGuard.sol:40"
             }
           ],
           "types": {
@@ -898,7 +898,7 @@
         "solcVersion": "0.8.22"
       },
       "@openzeppelin/contracts/utils/StorageSlot.sol:StorageSlot": {
-        "src": "@openzeppelin/contracts/utils/StorageSlot.sol:34",
+        "src": "@openzeppelin\\contracts\\utils\\StorageSlot.sol:34",
         "version": {
           "withMetadata": "e411b9c92770002ec22ec07d147a0a43b56b7dfb13454d50271e61ea602d52ab",
           "withoutMetadata": "e2a89a66865458f0d9fedd4bc7faf0ee62e4c341d176ab79d29bd77a1bdfc32a",
@@ -919,9 +919,9 @@
         "solcVersion": "0.8.22"
       },
       "contracts/AdminLib.sol:AdminLib": {
-        "src": "contracts/AdminLib.sol:4",
+        "src": "contracts\\AdminLib.sol:4",
         "version": {
-          "withMetadata": "9b501191278ea04ed98da4baec8a5abc64a16567ab9fe24c60f6744cfa6bc6cc",
+          "withMetadata": "64e6487fdf938a0e22be47e2083299007f6c443dc950bba0b0cf846df78be549",
           "withoutMetadata": "e2a89a66865458f0d9fedd4bc7faf0ee62e4c341d176ab79d29bd77a1bdfc32a",
           "linkedWithoutMetadata": "e2a89a66865458f0d9fedd4bc7faf0ee62e4c341d176ab79d29bd77a1bdfc32a"
         },
@@ -940,9 +940,9 @@
         "solcVersion": "0.8.22"
       },
       "contracts/DailyBurnExtension.sol:DailyBurnExtension": {
-        "src": "contracts/DailyBurnExtension.sol:10",
+        "src": "contracts\\DailyBurnExtension.sol:10",
         "version": {
-          "withMetadata": "df790bb40c056ed606fc2d91bc7c32b30a9b305c1d4a6bbb4188e3adabf9d479",
+          "withMetadata": "8f37687c2e074cbd43a1d52984bfc12e46223a657e52c5046159c3af0eb8d82f",
           "withoutMetadata": "aca142dc15b693dea39e2cd25083630308bb7952615093984ee05e423873f042",
           "linkedWithoutMetadata": "aca142dc15b693dea39e2cd25083630308bb7952615093984ee05e423873f042"
         },
@@ -960,12 +960,12 @@
           {
             "kind": "constructor",
             "contract": "DailyBurnExtension",
-            "src": "contracts/DailyBurnExtension.sol:15"
+            "src": "contracts\\DailyBurnExtension.sol:15"
           },
           {
             "kind": "state-variable-immutable",
             "name": "protocol",
-            "src": "contracts/DailyBurnExtension.sol:11"
+            "src": "contracts\\DailyBurnExtension.sol:11"
           }
         ],
         "layout": {
@@ -978,9 +978,9 @@
         "solcVersion": "0.8.22"
       },
       "contracts/DailyBurnManager.sol:DailyBurnManager": {
-        "src": "contracts/DailyBurnManager.sol:12",
+        "src": "contracts\\DailyBurnManager.sol:12",
         "version": {
-          "withMetadata": "186a9ba3d8855cd88adc1ab880ecb38123c852781fcd474f0ce482dc492246ad",
+          "withMetadata": "626773d018cce2b147015e851ae5e69a0900a05fe08887b834252a7fa240f107",
           "withoutMetadata": "105fa70bd6cb6ad1ca4d02330284e185aee9877cc65c633fc583b78b6a497197",
           "linkedWithoutMetadata": "105fa70bd6cb6ad1ca4d02330284e185aee9877cc65c633fc583b78b6a497197"
         },
@@ -1004,17 +1004,17 @@
           {
             "kind": "constructor",
             "contract": "DailyBurnManager",
-            "src": "contracts/DailyBurnManager.sol:22"
+            "src": "contracts\\DailyBurnManager.sol:22"
           },
           {
             "kind": "state-variable-immutable",
             "name": "protocol",
-            "src": "contracts/DailyBurnManager.sol:12"
+            "src": "contracts\\DailyBurnManager.sol:12"
           },
           {
             "kind": "state-variable-immutable",
             "name": "jbcToken",
-            "src": "contracts/DailyBurnManager.sol:15"
+            "src": "contracts\\DailyBurnManager.sol:15"
           }
         ],
         "layout": {
@@ -1025,7 +1025,7 @@
               "slot": "0",
               "type": "t_address",
               "contract": "Ownable",
-              "src": "@openzeppelin/contracts/access/Ownable.sol:21"
+              "src": "@openzeppelin\\contracts\\access\\Ownable.sol:21"
             },
             {
               "label": "lastBurnTime",
@@ -1033,7 +1033,7 @@
               "slot": "1",
               "type": "t_uint256",
               "contract": "DailyBurnManager",
-              "src": "contracts/DailyBurnManager.sol:16"
+              "src": "contracts\\DailyBurnManager.sol:16"
             }
           ],
           "types": {
@@ -1053,11 +1053,11 @@
         "solcVersion": "0.8.22"
       },
       "contracts/JBC.sol:JBC": {
-        "src": "contracts/JBC.sol:7",
+        "src": "contracts\\JBC.sol:7",
         "version": {
-          "withMetadata": "598138d860ecc00501a3fc06fce86c3e549e0b4e3efe9ed791e99778e1039779",
-          "withoutMetadata": "598138d860ecc00501a3fc06fce86c3e549e0b4e3efe9ed791e99778e1039779",
-          "linkedWithoutMetadata": "598138d860ecc00501a3fc06fce86c3e549e0b4e3efe9ed791e99778e1039779"
+          "withMetadata": "fc6f37bcdceb006f62d785e9713fb0697c6cd46896486950906e4071489e838f",
+          "withoutMetadata": "fc6f37bcdceb006f62d785e9713fb0697c6cd46896486950906e4071489e838f",
+          "linkedWithoutMetadata": "fc6f37bcdceb006f62d785e9713fb0697c6cd46896486950906e4071489e838f"
         },
         "inherit": [
           "@openzeppelin/contracts/access/Ownable.sol:Ownable",
@@ -1079,7 +1079,7 @@
           {
             "kind": "constructor",
             "contract": "JBC",
-            "src": "contracts/JBC.sol:21"
+            "src": "contracts\\JBC.sol:21"
           }
         ],
         "layout": {
@@ -1090,7 +1090,7 @@
               "slot": "0",
               "type": "t_mapping(t_address,t_uint256)",
               "contract": "ERC20",
-              "src": "@openzeppelin/contracts/token/ERC20/ERC20.sol:30"
+              "src": "@openzeppelin\\contracts\\token\\ERC20\\ERC20.sol:30"
             },
             {
               "label": "_allowances",
@@ -1098,7 +1098,7 @@
               "slot": "1",
               "type": "t_mapping(t_address,t_mapping(t_address,t_uint256))",
               "contract": "ERC20",
-              "src": "@openzeppelin/contracts/token/ERC20/ERC20.sol:32"
+              "src": "@openzeppelin\\contracts\\token\\ERC20\\ERC20.sol:32"
             },
             {
               "label": "_totalSupply",
@@ -1106,7 +1106,7 @@
               "slot": "2",
               "type": "t_uint256",
               "contract": "ERC20",
-              "src": "@openzeppelin/contracts/token/ERC20/ERC20.sol:34"
+              "src": "@openzeppelin\\contracts\\token\\ERC20\\ERC20.sol:34"
             },
             {
               "label": "_name",
@@ -1114,7 +1114,7 @@
               "slot": "3",
               "type": "t_string_storage",
               "contract": "ERC20",
-              "src": "@openzeppelin/contracts/token/ERC20/ERC20.sol:36"
+              "src": "@openzeppelin\\contracts\\token\\ERC20\\ERC20.sol:36"
             },
             {
               "label": "_symbol",
@@ -1122,7 +1122,7 @@
               "slot": "4",
               "type": "t_string_storage",
               "contract": "ERC20",
-              "src": "@openzeppelin/contracts/token/ERC20/ERC20.sol:37"
+              "src": "@openzeppelin\\contracts\\token\\ERC20\\ERC20.sol:37"
             },
             {
               "label": "_owner",
@@ -1130,7 +1130,7 @@
               "slot": "5",
               "type": "t_address",
               "contract": "Ownable",
-              "src": "@openzeppelin/contracts/access/Ownable.sol:21"
+              "src": "@openzeppelin\\contracts\\access\\Ownable.sol:21"
             },
             {
               "label": "uniswapV2Pair",
@@ -1138,7 +1138,7 @@
               "slot": "6",
               "type": "t_address",
               "contract": "JBC",
-              "src": "contracts/JBC.sol:12"
+              "src": "contracts\\JBC.sol:12"
             },
             {
               "label": "protocolAddress",
@@ -1146,7 +1146,7 @@
               "slot": "7",
               "type": "t_address",
               "contract": "JBC",
-              "src": "contracts/JBC.sol:15"
+              "src": "contracts\\JBC.sol:15"
             }
           ],
           "types": {
@@ -1178,9 +1178,9 @@
         "solcVersion": "0.8.22"
       },
       "contracts/JBCMigration.sol:JBCMigration": {
-        "src": "contracts/JBCMigration.sol:20",
+        "src": "contracts\\JBCMigration.sol:20",
         "version": {
-          "withMetadata": "946ffbb4c4ddd631efaaa37ba662b70088c30382b89ac5f594b55f099c21b1c4",
+          "withMetadata": "e86567ac001cf822d39b6bfda015a30da3e1a6c9e3e9a91297c290871c2c945e",
           "withoutMetadata": "36be507d0b789e479369f6bc16a70dcce05ca5b8d00f1dca36904bb742bccf11",
           "linkedWithoutMetadata": "36be507d0b789e479369f6bc16a70dcce05ca5b8d00f1dca36904bb742bccf11"
         },
@@ -1208,17 +1208,17 @@
           {
             "kind": "constructor",
             "contract": "JBCMigration",
-            "src": "contracts/JBCMigration.sol:57"
+            "src": "contracts\\JBCMigration.sol:57"
           },
           {
             "kind": "state-variable-immutable",
             "name": "oldJBC",
-            "src": "contracts/JBCMigration.sol:25"
+            "src": "contracts\\JBCMigration.sol:25"
           },
           {
             "kind": "state-variable-immutable",
             "name": "newJBC",
-            "src": "contracts/JBCMigration.sol:28"
+            "src": "contracts\\JBCMigration.sol:28"
           }
         ],
         "layout": {
@@ -1229,7 +1229,7 @@
               "slot": "0",
               "type": "t_address",
               "contract": "Ownable",
-              "src": "@openzeppelin/contracts/access/Ownable.sol:21"
+              "src": "@openzeppelin\\contracts\\access\\Ownable.sol:21"
             },
             {
               "label": "_status",
@@ -1237,7 +1237,7 @@
               "slot": "1",
               "type": "t_uint256",
               "contract": "ReentrancyGuard",
-              "src": "@openzeppelin/contracts/utils/ReentrancyGuard.sol:40"
+              "src": "@openzeppelin\\contracts\\utils\\ReentrancyGuard.sol:40"
             },
             {
               "label": "migrationEnabled",
@@ -1245,7 +1245,7 @@
               "slot": "2",
               "type": "t_bool",
               "contract": "JBCMigration",
-              "src": "contracts/JBCMigration.sol:29"
+              "src": "contracts\\JBCMigration.sol:29"
             },
             {
               "label": "totalMigrated",
@@ -1253,7 +1253,7 @@
               "slot": "3",
               "type": "t_uint256",
               "contract": "JBCMigration",
-              "src": "contracts/JBCMigration.sol:32"
+              "src": "contracts\\JBCMigration.sol:32"
             },
             {
               "label": "migrationCount",
@@ -1261,7 +1261,7 @@
               "slot": "4",
               "type": "t_uint256",
               "contract": "JBCMigration",
-              "src": "contracts/JBCMigration.sol:33"
+              "src": "contracts\\JBCMigration.sol:33"
             },
             {
               "label": "userMigrated",
@@ -1269,7 +1269,7 @@
               "slot": "5",
               "type": "t_mapping(t_address,t_uint256)",
               "contract": "JBCMigration",
-              "src": "contracts/JBCMigration.sol:35"
+              "src": "contracts\\JBCMigration.sol:35"
             },
             {
               "label": "userMigrationTime",
@@ -1277,7 +1277,7 @@
               "slot": "6",
               "type": "t_mapping(t_address,t_uint256)",
               "contract": "JBCMigration",
-              "src": "contracts/JBCMigration.sol:37"
+              "src": "contracts\\JBCMigration.sol:36"
             }
           ],
           "types": {
@@ -1305,7 +1305,7 @@
         "solcVersion": "0.8.22"
       },
       "contracts/JinbaoProtocol.sol:IJBC": {
-        "src": "contracts/JinbaoProtocol.sol:11",
+        "src": "contracts\\JinbaoProtocol.sol:11",
         "inherit": [
           "@openzeppelin/contracts/token/ERC20/IERC20.sol:IERC20"
         ],
@@ -1325,9 +1325,9 @@
         "solcVersion": "0.8.22"
       },
       "contracts/JinbaoProtocol.sol:JinbaoProtocol": {
-        "src": "contracts/JinbaoProtocol.sol:15",
+        "src": "contracts\\JinbaoProtocol.sol:15",
         "version": {
-          "withMetadata": "330a1cd1f4664109ad30a42e802ad0f47d7bc1c32d711a5a4b10769e4a582a96",
+          "withMetadata": "a53cc098827c71a1149c4e8b493d120ce5f7d91e8289cf80c14508f8bfefc510",
           "withoutMetadata": "b10f9e249b154c4810487fce482d985a990f9bbb1824bc6a30fcc4096781a46f",
           "linkedWithoutMetadata": "b10f9e249b154c4810487fce482d985a990f9bbb1824bc6a30fcc4096781a46f"
         },
@@ -1381,7 +1381,7 @@
               "slot": "0",
               "type": "t_contract(IERC20)2192",
               "contract": "JinbaoProtocol",
-              "src": "contracts/JinbaoProtocol.sol:59"
+              "src": "contracts\\JinbaoProtocol.sol:59"
             },
             {
               "label": "jbcToken",
@@ -1389,7 +1389,7 @@
               "slot": "1",
               "type": "t_contract(IJBC)4759",
               "contract": "JinbaoProtocol",
-              "src": "contracts/JinbaoProtocol.sol:60"
+              "src": "contracts\\JinbaoProtocol.sol:60"
             },
             {
               "label": "marketingWallet",
@@ -1397,7 +1397,7 @@
               "slot": "2",
               "type": "t_address",
               "contract": "JinbaoProtocol",
-              "src": "contracts/JinbaoProtocol.sol:62"
+              "src": "contracts\\JinbaoProtocol.sol:62"
             },
             {
               "label": "treasuryWallet",
@@ -1405,7 +1405,7 @@
               "slot": "3",
               "type": "t_address",
               "contract": "JinbaoProtocol",
-              "src": "contracts/JinbaoProtocol.sol:63"
+              "src": "contracts\\JinbaoProtocol.sol:63"
             },
             {
               "label": "lpInjectionWallet",
@@ -1413,7 +1413,7 @@
               "slot": "4",
               "type": "t_address",
               "contract": "JinbaoProtocol",
-              "src": "contracts/JinbaoProtocol.sol:64"
+              "src": "contracts\\JinbaoProtocol.sol:64"
             },
             {
               "label": "buybackWallet",
@@ -1421,7 +1421,7 @@
               "slot": "5",
               "type": "t_address",
               "contract": "JinbaoProtocol",
-              "src": "contracts/JinbaoProtocol.sol:65"
+              "src": "contracts\\JinbaoProtocol.sol:65"
             },
             {
               "label": "directRewardPercent",
@@ -1429,7 +1429,7 @@
               "slot": "6",
               "type": "t_uint256",
               "contract": "JinbaoProtocol",
-              "src": "contracts/JinbaoProtocol.sol:69"
+              "src": "contracts\\JinbaoProtocol.sol:69"
             },
             {
               "label": "levelRewardPercent",
@@ -1437,7 +1437,7 @@
               "slot": "7",
               "type": "t_uint256",
               "contract": "JinbaoProtocol",
-              "src": "contracts/JinbaoProtocol.sol:70"
+              "src": "contracts\\JinbaoProtocol.sol:70"
             },
             {
               "label": "marketingPercent",
@@ -1445,7 +1445,7 @@
               "slot": "8",
               "type": "t_uint256",
               "contract": "JinbaoProtocol",
-              "src": "contracts/JinbaoProtocol.sol:71"
+              "src": "contracts\\JinbaoProtocol.sol:71"
             },
             {
               "label": "buybackPercent",
@@ -1453,7 +1453,7 @@
               "slot": "9",
               "type": "t_uint256",
               "contract": "JinbaoProtocol",
-              "src": "contracts/JinbaoProtocol.sol:72"
+              "src": "contracts\\JinbaoProtocol.sol:72"
             },
             {
               "label": "lpInjectionPercent",
@@ -1461,7 +1461,7 @@
               "slot": "10",
               "type": "t_uint256",
               "contract": "JinbaoProtocol",
-              "src": "contracts/JinbaoProtocol.sol:73"
+              "src": "contracts\\JinbaoProtocol.sol:73"
             },
             {
               "label": "treasuryPercent",
@@ -1469,7 +1469,7 @@
               "slot": "11",
               "type": "t_uint256",
               "contract": "JinbaoProtocol",
-              "src": "contracts/JinbaoProtocol.sol:74"
+              "src": "contracts\\JinbaoProtocol.sol:74"
             },
             {
               "label": "redemptionFeePercent",
@@ -1477,7 +1477,7 @@
               "slot": "12",
               "type": "t_uint256",
               "contract": "JinbaoProtocol",
-              "src": "contracts/JinbaoProtocol.sol:76"
+              "src": "contracts\\JinbaoProtocol.sol:76"
             },
             {
               "label": "swapBuyTax",
@@ -1485,7 +1485,7 @@
               "slot": "13",
               "type": "t_uint256",
               "contract": "JinbaoProtocol",
-              "src": "contracts/JinbaoProtocol.sol:77"
+              "src": "contracts\\JinbaoProtocol.sol:77"
             },
             {
               "label": "swapSellTax",
@@ -1493,7 +1493,7 @@
               "slot": "14",
               "type": "t_uint256",
               "contract": "JinbaoProtocol",
-              "src": "contracts/JinbaoProtocol.sol:78"
+              "src": "contracts\\JinbaoProtocol.sol:78"
             },
             {
               "label": "userInfo",
@@ -1501,7 +1501,7 @@
               "slot": "15",
               "type": "t_mapping(t_address,t_struct(UserInfo)4794_storage)",
               "contract": "JinbaoProtocol",
-              "src": "contracts/JinbaoProtocol.sol:86"
+              "src": "contracts\\JinbaoProtocol.sol:86"
             },
             {
               "label": "userTicket",
@@ -1509,7 +1509,7 @@
               "slot": "16",
               "type": "t_mapping(t_address,t_struct(Ticket)4816_storage)",
               "contract": "JinbaoProtocol",
-              "src": "contracts/JinbaoProtocol.sol:87"
+              "src": "contracts\\JinbaoProtocol.sol:87"
             },
             {
               "label": "userStakes",
@@ -1517,7 +1517,7 @@
               "slot": "17",
               "type": "t_mapping(t_address,t_array(t_struct(Stake)4807_storage)dyn_storage)",
               "contract": "JinbaoProtocol",
-              "src": "contracts/JinbaoProtocol.sol:88"
+              "src": "contracts\\JinbaoProtocol.sol:88"
             },
             {
               "label": "directReferrals",
@@ -1525,7 +1525,7 @@
               "slot": "18",
               "type": "t_mapping(t_address,t_array(t_address)dyn_storage)",
               "contract": "JinbaoProtocol",
-              "src": "contracts/JinbaoProtocol.sol:89"
+              "src": "contracts\\JinbaoProtocol.sol:89"
             },
             {
               "label": "ticketPendingRewards",
@@ -1533,7 +1533,7 @@
               "slot": "19",
               "type": "t_mapping(t_uint256,t_array(t_struct(PendingReward)4821_storage)dyn_storage)",
               "contract": "JinbaoProtocol",
-              "src": "contracts/JinbaoProtocol.sol:90"
+              "src": "contracts\\JinbaoProtocol.sol:90"
             },
             {
               "label": "levelConfigs",
@@ -1541,7 +1541,7 @@
               "slot": "20",
               "type": "t_array(t_struct(LevelConfig)4912_storage)dyn_storage",
               "contract": "JinbaoProtocol",
-              "src": "contracts/JinbaoProtocol.sol:97"
+              "src": "contracts\\JinbaoProtocol.sol:97"
             },
             {
               "label": "ticketFlexibilityDuration",
@@ -1549,7 +1549,7 @@
               "slot": "21",
               "type": "t_uint256",
               "contract": "JinbaoProtocol",
-              "src": "contracts/JinbaoProtocol.sol:99"
+              "src": "contracts\\JinbaoProtocol.sol:99"
             },
             {
               "label": "liquidityEnabled",
@@ -1557,7 +1557,7 @@
               "slot": "22",
               "type": "t_bool",
               "contract": "JinbaoProtocol",
-              "src": "contracts/JinbaoProtocol.sol:100"
+              "src": "contracts\\JinbaoProtocol.sol:100"
             },
             {
               "label": "redeemEnabled",
@@ -1565,7 +1565,7 @@
               "slot": "22",
               "type": "t_bool",
               "contract": "JinbaoProtocol",
-              "src": "contracts/JinbaoProtocol.sol:101"
+              "src": "contracts\\JinbaoProtocol.sol:101"
             },
             {
               "label": "swapReserveMC",
@@ -1573,7 +1573,7 @@
               "slot": "23",
               "type": "t_uint256",
               "contract": "JinbaoProtocol",
-              "src": "contracts/JinbaoProtocol.sol:103"
+              "src": "contracts\\JinbaoProtocol.sol:103"
             },
             {
               "label": "swapReserveJBC",
@@ -1581,7 +1581,7 @@
               "slot": "24",
               "type": "t_uint256",
               "contract": "JinbaoProtocol",
-              "src": "contracts/JinbaoProtocol.sol:104"
+              "src": "contracts\\JinbaoProtocol.sol:104"
             },
             {
               "label": "nextTicketId",
@@ -1589,7 +1589,7 @@
               "slot": "25",
               "type": "t_uint256",
               "contract": "JinbaoProtocol",
-              "src": "contracts/JinbaoProtocol.sol:109"
+              "src": "contracts\\JinbaoProtocol.sol:109"
             },
             {
               "label": "nextStakeId",
@@ -1597,7 +1597,7 @@
               "slot": "26",
               "type": "t_uint256",
               "contract": "JinbaoProtocol",
-              "src": "contracts/JinbaoProtocol.sol:110"
+              "src": "contracts\\JinbaoProtocol.sol:110"
             },
             {
               "label": "lastBurnTime",
@@ -1605,7 +1605,7 @@
               "slot": "27",
               "type": "t_uint256",
               "contract": "JinbaoProtocol",
-              "src": "contracts/JinbaoProtocol.sol:111"
+              "src": "contracts\\JinbaoProtocol.sol:111"
             },
             {
               "label": "ticketOwner",
@@ -1613,7 +1613,7 @@
               "slot": "28",
               "type": "t_mapping(t_uint256,t_address)",
               "contract": "JinbaoProtocol",
-              "src": "contracts/JinbaoProtocol.sol:112"
+              "src": "contracts\\JinbaoProtocol.sol:112"
             },
             {
               "label": "stakePendingRewards",
@@ -1621,7 +1621,7 @@
               "slot": "29",
               "type": "t_mapping(t_uint256,t_array(t_struct(PendingReward)4821_storage)dyn_storage)",
               "contract": "JinbaoProtocol",
-              "src": "contracts/JinbaoProtocol.sol:113"
+              "src": "contracts\\JinbaoProtocol.sol:113"
             },
             {
               "label": "stakeOwner",
@@ -1629,7 +1629,7 @@
               "slot": "30",
               "type": "t_mapping(t_uint256,t_address)",
               "contract": "JinbaoProtocol",
-              "src": "contracts/JinbaoProtocol.sol:114"
+              "src": "contracts\\JinbaoProtocol.sol:114"
             },
             {
               "label": "levelRewardPool",
@@ -1637,7 +1637,7 @@
               "slot": "31",
               "type": "t_uint256",
               "contract": "JinbaoProtocol",
-              "src": "contracts/JinbaoProtocol.sol:115"
+              "src": "contracts\\JinbaoProtocol.sol:115"
             },
             {
               "label": "__gap",
@@ -1645,7 +1645,7 @@
               "slot": "32",
               "type": "t_array(t_uint256)47_storage",
               "contract": "JinbaoProtocol",
-              "src": "contracts/JinbaoProtocol.sol:116"
+              "src": "contracts\\JinbaoProtocol.sol:116"
             },
             {
               "label": "emergencyPaused",
@@ -1653,7 +1653,7 @@
               "slot": "79",
               "type": "t_bool",
               "contract": "JinbaoProtocol",
-              "src": "contracts/JinbaoProtocol.sol:117"
+              "src": "contracts\\JinbaoProtocol.sol:117"
             },
             {
               "label": "priceOracle",
@@ -1661,7 +1661,7 @@
               "slot": "79",
               "type": "t_address",
               "contract": "JinbaoProtocol",
-              "src": "contracts/JinbaoProtocol.sol:118"
+              "src": "contracts\\JinbaoProtocol.sol:118"
             },
             {
               "label": "_lastDifferentialDistribution",
@@ -1669,7 +1669,7 @@
               "slot": "80",
               "type": "t_mapping(t_address,t_struct(DifferentialDistribution)8403_storage)",
               "contract": "JinbaoProtocol",
-              "src": "contracts/JinbaoProtocol.sol:958"
+              "src": "contracts\\JinbaoProtocol.sol:958"
             }
           ],
           "types": {
@@ -2006,7 +2006,7 @@
                 "contract": "ReentrancyGuardUpgradeable",
                 "label": "_status",
                 "type": "t_uint256",
-                "src": "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol:43",
+                "src": "@openzeppelin\\contracts-upgradeable\\utils\\ReentrancyGuardUpgradeable.sol:43",
                 "offset": 0,
                 "slot": "0"
               }
@@ -2016,7 +2016,7 @@
                 "contract": "OwnableUpgradeable",
                 "label": "_owner",
                 "type": "t_address",
-                "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:24",
+                "src": "@openzeppelin\\contracts-upgradeable\\access\\OwnableUpgradeable.sol:24",
                 "offset": 0,
                 "slot": "0"
               }
@@ -2026,7 +2026,7 @@
                 "contract": "Initializable",
                 "label": "_initialized",
                 "type": "t_uint64",
-                "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:69",
+                "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:69",
                 "offset": 0,
                 "slot": "0"
               },
@@ -2034,7 +2034,7 @@
                 "contract": "Initializable",
                 "label": "_initializing",
                 "type": "t_bool",
-                "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:73",
+                "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:73",
                 "offset": 8,
                 "slot": "0"
               }
@@ -2044,7 +2044,7 @@
         "solcVersion": "0.8.22"
       },
       "contracts/JinbaoProtocolComplete.sol:IJBC": {
-        "src": "contracts/JinbaoProtocolComplete.sol:11",
+        "src": "contracts\\JinbaoProtocolComplete.sol:11",
         "inherit": [
           "@openzeppelin/contracts/token/ERC20/IERC20.sol:IERC20"
         ],
@@ -2064,9 +2064,9 @@
         "solcVersion": "0.8.22"
       },
       "contracts/JinbaoProtocolComplete.sol:JinbaoProtocolComplete": {
-        "src": "contracts/JinbaoProtocolComplete.sol:15",
+        "src": "contracts\\JinbaoProtocolComplete.sol:15",
         "version": {
-          "withMetadata": "711099ceb3d90663ac0408490e5c477bd01bfc685752763740e6acafee4482b0",
+          "withMetadata": "a50fbfae29b24a8185a55c3c3360f76f6d3e97981172d645e128fc3eb4873e7b",
           "withoutMetadata": "72d314be5e818c170b2b758a4d758bdf8815256064f544ef9a31eae294abe589",
           "linkedWithoutMetadata": "72d314be5e818c170b2b758a4d758bdf8815256064f544ef9a31eae294abe589"
         },
@@ -2099,7 +2099,7 @@
         "errors": [
           {
             "kind": "missing-initializer",
-            "src": "contracts/JinbaoProtocolComplete.sol:15"
+            "src": "contracts\\JinbaoProtocolComplete.sol:15"
           }
         ],
         "layout": {
@@ -2110,7 +2110,7 @@
               "slot": "0",
               "type": "t_contract(IERC20)2192",
               "contract": "JinbaoProtocolComplete",
-              "src": "contracts/JinbaoProtocolComplete.sol:53"
+              "src": "contracts\\JinbaoProtocolComplete.sol:53"
             },
             {
               "label": "jbcToken",
@@ -2118,7 +2118,7 @@
               "slot": "1",
               "type": "t_contract(IJBC)9988",
               "contract": "JinbaoProtocolComplete",
-              "src": "contracts/JinbaoProtocolComplete.sol:54"
+              "src": "contracts\\JinbaoProtocolComplete.sol:54"
             },
             {
               "label": "marketingWallet",
@@ -2126,7 +2126,7 @@
               "slot": "2",
               "type": "t_address",
               "contract": "JinbaoProtocolComplete",
-              "src": "contracts/JinbaoProtocolComplete.sol:56"
+              "src": "contracts\\JinbaoProtocolComplete.sol:56"
             },
             {
               "label": "treasuryWallet",
@@ -2134,7 +2134,7 @@
               "slot": "3",
               "type": "t_address",
               "contract": "JinbaoProtocolComplete",
-              "src": "contracts/JinbaoProtocolComplete.sol:57"
+              "src": "contracts\\JinbaoProtocolComplete.sol:57"
             },
             {
               "label": "lpInjectionWallet",
@@ -2142,7 +2142,7 @@
               "slot": "4",
               "type": "t_address",
               "contract": "JinbaoProtocolComplete",
-              "src": "contracts/JinbaoProtocolComplete.sol:58"
+              "src": "contracts\\JinbaoProtocolComplete.sol:58"
             },
             {
               "label": "buybackWallet",
@@ -2150,7 +2150,7 @@
               "slot": "5",
               "type": "t_address",
               "contract": "JinbaoProtocolComplete",
-              "src": "contracts/JinbaoProtocolComplete.sol:59"
+              "src": "contracts\\JinbaoProtocolComplete.sol:59"
             },
             {
               "label": "directRewardPercent",
@@ -2158,7 +2158,7 @@
               "slot": "6",
               "type": "t_uint256",
               "contract": "JinbaoProtocolComplete",
-              "src": "contracts/JinbaoProtocolComplete.sol:63"
+              "src": "contracts\\JinbaoProtocolComplete.sol:63"
             },
             {
               "label": "levelRewardPercent",
@@ -2166,7 +2166,7 @@
               "slot": "7",
               "type": "t_uint256",
               "contract": "JinbaoProtocolComplete",
-              "src": "contracts/JinbaoProtocolComplete.sol:64"
+              "src": "contracts\\JinbaoProtocolComplete.sol:64"
             },
             {
               "label": "marketingPercent",
@@ -2174,7 +2174,7 @@
               "slot": "8",
               "type": "t_uint256",
               "contract": "JinbaoProtocolComplete",
-              "src": "contracts/JinbaoProtocolComplete.sol:65"
+              "src": "contracts\\JinbaoProtocolComplete.sol:65"
             },
             {
               "label": "buybackPercent",
@@ -2182,7 +2182,7 @@
               "slot": "9",
               "type": "t_uint256",
               "contract": "JinbaoProtocolComplete",
-              "src": "contracts/JinbaoProtocolComplete.sol:66"
+              "src": "contracts\\JinbaoProtocolComplete.sol:66"
             },
             {
               "label": "lpInjectionPercent",
@@ -2190,7 +2190,7 @@
               "slot": "10",
               "type": "t_uint256",
               "contract": "JinbaoProtocolComplete",
-              "src": "contracts/JinbaoProtocolComplete.sol:67"
+              "src": "contracts\\JinbaoProtocolComplete.sol:67"
             },
             {
               "label": "treasuryPercent",
@@ -2198,7 +2198,7 @@
               "slot": "11",
               "type": "t_uint256",
               "contract": "JinbaoProtocolComplete",
-              "src": "contracts/JinbaoProtocolComplete.sol:68"
+              "src": "contracts\\JinbaoProtocolComplete.sol:68"
             },
             {
               "label": "redemptionFeePercent",
@@ -2206,7 +2206,7 @@
               "slot": "12",
               "type": "t_uint256",
               "contract": "JinbaoProtocolComplete",
-              "src": "contracts/JinbaoProtocolComplete.sol:70"
+              "src": "contracts\\JinbaoProtocolComplete.sol:70"
             },
             {
               "label": "swapBuyTax",
@@ -2214,7 +2214,7 @@
               "slot": "13",
               "type": "t_uint256",
               "contract": "JinbaoProtocolComplete",
-              "src": "contracts/JinbaoProtocolComplete.sol:71"
+              "src": "contracts\\JinbaoProtocolComplete.sol:71"
             },
             {
               "label": "swapSellTax",
@@ -2222,7 +2222,7 @@
               "slot": "14",
               "type": "t_uint256",
               "contract": "JinbaoProtocolComplete",
-              "src": "contracts/JinbaoProtocolComplete.sol:72"
+              "src": "contracts\\JinbaoProtocolComplete.sol:72"
             },
             {
               "label": "userInfo",
@@ -2230,7 +2230,7 @@
               "slot": "15",
               "type": "t_mapping(t_address,t_struct(UserInfo)10023_storage)",
               "contract": "JinbaoProtocolComplete",
-              "src": "contracts/JinbaoProtocolComplete.sol:80"
+              "src": "contracts\\JinbaoProtocolComplete.sol:80"
             },
             {
               "label": "userTicket",
@@ -2238,7 +2238,7 @@
               "slot": "16",
               "type": "t_mapping(t_address,t_struct(Ticket)10045_storage)",
               "contract": "JinbaoProtocolComplete",
-              "src": "contracts/JinbaoProtocolComplete.sol:81"
+              "src": "contracts\\JinbaoProtocolComplete.sol:81"
             },
             {
               "label": "userStakes",
@@ -2246,7 +2246,7 @@
               "slot": "17",
               "type": "t_mapping(t_address,t_array(t_struct(Stake)10036_storage)dyn_storage)",
               "contract": "JinbaoProtocolComplete",
-              "src": "contracts/JinbaoProtocolComplete.sol:82"
+              "src": "contracts\\JinbaoProtocolComplete.sol:82"
             },
             {
               "label": "directReferrals",
@@ -2254,7 +2254,7 @@
               "slot": "18",
               "type": "t_mapping(t_address,t_array(t_address)dyn_storage)",
               "contract": "JinbaoProtocolComplete",
-              "src": "contracts/JinbaoProtocolComplete.sol:83"
+              "src": "contracts\\JinbaoProtocolComplete.sol:83"
             },
             {
               "label": "ticketPendingRewards",
@@ -2262,7 +2262,7 @@
               "slot": "19",
               "type": "t_mapping(t_uint256,t_array(t_struct(PendingReward)10050_storage)dyn_storage)",
               "contract": "JinbaoProtocolComplete",
-              "src": "contracts/JinbaoProtocolComplete.sol:84"
+              "src": "contracts\\JinbaoProtocolComplete.sol:84"
             },
             {
               "label": "ticketFlexibilityDuration",
@@ -2270,7 +2270,7 @@
               "slot": "20",
               "type": "t_uint256",
               "contract": "JinbaoProtocolComplete",
-              "src": "contracts/JinbaoProtocolComplete.sol:86"
+              "src": "contracts\\JinbaoProtocolComplete.sol:86"
             },
             {
               "label": "liquidityEnabled",
@@ -2278,7 +2278,7 @@
               "slot": "21",
               "type": "t_bool",
               "contract": "JinbaoProtocolComplete",
-              "src": "contracts/JinbaoProtocolComplete.sol:87"
+              "src": "contracts\\JinbaoProtocolComplete.sol:87"
             },
             {
               "label": "redeemEnabled",
@@ -2286,7 +2286,7 @@
               "slot": "21",
               "type": "t_bool",
               "contract": "JinbaoProtocolComplete",
-              "src": "contracts/JinbaoProtocolComplete.sol:88"
+              "src": "contracts\\JinbaoProtocolComplete.sol:88"
             },
             {
               "label": "swapReserveMC",
@@ -2294,7 +2294,7 @@
               "slot": "22",
               "type": "t_uint256",
               "contract": "JinbaoProtocolComplete",
-              "src": "contracts/JinbaoProtocolComplete.sol:90"
+              "src": "contracts\\JinbaoProtocolComplete.sol:90"
             },
             {
               "label": "swapReserveJBC",
@@ -2302,7 +2302,7 @@
               "slot": "23",
               "type": "t_uint256",
               "contract": "JinbaoProtocolComplete",
-              "src": "contracts/JinbaoProtocolComplete.sol:91"
+              "src": "contracts\\JinbaoProtocolComplete.sol:91"
             },
             {
               "label": "nextTicketId",
@@ -2310,7 +2310,7 @@
               "slot": "24",
               "type": "t_uint256",
               "contract": "JinbaoProtocolComplete",
-              "src": "contracts/JinbaoProtocolComplete.sol:96"
+              "src": "contracts\\JinbaoProtocolComplete.sol:96"
             },
             {
               "label": "nextStakeId",
@@ -2318,7 +2318,7 @@
               "slot": "25",
               "type": "t_uint256",
               "contract": "JinbaoProtocolComplete",
-              "src": "contracts/JinbaoProtocolComplete.sol:97"
+              "src": "contracts\\JinbaoProtocolComplete.sol:97"
             },
             {
               "label": "lastBurnTime",
@@ -2326,7 +2326,7 @@
               "slot": "26",
               "type": "t_uint256",
               "contract": "JinbaoProtocolComplete",
-              "src": "contracts/JinbaoProtocolComplete.sol:98"
+              "src": "contracts\\JinbaoProtocolComplete.sol:98"
             },
             {
               "label": "ticketOwner",
@@ -2334,7 +2334,7 @@
               "slot": "27",
               "type": "t_mapping(t_uint256,t_address)",
               "contract": "JinbaoProtocolComplete",
-              "src": "contracts/JinbaoProtocolComplete.sol:99"
+              "src": "contracts\\JinbaoProtocolComplete.sol:99"
             },
             {
               "label": "stakePendingRewards",
@@ -2342,7 +2342,7 @@
               "slot": "28",
               "type": "t_mapping(t_uint256,t_array(t_struct(PendingReward)10050_storage)dyn_storage)",
               "contract": "JinbaoProtocolComplete",
-              "src": "contracts/JinbaoProtocolComplete.sol:100"
+              "src": "contracts\\JinbaoProtocolComplete.sol:100"
             },
             {
               "label": "stakeOwner",
@@ -2350,7 +2350,7 @@
               "slot": "29",
               "type": "t_mapping(t_uint256,t_address)",
               "contract": "JinbaoProtocolComplete",
-              "src": "contracts/JinbaoProtocolComplete.sol:101"
+              "src": "contracts\\JinbaoProtocolComplete.sol:101"
             },
             {
               "label": "levelRewardPool",
@@ -2358,7 +2358,7 @@
               "slot": "30",
               "type": "t_uint256",
               "contract": "JinbaoProtocolComplete",
-              "src": "contracts/JinbaoProtocolComplete.sol:102"
+              "src": "contracts\\JinbaoProtocolComplete.sol:102"
             },
             {
               "label": "__gap",
@@ -2366,7 +2366,7 @@
               "slot": "31",
               "type": "t_array(t_uint256)47_storage",
               "contract": "JinbaoProtocolComplete",
-              "src": "contracts/JinbaoProtocolComplete.sol:103"
+              "src": "contracts\\JinbaoProtocolComplete.sol:103"
             },
             {
               "label": "emergencyPaused",
@@ -2374,7 +2374,7 @@
               "slot": "78",
               "type": "t_bool",
               "contract": "JinbaoProtocolComplete",
-              "src": "contracts/JinbaoProtocolComplete.sol:104"
+              "src": "contracts\\JinbaoProtocolComplete.sol:104"
             },
             {
               "label": "priceOracle",
@@ -2382,7 +2382,7 @@
               "slot": "78",
               "type": "t_address",
               "contract": "JinbaoProtocolComplete",
-              "src": "contracts/JinbaoProtocolComplete.sol:105"
+              "src": "contracts\\JinbaoProtocolComplete.sol:105"
             }
           ],
           "types": {
@@ -2663,7 +2663,7 @@
                 "contract": "ReentrancyGuardUpgradeable",
                 "label": "_status",
                 "type": "t_uint256",
-                "src": "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol:43",
+                "src": "@openzeppelin\\contracts-upgradeable\\utils\\ReentrancyGuardUpgradeable.sol:43",
                 "offset": 0,
                 "slot": "0"
               }
@@ -2673,7 +2673,7 @@
                 "contract": "OwnableUpgradeable",
                 "label": "_owner",
                 "type": "t_address",
-                "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:24",
+                "src": "@openzeppelin\\contracts-upgradeable\\access\\OwnableUpgradeable.sol:24",
                 "offset": 0,
                 "slot": "0"
               }
@@ -2683,7 +2683,7 @@
                 "contract": "Initializable",
                 "label": "_initialized",
                 "type": "t_uint64",
-                "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:69",
+                "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:69",
                 "offset": 0,
                 "slot": "0"
               },
@@ -2691,7 +2691,7 @@
                 "contract": "Initializable",
                 "label": "_initializing",
                 "type": "t_bool",
-                "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:73",
+                "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:73",
                 "offset": 8,
                 "slot": "0"
               }
@@ -2701,7 +2701,7 @@
         "solcVersion": "0.8.22"
       },
       "contracts/JinbaoProtocolFixed.sol:IJBC": {
-        "src": "contracts/JinbaoProtocolFixed.sol:11",
+        "src": "contracts\\JinbaoProtocolFixed.sol:11",
         "inherit": [
           "@openzeppelin/contracts/token/ERC20/IERC20.sol:IERC20"
         ],
@@ -2721,9 +2721,9 @@
         "solcVersion": "0.8.22"
       },
       "contracts/JinbaoProtocolFixed.sol:JinbaoProtocolFixed": {
-        "src": "contracts/JinbaoProtocolFixed.sol:15",
+        "src": "contracts\\JinbaoProtocolFixed.sol:15",
         "version": {
-          "withMetadata": "cc4c1944e57b5273f9df7ea4d717b404667bab8dccc53e2efef91dd67e7780b1",
+          "withMetadata": "e9f8ba07b9cb51112506cf14f695d0ac5871e178207a06ba416aaa0a943b15fe",
           "withoutMetadata": "bb41f2c9073125d33c928070f9c6d141c9e7391552e786bb1684df3a30f6f9a5",
           "linkedWithoutMetadata": "bb41f2c9073125d33c928070f9c6d141c9e7391552e786bb1684df3a30f6f9a5"
         },
@@ -2757,7 +2757,7 @@
         "errors": [
           {
             "kind": "missing-initializer",
-            "src": "contracts/JinbaoProtocolFixed.sol:15"
+            "src": "contracts\\JinbaoProtocolFixed.sol:15"
           }
         ],
         "layout": {
@@ -2768,7 +2768,7 @@
               "slot": "0",
               "type": "t_contract(IERC20)2192",
               "contract": "JinbaoProtocolFixed",
-              "src": "contracts/JinbaoProtocolFixed.sol:53"
+              "src": "contracts\\JinbaoProtocolFixed.sol:53"
             },
             {
               "label": "jbcToken",
@@ -2776,7 +2776,7 @@
               "slot": "1",
               "type": "t_contract(IJBC)11962",
               "contract": "JinbaoProtocolFixed",
-              "src": "contracts/JinbaoProtocolFixed.sol:54"
+              "src": "contracts\\JinbaoProtocolFixed.sol:54"
             },
             {
               "label": "marketingWallet",
@@ -2784,7 +2784,7 @@
               "slot": "2",
               "type": "t_address",
               "contract": "JinbaoProtocolFixed",
-              "src": "contracts/JinbaoProtocolFixed.sol:56"
+              "src": "contracts\\JinbaoProtocolFixed.sol:56"
             },
             {
               "label": "treasuryWallet",
@@ -2792,7 +2792,7 @@
               "slot": "3",
               "type": "t_address",
               "contract": "JinbaoProtocolFixed",
-              "src": "contracts/JinbaoProtocolFixed.sol:57"
+              "src": "contracts\\JinbaoProtocolFixed.sol:57"
             },
             {
               "label": "lpInjectionWallet",
@@ -2800,7 +2800,7 @@
               "slot": "4",
               "type": "t_address",
               "contract": "JinbaoProtocolFixed",
-              "src": "contracts/JinbaoProtocolFixed.sol:58"
+              "src": "contracts\\JinbaoProtocolFixed.sol:58"
             },
             {
               "label": "buybackWallet",
@@ -2808,7 +2808,7 @@
               "slot": "5",
               "type": "t_address",
               "contract": "JinbaoProtocolFixed",
-              "src": "contracts/JinbaoProtocolFixed.sol:59"
+              "src": "contracts\\JinbaoProtocolFixed.sol:59"
             },
             {
               "label": "directRewardPercent",
@@ -2816,7 +2816,7 @@
               "slot": "6",
               "type": "t_uint256",
               "contract": "JinbaoProtocolFixed",
-              "src": "contracts/JinbaoProtocolFixed.sol:63"
+              "src": "contracts\\JinbaoProtocolFixed.sol:63"
             },
             {
               "label": "levelRewardPercent",
@@ -2824,7 +2824,7 @@
               "slot": "7",
               "type": "t_uint256",
               "contract": "JinbaoProtocolFixed",
-              "src": "contracts/JinbaoProtocolFixed.sol:64"
+              "src": "contracts\\JinbaoProtocolFixed.sol:64"
             },
             {
               "label": "marketingPercent",
@@ -2832,7 +2832,7 @@
               "slot": "8",
               "type": "t_uint256",
               "contract": "JinbaoProtocolFixed",
-              "src": "contracts/JinbaoProtocolFixed.sol:65"
+              "src": "contracts\\JinbaoProtocolFixed.sol:65"
             },
             {
               "label": "buybackPercent",
@@ -2840,7 +2840,7 @@
               "slot": "9",
               "type": "t_uint256",
               "contract": "JinbaoProtocolFixed",
-              "src": "contracts/JinbaoProtocolFixed.sol:66"
+              "src": "contracts\\JinbaoProtocolFixed.sol:66"
             },
             {
               "label": "lpInjectionPercent",
@@ -2848,7 +2848,7 @@
               "slot": "10",
               "type": "t_uint256",
               "contract": "JinbaoProtocolFixed",
-              "src": "contracts/JinbaoProtocolFixed.sol:67"
+              "src": "contracts\\JinbaoProtocolFixed.sol:67"
             },
             {
               "label": "treasuryPercent",
@@ -2856,7 +2856,7 @@
               "slot": "11",
               "type": "t_uint256",
               "contract": "JinbaoProtocolFixed",
-              "src": "contracts/JinbaoProtocolFixed.sol:68"
+              "src": "contracts\\JinbaoProtocolFixed.sol:68"
             },
             {
               "label": "redemptionFeePercent",
@@ -2864,7 +2864,7 @@
               "slot": "12",
               "type": "t_uint256",
               "contract": "JinbaoProtocolFixed",
-              "src": "contracts/JinbaoProtocolFixed.sol:70"
+              "src": "contracts\\JinbaoProtocolFixed.sol:70"
             },
             {
               "label": "swapBuyTax",
@@ -2872,7 +2872,7 @@
               "slot": "13",
               "type": "t_uint256",
               "contract": "JinbaoProtocolFixed",
-              "src": "contracts/JinbaoProtocolFixed.sol:71"
+              "src": "contracts\\JinbaoProtocolFixed.sol:71"
             },
             {
               "label": "swapSellTax",
@@ -2880,7 +2880,7 @@
               "slot": "14",
               "type": "t_uint256",
               "contract": "JinbaoProtocolFixed",
-              "src": "contracts/JinbaoProtocolFixed.sol:72"
+              "src": "contracts\\JinbaoProtocolFixed.sol:72"
             },
             {
               "label": "userInfo",
@@ -2888,7 +2888,7 @@
               "slot": "15",
               "type": "t_mapping(t_address,t_struct(UserInfo)11997_storage)",
               "contract": "JinbaoProtocolFixed",
-              "src": "contracts/JinbaoProtocolFixed.sol:80"
+              "src": "contracts\\JinbaoProtocolFixed.sol:80"
             },
             {
               "label": "userTicket",
@@ -2896,7 +2896,7 @@
               "slot": "16",
               "type": "t_mapping(t_address,t_struct(Ticket)12019_storage)",
               "contract": "JinbaoProtocolFixed",
-              "src": "contracts/JinbaoProtocolFixed.sol:81"
+              "src": "contracts\\JinbaoProtocolFixed.sol:81"
             },
             {
               "label": "userStakes",
@@ -2904,7 +2904,7 @@
               "slot": "17",
               "type": "t_mapping(t_address,t_array(t_struct(Stake)12010_storage)dyn_storage)",
               "contract": "JinbaoProtocolFixed",
-              "src": "contracts/JinbaoProtocolFixed.sol:82"
+              "src": "contracts\\JinbaoProtocolFixed.sol:82"
             },
             {
               "label": "directReferrals",
@@ -2912,7 +2912,7 @@
               "slot": "18",
               "type": "t_mapping(t_address,t_array(t_address)dyn_storage)",
               "contract": "JinbaoProtocolFixed",
-              "src": "contracts/JinbaoProtocolFixed.sol:83"
+              "src": "contracts\\JinbaoProtocolFixed.sol:83"
             },
             {
               "label": "ticketPendingRewards",
@@ -2920,7 +2920,7 @@
               "slot": "19",
               "type": "t_mapping(t_uint256,t_array(t_struct(PendingReward)12024_storage)dyn_storage)",
               "contract": "JinbaoProtocolFixed",
-              "src": "contracts/JinbaoProtocolFixed.sol:84"
+              "src": "contracts\\JinbaoProtocolFixed.sol:84"
             },
             {
               "label": "ticketFlexibilityDuration",
@@ -2928,7 +2928,7 @@
               "slot": "20",
               "type": "t_uint256",
               "contract": "JinbaoProtocolFixed",
-              "src": "contracts/JinbaoProtocolFixed.sol:86"
+              "src": "contracts\\JinbaoProtocolFixed.sol:86"
             },
             {
               "label": "liquidityEnabled",
@@ -2936,7 +2936,7 @@
               "slot": "21",
               "type": "t_bool",
               "contract": "JinbaoProtocolFixed",
-              "src": "contracts/JinbaoProtocolFixed.sol:87"
+              "src": "contracts\\JinbaoProtocolFixed.sol:87"
             },
             {
               "label": "redeemEnabled",
@@ -2944,7 +2944,7 @@
               "slot": "21",
               "type": "t_bool",
               "contract": "JinbaoProtocolFixed",
-              "src": "contracts/JinbaoProtocolFixed.sol:88"
+              "src": "contracts\\JinbaoProtocolFixed.sol:88"
             },
             {
               "label": "swapReserveMC",
@@ -2952,7 +2952,7 @@
               "slot": "22",
               "type": "t_uint256",
               "contract": "JinbaoProtocolFixed",
-              "src": "contracts/JinbaoProtocolFixed.sol:90"
+              "src": "contracts\\JinbaoProtocolFixed.sol:90"
             },
             {
               "label": "swapReserveJBC",
@@ -2960,7 +2960,7 @@
               "slot": "23",
               "type": "t_uint256",
               "contract": "JinbaoProtocolFixed",
-              "src": "contracts/JinbaoProtocolFixed.sol:91"
+              "src": "contracts\\JinbaoProtocolFixed.sol:91"
             },
             {
               "label": "nextTicketId",
@@ -2968,7 +2968,7 @@
               "slot": "24",
               "type": "t_uint256",
               "contract": "JinbaoProtocolFixed",
-              "src": "contracts/JinbaoProtocolFixed.sol:96"
+              "src": "contracts\\JinbaoProtocolFixed.sol:96"
             },
             {
               "label": "nextStakeId",
@@ -2976,7 +2976,7 @@
               "slot": "25",
               "type": "t_uint256",
               "contract": "JinbaoProtocolFixed",
-              "src": "contracts/JinbaoProtocolFixed.sol:97"
+              "src": "contracts\\JinbaoProtocolFixed.sol:97"
             },
             {
               "label": "lastBurnTime",
@@ -2984,7 +2984,7 @@
               "slot": "26",
               "type": "t_uint256",
               "contract": "JinbaoProtocolFixed",
-              "src": "contracts/JinbaoProtocolFixed.sol:98"
+              "src": "contracts\\JinbaoProtocolFixed.sol:98"
             },
             {
               "label": "ticketOwner",
@@ -2992,7 +2992,7 @@
               "slot": "27",
               "type": "t_mapping(t_uint256,t_address)",
               "contract": "JinbaoProtocolFixed",
-              "src": "contracts/JinbaoProtocolFixed.sol:99"
+              "src": "contracts\\JinbaoProtocolFixed.sol:99"
             },
             {
               "label": "stakePendingRewards",
@@ -3000,7 +3000,7 @@
               "slot": "28",
               "type": "t_mapping(t_uint256,t_array(t_struct(PendingReward)12024_storage)dyn_storage)",
               "contract": "JinbaoProtocolFixed",
-              "src": "contracts/JinbaoProtocolFixed.sol:100"
+              "src": "contracts\\JinbaoProtocolFixed.sol:100"
             },
             {
               "label": "stakeOwner",
@@ -3008,7 +3008,7 @@
               "slot": "29",
               "type": "t_mapping(t_uint256,t_address)",
               "contract": "JinbaoProtocolFixed",
-              "src": "contracts/JinbaoProtocolFixed.sol:101"
+              "src": "contracts\\JinbaoProtocolFixed.sol:101"
             },
             {
               "label": "levelRewardPool",
@@ -3016,7 +3016,7 @@
               "slot": "30",
               "type": "t_uint256",
               "contract": "JinbaoProtocolFixed",
-              "src": "contracts/JinbaoProtocolFixed.sol:102"
+              "src": "contracts\\JinbaoProtocolFixed.sol:102"
             },
             {
               "label": "__gap",
@@ -3024,7 +3024,7 @@
               "slot": "31",
               "type": "t_array(t_uint256)47_storage",
               "contract": "JinbaoProtocolFixed",
-              "src": "contracts/JinbaoProtocolFixed.sol:103"
+              "src": "contracts\\JinbaoProtocolFixed.sol:103"
             },
             {
               "label": "emergencyPaused",
@@ -3032,7 +3032,7 @@
               "slot": "78",
               "type": "t_bool",
               "contract": "JinbaoProtocolFixed",
-              "src": "contracts/JinbaoProtocolFixed.sol:104"
+              "src": "contracts\\JinbaoProtocolFixed.sol:104"
             },
             {
               "label": "priceOracle",
@@ -3040,7 +3040,7 @@
               "slot": "78",
               "type": "t_address",
               "contract": "JinbaoProtocolFixed",
-              "src": "contracts/JinbaoProtocolFixed.sol:105"
+              "src": "contracts\\JinbaoProtocolFixed.sol:105"
             }
           ],
           "types": {
@@ -3321,7 +3321,7 @@
                 "contract": "ReentrancyGuardUpgradeable",
                 "label": "_status",
                 "type": "t_uint256",
-                "src": "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol:43",
+                "src": "@openzeppelin\\contracts-upgradeable\\utils\\ReentrancyGuardUpgradeable.sol:43",
                 "offset": 0,
                 "slot": "0"
               }
@@ -3331,7 +3331,7 @@
                 "contract": "OwnableUpgradeable",
                 "label": "_owner",
                 "type": "t_address",
-                "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:24",
+                "src": "@openzeppelin\\contracts-upgradeable\\access\\OwnableUpgradeable.sol:24",
                 "offset": 0,
                 "slot": "0"
               }
@@ -3341,7 +3341,7 @@
                 "contract": "Initializable",
                 "label": "_initialized",
                 "type": "t_uint64",
-                "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:69",
+                "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:69",
                 "offset": 0,
                 "slot": "0"
               },
@@ -3349,7 +3349,7 @@
                 "contract": "Initializable",
                 "label": "_initializing",
                 "type": "t_bool",
-                "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:73",
+                "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:73",
                 "offset": 8,
                 "slot": "0"
               }
@@ -3359,7 +3359,7 @@
         "solcVersion": "0.8.22"
       },
       "contracts/JinbaoProtocolNative.sol:IJBC": {
-        "src": "contracts/JinbaoProtocolNative.sol:11",
+        "src": "contracts\\JinbaoProtocolNative.sol:11",
         "inherit": [
           "@openzeppelin/contracts/token/ERC20/IERC20.sol:IERC20"
         ],
@@ -3379,9 +3379,9 @@
         "solcVersion": "0.8.22"
       },
       "contracts/JinbaoProtocolNative.sol:JinbaoProtocolNative": {
-        "src": "contracts/JinbaoProtocolNative.sol:20",
+        "src": "contracts\\JinbaoProtocolNative.sol:20",
         "version": {
-          "withMetadata": "070ba6e1000f2ed85c452e966dc730d20adf44ab13713a0b3800beb7db178b65",
+          "withMetadata": "d86f0576318940e6ad4c56f4cebe111d420ec4a7dd7baed0f32491adad9cb9ae",
           "withoutMetadata": "8f8b381e4ea6c3b363415ed5ecbd3a7e88818a8fa1dbda702496a2607ff48171",
           "linkedWithoutMetadata": "8f8b381e4ea6c3b363415ed5ecbd3a7e88818a8fa1dbda702496a2607ff48171"
         },
@@ -3438,7 +3438,7 @@
               "slot": "0",
               "type": "t_contract(IJBC)13793",
               "contract": "JinbaoProtocolNative",
-              "src": "contracts/JinbaoProtocolNative.sol:67"
+              "src": "contracts\\JinbaoProtocolNative.sol:67"
             },
             {
               "label": "marketingWallet",
@@ -3446,7 +3446,7 @@
               "slot": "1",
               "type": "t_address",
               "contract": "JinbaoProtocolNative",
-              "src": "contracts/JinbaoProtocolNative.sol:68"
+              "src": "contracts\\JinbaoProtocolNative.sol:68"
             },
             {
               "label": "treasuryWallet",
@@ -3454,7 +3454,7 @@
               "slot": "2",
               "type": "t_address",
               "contract": "JinbaoProtocolNative",
-              "src": "contracts/JinbaoProtocolNative.sol:69"
+              "src": "contracts\\JinbaoProtocolNative.sol:69"
             },
             {
               "label": "lpInjectionWallet",
@@ -3462,7 +3462,7 @@
               "slot": "3",
               "type": "t_address",
               "contract": "JinbaoProtocolNative",
-              "src": "contracts/JinbaoProtocolNative.sol:71"
+              "src": "contracts\\JinbaoProtocolNative.sol:71"
             },
             {
               "label": "buybackWallet",
@@ -3470,7 +3470,7 @@
               "slot": "4",
               "type": "t_address",
               "contract": "JinbaoProtocolNative",
-              "src": "contracts/JinbaoProtocolNative.sol:71"
+              "src": "contracts\\JinbaoProtocolNative.sol:71"
             },
             {
               "label": "directRewardPercent",
@@ -3478,7 +3478,7 @@
               "slot": "5",
               "type": "t_uint256",
               "contract": "JinbaoProtocolNative",
-              "src": "contracts/JinbaoProtocolNative.sol:75"
+              "src": "contracts\\JinbaoProtocolNative.sol:75"
             },
             {
               "label": "levelRewardPercent",
@@ -3486,7 +3486,7 @@
               "slot": "6",
               "type": "t_uint256",
               "contract": "JinbaoProtocolNative",
-              "src": "contracts/JinbaoProtocolNative.sol:76"
+              "src": "contracts\\JinbaoProtocolNative.sol:76"
             },
             {
               "label": "marketingPercent",
@@ -3494,7 +3494,7 @@
               "slot": "7",
               "type": "t_uint256",
               "contract": "JinbaoProtocolNative",
-              "src": "contracts/JinbaoProtocolNative.sol:77"
+              "src": "contracts\\JinbaoProtocolNative.sol:77"
             },
             {
               "label": "buybackPercent",
@@ -3502,7 +3502,7 @@
               "slot": "8",
               "type": "t_uint256",
               "contract": "JinbaoProtocolNative",
-              "src": "contracts/JinbaoProtocolNative.sol:78"
+              "src": "contracts\\JinbaoProtocolNative.sol:78"
             },
             {
               "label": "lpInjectionPercent",
@@ -3510,7 +3510,7 @@
               "slot": "9",
               "type": "t_uint256",
               "contract": "JinbaoProtocolNative",
-              "src": "contracts/JinbaoProtocolNative.sol:80"
+              "src": "contracts\\JinbaoProtocolNative.sol:80"
             },
             {
               "label": "treasuryPercent",
@@ -3518,7 +3518,7 @@
               "slot": "10",
               "type": "t_uint256",
               "contract": "JinbaoProtocolNative",
-              "src": "contracts/JinbaoProtocolNative.sol:81"
+              "src": "contracts\\JinbaoProtocolNative.sol:81"
             },
             {
               "label": "redemptionFeePercent",
@@ -3526,7 +3526,7 @@
               "slot": "11",
               "type": "t_uint256",
               "contract": "JinbaoProtocolNative",
-              "src": "contracts/JinbaoProtocolNative.sol:82"
+              "src": "contracts\\JinbaoProtocolNative.sol:82"
             },
             {
               "label": "swapBuyTax",
@@ -3534,7 +3534,7 @@
               "slot": "12",
               "type": "t_uint256",
               "contract": "JinbaoProtocolNative",
-              "src": "contracts/JinbaoProtocolNative.sol:84"
+              "src": "contracts\\JinbaoProtocolNative.sol:84"
             },
             {
               "label": "swapSellTax",
@@ -3542,7 +3542,7 @@
               "slot": "13",
               "type": "t_uint256",
               "contract": "JinbaoProtocolNative",
-              "src": "contracts/JinbaoProtocolNative.sol:85"
+              "src": "contracts\\JinbaoProtocolNative.sol:85"
             },
             {
               "label": "userInfo",
@@ -3550,7 +3550,7 @@
               "slot": "14",
               "type": "t_mapping(t_address,t_struct(UserInfo)13829_storage)",
               "contract": "JinbaoProtocolNative",
-              "src": "contracts/JinbaoProtocolNative.sol:92"
+              "src": "contracts\\JinbaoProtocolNative.sol:92"
             },
             {
               "label": "userTicket",
@@ -3558,7 +3558,7 @@
               "slot": "15",
               "type": "t_mapping(t_address,t_struct(Ticket)13851_storage)",
               "contract": "JinbaoProtocolNative",
-              "src": "contracts/JinbaoProtocolNative.sol:93"
+              "src": "contracts\\JinbaoProtocolNative.sol:92"
             },
             {
               "label": "userStakes",
@@ -3566,7 +3566,7 @@
               "slot": "16",
               "type": "t_mapping(t_address,t_array(t_struct(Stake)13842_storage)dyn_storage)",
               "contract": "JinbaoProtocolNative",
-              "src": "contracts/JinbaoProtocolNative.sol:93"
+              "src": "contracts\\JinbaoProtocolNative.sol:93"
             },
             {
               "label": "directReferrals",
@@ -3574,7 +3574,7 @@
               "slot": "17",
               "type": "t_mapping(t_address,t_array(t_address)dyn_storage)",
               "contract": "JinbaoProtocolNative",
-              "src": "contracts/JinbaoProtocolNative.sol:94"
+              "src": "contracts\\JinbaoProtocolNative.sol:94"
             },
             {
               "label": "ticketPendingRewards",
@@ -3582,7 +3582,7 @@
               "slot": "18",
               "type": "t_mapping(t_uint256,t_array(t_struct(PendingReward)13856_storage)dyn_storage)",
               "contract": "JinbaoProtocolNative",
-              "src": "contracts/JinbaoProtocolNative.sol:97"
+              "src": "contracts\\JinbaoProtocolNative.sol:97"
             },
             {
               "label": "levelConfigs",
@@ -3590,7 +3590,7 @@
               "slot": "19",
               "type": "t_array(t_struct(LevelConfig)13944_storage)dyn_storage",
               "contract": "JinbaoProtocolNative",
-              "src": "contracts/JinbaoProtocolNative.sol:104"
+              "src": "contracts\\JinbaoProtocolNative.sol:104"
             },
             {
               "label": "ticketFlexibilityDuration",
@@ -3598,7 +3598,7 @@
               "slot": "20",
               "type": "t_uint256",
               "contract": "JinbaoProtocolNative",
-              "src": "contracts/JinbaoProtocolNative.sol:105"
+              "src": "contracts\\JinbaoProtocolNative.sol:105"
             },
             {
               "label": "liquidityEnabled",
@@ -3606,7 +3606,7 @@
               "slot": "21",
               "type": "t_bool",
               "contract": "JinbaoProtocolNative",
-              "src": "contracts/JinbaoProtocolNative.sol:107"
+              "src": "contracts\\JinbaoProtocolNative.sol:107"
             },
             {
               "label": "redeemEnabled",
@@ -3614,7 +3614,7 @@
               "slot": "21",
               "type": "t_bool",
               "contract": "JinbaoProtocolNative",
-              "src": "contracts/JinbaoProtocolNative.sol:108"
+              "src": "contracts\\JinbaoProtocolNative.sol:108"
             },
             {
               "label": "swapReserveMC",
@@ -3622,7 +3622,7 @@
               "slot": "22",
               "type": "t_uint256",
               "contract": "JinbaoProtocolNative",
-              "src": "contracts/JinbaoProtocolNative.sol:110"
+              "src": "contracts\\JinbaoProtocolNative.sol:110"
             },
             {
               "label": "swapReserveJBC",
@@ -3630,7 +3630,7 @@
               "slot": "23",
               "type": "t_uint256",
               "contract": "JinbaoProtocolNative",
-              "src": "contracts/JinbaoProtocolNative.sol:111"
+              "src": "contracts\\JinbaoProtocolNative.sol:111"
             },
             {
               "label": "nextTicketId",
@@ -3638,7 +3638,7 @@
               "slot": "24",
               "type": "t_uint256",
               "contract": "JinbaoProtocolNative",
-              "src": "contracts/JinbaoProtocolNative.sol:116"
+              "src": "contracts\\JinbaoProtocolNative.sol:116"
             },
             {
               "label": "nextStakeId",
@@ -3646,7 +3646,7 @@
               "slot": "25",
               "type": "t_uint256",
               "contract": "JinbaoProtocolNative",
-              "src": "contracts/JinbaoProtocolNative.sol:117"
+              "src": "contracts\\JinbaoProtocolNative.sol:117"
             },
             {
               "label": "lastBurnTime",
@@ -3654,7 +3654,7 @@
               "slot": "26",
               "type": "t_uint256",
               "contract": "JinbaoProtocolNative",
-              "src": "contracts/JinbaoProtocolNative.sol:117"
+              "src": "contracts\\JinbaoProtocolNative.sol:117"
             },
             {
               "label": "ticketOwner",
@@ -3662,7 +3662,7 @@
               "slot": "27",
               "type": "t_mapping(t_uint256,t_address)",
               "contract": "JinbaoProtocolNative",
-              "src": "contracts/JinbaoProtocolNative.sol:118"
+              "src": "contracts\\JinbaoProtocolNative.sol:118"
             },
             {
               "label": "stakePendingRewards",
@@ -3670,7 +3670,7 @@
               "slot": "28",
               "type": "t_mapping(t_uint256,t_array(t_struct(PendingReward)13856_storage)dyn_storage)",
               "contract": "JinbaoProtocolNative",
-              "src": "contracts/JinbaoProtocolNative.sol:119"
+              "src": "contracts\\JinbaoProtocolNative.sol:119"
             },
             {
               "label": "stakeOwner",
@@ -3678,7 +3678,7 @@
               "slot": "29",
               "type": "t_mapping(t_uint256,t_address)",
               "contract": "JinbaoProtocolNative",
-              "src": "contracts/JinbaoProtocolNative.sol:122"
+              "src": "contracts\\JinbaoProtocolNative.sol:122"
             },
             {
               "label": "levelRewardPool",
@@ -3686,7 +3686,7 @@
               "slot": "30",
               "type": "t_uint256",
               "contract": "JinbaoProtocolNative",
-              "src": "contracts/JinbaoProtocolNative.sol:123"
+              "src": "contracts\\JinbaoProtocolNative.sol:122"
             },
             {
               "label": "totalDynamicEarned",
@@ -3694,7 +3694,7 @@
               "slot": "31",
               "type": "t_mapping(t_address,t_uint256)",
               "contract": "JinbaoProtocolNative",
-              "src": "contracts/JinbaoProtocolNative.sol:125"
+              "src": "contracts\\JinbaoProtocolNative.sol:125"
             },
             {
               "label": "totalDynamicClaimed",
@@ -3702,7 +3702,7 @@
               "slot": "32",
               "type": "t_mapping(t_address,t_uint256)",
               "contract": "JinbaoProtocolNative",
-              "src": "contracts/JinbaoProtocolNative.sol:127"
+              "src": "contracts\\JinbaoProtocolNative.sol:127"
             },
             {
               "label": "__gap",
@@ -3710,7 +3710,7 @@
               "slot": "33",
               "type": "t_array(t_uint256)45_storage",
               "contract": "JinbaoProtocolNative",
-              "src": "contracts/JinbaoProtocolNative.sol:131"
+              "src": "contracts\\JinbaoProtocolNative.sol:131"
             },
             {
               "label": "emergencyPaused",
@@ -3718,7 +3718,7 @@
               "slot": "78",
               "type": "t_bool",
               "contract": "JinbaoProtocolNative",
-              "src": "contracts/JinbaoProtocolNative.sol:132"
+              "src": "contracts\\JinbaoProtocolNative.sol:132"
             },
             {
               "label": "priceOracle",
@@ -3726,7 +3726,7 @@
               "slot": "78",
               "type": "t_address",
               "contract": "JinbaoProtocolNative",
-              "src": "contracts/JinbaoProtocolNative.sol:133"
+              "src": "contracts\\JinbaoProtocolNative.sol:133"
             },
             {
               "label": "_lastDifferentialDistribution",
@@ -3734,7 +3734,7 @@
               "slot": "79",
               "type": "t_mapping(t_address,t_struct(DifferentialDistribution)17135_storage)",
               "contract": "JinbaoProtocolNative",
-              "src": "contracts/JinbaoProtocolNative.sol:958"
+              "src": "contracts\\JinbaoProtocolNative.sol:957"
             }
           ],
           "types": {
@@ -4071,7 +4071,7 @@
                 "contract": "ReentrancyGuardUpgradeable",
                 "label": "_status",
                 "type": "t_uint256",
-                "src": "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol:43",
+                "src": "@openzeppelin\\contracts-upgradeable\\utils\\ReentrancyGuardUpgradeable.sol:43",
                 "offset": 0,
                 "slot": "0"
               }
@@ -4081,7 +4081,7 @@
                 "contract": "OwnableUpgradeable",
                 "label": "_owner",
                 "type": "t_address",
-                "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:24",
+                "src": "@openzeppelin\\contracts-upgradeable\\access\\OwnableUpgradeable.sol:24",
                 "offset": 0,
                 "slot": "0"
               }
@@ -4091,7 +4091,7 @@
                 "contract": "Initializable",
                 "label": "_initialized",
                 "type": "t_uint64",
-                "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:69",
+                "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:69",
                 "offset": 0,
                 "slot": "0"
               },
@@ -4099,7 +4099,7 @@
                 "contract": "Initializable",
                 "label": "_initializing",
                 "type": "t_bool",
-                "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:73",
+                "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:73",
                 "offset": 8,
                 "slot": "0"
               }
@@ -4109,7 +4109,7 @@
         "solcVersion": "0.8.22"
       },
       "contracts/JinbaoProtocolProduction.sol:IJBC": {
-        "src": "contracts/JinbaoProtocolProduction.sol:10",
+        "src": "contracts\\JinbaoProtocolProduction.sol:10",
         "inherit": [
           "@openzeppelin/contracts/token/ERC20/IERC20.sol:IERC20"
         ],
@@ -4129,9 +4129,9 @@
         "solcVersion": "0.8.22"
       },
       "contracts/JinbaoProtocolProduction.sol:JinbaoProtocolProduction": {
-        "src": "contracts/JinbaoProtocolProduction.sol:23",
+        "src": "contracts\\JinbaoProtocolProduction.sol:23",
         "version": {
-          "withMetadata": "54a4732cff32b8a4a0d5f8cb7a0ec1ec04cbeb1152670f7a748cecbdf3f2a2ed",
+          "withMetadata": "00e00a785597111ca896ec6f27609d6b8b72c6148674a832785f0449bbfcba8e",
           "withoutMetadata": "62b112511dda4b4ecafe87f004b6bf71d37c94c452e4aab709bf311836d92180",
           "linkedWithoutMetadata": "62b112511dda4b4ecafe87f004b6bf71d37c94c452e4aab709bf311836d92180"
         },
@@ -4165,7 +4165,7 @@
               "slot": "0",
               "type": "t_contract(IERC20)2192",
               "contract": "JinbaoProtocolProduction",
-              "src": "contracts/JinbaoProtocolProduction.sol:64"
+              "src": "contracts\\JinbaoProtocolProduction.sol:63"
             },
             {
               "label": "jbcToken",
@@ -4173,7 +4173,7 @@
               "slot": "1",
               "type": "t_contract(IJBC)19172",
               "contract": "JinbaoProtocolProduction",
-              "src": "contracts/JinbaoProtocolProduction.sol:64"
+              "src": "contracts\\JinbaoProtocolProduction.sol:64"
             },
             {
               "label": "marketingWallet",
@@ -4181,7 +4181,7 @@
               "slot": "2",
               "type": "t_address",
               "contract": "JinbaoProtocolProduction",
-              "src": "contracts/JinbaoProtocolProduction.sol:65"
+              "src": "contracts\\JinbaoProtocolProduction.sol:65"
             },
             {
               "label": "treasuryWallet",
@@ -4189,7 +4189,7 @@
               "slot": "3",
               "type": "t_address",
               "contract": "JinbaoProtocolProduction",
-              "src": "contracts/JinbaoProtocolProduction.sol:66"
+              "src": "contracts\\JinbaoProtocolProduction.sol:66"
             },
             {
               "label": "lpInjectionWallet",
@@ -4197,7 +4197,7 @@
               "slot": "4",
               "type": "t_address",
               "contract": "JinbaoProtocolProduction",
-              "src": "contracts/JinbaoProtocolProduction.sol:68"
+              "src": "contracts\\JinbaoProtocolProduction.sol:68"
             },
             {
               "label": "buybackWallet",
@@ -4205,7 +4205,7 @@
               "slot": "5",
               "type": "t_address",
               "contract": "JinbaoProtocolProduction",
-              "src": "contracts/JinbaoProtocolProduction.sol:69"
+              "src": "contracts\\JinbaoProtocolProduction.sol:69"
             },
             {
               "label": "directRewardPercent",
@@ -4213,7 +4213,7 @@
               "slot": "6",
               "type": "t_uint256",
               "contract": "JinbaoProtocolProduction",
-              "src": "contracts/JinbaoProtocolProduction.sol:74"
+              "src": "contracts\\JinbaoProtocolProduction.sol:74"
             },
             {
               "label": "levelRewardPercent",
@@ -4221,7 +4221,7 @@
               "slot": "7",
               "type": "t_uint256",
               "contract": "JinbaoProtocolProduction",
-              "src": "contracts/JinbaoProtocolProduction.sol:75"
+              "src": "contracts\\JinbaoProtocolProduction.sol:75"
             },
             {
               "label": "marketingPercent",
@@ -4229,7 +4229,7 @@
               "slot": "8",
               "type": "t_uint256",
               "contract": "JinbaoProtocolProduction",
-              "src": "contracts/JinbaoProtocolProduction.sol:76"
+              "src": "contracts\\JinbaoProtocolProduction.sol:76"
             },
             {
               "label": "buybackPercent",
@@ -4237,7 +4237,7 @@
               "slot": "9",
               "type": "t_uint256",
               "contract": "JinbaoProtocolProduction",
-              "src": "contracts/JinbaoProtocolProduction.sol:78"
+              "src": "contracts\\JinbaoProtocolProduction.sol:78"
             },
             {
               "label": "lpInjectionPercent",
@@ -4245,7 +4245,7 @@
               "slot": "10",
               "type": "t_uint256",
               "contract": "JinbaoProtocolProduction",
-              "src": "contracts/JinbaoProtocolProduction.sol:79"
+              "src": "contracts\\JinbaoProtocolProduction.sol:79"
             },
             {
               "label": "treasuryPercent",
@@ -4253,7 +4253,7 @@
               "slot": "11",
               "type": "t_uint256",
               "contract": "JinbaoProtocolProduction",
-              "src": "contracts/JinbaoProtocolProduction.sol:80"
+              "src": "contracts\\JinbaoProtocolProduction.sol:80"
             },
             {
               "label": "redemptionFeePercent",
@@ -4261,7 +4261,7 @@
               "slot": "12",
               "type": "t_uint256",
               "contract": "JinbaoProtocolProduction",
-              "src": "contracts/JinbaoProtocolProduction.sol:82"
+              "src": "contracts\\JinbaoProtocolProduction.sol:82"
             },
             {
               "label": "swapBuyTax",
@@ -4269,7 +4269,7 @@
               "slot": "13",
               "type": "t_uint256",
               "contract": "JinbaoProtocolProduction",
-              "src": "contracts/JinbaoProtocolProduction.sol:83"
+              "src": "contracts\\JinbaoProtocolProduction.sol:83"
             },
             {
               "label": "swapSellTax",
@@ -4277,7 +4277,7 @@
               "slot": "14",
               "type": "t_uint256",
               "contract": "JinbaoProtocolProduction",
-              "src": "contracts/JinbaoProtocolProduction.sol:84"
+              "src": "contracts\\JinbaoProtocolProduction.sol:84"
             },
             {
               "label": "userInfo",
@@ -4285,7 +4285,7 @@
               "slot": "15",
               "type": "t_mapping(t_address,t_struct(UserInfo)19204_storage)",
               "contract": "JinbaoProtocolProduction",
-              "src": "contracts/JinbaoProtocolProduction.sol:90"
+              "src": "contracts\\JinbaoProtocolProduction.sol:90"
             },
             {
               "label": "userTicket",
@@ -4293,7 +4293,7 @@
               "slot": "16",
               "type": "t_mapping(t_address,t_struct(Ticket)19226_storage)",
               "contract": "JinbaoProtocolProduction",
-              "src": "contracts/JinbaoProtocolProduction.sol:91"
+              "src": "contracts\\JinbaoProtocolProduction.sol:91"
             },
             {
               "label": "userStakes",
@@ -4301,7 +4301,7 @@
               "slot": "17",
               "type": "t_mapping(t_address,t_array(t_struct(Stake)19217_storage)dyn_storage)",
               "contract": "JinbaoProtocolProduction",
-              "src": "contracts/JinbaoProtocolProduction.sol:92"
+              "src": "contracts\\JinbaoProtocolProduction.sol:92"
             },
             {
               "label": "directReferrals",
@@ -4309,7 +4309,7 @@
               "slot": "18",
               "type": "t_mapping(t_address,t_array(t_address)dyn_storage)",
               "contract": "JinbaoProtocolProduction",
-              "src": "contracts/JinbaoProtocolProduction.sol:94"
+              "src": "contracts\\JinbaoProtocolProduction.sol:93"
             },
             {
               "label": "ticketPendingRewards",
@@ -4317,7 +4317,7 @@
               "slot": "19",
               "type": "t_mapping(t_uint256,t_array(t_struct(PendingReward)19231_storage)dyn_storage)",
               "contract": "JinbaoProtocolProduction",
-              "src": "contracts/JinbaoProtocolProduction.sol:95"
+              "src": "contracts\\JinbaoProtocolProduction.sol:95"
             },
             {
               "label": "ticketFlexibilityDuration",
@@ -4325,7 +4325,7 @@
               "slot": "20",
               "type": "t_uint256",
               "contract": "JinbaoProtocolProduction",
-              "src": "contracts/JinbaoProtocolProduction.sol:98"
+              "src": "contracts\\JinbaoProtocolProduction.sol:98"
             },
             {
               "label": "liquidityEnabled",
@@ -4333,7 +4333,7 @@
               "slot": "21",
               "type": "t_bool",
               "contract": "JinbaoProtocolProduction",
-              "src": "contracts/JinbaoProtocolProduction.sol:99"
+              "src": "contracts\\JinbaoProtocolProduction.sol:99"
             },
             {
               "label": "redeemEnabled",
@@ -4341,7 +4341,7 @@
               "slot": "21",
               "type": "t_bool",
               "contract": "JinbaoProtocolProduction",
-              "src": "contracts/JinbaoProtocolProduction.sol:101"
+              "src": "contracts\\JinbaoProtocolProduction.sol:101"
             },
             {
               "label": "swapReserveMC",
@@ -4349,7 +4349,7 @@
               "slot": "22",
               "type": "t_uint256",
               "contract": "JinbaoProtocolProduction",
-              "src": "contracts/JinbaoProtocolProduction.sol:102"
+              "src": "contracts\\JinbaoProtocolProduction.sol:101"
             },
             {
               "label": "swapReserveJBC",
@@ -4357,7 +4357,7 @@
               "slot": "23",
               "type": "t_uint256",
               "contract": "JinbaoProtocolProduction",
-              "src": "contracts/JinbaoProtocolProduction.sol:102"
+              "src": "contracts\\JinbaoProtocolProduction.sol:102"
             },
             {
               "label": "nextTicketId",
@@ -4365,7 +4365,7 @@
               "slot": "24",
               "type": "t_uint256",
               "contract": "JinbaoProtocolProduction",
-              "src": "contracts/JinbaoProtocolProduction.sol:107"
+              "src": "contracts\\JinbaoProtocolProduction.sol:107"
             },
             {
               "label": "nextStakeId",
@@ -4373,7 +4373,7 @@
               "slot": "25",
               "type": "t_uint256",
               "contract": "JinbaoProtocolProduction",
-              "src": "contracts/JinbaoProtocolProduction.sol:108"
+              "src": "contracts\\JinbaoProtocolProduction.sol:108"
             },
             {
               "label": "lastBurnTime",
@@ -4381,7 +4381,7 @@
               "slot": "26",
               "type": "t_uint256",
               "contract": "JinbaoProtocolProduction",
-              "src": "contracts/JinbaoProtocolProduction.sol:108"
+              "src": "contracts\\JinbaoProtocolProduction.sol:108"
             },
             {
               "label": "ticketOwner",
@@ -4389,7 +4389,7 @@
               "slot": "27",
               "type": "t_mapping(t_uint256,t_address)",
               "contract": "JinbaoProtocolProduction",
-              "src": "contracts/JinbaoProtocolProduction.sol:109"
+              "src": "contracts\\JinbaoProtocolProduction.sol:109"
             },
             {
               "label": "stakePendingRewards",
@@ -4397,7 +4397,7 @@
               "slot": "28",
               "type": "t_mapping(t_uint256,t_array(t_struct(PendingReward)19231_storage)dyn_storage)",
               "contract": "JinbaoProtocolProduction",
-              "src": "contracts/JinbaoProtocolProduction.sol:110"
+              "src": "contracts\\JinbaoProtocolProduction.sol:110"
             },
             {
               "label": "stakeOwner",
@@ -4405,7 +4405,7 @@
               "slot": "29",
               "type": "t_mapping(t_uint256,t_address)",
               "contract": "JinbaoProtocolProduction",
-              "src": "contracts/JinbaoProtocolProduction.sol:112"
+              "src": "contracts\\JinbaoProtocolProduction.sol:112"
             },
             {
               "label": "levelRewardPool",
@@ -4413,7 +4413,7 @@
               "slot": "30",
               "type": "t_uint256",
               "contract": "JinbaoProtocolProduction",
-              "src": "contracts/JinbaoProtocolProduction.sol:114"
+              "src": "contracts\\JinbaoProtocolProduction.sol:113"
             },
             {
               "label": "__gap",
@@ -4421,7 +4421,7 @@
               "slot": "31",
               "type": "t_array(t_uint256)47_storage",
               "contract": "JinbaoProtocolProduction",
-              "src": "contracts/JinbaoProtocolProduction.sol:116"
+              "src": "contracts\\JinbaoProtocolProduction.sol:116"
             },
             {
               "label": "emergencyPaused",
@@ -4429,7 +4429,7 @@
               "slot": "78",
               "type": "t_bool",
               "contract": "JinbaoProtocolProduction",
-              "src": "contracts/JinbaoProtocolProduction.sol:116"
+              "src": "contracts\\JinbaoProtocolProduction.sol:116"
             },
             {
               "label": "priceOracle",
@@ -4437,7 +4437,7 @@
               "slot": "78",
               "type": "t_address",
               "contract": "JinbaoProtocolProduction",
-              "src": "contracts/JinbaoProtocolProduction.sol:116"
+              "src": "contracts\\JinbaoProtocolProduction.sol:116"
             }
           ],
           "types": {
@@ -4718,7 +4718,7 @@
                 "contract": "ReentrancyGuardUpgradeable",
                 "label": "_status",
                 "type": "t_uint256",
-                "src": "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol:43",
+                "src": "@openzeppelin\\contracts-upgradeable\\utils\\ReentrancyGuardUpgradeable.sol:43",
                 "offset": 0,
                 "slot": "0"
               }
@@ -4728,7 +4728,7 @@
                 "contract": "OwnableUpgradeable",
                 "label": "_owner",
                 "type": "t_address",
-                "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:24",
+                "src": "@openzeppelin\\contracts-upgradeable\\access\\OwnableUpgradeable.sol:24",
                 "offset": 0,
                 "slot": "0"
               }
@@ -4738,7 +4738,7 @@
                 "contract": "Initializable",
                 "label": "_initialized",
                 "type": "t_uint64",
-                "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:69",
+                "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:69",
                 "offset": 0,
                 "slot": "0"
               },
@@ -4746,7 +4746,7 @@
                 "contract": "Initializable",
                 "label": "_initializing",
                 "type": "t_bool",
-                "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:73",
+                "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:73",
                 "offset": 8,
                 "slot": "0"
               }
@@ -4756,7 +4756,7 @@
         "solcVersion": "0.8.22"
       },
       "contracts/JinbaoProtocolV2.sol:IJBC": {
-        "src": "contracts/JinbaoProtocolV2.sol:10",
+        "src": "contracts\\JinbaoProtocolV2.sol:10",
         "inherit": [
           "@openzeppelin/contracts/token/ERC20/IERC20.sol:IERC20"
         ],
@@ -4776,9 +4776,9 @@
         "solcVersion": "0.8.22"
       },
       "contracts/JinbaoProtocolV2.sol:JinbaoProtocolV2": {
-        "src": "contracts/JinbaoProtocolV2.sol:14",
+        "src": "contracts\\JinbaoProtocolV2.sol:14",
         "version": {
-          "withMetadata": "63d5dca9038aec71783531a918953e90130e6c5b08d4932c52e08039a25c4390",
+          "withMetadata": "45eeb26a686459df4e80d9cd86718ea35f49be5e6d130755537c302a24f92b1d",
           "withoutMetadata": "02472f0f90aaad3c2960c4fabebabfc70a75802c5b085edae4a5c93450a3482f",
           "linkedWithoutMetadata": "02472f0f90aaad3c2960c4fabebabfc70a75802c5b085edae4a5c93450a3482f"
         },
@@ -4801,7 +4801,7 @@
         "errors": [
           {
             "kind": "missing-initializer",
-            "src": "contracts/JinbaoProtocolV2.sol:14"
+            "src": "contracts\\JinbaoProtocolV2.sol:14"
           }
         ],
         "layout": {
@@ -4812,7 +4812,7 @@
               "slot": "0",
               "type": "t_contract(IERC20)2192",
               "contract": "JinbaoProtocolV2",
-              "src": "contracts/JinbaoProtocolV2.sol:51"
+              "src": "contracts\\JinbaoProtocolV2.sol:51"
             },
             {
               "label": "jbcToken",
@@ -4820,7 +4820,7 @@
               "slot": "1",
               "type": "t_contract(IJBC)20180",
               "contract": "JinbaoProtocolV2",
-              "src": "contracts/JinbaoProtocolV2.sol:52"
+              "src": "contracts\\JinbaoProtocolV2.sol:52"
             },
             {
               "label": "marketingWallet",
@@ -4828,7 +4828,7 @@
               "slot": "2",
               "type": "t_address",
               "contract": "JinbaoProtocolV2",
-              "src": "contracts/JinbaoProtocolV2.sol:54"
+              "src": "contracts\\JinbaoProtocolV2.sol:54"
             },
             {
               "label": "treasuryWallet",
@@ -4836,7 +4836,7 @@
               "slot": "3",
               "type": "t_address",
               "contract": "JinbaoProtocolV2",
-              "src": "contracts/JinbaoProtocolV2.sol:55"
+              "src": "contracts\\JinbaoProtocolV2.sol:55"
             },
             {
               "label": "lpInjectionWallet",
@@ -4844,7 +4844,7 @@
               "slot": "4",
               "type": "t_address",
               "contract": "JinbaoProtocolV2",
-              "src": "contracts/JinbaoProtocolV2.sol:56"
+              "src": "contracts\\JinbaoProtocolV2.sol:56"
             },
             {
               "label": "buybackWallet",
@@ -4852,7 +4852,7 @@
               "slot": "5",
               "type": "t_address",
               "contract": "JinbaoProtocolV2",
-              "src": "contracts/JinbaoProtocolV2.sol:57"
+              "src": "contracts\\JinbaoProtocolV2.sol:57"
             },
             {
               "label": "directRewardPercent",
@@ -4860,7 +4860,7 @@
               "slot": "6",
               "type": "t_uint256",
               "contract": "JinbaoProtocolV2",
-              "src": "contracts/JinbaoProtocolV2.sol:61"
+              "src": "contracts\\JinbaoProtocolV2.sol:61"
             },
             {
               "label": "levelRewardPercent",
@@ -4868,7 +4868,7 @@
               "slot": "7",
               "type": "t_uint256",
               "contract": "JinbaoProtocolV2",
-              "src": "contracts/JinbaoProtocolV2.sol:62"
+              "src": "contracts\\JinbaoProtocolV2.sol:62"
             },
             {
               "label": "marketingPercent",
@@ -4876,7 +4876,7 @@
               "slot": "8",
               "type": "t_uint256",
               "contract": "JinbaoProtocolV2",
-              "src": "contracts/JinbaoProtocolV2.sol:63"
+              "src": "contracts\\JinbaoProtocolV2.sol:63"
             },
             {
               "label": "buybackPercent",
@@ -4884,7 +4884,7 @@
               "slot": "9",
               "type": "t_uint256",
               "contract": "JinbaoProtocolV2",
-              "src": "contracts/JinbaoProtocolV2.sol:64"
+              "src": "contracts\\JinbaoProtocolV2.sol:64"
             },
             {
               "label": "lpInjectionPercent",
@@ -4892,7 +4892,7 @@
               "slot": "10",
               "type": "t_uint256",
               "contract": "JinbaoProtocolV2",
-              "src": "contracts/JinbaoProtocolV2.sol:65"
+              "src": "contracts\\JinbaoProtocolV2.sol:65"
             },
             {
               "label": "treasuryPercent",
@@ -4900,7 +4900,7 @@
               "slot": "11",
               "type": "t_uint256",
               "contract": "JinbaoProtocolV2",
-              "src": "contracts/JinbaoProtocolV2.sol:66"
+              "src": "contracts\\JinbaoProtocolV2.sol:66"
             },
             {
               "label": "redemptionFeePercent",
@@ -4908,7 +4908,7 @@
               "slot": "12",
               "type": "t_uint256",
               "contract": "JinbaoProtocolV2",
-              "src": "contracts/JinbaoProtocolV2.sol:68"
+              "src": "contracts\\JinbaoProtocolV2.sol:68"
             },
             {
               "label": "swapBuyTax",
@@ -4916,7 +4916,7 @@
               "slot": "13",
               "type": "t_uint256",
               "contract": "JinbaoProtocolV2",
-              "src": "contracts/JinbaoProtocolV2.sol:69"
+              "src": "contracts\\JinbaoProtocolV2.sol:69"
             },
             {
               "label": "swapSellTax",
@@ -4924,7 +4924,7 @@
               "slot": "14",
               "type": "t_uint256",
               "contract": "JinbaoProtocolV2",
-              "src": "contracts/JinbaoProtocolV2.sol:70"
+              "src": "contracts\\JinbaoProtocolV2.sol:70"
             },
             {
               "label": "userInfo",
@@ -4932,7 +4932,7 @@
               "slot": "15",
               "type": "t_mapping(t_address,t_struct(UserInfo)20211_storage)",
               "contract": "JinbaoProtocolV2",
-              "src": "contracts/JinbaoProtocolV2.sol:78"
+              "src": "contracts\\JinbaoProtocolV2.sol:78"
             },
             {
               "label": "userTicket",
@@ -4940,7 +4940,7 @@
               "slot": "16",
               "type": "t_mapping(t_address,t_struct(Ticket)20233_storage)",
               "contract": "JinbaoProtocolV2",
-              "src": "contracts/JinbaoProtocolV2.sol:79"
+              "src": "contracts\\JinbaoProtocolV2.sol:79"
             },
             {
               "label": "userStakes",
@@ -4948,7 +4948,7 @@
               "slot": "17",
               "type": "t_mapping(t_address,t_array(t_struct(Stake)20224_storage)dyn_storage)",
               "contract": "JinbaoProtocolV2",
-              "src": "contracts/JinbaoProtocolV2.sol:80"
+              "src": "contracts\\JinbaoProtocolV2.sol:80"
             },
             {
               "label": "directReferrals",
@@ -4956,7 +4956,7 @@
               "slot": "18",
               "type": "t_mapping(t_address,t_array(t_address)dyn_storage)",
               "contract": "JinbaoProtocolV2",
-              "src": "contracts/JinbaoProtocolV2.sol:81"
+              "src": "contracts\\JinbaoProtocolV2.sol:81"
             },
             {
               "label": "ticketPendingRewards",
@@ -4964,7 +4964,7 @@
               "slot": "19",
               "type": "t_mapping(t_uint256,t_array(t_struct(PendingReward)20238_storage)dyn_storage)",
               "contract": "JinbaoProtocolV2",
-              "src": "contracts/JinbaoProtocolV2.sol:82"
+              "src": "contracts\\JinbaoProtocolV2.sol:82"
             },
             {
               "label": "ticketFlexibilityDuration",
@@ -4972,7 +4972,7 @@
               "slot": "20",
               "type": "t_uint256",
               "contract": "JinbaoProtocolV2",
-              "src": "contracts/JinbaoProtocolV2.sol:84"
+              "src": "contracts\\JinbaoProtocolV2.sol:84"
             },
             {
               "label": "liquidityEnabled",
@@ -4980,7 +4980,7 @@
               "slot": "21",
               "type": "t_bool",
               "contract": "JinbaoProtocolV2",
-              "src": "contracts/JinbaoProtocolV2.sol:85"
+              "src": "contracts\\JinbaoProtocolV2.sol:85"
             },
             {
               "label": "redeemEnabled",
@@ -4988,7 +4988,7 @@
               "slot": "21",
               "type": "t_bool",
               "contract": "JinbaoProtocolV2",
-              "src": "contracts/JinbaoProtocolV2.sol:86"
+              "src": "contracts\\JinbaoProtocolV2.sol:86"
             },
             {
               "label": "swapReserveMC",
@@ -4996,7 +4996,7 @@
               "slot": "22",
               "type": "t_uint256",
               "contract": "JinbaoProtocolV2",
-              "src": "contracts/JinbaoProtocolV2.sol:88"
+              "src": "contracts\\JinbaoProtocolV2.sol:88"
             },
             {
               "label": "swapReserveJBC",
@@ -5004,7 +5004,7 @@
               "slot": "23",
               "type": "t_uint256",
               "contract": "JinbaoProtocolV2",
-              "src": "contracts/JinbaoProtocolV2.sol:89"
+              "src": "contracts\\JinbaoProtocolV2.sol:89"
             },
             {
               "label": "nextTicketId",
@@ -5012,7 +5012,7 @@
               "slot": "24",
               "type": "t_uint256",
               "contract": "JinbaoProtocolV2",
-              "src": "contracts/JinbaoProtocolV2.sol:94"
+              "src": "contracts\\JinbaoProtocolV2.sol:94"
             },
             {
               "label": "nextStakeId",
@@ -5020,7 +5020,7 @@
               "slot": "25",
               "type": "t_uint256",
               "contract": "JinbaoProtocolV2",
-              "src": "contracts/JinbaoProtocolV2.sol:95"
+              "src": "contracts\\JinbaoProtocolV2.sol:95"
             },
             {
               "label": "lastBurnTime",
@@ -5028,7 +5028,7 @@
               "slot": "26",
               "type": "t_uint256",
               "contract": "JinbaoProtocolV2",
-              "src": "contracts/JinbaoProtocolV2.sol:96"
+              "src": "contracts\\JinbaoProtocolV2.sol:96"
             },
             {
               "label": "ticketOwner",
@@ -5036,7 +5036,7 @@
               "slot": "27",
               "type": "t_mapping(t_uint256,t_address)",
               "contract": "JinbaoProtocolV2",
-              "src": "contracts/JinbaoProtocolV2.sol:97"
+              "src": "contracts\\JinbaoProtocolV2.sol:97"
             },
             {
               "label": "stakePendingRewards",
@@ -5044,7 +5044,7 @@
               "slot": "28",
               "type": "t_mapping(t_uint256,t_array(t_struct(PendingReward)20238_storage)dyn_storage)",
               "contract": "JinbaoProtocolV2",
-              "src": "contracts/JinbaoProtocolV2.sol:98"
+              "src": "contracts\\JinbaoProtocolV2.sol:98"
             },
             {
               "label": "stakeOwner",
@@ -5052,7 +5052,7 @@
               "slot": "29",
               "type": "t_mapping(t_uint256,t_address)",
               "contract": "JinbaoProtocolV2",
-              "src": "contracts/JinbaoProtocolV2.sol:99"
+              "src": "contracts\\JinbaoProtocolV2.sol:99"
             },
             {
               "label": "levelRewardPool",
@@ -5060,7 +5060,7 @@
               "slot": "30",
               "type": "t_uint256",
               "contract": "JinbaoProtocolV2",
-              "src": "contracts/JinbaoProtocolV2.sol:100"
+              "src": "contracts\\JinbaoProtocolV2.sol:100"
             },
             {
               "label": "__gap",
@@ -5068,7 +5068,7 @@
               "slot": "31",
               "type": "t_array(t_uint256)47_storage",
               "contract": "JinbaoProtocolV2",
-              "src": "contracts/JinbaoProtocolV2.sol:101"
+              "src": "contracts\\JinbaoProtocolV2.sol:101"
             },
             {
               "label": "emergencyPaused",
@@ -5076,7 +5076,7 @@
               "slot": "78",
               "type": "t_bool",
               "contract": "JinbaoProtocolV2",
-              "src": "contracts/JinbaoProtocolV2.sol:102"
+              "src": "contracts\\JinbaoProtocolV2.sol:102"
             },
             {
               "label": "priceOracle",
@@ -5084,7 +5084,7 @@
               "slot": "78",
               "type": "t_address",
               "contract": "JinbaoProtocolV2",
-              "src": "contracts/JinbaoProtocolV2.sol:103"
+              "src": "contracts\\JinbaoProtocolV2.sol:103"
             }
           ],
           "types": {
@@ -5365,7 +5365,7 @@
                 "contract": "ReentrancyGuardUpgradeable",
                 "label": "_status",
                 "type": "t_uint256",
-                "src": "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol:43",
+                "src": "@openzeppelin\\contracts-upgradeable\\utils\\ReentrancyGuardUpgradeable.sol:43",
                 "offset": 0,
                 "slot": "0"
               }
@@ -5375,7 +5375,7 @@
                 "contract": "OwnableUpgradeable",
                 "label": "_owner",
                 "type": "t_address",
-                "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:24",
+                "src": "@openzeppelin\\contracts-upgradeable\\access\\OwnableUpgradeable.sol:24",
                 "offset": 0,
                 "slot": "0"
               }
@@ -5385,7 +5385,7 @@
                 "contract": "Initializable",
                 "label": "_initialized",
                 "type": "t_uint64",
-                "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:69",
+                "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:69",
                 "offset": 0,
                 "slot": "0"
               },
@@ -5393,7 +5393,7 @@
                 "contract": "Initializable",
                 "label": "_initializing",
                 "type": "t_bool",
-                "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:73",
+                "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:73",
                 "offset": 8,
                 "slot": "0"
               }
@@ -5403,7 +5403,7 @@
         "solcVersion": "0.8.22"
       },
       "contracts/JinbaoProtocolV3Standalone.sol:IERC20": {
-        "src": "contracts/JinbaoProtocolV3Standalone.sol:10",
+        "src": "contracts\\JinbaoProtocolV3Standalone.sol:10",
         "inherit": [],
         "libraries": [],
         "methods": [
@@ -5423,7 +5423,7 @@
         "solcVersion": "0.8.22"
       },
       "contracts/JinbaoProtocolV3Standalone.sol:IJinbaoProtocolV2": {
-        "src": "contracts/JinbaoProtocolV3Standalone.sol:16",
+        "src": "contracts\\JinbaoProtocolV3Standalone.sol:16",
         "inherit": [],
         "libraries": [],
         "methods": [
@@ -5445,9 +5445,9 @@
         "solcVersion": "0.8.22"
       },
       "contracts/JinbaoProtocolV3Standalone.sol:JinbaoProtocolV3Standalone": {
-        "src": "contracts/JinbaoProtocolV3Standalone.sol:52",
+        "src": "contracts\\JinbaoProtocolV3Standalone.sol:52",
         "version": {
-          "withMetadata": "c25a0cf5eaebba9f23ada60647d916e0cfad764b778d30ebb8319031262968b7",
+          "withMetadata": "7a1576b2c496955c7c8e4f90eeca442d7f2674a5c357e89b0e6b65d0bc5400ad",
           "withoutMetadata": "607e9c36482beaec623222a8b119e9f08bd59f077b52e26938fd04a3ab195b23",
           "linkedWithoutMetadata": "607e9c36482beaec623222a8b119e9f08bd59f077b52e26938fd04a3ab195b23"
         },
@@ -5477,7 +5477,7 @@
         "errors": [
           {
             "kind": "missing-initializer",
-            "src": "contracts/JinbaoProtocolV3Standalone.sol:52"
+            "src": "contracts\\JinbaoProtocolV3Standalone.sol:52"
           }
         ],
         "layout": {
@@ -5488,7 +5488,7 @@
               "slot": "0",
               "type": "t_contract(IERC20)20798",
               "contract": "JinbaoProtocolV3Standalone",
-              "src": "contracts/JinbaoProtocolV3Standalone.sol:79"
+              "src": "contracts\\JinbaoProtocolV3Standalone.sol:79"
             },
             {
               "label": "jbcToken",
@@ -5496,7 +5496,7 @@
               "slot": "1",
               "type": "t_contract(IERC20)20798",
               "contract": "JinbaoProtocolV3Standalone",
-              "src": "contracts/JinbaoProtocolV3Standalone.sol:80"
+              "src": "contracts\\JinbaoProtocolV3Standalone.sol:80"
             },
             {
               "label": "userInfo",
@@ -5504,7 +5504,7 @@
               "slot": "2",
               "type": "t_mapping(t_address,t_struct(UserInfo)20906_storage)",
               "contract": "JinbaoProtocolV3Standalone",
-              "src": "contracts/JinbaoProtocolV3Standalone.sol:109"
+              "src": "contracts\\JinbaoProtocolV3Standalone.sol:108"
             },
             {
               "label": "tickets",
@@ -5512,7 +5512,7 @@
               "slot": "3",
               "type": "t_mapping(t_address,t_array(t_struct(Ticket)20913_storage)dyn_storage)",
               "contract": "JinbaoProtocolV3Standalone",
-              "src": "contracts/JinbaoProtocolV3Standalone.sol:110"
+              "src": "contracts\\JinbaoProtocolV3Standalone.sol:110"
             },
             {
               "label": "stakes",
@@ -5520,7 +5520,7 @@
               "slot": "4",
               "type": "t_mapping(t_address,t_array(t_struct(Stake)20924_storage)dyn_storage)",
               "contract": "JinbaoProtocolV3Standalone",
-              "src": "contracts/JinbaoProtocolV3Standalone.sol:111"
+              "src": "contracts\\JinbaoProtocolV3Standalone.sol:111"
             },
             {
               "label": "referrals",
@@ -5528,7 +5528,7 @@
               "slot": "5",
               "type": "t_mapping(t_address,t_array(t_address)dyn_storage)",
               "contract": "JinbaoProtocolV3Standalone",
-              "src": "contracts/JinbaoProtocolV3Standalone.sol:111"
+              "src": "contracts\\JinbaoProtocolV3Standalone.sol:111"
             },
             {
               "label": "pendingRewards",
@@ -5536,7 +5536,7 @@
               "slot": "6",
               "type": "t_mapping(t_address,t_uint256)",
               "contract": "JinbaoProtocolV3Standalone",
-              "src": "contracts/JinbaoProtocolV3Standalone.sol:112"
+              "src": "contracts\\JinbaoProtocolV3Standalone.sol:112"
             },
             {
               "label": "userDynamicRewards",
@@ -5544,7 +5544,7 @@
               "slot": "7",
               "type": "t_mapping(t_address,t_array(t_struct(DynamicReward)20885_storage)dyn_storage)",
               "contract": "JinbaoProtocolV3Standalone",
-              "src": "contracts/JinbaoProtocolV3Standalone.sol:117"
+              "src": "contracts\\JinbaoProtocolV3Standalone.sol:116"
             },
             {
               "label": "totalDynamicEarned",
@@ -5552,7 +5552,7 @@
               "slot": "8",
               "type": "t_mapping(t_address,t_uint256)",
               "contract": "JinbaoProtocolV3Standalone",
-              "src": "contracts/JinbaoProtocolV3Standalone.sol:118"
+              "src": "contracts\\JinbaoProtocolV3Standalone.sol:118"
             },
             {
               "label": "totalDynamicClaimed",
@@ -5560,7 +5560,7 @@
               "slot": "9",
               "type": "t_mapping(t_address,t_uint256)",
               "contract": "JinbaoProtocolV3Standalone",
-              "src": "contracts/JinbaoProtocolV3Standalone.sol:119"
+              "src": "contracts\\JinbaoProtocolV3Standalone.sol:119"
             },
             {
               "label": "__gap",
@@ -5568,7 +5568,7 @@
               "slot": "10",
               "type": "t_array(t_uint256)44_storage",
               "contract": "JinbaoProtocolV3Standalone",
-              "src": "contracts/JinbaoProtocolV3Standalone.sol:120"
+              "src": "contracts\\JinbaoProtocolV3Standalone.sol:120"
             }
           ],
           "types": {
@@ -5853,7 +5853,7 @@
                 "contract": "ReentrancyGuardUpgradeable",
                 "label": "_status",
                 "type": "t_uint256",
-                "src": "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol:43",
+                "src": "@openzeppelin\\contracts-upgradeable\\utils\\ReentrancyGuardUpgradeable.sol:43",
                 "offset": 0,
                 "slot": "0"
               }
@@ -5863,7 +5863,7 @@
                 "contract": "PausableUpgradeable",
                 "label": "_paused",
                 "type": "t_bool",
-                "src": "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol:21",
+                "src": "@openzeppelin\\contracts-upgradeable\\utils\\PausableUpgradeable.sol:21",
                 "offset": 0,
                 "slot": "0"
               }
@@ -5873,7 +5873,7 @@
                 "contract": "OwnableUpgradeable",
                 "label": "_owner",
                 "type": "t_address",
-                "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:24",
+                "src": "@openzeppelin\\contracts-upgradeable\\access\\OwnableUpgradeable.sol:24",
                 "offset": 0,
                 "slot": "0"
               }
@@ -5883,7 +5883,7 @@
                 "contract": "Initializable",
                 "label": "_initialized",
                 "type": "t_uint64",
-                "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:69",
+                "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:69",
                 "offset": 0,
                 "slot": "0"
               },
@@ -5891,7 +5891,7 @@
                 "contract": "Initializable",
                 "label": "_initializing",
                 "type": "t_bool",
-                "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:73",
+                "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:73",
                 "offset": 8,
                 "slot": "0"
               }
@@ -5901,7 +5901,7 @@
         "solcVersion": "0.8.22"
       },
       "contracts/JinbaoProtocolV4.sol:IJBC": {
-        "src": "contracts/JinbaoProtocolV4.sol:11",
+        "src": "contracts\\JinbaoProtocolV4.sol:11",
         "inherit": [
           "@openzeppelin/contracts/token/ERC20/IERC20.sol:IERC20"
         ],
@@ -5921,11 +5921,11 @@
         "solcVersion": "0.8.22"
       },
       "contracts/JinbaoProtocolV4.sol:JinbaoProtocolV4": {
-        "src": "contracts/JinbaoProtocolV4.sol:31",
+        "src": "contracts\\JinbaoProtocolV4.sol:31",
         "version": {
-          "withMetadata": "4bc519579f1b5b69d26466b49ace2e82e033c4f314876735a234135bda258daf",
-          "withoutMetadata": "34af0fe61fc24620c61268818cd54ff0be82ccdf117bae20f2956e30a81f4724",
-          "linkedWithoutMetadata": "34af0fe61fc24620c61268818cd54ff0be82ccdf117bae20f2956e30a81f4724"
+          "withMetadata": "f02dc38db4ef133f7de9422c6871eaf873f735538888e12310a88c075db7663e",
+          "withoutMetadata": "9660c824a2545fcb86f90b56ef0c37b93b27c809755b7569595fda4480d961b5",
+          "linkedWithoutMetadata": "9660c824a2545fcb86f90b56ef0c37b93b27c809755b7569595fda4480d961b5"
         },
         "inherit": [
           "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol:ReentrancyGuardUpgradeable",
@@ -5980,7 +5980,7 @@
               "slot": "0",
               "type": "t_contract(IJBC)21840",
               "contract": "JinbaoProtocolV4",
-              "src": "contracts/JinbaoProtocolV4.sol:108"
+              "src": "contracts\\JinbaoProtocolV4.sol:107"
             },
             {
               "label": "marketingWallet",
@@ -5988,7 +5988,7 @@
               "slot": "1",
               "type": "t_address",
               "contract": "JinbaoProtocolV4",
-              "src": "contracts/JinbaoProtocolV4.sol:109"
+              "src": "contracts\\JinbaoProtocolV4.sol:108"
             },
             {
               "label": "treasuryWallet",
@@ -5996,7 +5996,7 @@
               "slot": "2",
               "type": "t_address",
               "contract": "JinbaoProtocolV4",
-              "src": "contracts/JinbaoProtocolV4.sol:110"
+              "src": "contracts\\JinbaoProtocolV4.sol:109"
             },
             {
               "label": "lpInjectionWallet",
@@ -6004,7 +6004,7 @@
               "slot": "3",
               "type": "t_address",
               "contract": "JinbaoProtocolV4",
-              "src": "contracts/JinbaoProtocolV4.sol:111"
+              "src": "contracts\\JinbaoProtocolV4.sol:110"
             },
             {
               "label": "buybackWallet",
@@ -6012,7 +6012,7 @@
               "slot": "4",
               "type": "t_address",
               "contract": "JinbaoProtocolV4",
-              "src": "contracts/JinbaoProtocolV4.sol:111"
+              "src": "contracts\\JinbaoProtocolV4.sol:111"
             },
             {
               "label": "directRewardPercent",
@@ -6020,7 +6020,7 @@
               "slot": "5",
               "type": "t_uint256",
               "contract": "JinbaoProtocolV4",
-              "src": "contracts/JinbaoProtocolV4.sol:117"
+              "src": "contracts\\JinbaoProtocolV4.sol:117"
             },
             {
               "label": "levelRewardPercent",
@@ -6028,7 +6028,7 @@
               "slot": "6",
               "type": "t_uint256",
               "contract": "JinbaoProtocolV4",
-              "src": "contracts/JinbaoProtocolV4.sol:118"
+              "src": "contracts\\JinbaoProtocolV4.sol:118"
             },
             {
               "label": "marketingPercent",
@@ -6036,7 +6036,7 @@
               "slot": "7",
               "type": "t_uint256",
               "contract": "JinbaoProtocolV4",
-              "src": "contracts/JinbaoProtocolV4.sol:119"
+              "src": "contracts\\JinbaoProtocolV4.sol:118"
             },
             {
               "label": "buybackPercent",
@@ -6044,7 +6044,7 @@
               "slot": "8",
               "type": "t_uint256",
               "contract": "JinbaoProtocolV4",
-              "src": "contracts/JinbaoProtocolV4.sol:119"
+              "src": "contracts\\JinbaoProtocolV4.sol:119"
             },
             {
               "label": "lpInjectionPercent",
@@ -6052,7 +6052,7 @@
               "slot": "9",
               "type": "t_uint256",
               "contract": "JinbaoProtocolV4",
-              "src": "contracts/JinbaoProtocolV4.sol:120"
+              "src": "contracts\\JinbaoProtocolV4.sol:119"
             },
             {
               "label": "treasuryPercent",
@@ -6060,7 +6060,7 @@
               "slot": "10",
               "type": "t_uint256",
               "contract": "JinbaoProtocolV4",
-              "src": "contracts/JinbaoProtocolV4.sol:120"
+              "src": "contracts\\JinbaoProtocolV4.sol:120"
             },
             {
               "label": "redemptionFeePercent",
@@ -6068,7 +6068,7 @@
               "slot": "11",
               "type": "t_uint256",
               "contract": "JinbaoProtocolV4",
-              "src": "contracts/JinbaoProtocolV4.sol:122"
+              "src": "contracts\\JinbaoProtocolV4.sol:121"
             },
             {
               "label": "swapBuyTax",
@@ -6076,7 +6076,7 @@
               "slot": "12",
               "type": "t_uint256",
               "contract": "JinbaoProtocolV4",
-              "src": "contracts/JinbaoProtocolV4.sol:122"
+              "src": "contracts\\JinbaoProtocolV4.sol:122"
             },
             {
               "label": "swapSellTax",
@@ -6084,7 +6084,7 @@
               "slot": "13",
               "type": "t_uint256",
               "contract": "JinbaoProtocolV4",
-              "src": "contracts/JinbaoProtocolV4.sol:125"
+              "src": "contracts\\JinbaoProtocolV4.sol:124"
             },
             {
               "label": "userInfo",
@@ -6092,7 +6092,7 @@
               "slot": "14",
               "type": "t_mapping(t_address,t_struct(UserInfo)21875_storage)",
               "contract": "JinbaoProtocolV4",
-              "src": "contracts/JinbaoProtocolV4.sol:137"
+              "src": "contracts\\JinbaoProtocolV4.sol:136"
             },
             {
               "label": "userTicket",
@@ -6100,7 +6100,7 @@
               "slot": "15",
               "type": "t_mapping(t_address,t_struct(Ticket)21897_storage)",
               "contract": "JinbaoProtocolV4",
-              "src": "contracts/JinbaoProtocolV4.sol:140"
+              "src": "contracts\\JinbaoProtocolV4.sol:139"
             },
             {
               "label": "userStakes",
@@ -6108,7 +6108,7 @@
               "slot": "16",
               "type": "t_mapping(t_address,t_array(t_struct(Stake)21888_storage)dyn_storage)",
               "contract": "JinbaoProtocolV4",
-              "src": "contracts/JinbaoProtocolV4.sol:141"
+              "src": "contracts\\JinbaoProtocolV4.sol:140"
             },
             {
               "label": "directReferrals",
@@ -6116,7 +6116,7 @@
               "slot": "17",
               "type": "t_mapping(t_address,t_array(t_address)dyn_storage)",
               "contract": "JinbaoProtocolV4",
-              "src": "contracts/JinbaoProtocolV4.sol:144"
+              "src": "contracts\\JinbaoProtocolV4.sol:143"
             },
             {
               "label": "ticketPendingRewards",
@@ -6124,7 +6124,7 @@
               "slot": "18",
               "type": "t_mapping(t_uint256,t_array(t_struct(PendingReward)21902_storage)dyn_storage)",
               "contract": "JinbaoProtocolV4",
-              "src": "contracts/JinbaoProtocolV4.sol:146"
+              "src": "contracts\\JinbaoProtocolV4.sol:146"
             },
             {
               "label": "stakePendingRewards",
@@ -6132,7 +6132,7 @@
               "slot": "19",
               "type": "t_mapping(t_uint256,t_array(t_struct(PendingReward)21902_storage)dyn_storage)",
               "contract": "JinbaoProtocolV4",
-              "src": "contracts/JinbaoProtocolV4.sol:147"
+              "src": "contracts\\JinbaoProtocolV4.sol:148"
             },
             {
               "label": "ticketOwner",
@@ -6140,7 +6140,7 @@
               "slot": "20",
               "type": "t_mapping(t_uint256,t_address)",
               "contract": "JinbaoProtocolV4",
-              "src": "contracts/JinbaoProtocolV4.sol:148"
+              "src": "contracts\\JinbaoProtocolV4.sol:149"
             },
             {
               "label": "stakeOwner",
@@ -6148,7 +6148,7 @@
               "slot": "21",
               "type": "t_mapping(t_uint256,t_address)",
               "contract": "JinbaoProtocolV4",
-              "src": "contracts/JinbaoProtocolV4.sol:150"
+              "src": "contracts\\JinbaoProtocolV4.sol:150"
             },
             {
               "label": "ticketFlexibilityDuration",
@@ -6156,7 +6156,7 @@
               "slot": "22",
               "type": "t_uint256",
               "contract": "JinbaoProtocolV4",
-              "src": "contracts/JinbaoProtocolV4.sol:153"
+              "src": "contracts\\JinbaoProtocolV4.sol:153"
             },
             {
               "label": "liquidityEnabled",
@@ -6164,7 +6164,7 @@
               "slot": "23",
               "type": "t_bool",
               "contract": "JinbaoProtocolV4",
-              "src": "contracts/JinbaoProtocolV4.sol:155"
+              "src": "contracts\\JinbaoProtocolV4.sol:154"
             },
             {
               "label": "redeemEnabled",
@@ -6172,7 +6172,7 @@
               "slot": "23",
               "type": "t_bool",
               "contract": "JinbaoProtocolV4",
-              "src": "contracts/JinbaoProtocolV4.sol:157"
+              "src": "contracts\\JinbaoProtocolV4.sol:156"
             },
             {
               "label": "swapReserveMC",
@@ -6180,7 +6180,7 @@
               "slot": "24",
               "type": "t_uint256",
               "contract": "JinbaoProtocolV4",
-              "src": "contracts/JinbaoProtocolV4.sol:159"
+              "src": "contracts\\JinbaoProtocolV4.sol:158"
             },
             {
               "label": "swapReserveJBC",
@@ -6188,7 +6188,7 @@
               "slot": "25",
               "type": "t_uint256",
               "contract": "JinbaoProtocolV4",
-              "src": "contracts/JinbaoProtocolV4.sol:160"
+              "src": "contracts\\JinbaoProtocolV4.sol:159"
             },
             {
               "label": "nextTicketId",
@@ -6196,7 +6196,7 @@
               "slot": "26",
               "type": "t_uint256",
               "contract": "JinbaoProtocolV4",
-              "src": "contracts/JinbaoProtocolV4.sol:162"
+              "src": "contracts\\JinbaoProtocolV4.sol:162"
             },
             {
               "label": "nextStakeId",
@@ -6204,7 +6204,7 @@
               "slot": "27",
               "type": "t_uint256",
               "contract": "JinbaoProtocolV4",
-              "src": "contracts/JinbaoProtocolV4.sol:164"
+              "src": "contracts\\JinbaoProtocolV4.sol:163"
             },
             {
               "label": "lastBurnTime",
@@ -6212,7 +6212,7 @@
               "slot": "28",
               "type": "t_uint256",
               "contract": "JinbaoProtocolV4",
-              "src": "contracts/JinbaoProtocolV4.sol:164"
+              "src": "contracts\\JinbaoProtocolV4.sol:164"
             },
             {
               "label": "levelRewardPool",
@@ -6220,7 +6220,7 @@
               "slot": "29",
               "type": "t_uint256",
               "contract": "JinbaoProtocolV4",
-              "src": "contracts/JinbaoProtocolV4.sol:165"
+              "src": "contracts\\JinbaoProtocolV4.sol:165"
             },
             {
               "label": "emergencyPaused",
@@ -6228,7 +6228,7 @@
               "slot": "30",
               "type": "t_bool",
               "contract": "JinbaoProtocolV4",
-              "src": "contracts/JinbaoProtocolV4.sol:167"
+              "src": "contracts\\JinbaoProtocolV4.sol:167"
             },
             {
               "label": "priceOracle",
@@ -6236,7 +6236,7 @@
               "slot": "30",
               "type": "t_address",
               "contract": "JinbaoProtocolV4",
-              "src": "contracts/JinbaoProtocolV4.sol:169"
+              "src": "contracts\\JinbaoProtocolV4.sol:168"
             },
             {
               "label": "__gap",
@@ -6244,7 +6244,7 @@
               "slot": "31",
               "type": "t_array(t_uint256)45_storage",
               "contract": "JinbaoProtocolV4",
-              "src": "contracts/JinbaoProtocolV4.sol:170"
+              "src": "contracts\\JinbaoProtocolV4.sol:171"
             }
           ],
           "types": {
@@ -6521,7 +6521,7 @@
                 "contract": "ReentrancyGuardUpgradeable",
                 "label": "_status",
                 "type": "t_uint256",
-                "src": "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol:43",
+                "src": "@openzeppelin\\contracts-upgradeable\\utils\\ReentrancyGuardUpgradeable.sol:43",
                 "offset": 0,
                 "slot": "0"
               }
@@ -6531,7 +6531,7 @@
                 "contract": "OwnableUpgradeable",
                 "label": "_owner",
                 "type": "t_address",
-                "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:24",
+                "src": "@openzeppelin\\contracts-upgradeable\\access\\OwnableUpgradeable.sol:24",
                 "offset": 0,
                 "slot": "0"
               }
@@ -6541,7 +6541,7 @@
                 "contract": "Initializable",
                 "label": "_initialized",
                 "type": "t_uint64",
-                "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:69",
+                "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:69",
                 "offset": 0,
                 "slot": "0"
               },
@@ -6549,7 +6549,7 @@
                 "contract": "Initializable",
                 "label": "_initializing",
                 "type": "t_bool",
-                "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:73",
+                "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:73",
                 "offset": 8,
                 "slot": "0"
               }
@@ -6559,9 +6559,9 @@
         "solcVersion": "0.8.22"
       },
       "contracts/MockERC20.sol:MockERC20": {
-        "src": "contracts/MockERC20.sol:10",
+        "src": "contracts\\MockERC20.sol:10",
         "version": {
-          "withMetadata": "2e6a3f3f7323014a9cfbc79db6545e7ae15e6b718b10a043fea3b6c351cf4bd3",
+          "withMetadata": "5147e3d678ee601a7ea4933346981ca428f8d5791755e7dd10f48f8aba20ecdc",
           "withoutMetadata": "1bbad6b3f149aafbd31b5c1759641e6a45a07718bb4ded0a415c7d7a99009b33",
           "linkedWithoutMetadata": "1bbad6b3f149aafbd31b5c1759641e6a45a07718bb4ded0a415c7d7a99009b33"
         },
@@ -6583,7 +6583,7 @@
           {
             "kind": "constructor",
             "contract": "MockERC20",
-            "src": "contracts/MockERC20.sol:11"
+            "src": "contracts\\MockERC20.sol:11"
           }
         ],
         "layout": {
@@ -6594,7 +6594,7 @@
               "slot": "0",
               "type": "t_mapping(t_address,t_uint256)",
               "contract": "ERC20",
-              "src": "@openzeppelin/contracts/token/ERC20/ERC20.sol:30"
+              "src": "@openzeppelin\\contracts\\token\\ERC20\\ERC20.sol:30"
             },
             {
               "label": "_allowances",
@@ -6602,7 +6602,7 @@
               "slot": "1",
               "type": "t_mapping(t_address,t_mapping(t_address,t_uint256))",
               "contract": "ERC20",
-              "src": "@openzeppelin/contracts/token/ERC20/ERC20.sol:32"
+              "src": "@openzeppelin\\contracts\\token\\ERC20\\ERC20.sol:32"
             },
             {
               "label": "_totalSupply",
@@ -6610,7 +6610,7 @@
               "slot": "2",
               "type": "t_uint256",
               "contract": "ERC20",
-              "src": "@openzeppelin/contracts/token/ERC20/ERC20.sol:34"
+              "src": "@openzeppelin\\contracts\\token\\ERC20\\ERC20.sol:34"
             },
             {
               "label": "_name",
@@ -6618,7 +6618,7 @@
               "slot": "3",
               "type": "t_string_storage",
               "contract": "ERC20",
-              "src": "@openzeppelin/contracts/token/ERC20/ERC20.sol:36"
+              "src": "@openzeppelin\\contracts\\token\\ERC20\\ERC20.sol:36"
             },
             {
               "label": "_symbol",
@@ -6626,7 +6626,7 @@
               "slot": "4",
               "type": "t_string_storage",
               "contract": "ERC20",
-              "src": "@openzeppelin/contracts/token/ERC20/ERC20.sol:37"
+              "src": "@openzeppelin\\contracts\\token\\ERC20\\ERC20.sol:37"
             }
           ],
           "types": {
@@ -6658,9 +6658,9 @@
         "solcVersion": "0.8.22"
       },
       "contracts/MockMC.sol:MockMC": {
-        "src": "contracts/MockMC.sol:6",
+        "src": "contracts\\MockMC.sol:6",
         "version": {
-          "withMetadata": "f45710abc14dc84c74d4abe0669a9c9d4f7ba52c534284c584bc6b7bc819c4f0",
+          "withMetadata": "7d78f724fb5a0a2cd4d41fb2ba4a261e5364e9887f640b4f28428302accbc729",
           "withoutMetadata": "c04d61a5f8c34c6ce26373d4d9678dfc6000df30fc8005d164e1587eb061395a",
           "linkedWithoutMetadata": "c04d61a5f8c34c6ce26373d4d9678dfc6000df30fc8005d164e1587eb061395a"
         },
@@ -6681,7 +6681,7 @@
           {
             "kind": "constructor",
             "contract": "MockMC",
-            "src": "contracts/MockMC.sol:7"
+            "src": "contracts\\MockMC.sol:7"
           }
         ],
         "layout": {
@@ -6692,7 +6692,7 @@
               "slot": "0",
               "type": "t_mapping(t_address,t_uint256)",
               "contract": "ERC20",
-              "src": "@openzeppelin/contracts/token/ERC20/ERC20.sol:30"
+              "src": "@openzeppelin\\contracts\\token\\ERC20\\ERC20.sol:30"
             },
             {
               "label": "_allowances",
@@ -6700,7 +6700,7 @@
               "slot": "1",
               "type": "t_mapping(t_address,t_mapping(t_address,t_uint256))",
               "contract": "ERC20",
-              "src": "@openzeppelin/contracts/token/ERC20/ERC20.sol:32"
+              "src": "@openzeppelin\\contracts\\token\\ERC20\\ERC20.sol:32"
             },
             {
               "label": "_totalSupply",
@@ -6708,7 +6708,7 @@
               "slot": "2",
               "type": "t_uint256",
               "contract": "ERC20",
-              "src": "@openzeppelin/contracts/token/ERC20/ERC20.sol:34"
+              "src": "@openzeppelin\\contracts\\token\\ERC20\\ERC20.sol:34"
             },
             {
               "label": "_name",
@@ -6716,7 +6716,7 @@
               "slot": "3",
               "type": "t_string_storage",
               "contract": "ERC20",
-              "src": "@openzeppelin/contracts/token/ERC20/ERC20.sol:36"
+              "src": "@openzeppelin\\contracts\\token\\ERC20\\ERC20.sol:36"
             },
             {
               "label": "_symbol",
@@ -6724,7 +6724,7 @@
               "slot": "4",
               "type": "t_string_storage",
               "contract": "ERC20",
-              "src": "@openzeppelin/contracts/token/ERC20/ERC20.sol:37"
+              "src": "@openzeppelin\\contracts\\token\\ERC20\\ERC20.sol:37"
             }
           ],
           "types": {
@@ -6756,9 +6756,9 @@
         "solcVersion": "0.8.22"
       },
       "contracts/RedemptionLib.sol:RedemptionLib": {
-        "src": "contracts/RedemptionLib.sol:6",
+        "src": "contracts\\RedemptionLib.sol:6",
         "version": {
-          "withMetadata": "4ba63d01be377f22803a07b830fa66b1ca7cf896a763d9dbd430165e95f5e9f8",
+          "withMetadata": "557bbe7a933c0c7ad532600f070cd4c2daffb668f2926c750f21af7c45b91321",
           "withoutMetadata": "e2a89a66865458f0d9fedd4bc7faf0ee62e4c341d176ab79d29bd77a1bdfc32a",
           "linkedWithoutMetadata": "e2a89a66865458f0d9fedd4bc7faf0ee62e4c341d176ab79d29bd77a1bdfc32a"
         },
@@ -6777,9 +6777,9 @@
         "solcVersion": "0.8.22"
       },
       "contracts/Test.sol:Test": {
-        "src": "contracts/Test.sol:4",
+        "src": "contracts\\Test.sol:4",
         "version": {
-          "withMetadata": "f0a4cd0ff6b1a60a40ddd4d37ea8c36028d4365c79de66e4d97b856048c5f59e",
+          "withMetadata": "96bb26868c14bef168fc601df02865fd399b3eb1adeaab62a0cc147e332e945f",
           "withoutMetadata": "eafb0f11e6eab501941cd33f0dd3241d5b86b3503fa01e1c72c7308f2a7351fc",
           "linkedWithoutMetadata": "eafb0f11e6eab501941cd33f0dd3241d5b86b3503fa01e1c72c7308f2a7351fc"
         },
@@ -6791,7 +6791,7 @@
           {
             "kind": "state-variable-assignment",
             "name": "value",
-            "src": "contracts/Test.sol:5"
+            "src": "contracts\\Test.sol:5"
           }
         ],
         "layout": {
@@ -6802,7 +6802,7 @@
               "slot": "0",
               "type": "t_uint256",
               "contract": "Test",
-              "src": "contracts/Test.sol:5"
+              "src": "contracts\\Test.sol:5"
             }
           ],
           "types": {
@@ -6818,9 +6818,9 @@
         "solcVersion": "0.8.22"
       },
       "contracts/TestCompile.sol:TestCompile": {
-        "src": "contracts/TestCompile.sol:4",
+        "src": "contracts\\TestCompile.sol:4",
         "version": {
-          "withMetadata": "1e7092a2066b2831955d60ae650f72ceafcc3d95c94edf4383c4a9235ac8d342",
+          "withMetadata": "10039d05647109e2b993a5bfe5d0de816b7e582a0a73edd1b9cc9b92f92f2715",
           "withoutMetadata": "8b370d3102804bb6eba4d2d8391053ecf4dc4ff7a5e3b906966ca5c2a4787520",
           "linkedWithoutMetadata": "8b370d3102804bb6eba4d2d8391053ecf4dc4ff7a5e3b906966ca5c2a4787520"
         },
@@ -6834,7 +6834,7 @@
           {
             "kind": "state-variable-assignment",
             "name": "name",
-            "src": "contracts/TestCompile.sol:5"
+            "src": "contracts\\TestCompile.sol:5"
           }
         ],
         "layout": {
@@ -6845,7 +6845,7 @@
               "slot": "0",
               "type": "t_string_storage",
               "contract": "TestCompile",
-              "src": "contracts/TestCompile.sol:5"
+              "src": "contracts\\TestCompile.sol:5"
             }
           ],
           "types": {
@@ -6861,9 +6861,9 @@
         "solcVersion": "0.8.22"
       },
       "contracts/TestSimple.sol:TestSimple": {
-        "src": "contracts/TestSimple.sol:4",
+        "src": "contracts\\TestSimple.sol:4",
         "version": {
-          "withMetadata": "694b348cce1ce7560383a6fc734833e50ef339d5c0bbb27151d08aab3902d803",
+          "withMetadata": "bc1775cafaa48c27abd29684d2214a3582bcba7a2b6dac0fc80a482045214359",
           "withoutMetadata": "b5c2e8d6d1c3a666b6fe5efa4c21b320f0cdc3dd7373c31c82d5c9ced24ca310",
           "linkedWithoutMetadata": "b5c2e8d6d1c3a666b6fe5efa4c21b320f0cdc3dd7373c31c82d5c9ced24ca310"
         },
@@ -6877,7 +6877,7 @@
           {
             "kind": "state-variable-assignment",
             "name": "name",
-            "src": "contracts/TestSimple.sol:5"
+            "src": "contracts\\TestSimple.sol:5"
           }
         ],
         "layout": {
@@ -6888,7 +6888,7 @@
               "slot": "0",
               "type": "t_string_storage",
               "contract": "TestSimple",
-              "src": "contracts/TestSimple.sol:5"
+              "src": "contracts\\TestSimple.sol:5"
             }
           ],
           "types": {
@@ -6904,7 +6904,7 @@
         "solcVersion": "0.8.22"
       },
       "contracts/Tokenomics.sol:ITokenomicsConstants": {
-        "src": "contracts/Tokenomics.sol:34",
+        "src": "contracts\\Tokenomics.sol:33",
         "inherit": [],
         "libraries": [],
         "methods": [],
@@ -6920,9 +6920,9 @@
         "solcVersion": "0.8.22"
       },
       "contracts/Tokenomics.sol:JBCTokenParams": {
-        "src": "contracts/Tokenomics.sol:484",
+        "src": "contracts\\Tokenomics.sol:480",
         "version": {
-          "withMetadata": "c21b3417a30f4e7f8f828b5570c31443c5b28fa65331765b807cf3c1e35de0bd",
+          "withMetadata": "728378f6f99326016bb8e2b6cb51fec229187c4eb2cdde16d9168c484c90ac91",
           "withoutMetadata": "e2a89a66865458f0d9fedd4bc7faf0ee62e4c341d176ab79d29bd77a1bdfc32a",
           "linkedWithoutMetadata": "e2a89a66865458f0d9fedd4bc7faf0ee62e4c341d176ab79d29bd77a1bdfc32a"
         },
@@ -6941,9 +6941,9 @@
         "solcVersion": "0.8.22"
       },
       "contracts/Tokenomics.sol:TokenomicsLib": {
-        "src": "contracts/Tokenomics.sol:84",
+        "src": "contracts\\Tokenomics.sol:84",
         "version": {
-          "withMetadata": "5423ea6421f031a17f46f4e7b2520f267c308ffeaf5e6288d3962a24ffae71d1",
+          "withMetadata": "3c2b83dbf30de263de8ae0f59f19dbef23cf270dffac0a89a8eb6868db864795",
           "withoutMetadata": "e2a89a66865458f0d9fedd4bc7faf0ee62e4c341d176ab79d29bd77a1bdfc32a",
           "linkedWithoutMetadata": "e2a89a66865458f0d9fedd4bc7faf0ee62e4c341d176ab79d29bd77a1bdfc32a"
         },
@@ -6962,9 +6962,9 @@
         "solcVersion": "0.8.22"
       },
       "contracts/Tokenomics.sol:TokenomicsSummary": {
-        "src": "contracts/Tokenomics.sol:567",
+        "src": "contracts\\Tokenomics.sol:567",
         "version": {
-          "withMetadata": "248ef083bc6da2ba6688225efad237bdcd678e5973866255d59bcccaeba96e09",
+          "withMetadata": "db4925dfa4554d676e6d6514db5c05b88e3755c8a4cb46c417b9d3aaad03fd22",
           "withoutMetadata": "0d9e47180a49a46926e4b3933d93ba18d1f0f4ef26f882d7b81d4da5de783b17",
           "linkedWithoutMetadata": "0d9e47180a49a46926e4b3933d93ba18d1f0f4ef26f882d7b81d4da5de783b17"
         },

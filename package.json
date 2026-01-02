@@ -65,6 +65,7 @@
     "wagmi": "^2.19.5"
   },
   "devDependencies": {
+    "@esbuild/win32-x64": "^0.27.2",
     "@nomicfoundation/hardhat-chai-matchers": "^2.1.0",
     "@nomicfoundation/hardhat-ethers": "^3.1.2",
     "@nomicfoundation/hardhat-ignition": "^0.15.16",

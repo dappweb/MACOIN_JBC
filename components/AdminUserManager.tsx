@@ -108,109 +108,77 @@ const AdminUserManager: React.FC = () => {
 
     const handleSaveChanges = async () => {
         console.log('🔍 [AdminUserManager] handleSaveChanges called');
-        console.log('📋 [AdminUserManager] protocolContract:', protocolContract);
-        console.log('📋 [AdminUserManager] userInfo:', userInfo);
-        console.log('📋 [AdminUserManager] editData:', editData);
         
         if (!protocolContract) {
-            console.error('❌ [AdminUserManager] protocolContract is null');
             toast.error('合约未连接，请检查钱包连接');
             return;
         }
 
         if (!userInfo) {
-            console.error('❌ [AdminUserManager] userInfo is null');
             toast.error('用户信息未加载，请先搜索用户');
             return;
         }
 
         setLoading(true);
         try {
-            const updates: Promise<any>[] = [];
-            let hasUpdates = false;
-
-            // 更新活跃直推数量
+            // 准备更新数据
             const newActiveDirects = parseInt(editData.activeDirects);
-            console.log('📊 [AdminUserManager] Active Directs - Current:', userInfo.activeDirects, 'New:', newActiveDirects);
-            if (!isNaN(newActiveDirects) && newActiveDirects !== userInfo.activeDirects) {
-                hasUpdates = true;
-                console.log('✅ [AdminUserManager] Will update activeDirects to:', newActiveDirects);
-                
-                // 检查函数是否存在
-                if (!protocolContract.adminSetActiveDirects) {
-                    console.error('❌ [AdminUserManager] adminSetActiveDirects function not found in contract');
-                    toast.error('合约函数不存在，请确认合约已升级');
-                    setLoading(false);
-                    return;
-                }
-                
-                updates.push(
-                    protocolContract.adminSetActiveDirects(userInfo.address, newActiveDirects)
-                );
-            }
-
-            // 更新团队成员数量
             const newTeamCount = parseInt(editData.teamCount);
-            console.log('📊 [AdminUserManager] Team Count - Current:', userInfo.teamCount, 'New:', newTeamCount);
-            if (!isNaN(newTeamCount) && newTeamCount !== userInfo.teamCount) {
-                hasUpdates = true;
-                console.log('✅ [AdminUserManager] Will update teamCount to:', newTeamCount);
-                
-                // 检查函数是否存在
-                if (!protocolContract.adminSetTeamCount) {
-                    console.error('❌ [AdminUserManager] adminSetTeamCount function not found in contract');
-                    toast.error('合约函数不存在，请确认合约已升级');
-                    setLoading(false);
-                    return;
-                }
-                
-                updates.push(
-                    protocolContract.adminSetTeamCount(userInfo.address, newTeamCount)
-                );
-            }
+            
+            const shouldUpdateActiveDirects = !isNaN(newActiveDirects) && newActiveDirects !== userInfo.activeDirects;
+            const shouldUpdateTeamCount = !isNaN(newTeamCount) && newTeamCount !== userInfo.teamCount;
 
-            if (!hasUpdates) {
-                console.log('ℹ️ [AdminUserManager] No updates needed');
-                toast('没有需要更新的数据', {
-                    icon: 'ℹ️',
-                    duration: 3000,
-                });
+            if (!shouldUpdateActiveDirects && !shouldUpdateTeamCount) {
+                toast('没有需要更新的数据', { icon: 'ℹ️', duration: 3000 });
                 setEditMode(false);
                 setLoading(false);
                 return;
             }
 
-            console.log('🚀 [AdminUserManager] Executing', updates.length, 'update(s)...');
+            console.log('🚀 [AdminUserManager] Updating user data...');
             
-            // 执行所有更新
-            const results = await Promise.all(updates);
-            console.log('✅ [AdminUserManager] Transactions sent:', results);
-            
-            // 等待交易确认
-            for (let i = 0; i < results.length; i++) {
-                const tx = results[i];
-                console.log(`⏳ [AdminUserManager] Waiting for transaction ${i + 1} confirmation...`);
-                const receipt = await tx.wait();
-                console.log(`✅ [AdminUserManager] Transaction ${i + 1} confirmed:`, receipt.transactionHash);
+            // 使用 adminUpdateUserData 一次性更新所有数据
+            if (protocolContract.adminUpdateUserData) {
+                const tx = await protocolContract.adminUpdateUserData(
+                    userInfo.address,
+                    shouldUpdateActiveDirects, shouldUpdateActiveDirects ? newActiveDirects : 0,
+                    shouldUpdateTeamCount, shouldUpdateTeamCount ? newTeamCount : 0,
+                    false, 0, // updateTotalRevenue
+                    false, 0, // updateCurrentCap
+                    false, 0  // updateRefundFee
+                );
+
+                console.log('⏳ [AdminUserManager] Waiting for transaction confirmation...');
+                await tx.wait();
+                console.log('✅ [AdminUserManager] Transaction confirmed:', tx.hash);
+            } else {
+                // 如果 adminUpdateUserData 不存在，尝试回退到旧的单独函数（为了兼容性，虽然可能不存在）
+                console.warn('⚠️ [AdminUserManager] adminUpdateUserData not found, trying individual setters...');
+                const updates: Promise<any>[] = [];
+
+                if (shouldUpdateActiveDirects && protocolContract.adminSetActiveDirects) {
+                    updates.push(protocolContract.adminSetActiveDirects(userInfo.address, newActiveDirects));
+                }
+                
+                if (shouldUpdateTeamCount && protocolContract.adminSetTeamCount) {
+                    updates.push(protocolContract.adminSetTeamCount(userInfo.address, newTeamCount));
+                }
+
+                if (updates.length === 0) {
+                    throw new Error('合约不支持此时的用户数据更新操作');
+                }
+
+                await Promise.all(updates.map(p => p.then(tx => tx.wait())));
             }
 
             toast.success('用户数据更新成功！');
             
             // 重新加载用户信息
-            console.log('🔄 [AdminUserManager] Reloading user info...');
             await searchUser();
             setEditMode(false);
         } catch (error: any) {
-            console.error('❌ [AdminUserManager] Update user data error:', error);
-            console.error('❌ [AdminUserManager] Error details:', {
-                message: error?.message,
-                code: error?.code,
-                reason: error?.reason,
-                data: error?.data
-            });
-            
+            console.error('❌ [AdminUserManager] Update error:', error);
             const errorMessage = formatContractError(error);
-            console.error('❌ [AdminUserManager] Formatted error:', errorMessage);
             toast.error(errorMessage);
         } finally {
             setLoading(false);

@@ -7,7 +7,7 @@
     }
   ],
   "impls": {
-    "34af0fe61fc24620c61268818cd54ff0be82ccdf117bae20f2956e30a81f4724": {
+    "9660c824a2545fcb86f90b56ef0c37b93b27c809755b7569595fda4480d961b5": {
       "address": "0x15106A34498DBec54151a7fa59115D549Ba38AAd",
       "layout": {
         "solcVersion": "0.8.22",
@@ -18,7 +18,7 @@
             "slot": "0",
             "type": "t_contract(IJBC)21840",
             "contract": "JinbaoProtocolV4",
-            "src": "contracts/JinbaoProtocolV4.sol:108"
+            "src": "contracts\\JinbaoProtocolV4.sol:107"
           },
           {
             "label": "marketingWallet",
@@ -26,7 +26,7 @@
             "slot": "1",
             "type": "t_address",
             "contract": "JinbaoProtocolV4",
-            "src": "contracts/JinbaoProtocolV4.sol:109"
+            "src": "contracts\\JinbaoProtocolV4.sol:108"
           },
           {
             "label": "treasuryWallet",
@@ -34,7 +34,7 @@
             "slot": "2",
             "type": "t_address",
             "contract": "JinbaoProtocolV4",
-            "src": "contracts/JinbaoProtocolV4.sol:110"
+            "src": "contracts\\JinbaoProtocolV4.sol:109"
           },
           {
             "label": "lpInjectionWallet",
@@ -42,7 +42,7 @@
             "slot": "3",
             "type": "t_address",
             "contract": "JinbaoProtocolV4",
-            "src": "contracts/JinbaoProtocolV4.sol:111"
+            "src": "contracts\\JinbaoProtocolV4.sol:110"
           },
           {
             "label": "buybackWallet",
@@ -50,7 +50,7 @@
             "slot": "4",
             "type": "t_address",
             "contract": "JinbaoProtocolV4",
-            "src": "contracts/JinbaoProtocolV4.sol:111"
+            "src": "contracts\\JinbaoProtocolV4.sol:111"
           },
           {
             "label": "directRewardPercent",
@@ -58,7 +58,7 @@
             "slot": "5",
             "type": "t_uint256",
             "contract": "JinbaoProtocolV4",
-            "src": "contracts/JinbaoProtocolV4.sol:117"
+            "src": "contracts\\JinbaoProtocolV4.sol:117"
           },
           {
             "label": "levelRewardPercent",
@@ -66,7 +66,7 @@
             "slot": "6",
             "type": "t_uint256",
             "contract": "JinbaoProtocolV4",
-            "src": "contracts/JinbaoProtocolV4.sol:118"
+            "src": "contracts\\JinbaoProtocolV4.sol:118"
           },
           {
             "label": "marketingPercent",
@@ -74,7 +74,7 @@
             "slot": "7",
             "type": "t_uint256",
             "contract": "JinbaoProtocolV4",
-            "src": "contracts/JinbaoProtocolV4.sol:119"
+            "src": "contracts\\JinbaoProtocolV4.sol:118"
           },
           {
             "label": "buybackPercent",
@@ -82,7 +82,7 @@
             "slot": "8",
             "type": "t_uint256",
             "contract": "JinbaoProtocolV4",
-            "src": "contracts/JinbaoProtocolV4.sol:119"
+            "src": "contracts\\JinbaoProtocolV4.sol:119"
           },
           {
             "label": "lpInjectionPercent",
@@ -90,7 +90,7 @@
             "slot": "9",
             "type": "t_uint256",
             "contract": "JinbaoProtocolV4",
-            "src": "contracts/JinbaoProtocolV4.sol:120"
+            "src": "contracts\\JinbaoProtocolV4.sol:119"
           },
           {
             "label": "treasuryPercent",
@@ -98,7 +98,7 @@
             "slot": "10",
             "type": "t_uint256",
             "contract": "JinbaoProtocolV4",
-            "src": "contracts/JinbaoProtocolV4.sol:120"
+            "src": "contracts\\JinbaoProtocolV4.sol:120"
           },
           {
             "label": "redemptionFeePercent",
@@ -106,7 +106,7 @@
             "slot": "11",
             "type": "t_uint256",
             "contract": "JinbaoProtocolV4",
-            "src": "contracts/JinbaoProtocolV4.sol:122"
+            "src": "contracts\\JinbaoProtocolV4.sol:121"
           },
           {
             "label": "swapBuyTax",
@@ -114,7 +114,7 @@
             "slot": "12",
             "type": "t_uint256",
             "contract": "JinbaoProtocolV4",
-            "src": "contracts/JinbaoProtocolV4.sol:122"
+            "src": "contracts\\JinbaoProtocolV4.sol:122"
           },
           {
             "label": "swapSellTax",
@@ -122,7 +122,7 @@
             "slot": "13",
             "type": "t_uint256",
             "contract": "JinbaoProtocolV4",
-            "src": "contracts/JinbaoProtocolV4.sol:125"
+            "src": "contracts\\JinbaoProtocolV4.sol:124"
           },
           {
             "label": "userInfo",
@@ -130,7 +130,7 @@
             "slot": "14",
             "type": "t_mapping(t_address,t_struct(UserInfo)21875_storage)",
             "contract": "JinbaoProtocolV4",
-            "src": "contracts/JinbaoProtocolV4.sol:137"
+            "src": "contracts\\JinbaoProtocolV4.sol:136"
           },
           {
             "label": "userTicket",
@@ -138,7 +138,7 @@
             "slot": "15",
             "type": "t_mapping(t_address,t_struct(Ticket)21897_storage)",
             "contract": "JinbaoProtocolV4",
-            "src": "contracts/JinbaoProtocolV4.sol:140"
+            "src": "contracts\\JinbaoProtocolV4.sol:139"
           },
           {
             "label": "userStakes",
@@ -146,7 +146,7 @@
             "slot": "16",
             "type": "t_mapping(t_address,t_array(t_struct(Stake)21888_storage)dyn_storage)",
             "contract": "JinbaoProtocolV4",
-            "src": "contracts/JinbaoProtocolV4.sol:141"
+            "src": "contracts\\JinbaoProtocolV4.sol:140"
           },
           {
             "label": "directReferrals",
@@ -154,7 +154,7 @@
             "slot": "17",
             "type": "t_mapping(t_address,t_array(t_address)dyn_storage)",
             "contract": "JinbaoProtocolV4",
-            "src": "contracts/JinbaoProtocolV4.sol:144"
+            "src": "contracts\\JinbaoProtocolV4.sol:143"
           },
           {
             "label": "ticketPendingRewards",
@@ -162,7 +162,7 @@
             "slot": "18",
             "type": "t_mapping(t_uint256,t_array(t_struct(PendingReward)21902_storage)dyn_storage)",
             "contract": "JinbaoProtocolV4",
-            "src": "contracts/JinbaoProtocolV4.sol:146"
+            "src": "contracts\\JinbaoProtocolV4.sol:146"
           },
           {
             "label": "stakePendingRewards",
@@ -170,7 +170,7 @@
             "slot": "19",
             "type": "t_mapping(t_uint256,t_array(t_struct(PendingReward)21902_storage)dyn_storage)",
             "contract": "JinbaoProtocolV4",
-            "src": "contracts/JinbaoProtocolV4.sol:147"
+            "src": "contracts\\JinbaoProtocolV4.sol:148"
           },
           {
             "label": "ticketOwner",
@@ -178,7 +178,7 @@
             "slot": "20",
             "type": "t_mapping(t_uint256,t_address)",
             "contract": "JinbaoProtocolV4",
-            "src": "contracts/JinbaoProtocolV4.sol:148"
+            "src": "contracts\\JinbaoProtocolV4.sol:149"
           },
           {
             "label": "stakeOwner",
@@ -186,7 +186,7 @@
             "slot": "21",
             "type": "t_mapping(t_uint256,t_address)",
             "contract": "JinbaoProtocolV4",
-            "src": "contracts/JinbaoProtocolV4.sol:150"
+            "src": "contracts\\JinbaoProtocolV4.sol:150"
           },
           {
             "label": "ticketFlexibilityDuration",
@@ -194,7 +194,7 @@
             "slot": "22",
             "type": "t_uint256",
             "contract": "JinbaoProtocolV4",
-            "src": "contracts/JinbaoProtocolV4.sol:153"
+            "src": "contracts\\JinbaoProtocolV4.sol:153"
           },
           {
             "label": "liquidityEnabled",
@@ -202,7 +202,7 @@
             "slot": "23",
             "type": "t_bool",
             "contract": "JinbaoProtocolV4",
-            "src": "contracts/JinbaoProtocolV4.sol:155"
+            "src": "contracts\\JinbaoProtocolV4.sol:154"
           },
           {
             "label": "redeemEnabled",
@@ -210,7 +210,7 @@
             "slot": "23",
             "type": "t_bool",
             "contract": "JinbaoProtocolV4",
-            "src": "contracts/JinbaoProtocolV4.sol:157"
+            "src": "contracts\\JinbaoProtocolV4.sol:156"
           },
           {
             "label": "swapReserveMC",
@@ -218,7 +218,7 @@
             "slot": "24",
             "type": "t_uint256",
             "contract": "JinbaoProtocolV4",
-            "src": "contracts/JinbaoProtocolV4.sol:159"
+            "src": "contracts\\JinbaoProtocolV4.sol:158"
           },
           {
             "label": "swapReserveJBC",
@@ -226,7 +226,7 @@
             "slot": "25",
             "type": "t_uint256",
             "contract": "JinbaoProtocolV4",
-            "src": "contracts/JinbaoProtocolV4.sol:160"
+            "src": "contracts\\JinbaoProtocolV4.sol:159"
           },
           {
             "label": "nextTicketId",
@@ -234,7 +234,7 @@
             "slot": "26",
             "type": "t_uint256",
             "contract": "JinbaoProtocolV4",
-            "src": "contracts/JinbaoProtocolV4.sol:162"
+            "src": "contracts\\JinbaoProtocolV4.sol:162"
           },
           {
             "label": "nextStakeId",
@@ -242,7 +242,7 @@
             "slot": "27",
             "type": "t_uint256",
             "contract": "JinbaoProtocolV4",
-            "src": "contracts/JinbaoProtocolV4.sol:164"
+            "src": "contracts\\JinbaoProtocolV4.sol:163"
           },
           {
             "label": "lastBurnTime",
@@ -250,7 +250,7 @@
             "slot": "28",
             "type": "t_uint256",
             "contract": "JinbaoProtocolV4",
-            "src": "contracts/JinbaoProtocolV4.sol:164"
+            "src": "contracts\\JinbaoProtocolV4.sol:164"
           },
           {
             "label": "levelRewardPool",
@@ -258,7 +258,7 @@
             "slot": "29",
             "type": "t_uint256",
             "contract": "JinbaoProtocolV4",
-            "src": "contracts/JinbaoProtocolV4.sol:165"
+            "src": "contracts\\JinbaoProtocolV4.sol:165"
           },
           {
             "label": "emergencyPaused",
@@ -266,7 +266,7 @@
             "slot": "30",
             "type": "t_bool",
             "contract": "JinbaoProtocolV4",
-            "src": "contracts/JinbaoProtocolV4.sol:167"
+            "src": "contracts\\JinbaoProtocolV4.sol:167"
           },
           {
             "label": "priceOracle",
@@ -274,7 +274,7 @@
             "slot": "30",
             "type": "t_address",
             "contract": "JinbaoProtocolV4",
-            "src": "contracts/JinbaoProtocolV4.sol:169"
+            "src": "contracts\\JinbaoProtocolV4.sol:168"
           },
           {
             "label": "__gap",
@@ -282,7 +282,7 @@
             "slot": "31",
             "type": "t_array(t_uint256)45_storage",
             "contract": "JinbaoProtocolV4",
-            "src": "contracts/JinbaoProtocolV4.sol:170"
+            "src": "contracts\\JinbaoProtocolV4.sol:171"
           }
         ],
         "types": {
@@ -557,7 +557,7 @@
               "contract": "ReentrancyGuardUpgradeable",
               "label": "_status",
               "type": "t_uint256",
-              "src": "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol:43",
+              "src": "@openzeppelin\\contracts-upgradeable\\utils\\ReentrancyGuardUpgradeable.sol:43",
               "offset": 0,
               "slot": "0"
             }
@@ -567,7 +567,7 @@
               "contract": "OwnableUpgradeable",
               "label": "_owner",
               "type": "t_address",
-              "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:24",
+              "src": "@openzeppelin\\contracts-upgradeable\\access\\OwnableUpgradeable.sol:24",
               "offset": 0,
               "slot": "0"
             }
@@ -577,7 +577,7 @@
               "contract": "Initializable",
               "label": "_initialized",
               "type": "t_uint64",
-              "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:69",
+              "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:69",
               "offset": 0,
               "slot": "0"
             },
@@ -585,16 +585,13 @@
               "contract": "Initializable",
               "label": "_initializing",
               "type": "t_bool",
-              "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:73",
+              "src": "@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol:73",
               "offset": 8,
               "slot": "0"
             }
           ]
         }
-      },
-      "allAddresses": [
-        "0x15106A34498DBec54151a7fa59115D549Ba38AAd"
-      ]
+      }
     }
   }
 }

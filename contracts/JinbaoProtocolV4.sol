@@ -142,6 +142,8 @@ contract JinbaoProtocolV4 is Initializable, OwnableUpgradeable, UUPSUpgradeable,
     
     /// @notice 升级预留空间
     uint256[45] private __gap;
+
+    uint256 public constant VERSION_DEBUG = 1;
     
     // ═══════════════════════════════════════════════════════════════════════
     //                              错误定义
@@ -1172,7 +1174,7 @@ contract JinbaoProtocolV4 is Initializable, OwnableUpgradeable, UUPSUpgradeable,
         
         userInfo[user].activeDirects = newActiveDirects;
         
-        emit UserDataUpdated(user, newActiveDirects, userInfo[user].totalRevenue, userInfo[user].currentCap, userInfo[user].refundFeeAmount);
+        // emit UserDataUpdated(user, newActiveDirects, userInfo[user].totalRevenue, userInfo[user].currentCap, userInfo[user].refundFeeAmount);
     }
 
     /// @notice 管理员修改用户的团队成员数量

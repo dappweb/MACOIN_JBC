@@ -355,14 +355,18 @@ const EarningsDetail: React.FC<{ onNavigateToMining?: () => void }> = ({ onNavig
       setError(null)
       
       const currentBlock = await provider.getBlockNumber()
-      // 优化：减少查询范围到 20,000 区块，提高查询速度
-      // 如果用户需要更早的数据，可以增加范围或使用分页查询
-      const fromBlock = Math.max(0, currentBlock - 20000)
+      // 增加查询范围到 100,000 区块，确保能获取到所有历史数据
+      // 如果查询太慢，可以考虑分批查询或使用索引服务
+      const fromBlock = Math.max(0, currentBlock - 100000)
+      
+      console.log(`📊 [EarningsDetail] 查询范围: 区块 ${fromBlock} 到 ${currentBlock} (共 ${currentBlock - fromBlock} 个区块)`)
 
       const targetUser = isOwner && viewMode === "all" ? null : account
+      console.log(`📊 [EarningsDetail] 查询用户: ${targetUser || '所有用户'}`)
 
       // 并行查询四种事件
       // 使用 Promise.allSettled 避免其中一个失败导致整体失败
+      console.log(`📊 [EarningsDetail] 开始查询事件...`)
       const [rewardPaidResults, rewardClaimedResults, referralResults, differentialResults] = await Promise.allSettled([
         protocolContract.queryFilter(
           protocolContract.filters.RewardPaid(targetUser), 
@@ -389,31 +393,38 @@ const EarningsDetail: React.FC<{ onNavigateToMining?: () => void }> = ({ onNavig
 
       if (rewardPaidResults.status === 'fulfilled') {
         rewardPaidEvents = rewardPaidResults.value
+        console.log(`✅ [EarningsDetail] RewardPaid 事件: ${rewardPaidEvents.length} 条`)
       } else {
-        console.error("Failed to fetch RewardPaid events:", rewardPaidResults.reason)
+        console.error("❌ [EarningsDetail] Failed to fetch RewardPaid events:", rewardPaidResults.reason)
         toast.error("Failed to load RewardPaid events")
       }
 
       if (rewardClaimedResults.status === 'fulfilled') {
         rewardClaimedEvents = rewardClaimedResults.value
+        console.log(`✅ [EarningsDetail] RewardClaimed 事件: ${rewardClaimedEvents.length} 条`)
       } else {
-        console.error("Failed to fetch RewardClaimed events:", rewardClaimedResults.reason)
+        console.error("❌ [EarningsDetail] Failed to fetch RewardClaimed events:", rewardClaimedResults.reason)
         toast.error("Failed to load RewardClaimed events")
       }
 
       if (referralResults.status === 'fulfilled') {
         referralEvents = referralResults.value
+        console.log(`✅ [EarningsDetail] ReferralRewardPaid 事件: ${referralEvents.length} 条`)
       } else {
-        console.error("Failed to fetch referral events:", referralResults.reason)
+        console.error("❌ [EarningsDetail] Failed to fetch referral events:", referralResults.reason)
         toast.error("Failed to load referral events")
       }
 
       if (differentialResults.status === 'fulfilled') {
         differentialEvents = differentialResults.value
+        console.log(`✅ [EarningsDetail] DifferentialRewardDistributed 事件: ${differentialEvents.length} 条`)
       } else {
-        console.error("Failed to fetch differential events:", differentialResults.reason)
+        console.warn("⚠️ [EarningsDetail] Failed to fetch differential events (可能合约不支持):", differentialResults.reason)
         // 不显示错误，因为这是新事件，旧合约可能没有
       }
+      
+      const totalEvents = rewardPaidEvents.length + rewardClaimedEvents.length + referralEvents.length + differentialEvents.length
+      console.log(`📊 [EarningsDetail] 总共找到 ${totalEvents} 个事件`)
 
       const rows: RewardRecord[] = []
       let processedEvents = 0
@@ -607,28 +618,44 @@ const EarningsDetail: React.FC<{ onNavigateToMining?: () => void }> = ({ onNavig
       saveToCache(rows)
       
       // 显示处理结果
+      console.log(`📊 [EarningsDetail] 处理完成: ${processedEvents} 条成功, ${failedEvents} 条失败`)
+      
       if (failedEvents > 0) {
         toast.error(`Loaded ${processedEvents} records, ${failedEvents} failed to parse`)
       } else if (processedEvents > 0) {
         toast.success(`Loaded ${processedEvents} earnings records`)
+        console.log(`✅ [EarningsDetail] 成功加载 ${processedEvents} 条收益记录`)
       } else {
+        console.warn(`⚠️ [EarningsDetail] 未找到任何事件记录，尝试降级方案...`)
         // 如果没有记录，尝试获取合约状态作为降级方案
         await fetchContractStateFallback();
       }
       
     } catch (err: any) {
-      console.error("Failed to fetch earnings records:", err)
+      console.error("❌ [EarningsDetail] Failed to fetch earnings records:", err)
+      console.error("❌ [EarningsDetail] Error details:", {
+        message: err.message,
+        code: err.code,
+        stack: err.stack
+      })
       
       // 添加重试机制
       if (retryCount < 3) {
+        const retryDelay = 2000 * (retryCount + 1)
+        console.log(`🔄 [EarningsDetail] 将在 ${retryDelay}ms 后重试 (${retryCount + 1}/3)`)
         setTimeout(() => {
           fetchRecords(false, retryCount + 1);
-        }, 2000 * (retryCount + 1)); // 递增延迟
+        }, retryDelay); // 递增延迟
         return;
       }
       
-      // 静默处理错误，不显示用户错误提示
+      // 显示错误信息给用户
+      const errorMsg = err.message || "Failed to fetch earnings records"
+      setError(`查询失败: ${errorMsg}. 请检查网络连接或稍后重试。`)
+      toast.error(`查询失败: ${errorMsg}`)
+      
       // 尝试降级方案
+      console.log(`🔄 [EarningsDetail] 尝试降级方案...`)
       await fetchContractStateFallback();
     } finally {
       setLoading(false)
@@ -1157,12 +1184,30 @@ const EarningsDetail: React.FC<{ onNavigateToMining?: () => void }> = ({ onNavig
         <div className="bg-gray-900/80 border border-gray-700 rounded-xl shadow-md p-12 text-center backdrop-blur-sm">
           <div className="w-12 h-12 border-4 border-neon-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-gray-200">{ui.loading || "Loading..."}</p>
+          {refreshing && (
+            <p className="text-sm text-gray-400 mt-2">正在从链上查询数据，请稍候...</p>
+          )}
         </div>
       ) : filteredRecords.length === 0 ? (
         <div className="bg-gray-900/80 border border-gray-700 rounded-xl shadow-md p-12 text-center backdrop-blur-sm">
           <Gift className="w-16 h-16 mx-auto text-gray-400 mb-4" />
           <h3 className="text-xl font-bold text-gray-50 mb-2">{ui.noRecords || "No Reward Records"}</h3>
-          <p className="text-gray-200">{ui.noRecordsDesc || "No reward claims yet."}</p>
+          <p className="text-gray-200 mb-4">{ui.noRecordsDesc || "No reward claims yet."}</p>
+          {records.length > 0 && (
+            <div className="mt-4 p-4 bg-yellow-900/20 border border-yellow-500/30 rounded-lg">
+              <p className="text-sm text-yellow-300">
+                ⚠️ 找到 {records.length} 条记录，但被过滤器过滤掉了。
+              </p>
+              <p className="text-xs text-yellow-400 mt-1">
+                当前过滤器: {filterType === 'all' ? '全部' : getRewardTypeLabel(filterType as number)}
+              </p>
+            </div>
+          )}
+          {error && (
+            <div className="mt-4 p-4 bg-red-900/20 border border-red-500/30 rounded-lg">
+              <p className="text-sm text-red-300">{error}</p>
+            </div>
+          )}
         </div>
       ) : (
         <>

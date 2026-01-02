@@ -1,0 +1,27 @@
+name = "jbc-rpc-proxy"
+main = "rpc-proxy.ts"
+compatibility_date = "2024-01-01"
+
+# KV 命名空间（用于缓存）
+# 需要在 Cloudflare Dashboard 创建: wrangler kv:namespace create "RPC_CACHE"
+# [[kv_namespaces]]
+# binding = "RPC_CACHE"
+# id = "your-kv-namespace-id"
+
+# 环境变量
+[vars]
+CACHE_TTL = "60"
+
+# 生产环境配置
+[env.production]
+vars = { CACHE_TTL = "60" }
+
+# 开发环境配置
+[env.development]
+vars = { CACHE_TTL = "30" }
+
+# 路由配置（可选）
+# routes = [
+#   { pattern = "rpc.jbc.ac/*", zone_name = "jbc.ac" }
+# ]
+

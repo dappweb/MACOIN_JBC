@@ -145,8 +145,19 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   }
 
+  // Debounced owner check to avoid excessive calls
   useEffect(() => {
-    checkOwner()
+    if (!protocolContract || !address) {
+      setIsOwner(false)
+      return
+    }
+    
+    // Debounce owner check
+    const timeoutId = setTimeout(() => {
+      checkOwner()
+    }, 300)
+    
+    return () => clearTimeout(timeoutId)
   }, [protocolContract, address])
 
   useEffect(() => {
@@ -168,9 +179,19 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   }, [signer, provider])
 
-  // Refresh native MC balance when provider or address changes
+  // Refresh native MC balance when provider or address changes - debounced
   useEffect(() => {
-    refreshMcBalance()
+    if (!provider || !address) {
+      setMcBalance(null)
+      return
+    }
+    
+    // Debounce balance refresh to avoid excessive calls
+    const timeoutId = setTimeout(() => {
+      refreshMcBalance()
+    }, 200)
+    
+    return () => clearTimeout(timeoutId)
   }, [provider, address])
 
   const checkOwner = async () => {

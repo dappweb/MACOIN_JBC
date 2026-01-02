@@ -7,8 +7,8 @@
     }
   ],
   "impls": {
-    "8f8b381e4ea6c3b363415ed5ecbd3a7e88818a8fa1dbda702496a2607ff48171": {
-      "address": "0x9459122Fb6672E1007eBE4f00D134B9974e6Fb1c",
+    "34af0fe61fc24620c61268818cd54ff0be82ccdf117bae20f2956e30a81f4724": {
+      "address": "0x15106A34498DBec54151a7fa59115D549Ba38AAd",
       "layout": {
         "solcVersion": "0.8.22",
         "storage": [
@@ -16,305 +16,273 @@
             "label": "jbcToken",
             "offset": 0,
             "slot": "0",
-            "type": "t_contract(IJBC)13793",
-            "contract": "JinbaoProtocolNative",
-            "src": "contracts/JinbaoProtocolNative.sol:67"
+            "type": "t_contract(IJBC)21840",
+            "contract": "JinbaoProtocolV4",
+            "src": "contracts/JinbaoProtocolV4.sol:108"
           },
           {
             "label": "marketingWallet",
             "offset": 0,
             "slot": "1",
             "type": "t_address",
-            "contract": "JinbaoProtocolNative",
-            "src": "contracts/JinbaoProtocolNative.sol:68"
+            "contract": "JinbaoProtocolV4",
+            "src": "contracts/JinbaoProtocolV4.sol:109"
           },
           {
             "label": "treasuryWallet",
             "offset": 0,
             "slot": "2",
             "type": "t_address",
-            "contract": "JinbaoProtocolNative",
-            "src": "contracts/JinbaoProtocolNative.sol:69"
+            "contract": "JinbaoProtocolV4",
+            "src": "contracts/JinbaoProtocolV4.sol:110"
           },
           {
             "label": "lpInjectionWallet",
             "offset": 0,
             "slot": "3",
             "type": "t_address",
-            "contract": "JinbaoProtocolNative",
-            "src": "contracts/JinbaoProtocolNative.sol:71"
+            "contract": "JinbaoProtocolV4",
+            "src": "contracts/JinbaoProtocolV4.sol:111"
           },
           {
             "label": "buybackWallet",
             "offset": 0,
             "slot": "4",
             "type": "t_address",
-            "contract": "JinbaoProtocolNative",
-            "src": "contracts/JinbaoProtocolNative.sol:71"
+            "contract": "JinbaoProtocolV4",
+            "src": "contracts/JinbaoProtocolV4.sol:111"
           },
           {
             "label": "directRewardPercent",
             "offset": 0,
             "slot": "5",
             "type": "t_uint256",
-            "contract": "JinbaoProtocolNative",
-            "src": "contracts/JinbaoProtocolNative.sol:75"
+            "contract": "JinbaoProtocolV4",
+            "src": "contracts/JinbaoProtocolV4.sol:117"
           },
           {
             "label": "levelRewardPercent",
             "offset": 0,
             "slot": "6",
             "type": "t_uint256",
-            "contract": "JinbaoProtocolNative",
-            "src": "contracts/JinbaoProtocolNative.sol:76"
+            "contract": "JinbaoProtocolV4",
+            "src": "contracts/JinbaoProtocolV4.sol:118"
           },
           {
             "label": "marketingPercent",
             "offset": 0,
             "slot": "7",
             "type": "t_uint256",
-            "contract": "JinbaoProtocolNative",
-            "src": "contracts/JinbaoProtocolNative.sol:77"
+            "contract": "JinbaoProtocolV4",
+            "src": "contracts/JinbaoProtocolV4.sol:119"
           },
           {
             "label": "buybackPercent",
             "offset": 0,
             "slot": "8",
             "type": "t_uint256",
-            "contract": "JinbaoProtocolNative",
-            "src": "contracts/JinbaoProtocolNative.sol:78"
+            "contract": "JinbaoProtocolV4",
+            "src": "contracts/JinbaoProtocolV4.sol:119"
           },
           {
             "label": "lpInjectionPercent",
             "offset": 0,
             "slot": "9",
             "type": "t_uint256",
-            "contract": "JinbaoProtocolNative",
-            "src": "contracts/JinbaoProtocolNative.sol:80"
+            "contract": "JinbaoProtocolV4",
+            "src": "contracts/JinbaoProtocolV4.sol:120"
           },
           {
             "label": "treasuryPercent",
             "offset": 0,
             "slot": "10",
             "type": "t_uint256",
-            "contract": "JinbaoProtocolNative",
-            "src": "contracts/JinbaoProtocolNative.sol:81"
+            "contract": "JinbaoProtocolV4",
+            "src": "contracts/JinbaoProtocolV4.sol:120"
           },
           {
             "label": "redemptionFeePercent",
             "offset": 0,
             "slot": "11",
             "type": "t_uint256",
-            "contract": "JinbaoProtocolNative",
-            "src": "contracts/JinbaoProtocolNative.sol:82"
+            "contract": "JinbaoProtocolV4",
+            "src": "contracts/JinbaoProtocolV4.sol:122"
           },
           {
             "label": "swapBuyTax",
             "offset": 0,
             "slot": "12",
             "type": "t_uint256",
-            "contract": "JinbaoProtocolNative",
-            "src": "contracts/JinbaoProtocolNative.sol:84"
+            "contract": "JinbaoProtocolV4",
+            "src": "contracts/JinbaoProtocolV4.sol:122"
           },
           {
             "label": "swapSellTax",
             "offset": 0,
             "slot": "13",
             "type": "t_uint256",
-            "contract": "JinbaoProtocolNative",
-            "src": "contracts/JinbaoProtocolNative.sol:85"
+            "contract": "JinbaoProtocolV4",
+            "src": "contracts/JinbaoProtocolV4.sol:125"
           },
           {
             "label": "userInfo",
             "offset": 0,
             "slot": "14",
-            "type": "t_mapping(t_address,t_struct(UserInfo)13829_storage)",
-            "contract": "JinbaoProtocolNative",
-            "src": "contracts/JinbaoProtocolNative.sol:92"
+            "type": "t_mapping(t_address,t_struct(UserInfo)21875_storage)",
+            "contract": "JinbaoProtocolV4",
+            "src": "contracts/JinbaoProtocolV4.sol:137"
           },
           {
             "label": "userTicket",
             "offset": 0,
             "slot": "15",
-            "type": "t_mapping(t_address,t_struct(Ticket)13851_storage)",
-            "contract": "JinbaoProtocolNative",
-            "src": "contracts/JinbaoProtocolNative.sol:93"
+            "type": "t_mapping(t_address,t_struct(Ticket)21897_storage)",
+            "contract": "JinbaoProtocolV4",
+            "src": "contracts/JinbaoProtocolV4.sol:140"
           },
           {
             "label": "userStakes",
             "offset": 0,
             "slot": "16",
-            "type": "t_mapping(t_address,t_array(t_struct(Stake)13842_storage)dyn_storage)",
-            "contract": "JinbaoProtocolNative",
-            "src": "contracts/JinbaoProtocolNative.sol:93"
+            "type": "t_mapping(t_address,t_array(t_struct(Stake)21888_storage)dyn_storage)",
+            "contract": "JinbaoProtocolV4",
+            "src": "contracts/JinbaoProtocolV4.sol:141"
           },
           {
             "label": "directReferrals",
             "offset": 0,
             "slot": "17",
             "type": "t_mapping(t_address,t_array(t_address)dyn_storage)",
-            "contract": "JinbaoProtocolNative",
-            "src": "contracts/JinbaoProtocolNative.sol:94"
+            "contract": "JinbaoProtocolV4",
+            "src": "contracts/JinbaoProtocolV4.sol:144"
           },
           {
             "label": "ticketPendingRewards",
             "offset": 0,
             "slot": "18",
-            "type": "t_mapping(t_uint256,t_array(t_struct(PendingReward)13856_storage)dyn_storage)",
-            "contract": "JinbaoProtocolNative",
-            "src": "contracts/JinbaoProtocolNative.sol:97"
-          },
-          {
-            "label": "levelConfigs",
-            "offset": 0,
-            "slot": "19",
-            "type": "t_array(t_struct(LevelConfig)13944_storage)dyn_storage",
-            "contract": "JinbaoProtocolNative",
-            "src": "contracts/JinbaoProtocolNative.sol:104"
-          },
-          {
-            "label": "ticketFlexibilityDuration",
-            "offset": 0,
-            "slot": "20",
-            "type": "t_uint256",
-            "contract": "JinbaoProtocolNative",
-            "src": "contracts/JinbaoProtocolNative.sol:105"
-          },
-          {
-            "label": "liquidityEnabled",
-            "offset": 0,
-            "slot": "21",
-            "type": "t_bool",
-            "contract": "JinbaoProtocolNative",
-            "src": "contracts/JinbaoProtocolNative.sol:107"
-          },
-          {
-            "label": "redeemEnabled",
-            "offset": 1,
-            "slot": "21",
-            "type": "t_bool",
-            "contract": "JinbaoProtocolNative",
-            "src": "contracts/JinbaoProtocolNative.sol:108"
-          },
-          {
-            "label": "swapReserveMC",
-            "offset": 0,
-            "slot": "22",
-            "type": "t_uint256",
-            "contract": "JinbaoProtocolNative",
-            "src": "contracts/JinbaoProtocolNative.sol:110"
-          },
-          {
-            "label": "swapReserveJBC",
-            "offset": 0,
-            "slot": "23",
-            "type": "t_uint256",
-            "contract": "JinbaoProtocolNative",
-            "src": "contracts/JinbaoProtocolNative.sol:111"
-          },
-          {
-            "label": "nextTicketId",
-            "offset": 0,
-            "slot": "24",
-            "type": "t_uint256",
-            "contract": "JinbaoProtocolNative",
-            "src": "contracts/JinbaoProtocolNative.sol:116"
-          },
-          {
-            "label": "nextStakeId",
-            "offset": 0,
-            "slot": "25",
-            "type": "t_uint256",
-            "contract": "JinbaoProtocolNative",
-            "src": "contracts/JinbaoProtocolNative.sol:117"
-          },
-          {
-            "label": "lastBurnTime",
-            "offset": 0,
-            "slot": "26",
-            "type": "t_uint256",
-            "contract": "JinbaoProtocolNative",
-            "src": "contracts/JinbaoProtocolNative.sol:117"
-          },
-          {
-            "label": "ticketOwner",
-            "offset": 0,
-            "slot": "27",
-            "type": "t_mapping(t_uint256,t_address)",
-            "contract": "JinbaoProtocolNative",
-            "src": "contracts/JinbaoProtocolNative.sol:118"
+            "type": "t_mapping(t_uint256,t_array(t_struct(PendingReward)21902_storage)dyn_storage)",
+            "contract": "JinbaoProtocolV4",
+            "src": "contracts/JinbaoProtocolV4.sol:146"
           },
           {
             "label": "stakePendingRewards",
             "offset": 0,
-            "slot": "28",
-            "type": "t_mapping(t_uint256,t_array(t_struct(PendingReward)13856_storage)dyn_storage)",
-            "contract": "JinbaoProtocolNative",
-            "src": "contracts/JinbaoProtocolNative.sol:119"
+            "slot": "19",
+            "type": "t_mapping(t_uint256,t_array(t_struct(PendingReward)21902_storage)dyn_storage)",
+            "contract": "JinbaoProtocolV4",
+            "src": "contracts/JinbaoProtocolV4.sol:147"
+          },
+          {
+            "label": "ticketOwner",
+            "offset": 0,
+            "slot": "20",
+            "type": "t_mapping(t_uint256,t_address)",
+            "contract": "JinbaoProtocolV4",
+            "src": "contracts/JinbaoProtocolV4.sol:148"
           },
           {
             "label": "stakeOwner",
             "offset": 0,
-            "slot": "29",
+            "slot": "21",
             "type": "t_mapping(t_uint256,t_address)",
-            "contract": "JinbaoProtocolNative",
-            "src": "contracts/JinbaoProtocolNative.sol:122"
+            "contract": "JinbaoProtocolV4",
+            "src": "contracts/JinbaoProtocolV4.sol:150"
+          },
+          {
+            "label": "ticketFlexibilityDuration",
+            "offset": 0,
+            "slot": "22",
+            "type": "t_uint256",
+            "contract": "JinbaoProtocolV4",
+            "src": "contracts/JinbaoProtocolV4.sol:153"
+          },
+          {
+            "label": "liquidityEnabled",
+            "offset": 0,
+            "slot": "23",
+            "type": "t_bool",
+            "contract": "JinbaoProtocolV4",
+            "src": "contracts/JinbaoProtocolV4.sol:155"
+          },
+          {
+            "label": "redeemEnabled",
+            "offset": 1,
+            "slot": "23",
+            "type": "t_bool",
+            "contract": "JinbaoProtocolV4",
+            "src": "contracts/JinbaoProtocolV4.sol:157"
+          },
+          {
+            "label": "swapReserveMC",
+            "offset": 0,
+            "slot": "24",
+            "type": "t_uint256",
+            "contract": "JinbaoProtocolV4",
+            "src": "contracts/JinbaoProtocolV4.sol:159"
+          },
+          {
+            "label": "swapReserveJBC",
+            "offset": 0,
+            "slot": "25",
+            "type": "t_uint256",
+            "contract": "JinbaoProtocolV4",
+            "src": "contracts/JinbaoProtocolV4.sol:160"
+          },
+          {
+            "label": "nextTicketId",
+            "offset": 0,
+            "slot": "26",
+            "type": "t_uint256",
+            "contract": "JinbaoProtocolV4",
+            "src": "contracts/JinbaoProtocolV4.sol:162"
+          },
+          {
+            "label": "nextStakeId",
+            "offset": 0,
+            "slot": "27",
+            "type": "t_uint256",
+            "contract": "JinbaoProtocolV4",
+            "src": "contracts/JinbaoProtocolV4.sol:164"
+          },
+          {
+            "label": "lastBurnTime",
+            "offset": 0,
+            "slot": "28",
+            "type": "t_uint256",
+            "contract": "JinbaoProtocolV4",
+            "src": "contracts/JinbaoProtocolV4.sol:164"
           },
           {
             "label": "levelRewardPool",
             "offset": 0,
-            "slot": "30",
+            "slot": "29",
             "type": "t_uint256",
-            "contract": "JinbaoProtocolNative",
-            "src": "contracts/JinbaoProtocolNative.sol:123"
-          },
-          {
-            "label": "totalDynamicEarned",
-            "offset": 0,
-            "slot": "31",
-            "type": "t_mapping(t_address,t_uint256)",
-            "contract": "JinbaoProtocolNative",
-            "src": "contracts/JinbaoProtocolNative.sol:125"
-          },
-          {
-            "label": "totalDynamicClaimed",
-            "offset": 0,
-            "slot": "32",
-            "type": "t_mapping(t_address,t_uint256)",
-            "contract": "JinbaoProtocolNative",
-            "src": "contracts/JinbaoProtocolNative.sol:127"
-          },
-          {
-            "label": "__gap",
-            "offset": 0,
-            "slot": "33",
-            "type": "t_array(t_uint256)45_storage",
-            "contract": "JinbaoProtocolNative",
-            "src": "contracts/JinbaoProtocolNative.sol:131"
+            "contract": "JinbaoProtocolV4",
+            "src": "contracts/JinbaoProtocolV4.sol:165"
           },
           {
             "label": "emergencyPaused",
             "offset": 0,
-            "slot": "78",
+            "slot": "30",
             "type": "t_bool",
-            "contract": "JinbaoProtocolNative",
-            "src": "contracts/JinbaoProtocolNative.sol:132"
+            "contract": "JinbaoProtocolV4",
+            "src": "contracts/JinbaoProtocolV4.sol:167"
           },
           {
             "label": "priceOracle",
             "offset": 1,
-            "slot": "78",
+            "slot": "30",
             "type": "t_address",
-            "contract": "JinbaoProtocolNative",
-            "src": "contracts/JinbaoProtocolNative.sol:133"
+            "contract": "JinbaoProtocolV4",
+            "src": "contracts/JinbaoProtocolV4.sol:169"
           },
           {
-            "label": "_lastDifferentialDistribution",
+            "label": "__gap",
             "offset": 0,
-            "slot": "79",
-            "type": "t_mapping(t_address,t_struct(DifferentialDistribution)17135_storage)",
-            "contract": "JinbaoProtocolNative",
-            "src": "contracts/JinbaoProtocolNative.sol:958"
+            "slot": "31",
+            "type": "t_array(t_uint256)45_storage",
+            "contract": "JinbaoProtocolV4",
+            "src": "contracts/JinbaoProtocolV4.sol:170"
           }
         ],
         "types": {
@@ -380,23 +348,19 @@
             "label": "address[]",
             "numberOfBytes": "32"
           },
-          "t_array(t_struct(LevelConfig)13944_storage)dyn_storage": {
-            "label": "struct JinbaoProtocolNative.LevelConfig[]",
+          "t_array(t_struct(PendingReward)21902_storage)dyn_storage": {
+            "label": "struct JinbaoProtocolV4.PendingReward[]",
             "numberOfBytes": "32"
           },
-          "t_array(t_struct(PendingReward)13856_storage)dyn_storage": {
-            "label": "struct JinbaoProtocolNative.PendingReward[]",
-            "numberOfBytes": "32"
-          },
-          "t_array(t_struct(Stake)13842_storage)dyn_storage": {
-            "label": "struct JinbaoProtocolNative.Stake[]",
+          "t_array(t_struct(Stake)21888_storage)dyn_storage": {
+            "label": "struct JinbaoProtocolV4.Stake[]",
             "numberOfBytes": "32"
           },
           "t_array(t_uint256)45_storage": {
             "label": "uint256[45]",
             "numberOfBytes": "1440"
           },
-          "t_contract(IJBC)13793": {
+          "t_contract(IJBC)21840": {
             "label": "contract IJBC",
             "numberOfBytes": "20"
           },
@@ -404,84 +368,28 @@
             "label": "mapping(address => address[])",
             "numberOfBytes": "32"
           },
-          "t_mapping(t_address,t_array(t_struct(Stake)13842_storage)dyn_storage)": {
-            "label": "mapping(address => struct JinbaoProtocolNative.Stake[])",
+          "t_mapping(t_address,t_array(t_struct(Stake)21888_storage)dyn_storage)": {
+            "label": "mapping(address => struct JinbaoProtocolV4.Stake[])",
             "numberOfBytes": "32"
           },
-          "t_mapping(t_address,t_struct(DifferentialDistribution)17135_storage)": {
-            "label": "mapping(address => struct JinbaoProtocolNative.DifferentialDistribution)",
+          "t_mapping(t_address,t_struct(Ticket)21897_storage)": {
+            "label": "mapping(address => struct JinbaoProtocolV4.Ticket)",
             "numberOfBytes": "32"
           },
-          "t_mapping(t_address,t_struct(Ticket)13851_storage)": {
-            "label": "mapping(address => struct JinbaoProtocolNative.Ticket)",
-            "numberOfBytes": "32"
-          },
-          "t_mapping(t_address,t_struct(UserInfo)13829_storage)": {
-            "label": "mapping(address => struct JinbaoProtocolNative.UserInfo)",
-            "numberOfBytes": "32"
-          },
-          "t_mapping(t_address,t_uint256)": {
-            "label": "mapping(address => uint256)",
+          "t_mapping(t_address,t_struct(UserInfo)21875_storage)": {
+            "label": "mapping(address => struct JinbaoProtocolV4.UserInfo)",
             "numberOfBytes": "32"
           },
           "t_mapping(t_uint256,t_address)": {
             "label": "mapping(uint256 => address)",
             "numberOfBytes": "32"
           },
-          "t_mapping(t_uint256,t_array(t_struct(PendingReward)13856_storage)dyn_storage)": {
-            "label": "mapping(uint256 => struct JinbaoProtocolNative.PendingReward[])",
+          "t_mapping(t_uint256,t_array(t_struct(PendingReward)21902_storage)dyn_storage)": {
+            "label": "mapping(uint256 => struct JinbaoProtocolV4.PendingReward[])",
             "numberOfBytes": "32"
           },
-          "t_struct(DifferentialDistribution)17135_storage": {
-            "label": "struct JinbaoProtocolNative.DifferentialDistribution",
-            "members": [
-              {
-                "label": "mcAmount",
-                "type": "t_uint256",
-                "offset": 0,
-                "slot": "0"
-              },
-              {
-                "label": "jbcAmount",
-                "type": "t_uint256",
-                "offset": 0,
-                "slot": "1"
-              },
-              {
-                "label": "totalValue",
-                "type": "t_uint256",
-                "offset": 0,
-                "slot": "2"
-              }
-            ],
-            "numberOfBytes": "96"
-          },
-          "t_struct(LevelConfig)13944_storage": {
-            "label": "struct JinbaoProtocolNative.LevelConfig",
-            "members": [
-              {
-                "label": "minDirects",
-                "type": "t_uint256",
-                "offset": 0,
-                "slot": "0"
-              },
-              {
-                "label": "level",
-                "type": "t_uint256",
-                "offset": 0,
-                "slot": "1"
-              },
-              {
-                "label": "percent",
-                "type": "t_uint256",
-                "offset": 0,
-                "slot": "2"
-              }
-            ],
-            "numberOfBytes": "96"
-          },
-          "t_struct(PendingReward)13856_storage": {
-            "label": "struct JinbaoProtocolNative.PendingReward",
+          "t_struct(PendingReward)21902_storage": {
+            "label": "struct JinbaoProtocolV4.PendingReward",
             "members": [
               {
                 "label": "upline",
@@ -498,8 +406,8 @@
             ],
             "numberOfBytes": "64"
           },
-          "t_struct(Stake)13842_storage": {
-            "label": "struct JinbaoProtocolNative.Stake",
+          "t_struct(Stake)21888_storage": {
+            "label": "struct JinbaoProtocolV4.Stake",
             "members": [
               {
                 "label": "id",
@@ -540,8 +448,8 @@
             ],
             "numberOfBytes": "192"
           },
-          "t_struct(Ticket)13851_storage": {
-            "label": "struct JinbaoProtocolNative.Ticket",
+          "t_struct(Ticket)21897_storage": {
+            "label": "struct JinbaoProtocolV4.Ticket",
             "members": [
               {
                 "label": "ticketId",
@@ -570,8 +478,8 @@
             ],
             "numberOfBytes": "128"
           },
-          "t_struct(UserInfo)13829_storage": {
-            "label": "struct JinbaoProtocolNative.UserInfo",
+          "t_struct(UserInfo)21875_storage": {
+            "label": "struct JinbaoProtocolV4.UserInfo",
             "members": [
               {
                 "label": "referrer",
@@ -683,7 +591,10 @@
             }
           ]
         }
-      }
+      },
+      "allAddresses": [
+        "0x15106A34498DBec54151a7fa59115D549Ba38AAd"
+      ]
     }
   }
 }

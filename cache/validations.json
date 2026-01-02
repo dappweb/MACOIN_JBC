@@ -5923,9 +5923,9 @@
       "contracts/JinbaoProtocolV4.sol:JinbaoProtocolV4": {
         "src": "contracts/JinbaoProtocolV4.sol:31",
         "version": {
-          "withMetadata": "8014dc095d5995c964000d190d406348ce99671e2f34d0b1f7dbbcf571702192",
-          "withoutMetadata": "560233c2de9656dcb2176c1cb915b203c3fd4a8b10fc0a093318f234783d4c91",
-          "linkedWithoutMetadata": "560233c2de9656dcb2176c1cb915b203c3fd4a8b10fc0a093318f234783d4c91"
+          "withMetadata": "4bc519579f1b5b69d26466b49ace2e82e033c4f314876735a234135bda258daf",
+          "withoutMetadata": "34af0fe61fc24620c61268818cd54ff0be82ccdf117bae20f2956e30a81f4724",
+          "linkedWithoutMetadata": "34af0fe61fc24620c61268818cd54ff0be82ccdf117bae20f2956e30a81f4724"
         },
         "inherit": [
           "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol:ReentrancyGuardUpgradeable",
@@ -5965,6 +5965,8 @@
           "addLiquidity(uint256)",
           "withdrawSwapReserves(address,uint256,address,uint256)",
           "adminSetReferrer(address,address)",
+          "adminSetActiveDirects(address,uint256)",
+          "adminSetTeamCount(address,uint256)",
           "rescueTokens(address,address,uint256)",
           "emergencyWithdrawNative(address,uint256)"
         ],

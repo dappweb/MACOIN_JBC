@@ -8,9 +8,13 @@
     <link rel="manifest" href="/manifest.json" />
     
     <!-- Preload critical resources -->
-    <link rel="preload" href="https://cdn.tailwindcss.com" as="script" />
+    <link rel="preload" href="/icon.png" as="image" />
+    <link rel="preload" href="/bg-3.png" as="image" />
     <link rel="dns-prefetch" href="//chain.mcerscan.com" />
     <link rel="dns-prefetch" href="//mcerscan.com" />
+    <link rel="dns-prefetch" href="//api.macoin.ai" />
+    <!-- Preconnect to external APIs -->
+    <link rel="preconnect" href="https://api.macoin.ai" crossorigin />
     
     <!-- Open Graph / Facebook / DApp Browsers -->
     <meta property="og:type" content="website" />

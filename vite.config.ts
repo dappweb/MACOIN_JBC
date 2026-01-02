@@ -68,21 +68,46 @@ export default defineConfig(({ mode }) => {
           compress: {
             drop_console: isProduction,
             drop_debugger: isProduction,
-            pure_funcs: isProduction ? ['console.log', 'console.warn'] : []
+            pure_funcs: isProduction ? ['console.log', 'console.warn'] : [],
+            passes: 2 // 多次压缩以获得更好的结果
           }
         },
         rollupOptions: {
           output: {
-            // 代码分割策略
-            manualChunks: {
+            // 代码分割策略 - 更细粒度分割
+            manualChunks: (id) => {
               // 核心React库
-              'react-vendor': ['react', 'react-dom'],
+              if (id.includes('node_modules/react') || id.includes('node_modules/react-dom')) {
+                return 'react-vendor';
+              }
               // Web3相关库
-              'web3-vendor': ['ethers', '@rainbow-me/rainbowkit', 'wagmi', 'viem'],
+              if (id.includes('node_modules/ethers') || 
+                  id.includes('node_modules/@rainbow-me') || 
+                  id.includes('node_modules/wagmi') || 
+                  id.includes('node_modules/viem')) {
+                return 'web3-vendor';
+              }
               // UI组件库
-              'ui-vendor': ['lucide-react', 'recharts', 'react-hot-toast'],
+              if (id.includes('node_modules/lucide-react') || 
+                  id.includes('node_modules/recharts') || 
+                  id.includes('node_modules/react-hot-toast')) {
+                return 'ui-vendor';
+              }
               // 工具库
-              'utils-vendor': ['@tanstack/react-query']
+              if (id.includes('node_modules/@tanstack')) {
+                return 'utils-vendor';
+              }
+              // 组件代码分割 - 按路由/功能分割
+              if (id.includes('/components/')) {
+                const match = id.match(/components\/([^/]+)/);
+                if (match) {
+                  const componentName = match[1];
+                  // 大型组件单独打包
+                  if (['MiningPanel', 'EarningsDetail', 'TeamLevel', 'SwapPanel'].includes(componentName)) {
+                    return `component-${componentName.toLowerCase()}`;
+                  }
+                }
+              }
             },
             // 文件命名优化
             chunkFileNames: 'assets/js/[name]-[hash].js',

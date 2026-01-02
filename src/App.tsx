@@ -1,14 +1,6 @@
-import React, { useState, useEffect } from "react"
+import React, { useState, useEffect, Suspense, lazy } from "react"
 import Navbar from "../components/Navbar"
 import NoticeBar from "../components/NoticeBar"
-import StatsPanel from "../components/StatsPanel"
-import MiningPanel from "../components/MiningPanel"
-import BuyTicketPanel from "../components/BuyTicketPanel"
-import TeamLevel from "../components/TeamLevel"
-import SwapPanel from "../components/SwapPanel"
-import AdminPanel from "../components/AdminPanel"
-import TransactionHistory from "../components/TransactionHistory"
-import EarningsDetail from "../components/EarningsDetail"
 import PullToRefresh from "../components/PullToRefresh"
 import ErrorBoundary from "../components/ErrorBoundary"
 import { SkeletonCard } from "../components/LoadingSkeletons"
@@ -26,13 +18,33 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { config } from "./config"
 import "@rainbow-me/rainbowkit/styles.css"
 
-const queryClient = new QueryClient()
+// Lazy load heavy components - only load when needed
+const StatsPanel = lazy(() => import("../components/StatsPanel"))
+const MiningPanel = lazy(() => import("../components/MiningPanel"))
+const BuyTicketPanel = lazy(() => import("../components/BuyTicketPanel"))
+const TeamLevel = lazy(() => import("../components/TeamLevel"))
+const SwapPanel = lazy(() => import("../components/SwapPanel"))
+const AdminPanel = lazy(() => import("../components/AdminPanel"))
+const TransactionHistory = lazy(() => import("../components/TransactionHistory"))
+const EarningsDetail = lazy(() => import("../components/EarningsDetail"))
+
+// Optimize QueryClient with better defaults
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5, // 5 minutes
+      gcTime: 1000 * 60 * 10, // 10 minutes (formerly cacheTime)
+      refetchOnWindowFocus: false,
+      retry: 1,
+    },
+  },
+})
 
 // Create an inner component to use the hook
 const AppContent: React.FC = () => {
   const [currentTab, setCurrentTab] = useState<AppTab>(AppTab.HOME)
-  const [loading, setLoading] = useState(true)
   const [appError, setAppError] = useState<string | null>(null)
+  const [isInitialized, setIsInitialized] = useState(false)
   const { t } = useLanguage()
 
   const handleRefresh = async () => {
@@ -50,15 +62,44 @@ const AppContent: React.FC = () => {
     // Initialize toast configuration - disable error notifications by default
     disableErrorNotifications();
     
-    // Simulate initial loading with better UX
-    const timer = setTimeout(() => {
-      setLoading(false)
-    }, 1200) // Reduced from 1500ms for better perceived performance
-    return () => clearTimeout(timer)
+    // Fast initialization - check if Web3 is ready
+    // Don't wait for contracts if not connected
+    const initTimer = setTimeout(() => {
+      setIsInitialized(true)
+    }, 100) // Minimal delay for smooth transition
+    
+    return () => clearTimeout(initTimer)
   }, [])
 
-  // Enhanced loading screen
-  if (loading) {
+  // Preload next likely component when user hovers over nav
+  const preloadComponent = (tab: AppTab) => {
+    switch (tab) {
+      case AppTab.MINING:
+        import("../components/MiningPanel")
+        break
+      case AppTab.BUY_TICKET:
+        import("../components/BuyTicketPanel")
+        break
+      case AppTab.TEAM:
+        import("../components/TeamLevel")
+        break
+      case AppTab.SWAP:
+        import("../components/SwapPanel")
+        break
+      case AppTab.HISTORY:
+        import("../components/TransactionHistory")
+        break
+      case AppTab.EARNINGS:
+        import("../components/EarningsDetail")
+        break
+      case AppTab.ADMIN:
+        import("../components/AdminPanel")
+        break
+    }
+  }
+
+  // Minimal loading screen - only show if not initialized
+  if (!isInitialized) {
     return (
       <div className="min-h-screen w-full bg-black flex flex-col items-center justify-center relative overflow-hidden">
         {/* Background effects */}
@@ -68,26 +109,13 @@ const AppContent: React.FC = () => {
         
         <div className="z-10 flex flex-col items-center">
           <div className="w-32 h-32 md:w-40 md:h-40 overflow-hidden rounded-xl animate-spin mb-6 md:mb-8 shadow-xl">
-            <img src="/icon.png" alt="Jinbao Protocol" className="w-full h-full object-cover" />
+            <img src="/icon.png" alt="Jinbao Protocol" className="w-full h-full object-cover" loading="eager" />
           </div>
           <h1 className="text-xl md:text-2xl font-bold text-white tracking-widest animate-pulse mb-2">
             JBC <span className="text-neon-400">RWA</span>
           </h1>
-          <p className="text-gray-400 text-xs md:text-sm animate-pulse">Loading Protocol Data...</p>
-          
-          {/* Loading progress indicator */}
-          <div className="mt-6 w-48 h-1 bg-gray-800 rounded-full overflow-hidden">
-            <div className="h-full bg-gradient-to-r from-neon-500 to-neon-400 rounded-full animate-[loading_1.2s_ease-in-out_infinite]"></div>
-          </div>
+          <p className="text-gray-400 text-xs md:text-sm animate-pulse">Initializing...</p>
         </div>
-        
-        <style jsx>{`
-          @keyframes loading {
-            0% { width: 0%; }
-            50% { width: 70%; }
-            100% { width: 100%; }
-          }
-        `}</style>
       </div>
     )
   }
@@ -156,61 +184,84 @@ const AppContent: React.FC = () => {
         <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-blue-500/3 rounded-full blur-3xl animate-pulse delay-2000"></div>
       </div>
       
-      <Navbar currentTab={currentTab} setTab={setCurrentTab} />
+      <Navbar 
+        currentTab={currentTab} 
+        setTab={(tab) => {
+          setCurrentTab(tab)
+          // Preload adjacent components
+          preloadComponent(tab)
+        }} 
+      />
 
       <PullToRefresh onRefresh={handleRefresh} className="pt-20 md:pt-24 relative z-10">
         <main className="px-3 sm:px-4 md:px-6 lg:px-8 mb-16 md:mb-0">
           <NoticeBar />
-          {/* Render Tab Content with Error Boundaries */}
+          {/* Render Tab Content with Error Boundaries and Suspense */}
           {currentTab === AppTab.HOME && (
             <ErrorBoundary onError={handleAppError}>
-              <StatsPanel
-                stats={MOCK_USER_STATS}
-                onJoinClick={() => setCurrentTab(AppTab.MINING)}
-                onBuyTicketClick={() => setCurrentTab(AppTab.BUY_TICKET)}
-              />
+              <Suspense fallback={<SkeletonCard />}>
+                <StatsPanel
+                  stats={MOCK_USER_STATS}
+                  onJoinClick={() => setCurrentTab(AppTab.MINING)}
+                  onBuyTicketClick={() => setCurrentTab(AppTab.BUY_TICKET)}
+                />
+              </Suspense>
             </ErrorBoundary>
           )}
 
           {currentTab === AppTab.MINING && (
             <ErrorBoundary onError={handleAppError}>
-              <MiningPanel />
+              <Suspense fallback={<SkeletonCard />}>
+                <MiningPanel />
+              </Suspense>
             </ErrorBoundary>
           )}
 
           {currentTab === AppTab.BUY_TICKET && (
             <ErrorBoundary onError={handleAppError}>
-              <BuyTicketPanel onBack={() => setCurrentTab(AppTab.HOME)} />
+              <Suspense fallback={<SkeletonCard />}>
+                <BuyTicketPanel onBack={() => setCurrentTab(AppTab.HOME)} />
+              </Suspense>
             </ErrorBoundary>
           )}
 
           {currentTab === AppTab.TEAM && (
             <ErrorBoundary onError={handleAppError}>
-              <TeamLevel />
+              <Suspense fallback={<SkeletonCard />}>
+                <TeamLevel />
+              </Suspense>
             </ErrorBoundary>
           )}
 
           {currentTab === AppTab.SWAP && (
             <ErrorBoundary onError={handleAppError}>
-              <SwapPanel />
+              <Suspense fallback={<SkeletonCard />}>
+                <SwapPanel />
+              </Suspense>
             </ErrorBoundary>
           )}
 
           {currentTab === AppTab.HISTORY && (
             <ErrorBoundary onError={handleAppError}>
-              <TransactionHistory />
+              <Suspense fallback={<SkeletonCard />}>
+                <TransactionHistory />
+              </Suspense>
             </ErrorBoundary>
           )}
 
           {currentTab === AppTab.EARNINGS && (
             <ErrorBoundary onError={handleAppError}>
-              <EarningsDetail onNavigateToMining={() => setCurrentTab(AppTab.MINING)} />
+              <Suspense fallback={<SkeletonCard />}>
+                <EarningsDetail onNavigateToMining={() => setCurrentTab(AppTab.MINING)} />
+              </Suspense>
             </ErrorBoundary>
           )}
 
           {currentTab === AppTab.ADMIN && (
             <ErrorBoundary onError={handleAppError}>
-              <AdminPanel />
+              <Suspense fallback={<SkeletonCard />}>
+                <AdminPanel />
+              </Suspense>
             </ErrorBoundary>
           )}
         </main>

@@ -955,7 +955,7 @@ const EarningsDetail: React.FC<{ onNavigateToMining?: () => void }> = ({ onNavig
                 }}
                 className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-sm font-medium transition-colors"
               >
-                {ui.goToStake || "去质押"}
+                {ui.goToStake || "去提供流动性"}
               </button>
             </div>
           </div>

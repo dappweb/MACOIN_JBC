@@ -647,6 +647,8 @@ const EarningsDetail: React.FC<{ onNavigateToMining?: () => void }> = ({ onNavig
       
       if (totalRevenue > 0) {
         // 创建一个基于合约状态的记录
+        // 注意：这个记录代表总累计收益，不是24小时内的收益
+        // 使用旧时间戳（1年前）以确保它不会被计入24小时统计
         const fallbackRecord: RewardRecord = {
           hash: "contract-state",
           user: account,
@@ -655,7 +657,7 @@ const EarningsDetail: React.FC<{ onNavigateToMining?: () => void }> = ({ onNavig
           rewardType: 0, // 静态收益
           ticketId: "fallback",
           blockNumber: 0,
-          timestamp: Math.floor(Date.now() / 1000),
+          timestamp: Math.floor(Date.now() / 1000) - (365 * 24 * 3600), // 1年前的时间戳，确保不被计入24h统计
           status: "confirmed",
         };
         
@@ -720,6 +722,11 @@ const EarningsDetail: React.FC<{ onNavigateToMining?: () => void }> = ({ onNavig
     const oneDayAgo = now - 24 * 3600
 
     records.forEach((row) => {
+      // 排除 fallback 记录（contract-state），因为它代表总累计收益，不是24小时内的收益
+      if (row.hash === "contract-state") {
+        return
+      }
+      
       if (row.timestamp >= oneDayAgo) {
         const mc = parseFloat(row.mcAmount || "0")
         const jbc = parseFloat(row.jbcAmount || "0")

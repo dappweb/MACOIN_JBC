@@ -306,12 +306,14 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
         }
 
         // 获取动态奖励数据 (V3合约功能)
+        let dynamicTotalEarned = 0
         try {
           // 检查合约是否支持V3功能
           if (protocolContract.getUserDynamicRewards) {
             const dynamicRewardsData = await protocolContract.getUserDynamicRewards(account)
+            dynamicTotalEarned = parseFloat(ethers.formatEther(dynamicRewardsData.totalEarned))
             setDynamicRewards({
-              totalEarned: parseFloat(ethers.formatEther(dynamicRewardsData.totalEarned)),
+              totalEarned: dynamicTotalEarned,
               totalClaimed: parseFloat(ethers.formatEther(dynamicRewardsData.totalClaimed)),
               pendingAmount: parseFloat(ethers.formatEther(dynamicRewardsData.pendingAmount)),
               claimableAmount: parseFloat(ethers.formatEther(dynamicRewardsData.claimableAmount))
@@ -323,7 +325,8 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
         }
 
         const baseRevenue = parseFloat(ethers.formatEther(userInfo[3]))
-        const combinedRevenue = baseRevenue + referralRevenue
+        // 累计收益 = 合约状态的基础收益 + 推荐奖励 + 动态奖励
+        const combinedRevenue = baseRevenue + referralRevenue + dynamicTotalEarned
         setRewardTotals({
           mc: rewardMc + referralRevenue,
           jbc: rewardJbc,

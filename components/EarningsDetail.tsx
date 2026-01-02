@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react"
+import React, { useEffect, useMemo, useState, useRef } from "react"
 import { ethers } from "ethers"
 import { Clock, ExternalLink, Gift, RefreshCw, Filter, X, ChevronRight, Copy, CheckCircle, Pickaxe, Zap, UserPlus, Layers, TrendingUp, ChevronLeft, AlertCircle } from "lucide-react"
 import { useWeb3 } from "../src/Web3Context"
@@ -60,6 +60,9 @@ const EarningsDetail: React.FC<{ onNavigateToMining?: () => void }> = ({ onNavig
   
   // 缓存状态
   const [cacheStatus, setCacheStatus] = useState<'none' | 'loading' | 'loaded'>('none')
+  
+  // 区块信息缓存（避免重复获取）- 使用 useRef 保持缓存持久性
+  const blockCache = useRef(new Map<number, { timestamp: number }>())
 
   useEffect(() => {
     const checkOwner = async () => {
@@ -187,24 +190,36 @@ const EarningsDetail: React.FC<{ onNavigateToMining?: () => void }> = ({ onNavig
       let totalPendingRewards = 0n;
       let activeStakesCount = 0;
       
-      // 遍历用户的质押记录
-      for (let i = 0; i < 20; i++) { // 增加到检查前20条记录
-        try {
-          // 使用 userStakes 获取质押信息
-          // 注意：如果 i 超过了用户的质押数量，合约可能会 revert
-          // 所以我们需要用 try-catch 包裹每次调用
-          const stake = await protocolContract.userStakes(account, i);
+      // 性能优化：批量获取质押记录，减少RPC调用次数
+      // 先尝试获取质押数量（如果合约支持）
+      let maxStakesToCheck = 20
+      let emptyCount = 0
+      const maxEmptyCount = 3 // 连续遇到3个空记录就停止
+      
+      // 批量获取质押记录（每批5个）
+      const batchSize = 5
+      for (let i = 0; i < maxStakesToCheck && emptyCount < maxEmptyCount; i += batchSize) {
+        const batchPromises = []
+        for (let j = 0; j < batchSize && (i + j) < maxStakesToCheck; j++) {
+          batchPromises.push(
+            protocolContract.userStakes(account, i + j).catch(() => null)
+          )
+        }
+        
+        const batchResults = await Promise.all(batchPromises)
+        
+        for (let j = 0; j < batchResults.length; j++) {
+          const stake = batchResults[j]
           
-          // 如果 amount 为 0，通常表示该索引没有有效质押（或者是空的结构体）
-          // 但在某些实现中，可能是被删除了。我们假设遇到空记录就停止，或者继续检查。
-          // 安全起见，如果连续遇到3个空记录才停止？
-          // 这里假设 amount > 0 才是有效记录
-          if (stake.amount === 0n) {
-             // 检查是否是真的结束了，还是只是中间有空洞
-             // 通常 userStakes 是数组，不会有空洞，除非 pop 了
-             // 暂时假设遇到 0 amount 就结束
-             break;
+          if (!stake || stake.amount === 0n) {
+            emptyCount++
+            if (emptyCount >= maxEmptyCount) {
+              break
+            }
+            continue
           }
+          
+          emptyCount = 0 // 重置空记录计数
           
           if (stake.active) {
             activeStakesCount++;
@@ -226,7 +241,7 @@ const EarningsDetail: React.FC<{ onNavigateToMining?: () => void }> = ({ onNavig
               else {
                  // 如果是非标准周期，尝试根据比例估算？或者暂时忽略
                  // 假设 30 天是基准？
-                 console.warn(`⚠️ [EarningsDetail] Unknown cycle days: ${days}, skipping reward calc for stake #${i}`);
+                 console.warn(`⚠️ [EarningsDetail] Unknown cycle days: ${days}, skipping reward calc for stake #${i + j}`);
                  continue;
               }
               
@@ -237,9 +252,10 @@ const EarningsDetail: React.FC<{ onNavigateToMining?: () => void }> = ({ onNavig
               totalPendingRewards += pending;
             }
           }
-        } catch (error) {
-          // 索引越界，结束遍历
-          break;
+        }
+        
+        if (emptyCount >= maxEmptyCount) {
+          break
         }
       }
       
@@ -339,8 +355,9 @@ const EarningsDetail: React.FC<{ onNavigateToMining?: () => void }> = ({ onNavig
       setError(null)
       
       const currentBlock = await provider.getBlockNumber()
-      // 减少查询范围到 50,000 区块，提高查询成功率
-      const fromBlock = Math.max(0, currentBlock - 50000)
+      // 优化：减少查询范围到 20,000 区块，提高查询速度
+      // 如果用户需要更早的数据，可以增加范围或使用分页查询
+      const fromBlock = Math.max(0, currentBlock - 20000)
 
       const targetUser = isOwner && viewMode === "all" ? null : account
 
@@ -402,10 +419,54 @@ const EarningsDetail: React.FC<{ onNavigateToMining?: () => void }> = ({ onNavig
       let processedEvents = 0
       let failedEvents = 0
 
+      // 性能优化：收集所有需要获取的区块号，然后批量获取
+      const blockNumbers = new Set<number>()
+      const allEvents = [
+        ...rewardPaidEvents,
+        ...rewardClaimedEvents,
+        ...referralEvents,
+        ...differentialEvents
+      ]
+      
+      allEvents.forEach(event => {
+        blockNumbers.add(event.blockNumber)
+      })
+
+      // 批量获取区块信息（只获取缓存中没有的）
+      const blocksToFetch = Array.from(blockNumbers).filter(blockNum => !blockCache.current.has(blockNum))
+      
+      if (blocksToFetch.length > 0) {
+        // 批量获取区块信息，限制并发数为10
+        const batchSize = 10
+        for (let i = 0; i < blocksToFetch.length; i += batchSize) {
+          const batch = blocksToFetch.slice(i, i + batchSize)
+          const blockPromises = batch.map(blockNum => 
+            provider.getBlock(blockNum).then(block => ({
+              blockNumber: blockNum,
+              timestamp: block ? block.timestamp : 0
+            })).catch(() => ({
+              blockNumber: blockNum,
+              timestamp: 0
+            }))
+          )
+          
+          const blockResults = await Promise.all(blockPromises)
+          blockResults.forEach(({ blockNumber, timestamp }) => {
+            blockCache.current.set(blockNumber, { timestamp })
+          })
+        }
+      }
+
+      // 获取区块信息的辅助函数
+      const getBlockTimestamp = (blockNumber: number): number => {
+        const cached = blockCache.current.get(blockNumber)
+        return cached ? cached.timestamp : 0
+      }
+
       // 处理RewardPaid事件（包含静态收益）
       for (const event of rewardPaidEvents) {
         try {
-          const block = await provider.getBlock(event.blockNumber)
+          const timestamp = getBlockTimestamp(event.blockNumber)
           const amount = event.args ? ethers.formatEther(event.args[1]) : "0"
           const rewardType = event.args ? Number(event.args[2]) : 0
 
@@ -430,7 +491,7 @@ const EarningsDetail: React.FC<{ onNavigateToMining?: () => void }> = ({ onNavig
             rewardType,
             ticketId: "", // RewardPaid事件没有ticketId
             blockNumber: event.blockNumber,
-            timestamp: block ? block.timestamp : 0,
+            timestamp,
             status: "confirmed",
           })
           processedEvents++
@@ -443,7 +504,7 @@ const EarningsDetail: React.FC<{ onNavigateToMining?: () => void }> = ({ onNavig
       // 处理RewardClaimed事件
       for (const event of rewardClaimedEvents) {
         try {
-          const block = await provider.getBlock(event.blockNumber)
+          const timestamp = getBlockTimestamp(event.blockNumber)
           const mcAmount = event.args ? ethers.formatEther(event.args[1]) : "0"
           const jbcAmount = event.args ? ethers.formatEther(event.args[2]) : "0"
           const rewardType = event.args ? Number(event.args[3]) : 0
@@ -457,7 +518,7 @@ const EarningsDetail: React.FC<{ onNavigateToMining?: () => void }> = ({ onNavig
             rewardType,
             ticketId,
             blockNumber: event.blockNumber,
-            timestamp: block ? block.timestamp : 0,
+            timestamp,
             status: "confirmed",
           })
           processedEvents++
@@ -470,7 +531,7 @@ const EarningsDetail: React.FC<{ onNavigateToMining?: () => void }> = ({ onNavig
       // 处理推荐奖励事件
       for (const event of referralEvents) {
         try {
-          const block = await provider.getBlock(event.blockNumber)
+          const timestamp = getBlockTimestamp(event.blockNumber)
           
           // 检查事件参数数量来判断是新格式还是旧格式
           const isNewFormat = event.args && event.args.length >= 6 // 新格式有6个参数
@@ -503,7 +564,7 @@ const EarningsDetail: React.FC<{ onNavigateToMining?: () => void }> = ({ onNavig
             rewardType,
             ticketId,
             blockNumber: event.blockNumber,
-            timestamp: block ? block.timestamp : 0,
+            timestamp,
             status: "confirmed",
           })
           processedEvents++
@@ -516,7 +577,7 @@ const EarningsDetail: React.FC<{ onNavigateToMining?: () => void }> = ({ onNavig
       // 处理新的 DifferentialRewardDistributed 事件
       for (const event of differentialEvents) {
         try {
-          const block = await provider.getBlock(event.blockNumber)
+          const timestamp = getBlockTimestamp(event.blockNumber)
           const mcAmount = event.args ? ethers.formatEther(event.args[1]) : "0"
           const jbcAmount = event.args ? ethers.formatEther(event.args[2]) : "0"
           const jbcPrice = event.args ? ethers.formatEther(event.args[3]) : "0"
@@ -529,7 +590,7 @@ const EarningsDetail: React.FC<{ onNavigateToMining?: () => void }> = ({ onNavig
             rewardType: 4, // 級差獎勵
             ticketId: "", // DifferentialRewardDistributed 事件沒有 ticketId
             blockNumber: event.blockNumber,
-            timestamp: block ? block.timestamp : 0,
+            timestamp,
             status: "confirmed",
           })
           processedEvents++
@@ -609,8 +670,16 @@ const EarningsDetail: React.FC<{ onNavigateToMining?: () => void }> = ({ onNavig
   }
 
   useEffect(() => {
-    fetchRecords()
-    fetchPendingRewards()
+    // 性能优化：先显示缓存数据，然后在后台更新
+    if (loadFromCache()) {
+      // 缓存数据已加载，在后台静默更新
+      fetchRecords(false).catch(console.error)
+      fetchPendingRewards().catch(console.error)
+    } else {
+      // 没有缓存，正常加载
+      fetchRecords()
+      fetchPendingRewards()
+    }
   }, [protocolContract, account, viewMode, isOwner])
 
   // 添加分页逻辑 - 过滤掉动态奖励记录

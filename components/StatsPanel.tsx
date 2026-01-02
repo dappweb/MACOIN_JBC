@@ -523,11 +523,11 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
             </div>
             <Wallet className="text-neon-400" size={18} />
           </div>
-          <div className="text-2xl md:text-3xl font-bold text-white mb-1">
-            {displayStats.balanceMC.toLocaleString()}
+          <div className="text-2xl md:text-3xl font-bold text-white mb-1 text-right font-mono">
+            {displayStats.balanceMC.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>
           {mcUsdtPrice > 0 && (
-            <div className="text-xs text-neon-400 font-bold flex items-center gap-1">
+            <div className="text-xs text-neon-400 font-bold text-right font-mono">
               ≈${(displayStats.balanceMC * mcUsdtPrice).toFixed(2)} USDT
             </div>
           )}
@@ -539,10 +539,10 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
             <span className="text-gray-300 text-xs md:text-sm font-medium">{t.stats.holding}</span>
             <Coins className="text-amber-400" size={18} />
           </div>
-          <div className="text-2xl md:text-3xl font-bold text-white mb-1">
-            {displayStats.balanceJBC.toLocaleString()}
+          <div className="text-2xl md:text-3xl font-bold text-white mb-1 text-right font-mono">
+            {displayStats.balanceJBC.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>
-          <div className="text-xs text-amber-400 flex items-center gap-1">
+          <div className="text-xs text-amber-400 text-right font-mono">
             ≈{(displayStats.balanceJBC * parseFloat(jbcPrice)).toFixed(2)} MC (Price:{" "}
             {parseFloat(jbcPrice).toFixed(4)})
           </div>
@@ -556,10 +556,10 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
           </div>
           
           {/* 显示真实的累计收益 */}
-          <div className="text-2xl md:text-3xl font-bold text-white mb-2">
+          <div className="text-2xl md:text-3xl font-bold text-white mb-2 text-right font-mono">
             {displayStats.totalRevenue.toFixed(4)} MC
           </div>
-          <div className="text-xs text-gray-400 mb-3">
+          <div className="text-xs text-gray-400 mb-3 text-right">
             来自合约状态的真实累计收益
           </div>
           
@@ -569,11 +569,11 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
             <div className="flex flex-col gap-1">
               <div className="flex items-center justify-between">
                 <span className="text-neon-400 font-bold text-xs">MC</span>
-                <span className="text-sm font-bold text-white">{rewardTotals.mc.toFixed(2)}</span>
+                <span className="text-sm font-bold text-white font-mono text-right">{rewardTotals.mc.toFixed(2)}</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-amber-400 font-bold text-xs">JBC</span>
-                <span className="text-sm font-bold text-white">{rewardTotals.jbc.toFixed(2)}</span>
+                <span className="text-sm font-bold text-white font-mono text-right">{rewardTotals.jbc.toFixed(2)}</span>
               </div>
             </div>
           </div>
@@ -585,25 +585,25 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
               <div className="flex flex-col gap-1">
                 <div className="flex items-center justify-between">
                   <span className="text-purple-400 font-bold text-xs">总获得</span>
-                  <span className="text-sm font-bold text-white">{dynamicRewards.totalEarned.toFixed(2)}</span>
+                  <span className="text-sm font-bold text-white font-mono text-right">{dynamicRewards.totalEarned.toFixed(2)}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-green-400 font-bold text-xs">可提取</span>
-                  <span className="text-sm font-bold text-white">{dynamicRewards.claimableAmount.toFixed(2)}</span>
+                  <span className="text-sm font-bold text-white font-mono text-right">{dynamicRewards.claimableAmount.toFixed(2)}</span>
                 </div>
                 {dynamicRewards.pendingAmount > 0 && (
                   <div className="flex items-center justify-between">
                     <span className="text-orange-400 font-bold text-xs">待解锁</span>
-                    <span className="text-sm font-bold text-white">{dynamicRewards.pendingAmount.toFixed(2)}</span>
+                    <span className="text-sm font-bold text-white font-mono text-right">{dynamicRewards.pendingAmount.toFixed(2)}</span>
                   </div>
                 )}
               </div>
             </div>
           )}
           
-          <div className="text-xs text-gray-300 flex justify-end items-center mt-2">
+          <div className="text-xs text-gray-300 text-right mt-2">
             {mcUsdtPrice > 0 && (
-              <span className="text-neon-400">
+              <span className="text-neon-400 font-mono">
                 ≈${(displayStats.totalRevenue * mcUsdtPrice).toFixed(2)}
               </span>
             )}
@@ -617,11 +617,11 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
             <span className="text-gray-300 text-xs md:text-sm font-medium">{t.stats.level}</span>
             <Users className="text-amber-400" size={18} />
           </div>
-          <div className="text-2xl md:text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-neon-400 to-amber-400 mb-1">
+          <div className="text-2xl md:text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-neon-400 to-amber-400 mb-1 text-right">
             {displayStats.currentLevel}
           </div>
-          <div className="text-xs text-gray-400">
-            {t.stats.teamCount}: {displayStats.teamCount}
+          <div className="text-xs text-gray-400 text-right font-mono">
+            {t.stats.teamCount}: {displayStats.teamCount.toLocaleString()}
           </div>
         </div>
       </div>
@@ -636,21 +636,21 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
             <div className="grid grid-cols-2 sm:flex sm:gap-2 md:gap-4 text-xs md:text-sm gap-2">
               <div className="text-center bg-gray-900/70 p-2 sm:p-3 rounded border border-gray-700">
                 <div className="text-gray-300 text-[10px] sm:text-xs font-medium">{t.stats.high}</div>
-                <div className="text-amber-400 font-bold text-xs sm:text-sm">${priceStats.high.toFixed(6)}</div>
+                <div className="text-amber-400 font-bold text-xs sm:text-sm font-mono">${priceStats.high.toFixed(6)}</div>
               </div>
               <div className="text-center bg-gray-900/70 p-2 sm:p-3 rounded border border-gray-700">
                 <div className="text-gray-300 text-[10px] sm:text-xs font-medium">{t.stats.low}</div>
-                <div className="text-amber-400 font-bold text-xs sm:text-sm">${priceStats.low.toFixed(6)}</div>
+                <div className="text-amber-400 font-bold text-xs sm:text-sm font-mono">${priceStats.low.toFixed(6)}</div>
               </div>
               <div className="text-center bg-gray-900/70 p-2 sm:p-3 rounded border border-gray-700">
                 <div className="text-gray-300 text-[10px] sm:text-xs font-medium">{t.stats.change}</div>
-                <div className={`font-bold text-xs sm:text-sm ${priceStats.change >= 0 ? "text-neon-400" : "text-red-400"}`}>
+                <div className={`font-bold text-xs sm:text-sm font-mono ${priceStats.change >= 0 ? "text-neon-400" : "text-red-400"}`}>
                   {priceStats.change >= 0 ? "+" : ""}{priceStats.change.toFixed(2)}%
                 </div>
               </div>
               <div className="text-center bg-gray-900/70 p-2 sm:p-3 rounded border border-gray-700">
                 <div className="text-gray-300 text-[10px] sm:text-xs font-medium">{t.stats.avg}</div>
-                <div className="text-neon-400 font-bold text-xs sm:text-sm">${priceStats.avgPrice.toFixed(6)}</div>
+                <div className="text-neon-400 font-bold text-xs sm:text-sm font-mono">${priceStats.avgPrice.toFixed(6)}</div>
               </div>
             </div>
           )}

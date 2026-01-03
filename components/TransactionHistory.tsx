@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useWeb3 } from '../src/Web3Context';
 import { useLanguage } from '../src/LanguageContext';
 import { useEventRefresh } from '../hooks/useGlobalRefresh';
+import { useTransactionCache } from '../hooks/useTransactionCache';
 import { FileText, X, Copy, ExternalLink, Filter, RefreshCw, Clock, TrendingUp, TrendingDown, ChevronRight, Package, Lock, Gift, Unlock, Calendar, DollarSign, ChevronDown, CheckCircle } from 'lucide-react';
 import { ethers } from 'ethers';
 
@@ -28,6 +29,13 @@ const TransactionHistory: React.FC = () => {
   const [viewMode, setViewMode] = useState<'self' | 'all'>('self');
   const [selectedTx, setSelectedTx] = useState<Transaction | null>(null);
   const [copied, setCopied] = useState(false);
+
+  // 使用交易缓存
+  const { getCache, setCache, clearCache, isCacheValid } = useTransactionCache(account, viewMode);
+  
+  // 防抖：避免重复刷新
+  const refreshTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const lastRefreshTimeRef = useRef<number>(0);
 
   // Advanced filters
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
@@ -67,37 +75,82 @@ const TransactionHistory: React.FC = () => {
     checkOwner();
   }, [protocolContract, account]);
 
-  // 监听交易相关事件，自动刷新交易历史
+  // 监听交易相关事件，自动刷新交易历史（清除缓存，强制刷新）
   useEventRefresh('ticketStatusChanged', () => {
     console.log('🎫 [TransactionHistory] 门票状态变化，刷新交易历史');
-    fetchTransactions();
+    clearCache();
+    fetchTransactions(false, true); // 不使用缓存，强制刷新
   });
 
   useEventRefresh('stakingStatusChanged', () => {
     console.log('💰 [TransactionHistory] 质押状态变化，刷新交易历史');
-    fetchTransactions();
+    clearCache();
+    fetchTransactions(false, true); // 不使用缓存，强制刷新
   });
 
   useEventRefresh('rewardsChanged', () => {
     console.log('🎁 [TransactionHistory] 收益变化，刷新交易历史');
-    fetchTransactions();
+    clearCache();
+    fetchTransactions(false, true); // 不使用缓存，强制刷新
   });
 
   useEventRefresh('poolDataChanged', () => {
     console.log('🏊 [TransactionHistory] 池子数据变化，刷新交易历史');
-    fetchTransactions();
+    clearCache();
+    fetchTransactions(false, true); // 不使用缓存，强制刷新
   });
 
-  const fetchTransactions = async () => {
+  const fetchTransactions = useCallback(async (useCache: boolean = true, forceRefresh: boolean = false) => {
     if (!protocolContract || !account || !provider) {
       setLoading(false);
       return;
     }
 
+    // 防抖：如果距离上次刷新不到2秒，跳过
+    const now = Date.now();
+    if (!forceRefresh && now - lastRefreshTimeRef.current < 2000) {
+      console.log('⏭️ [TransactionHistory] 跳过重复刷新请求');
+      return;
+    }
+    lastRefreshTimeRef.current = now;
+
     try {
+      // 1. 尝试从缓存读取（如果启用缓存且缓存有效）
+      if (useCache && !forceRefresh) {
+        const cached = getCache();
+        if (cached && cached.transactions.length > 0) {
+          const currentBlock = await provider.getBlockNumber();
+          if (isCacheValid(currentBlock)) {
+            // 使用缓存数据快速显示
+            setTransactions(cached.transactions);
+            setLoading(false);
+            
+            // 后台静默更新（不阻塞UI）
+            setTimeout(() => fetchTransactions(false, false), 100);
+            return;
+          }
+        }
+      }
+
       setRefreshing(true);
       const currentBlock = await provider.getBlockNumber();
-      const fromBlock = Math.max(0, currentBlock - 100000); // Last ~100k blocks
+      
+      // 智能确定查询范围：尝试增量更新
+      let fromBlock = Math.max(0, currentBlock - 100000); // 默认100k区块
+      let isIncremental = false;
+      
+      if (useCache && !forceRefresh) {
+        const cached = getCache();
+        if (cached && cached.lastUpdatedBlock > 0) {
+          const blockDiff = currentBlock - cached.lastUpdatedBlock;
+          // 如果区块差距小于10,000，使用增量查询
+          if (blockDiff < 10000 && blockDiff > 0) {
+            fromBlock = cached.lastUpdatedBlock + 1;
+            isIncremental = true;
+            console.log(`🔄 [TransactionHistory] 增量更新: 区块 ${fromBlock} 到 ${currentBlock} (差距: ${blockDiff})`);
+          }
+        }
+      }
 
       // Determine which user to query
       const targetUser = (isOwner && viewMode === 'all') ? null : account;
@@ -184,39 +237,90 @@ const TransactionHistory: React.FC = () => {
       // Sort by timestamp (newest first)
       txs.sort((a, b) => b.timestamp - a.timestamp);
 
-      setTransactions(txs);
+      // 如果是增量更新，合并新旧交易
+      let finalTransactions = txs;
+      if (isIncremental) {
+        const cached = getCache();
+        if (cached && cached.transactions.length > 0) {
+          // 合并：新交易在前，去重（基于hash）
+          const existingHashes = new Set(cached.transactions.map(t => t.hash));
+          const newTxs = txs.filter(t => !existingHashes.has(t.hash));
+          finalTransactions = [...newTxs, ...cached.transactions].sort((a, b) => b.timestamp - a.timestamp);
+          console.log(`✅ [TransactionHistory] 增量更新完成: 新增 ${newTxs.length} 条，总计 ${finalTransactions.length} 条`);
+        }
+      }
+
+      // 2. 更新缓存
+      setCache({
+        transactions: finalTransactions,
+        lastUpdatedBlock: currentBlock,
+        viewMode,
+        account,
+      });
+
+      setTransactions(finalTransactions);
     } catch (error) {
       console.error('Failed to fetch transactions:', error);
+      // 如果查询失败，尝试使用缓存数据
+      const cached = getCache();
+      if (cached && cached.transactions.length > 0) {
+        console.log('⚠️ [TransactionHistory] 使用缓存数据作为降级方案');
+        setTransactions(cached.transactions);
+      }
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  };
+  }, [protocolContract, account, provider, viewMode, isOwner, getCache, setCache, isCacheValid]);
 
   // Initial load and when dependencies change
   useEffect(() => {
     if (protocolContract && account && provider) {
-      fetchTransactions();
+      fetchTransactions(true, false); // 使用缓存
     }
-  }, [protocolContract, account, viewMode, isOwner]);
+  }, [protocolContract, account, viewMode, isOwner, fetchTransactions]);
 
-  // Auto-refresh every 5 minutes (300000ms)
+  // 智能自动刷新：根据页面可见性调整频率
   useEffect(() => {
     if (!protocolContract || !account || !provider) {
       return;
     }
 
-    // Set up 5-minute interval for auto-refresh
-    const autoRefreshInterval = setInterval(() => {
-      console.log('🔄 [TransactionHistory] Auto-refreshing earnings records (5 minutes)');
-      fetchTransactions();
-    }, 5 * 60 * 1000); // 5 minutes = 300000ms
+    // 根据页面可见性调整刷新频率
+    const getRefreshInterval = () => {
+      if (document.hidden) {
+        return 5 * 60 * 1000; // 后台：5分钟
+      }
+      return 5 * 60 * 1000; // 活跃：5分钟（收益记录不需要太频繁）
+    };
 
-    // Cleanup interval on unmount or when dependencies change
+    let refreshInterval = getRefreshInterval();
+    let autoRefreshInterval = setInterval(() => {
+      console.log('🔄 [TransactionHistory] Auto-refreshing earnings records');
+      fetchTransactions(true, false); // 使用缓存
+    }, refreshInterval);
+
+    // 页面可见性变化时调整刷新频率
+    const handleVisibilityChange = () => {
+      clearInterval(autoRefreshInterval);
+      refreshInterval = getRefreshInterval();
+      autoRefreshInterval = setInterval(() => {
+        console.log('🔄 [TransactionHistory] Auto-refreshing earnings records');
+        fetchTransactions(true, false); // 使用缓存
+      }, refreshInterval);
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    // Cleanup
     return () => {
       clearInterval(autoRefreshInterval);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      if (refreshTimeoutRef.current) {
+        clearTimeout(refreshTimeoutRef.current);
+      }
     };
-  }, [protocolContract, account, provider]);
+  }, [protocolContract, account, provider, fetchTransactions]);
 
   const getTypeIcon = (type: Transaction['type']) => {
     switch (type) {
@@ -410,7 +514,10 @@ const TransactionHistory: React.FC = () => {
               </div>
             )}
             <button
-              onClick={fetchTransactions}
+              onClick={() => {
+                clearCache(); // 清除缓存，强制刷新
+                fetchTransactions(false, true); // 不使用缓存，强制刷新
+              }}
               disabled={refreshing}
               className="flex items-center gap-2 px-4 py-2 bg-black/20 hover:bg-black/30 rounded-lg text-black transition-colors disabled:opacity-50"
             >

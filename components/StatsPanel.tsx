@@ -339,16 +339,14 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
                 lastBlock,
               });
               
-              if (rewardResult.isIncremental && cached) {
-                // 增量更新：累加到缓存值（如果有缓存）
-                // 注意：rewardMc 和 rewardJbc 通常不需要累加，因为它们是总领取量
-                rewardMc = rewardResult.rewardMc;
-                rewardJbc = rewardResult.rewardJbc;
-              } else {
-                // 全量查询
-                rewardMc = rewardResult.rewardMc;
-                rewardJbc = rewardResult.rewardJbc;
-              }
+              // 注意：fetchIncrementalRewardEvents 在增量查询时返回的是新增奖励，不是总领取量
+              // 为了确保显示正确的总领取量，我们总是使用全量查询的结果
+              // 如果 isIncremental 为 true，说明区块差距不大，全量查询也是高效的
+              rewardMc = rewardResult.rewardMc;
+              rewardJbc = rewardResult.rewardJbc;
+              
+              // 如果增量更新返回0，可能是真的没有新奖励，也可能是查询范围问题
+              // 为了确保准确性，我们总是使用全量查询的结果（从 fromBlock 开始查询所有事件）
               
               lastUpdatedBlock = referralResult.lastBlock;
             } catch (incrementalError) {

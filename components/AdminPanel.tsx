@@ -6,7 +6,7 @@ import { ethers } from 'ethers';
 import toast from 'react-hot-toast';
 import { API_BASE_URL } from '../src/constants';
 import { formatContractError } from '../utils/errorFormatter';
-import { formatEnhancedContractError } from '../utils/contractErrorDecoder';
+import { formatEnhancedContractError, decodeContractError } from '../utils/contractErrorDecoder';
 import { isUsingLatestContract } from '../utils/contractAddressResolver';
 import AdminUserManager from './AdminUserManager';
 import LevelDisplay from './LevelDisplay';
@@ -687,6 +687,12 @@ const AdminPanel: React.FC = () => {
         return;
     }
 
+    // 检查是否是合约拥有者
+    if (!isOwner) {
+        toast.error('权限错误：只有合约拥有者可以添加流动性');
+        return;
+    }
+
     setLoading(true);
     try {
         if (tokenType === 'MC' && mcLiquidityAmount) {
@@ -744,8 +750,22 @@ const AdminPanel: React.FC = () => {
         toast.dismiss('approve');
         toast.dismiss('addLiq');
         
-        // Use enhanced error handling
-        toast.error(formatEnhancedContractError(err, t));
+        // 检查是否是权限错误
+        let errorMessage = formatEnhancedContractError(err, t);
+        if (err.data) {
+            const decodedError = decodeContractError(err.data);
+            if (decodedError === 'OwnableUnauthorizedAccount') {
+                errorMessage = '权限错误：您不是合约拥有者，只有合约拥有者可以添加流动性';
+            }
+        } else if (err.message && (
+            err.message.includes('OwnableUnauthorizedAccount') || 
+            err.message.includes('caller is not the owner') ||
+            err.message.includes('Ownable: caller is not the owner')
+        )) {
+            errorMessage = '权限错误：您不是合约拥有者，只有合约拥有者可以添加流动性';
+        }
+        
+        toast.error(errorMessage, { duration: 5000 });
     } finally {
         setLoading(false);
     }
@@ -997,7 +1017,14 @@ const AdminPanel: React.FC = () => {
   // Fund Protocol Functions
   const fundProtocolWithJbc = async () => {
     if (!jbcContract || !account || !fundProtocolJbcAmount) {
-      toast.error('请填写JBC数量');
+      toast.error('请填写JBC数量', {
+        duration: 3000,
+        style: {
+          background: '#1f2937',
+          color: '#f87171',
+          border: '1px solid #f87171',
+        }
+      });
       return;
     }
 
@@ -1039,13 +1066,27 @@ const AdminPanel: React.FC = () => {
 
   const fundProtocolWithMc = async () => {
     if (!protocolContract || !account || !fundProtocolMcAmount || !mcBalance) {
-      toast.error('请填写MC数量');
+      toast.error('请填写MC数量', {
+        duration: 3000,
+        style: {
+          background: '#1f2937',
+          color: '#f87171',
+          border: '1px solid #f87171',
+        }
+      });
       return;
     }
 
     const amount = ethers.parseEther(fundProtocolMcAmount);
     if (mcBalance < amount) {
-      toast.error(`MC余额不足，需要 ${fundProtocolMcAmount} MC`);
+      toast.error(`MC余额不足，需要 ${fundProtocolMcAmount} MC`, {
+        duration: 4000,
+        style: {
+          background: '#1f2937',
+          color: '#f87171',
+          border: '1px solid #f87171',
+        }
+      });
       return;
     }
 

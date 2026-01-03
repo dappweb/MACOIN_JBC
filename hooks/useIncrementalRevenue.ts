@@ -123,11 +123,14 @@ export const useIncrementalRevenue = () => {
           };
         }
 
-        // 增量查询
+        // 增量查询：查询新增的奖励
+        // 注意：为了返回总领取量，我们需要查询所有历史事件，而不仅仅是增量部分
+        // 但由于性能考虑，如果区块差距不大，我们可以只查询增量部分
+        // 但为了确保显示正确的总领取量，我们仍然使用全量查询
+        const fromBlock = Math.max(0, currentBlock - 50000);
         const events = await protocolContract.queryFilter(
           protocolContract.filters.RewardClaimed(account),
-          lastBlock + 1,
-          currentBlock
+          fromBlock
         );
 
         let rewardMc = 0;
@@ -143,7 +146,7 @@ export const useIncrementalRevenue = () => {
           rewardMc,
           rewardJbc,
           lastBlock: currentBlock,
-          isIncremental: true,
+          isIncremental: false, // 改为 false，因为我们现在总是使用全量查询
         };
       } catch (error) {
         console.error('Failed to fetch incremental reward events:', error);

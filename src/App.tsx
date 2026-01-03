@@ -23,7 +23,8 @@ const StatsPanel = lazy(() => import("../components/StatsPanel"))
 const MiningPanel = lazy(() => import("../components/MiningPanel"))
 const BuyTicketPanel = lazy(() => import("../components/BuyTicketPanel"))
 const TeamLevel = lazy(() => import("../components/TeamLevel"))
-const SwapPanel = lazy(() => import("../components/SwapPanel"))
+// Swap Panel hidden
+// const SwapPanel = lazy(() => import("../components/SwapPanel"))
 const AdminPanel = lazy(() => import("../components/AdminPanel"))
 const TransactionHistory = lazy(() => import("../components/TransactionHistory"))
 
@@ -82,9 +83,10 @@ const AppContent: React.FC = () => {
       case AppTab.TEAM:
         import("../components/TeamLevel")
         break
-      case AppTab.SWAP:
-        import("../components/SwapPanel")
-        break
+      // Swap Panel hidden
+      // case AppTab.SWAP:
+      //   import("../components/SwapPanel")
+      //   break
       case AppTab.HISTORY:
         import("../components/TransactionHistory")
         break
@@ -228,13 +230,14 @@ const AppContent: React.FC = () => {
             </ErrorBoundary>
           )}
 
-          {currentTab === AppTab.SWAP && (
+          {/* Swap Panel hidden */}
+          {/* {currentTab === AppTab.SWAP && (
             <ErrorBoundary onError={handleAppError}>
               <Suspense fallback={<SkeletonCard />}>
                 <SwapPanel />
               </Suspense>
             </ErrorBoundary>
-          )}
+          )} */}
 
           {currentTab === AppTab.HISTORY && (
             <ErrorBoundary onError={handleAppError}>

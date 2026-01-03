@@ -96,10 +96,12 @@ const EarningsDetail: React.FC<{ onNavigateToMining?: () => void }> = ({ onNavig
         // 延长缓存有效期：15分钟
         const cacheAge = Date.now() - timestamp
         if (cacheAge < 15 * 60 * 1000) {
-          setRecords(data)
+          // 即使缓存数据为空，也设置记录（可能是真的没有记录）
+          setRecords(data || [])
           setLoading(false)
           setCacheStatus('loaded')
-          return true
+          // 如果缓存数据为空，返回 false 以触发新的查询
+          return data && data.length > 0
         }
       }
     } catch (err) {
@@ -647,8 +649,11 @@ const EarningsDetail: React.FC<{ onNavigateToMining?: () => void }> = ({ onNavig
         toast.success(`Loaded ${processedEvents} earnings records`)
         console.log(`✅ [EarningsDetail] 成功加载 ${processedEvents} 条收益记录`)
       } else {
-        console.warn(`⚠️ [EarningsDetail] 未找到任何事件记录，尝试降级方案...`)
-        // 如果没有记录，尝试获取合约状态作为降级方案
+        console.warn(`⚠️ [EarningsDetail] 未找到任何事件记录`)
+        // 设置空记录，确保UI能正确显示"无记录"状态
+        setRecords([])
+        saveToCache([])
+        // 尝试获取合约状态作为降级方案（仅用于显示总收益）
         await fetchContractStateFallback();
       }
       
@@ -693,27 +698,38 @@ const EarningsDetail: React.FC<{ onNavigateToMining?: () => void }> = ({ onNavig
       const userInfo = await protocolContract.userInfo(account);
       const totalRevenue = parseFloat(ethers.formatEther(userInfo.totalRevenue));
       
-      if (totalRevenue > 0) {
-        // 创建一个基于合约状态的记录
-        // 注意：这个记录代表总累计收益，不是24小时内的收益
-        // 使用旧时间戳（1年前）以确保它不会被计入24小时统计
-        const fallbackRecord: RewardRecord = {
-          hash: "contract-state",
-          user: account,
-          mcAmount: (totalRevenue / 2).toString(), // 假设50/50分配
-          jbcAmount: (totalRevenue / 2).toString(),
-          rewardType: 0, // 静态收益
-          ticketId: "fallback",
-          blockNumber: 0,
-          timestamp: Math.floor(Date.now() / 1000) - (365 * 24 * 3600), // 1年前的时间戳，确保不被计入24h统计
-          status: "confirmed",
-        };
+      // 只有在当前没有记录时才添加 fallback 记录
+      setRecords(prevRecords => {
+        // 如果已经有记录（不是 fallback 记录），不添加
+        const hasNonFallbackRecords = prevRecords.some(r => r.hash !== "contract-state");
+        if (hasNonFallbackRecords) {
+          return prevRecords;
+        }
         
-        setRecords([fallbackRecord]);
-        toast.success("Loaded earnings data from contract state");
-      } else {
-        // No revenue found in contract state
-      }
+        // 如果没有记录且总收益大于0，添加 fallback 记录
+        if (totalRevenue > 0) {
+          // 创建一个基于合约状态的记录
+          // 注意：这个记录代表总累计收益，不是24小时内的收益
+          // 使用旧时间戳（1年前）以确保它不会被计入24小时统计
+          const fallbackRecord: RewardRecord = {
+            hash: "contract-state",
+            user: account,
+            mcAmount: (totalRevenue / 2).toString(), // 假设50/50分配
+            jbcAmount: (totalRevenue / 2).toString(),
+            rewardType: 0, // 静态收益
+            ticketId: "fallback",
+            blockNumber: 0,
+            timestamp: Math.floor(Date.now() / 1000) - (365 * 24 * 3600), // 1年前的时间戳，确保不被计入24h统计
+            status: "confirmed",
+          };
+          
+          console.log('📊 [EarningsDetail] 使用合约状态作为降级方案，总收益:', totalRevenue);
+          return [fallbackRecord];
+        }
+        
+        // 如果没有收益，返回空数组
+        return [];
+      });
     } catch (fallbackErr) {
       console.error('❌ [EarningsDetail] Fallback also failed:', fallbackErr);
     }
@@ -721,12 +737,13 @@ const EarningsDetail: React.FC<{ onNavigateToMining?: () => void }> = ({ onNavig
 
   useEffect(() => {
     // 性能优化：先显示缓存数据，然后在后台更新
-    if (loadFromCache()) {
+    const hasCache = loadFromCache()
+    if (hasCache) {
       // 缓存数据已加载，在后台静默更新
       fetchRecords(false).catch(console.error)
       fetchPendingRewards().catch(console.error)
     } else {
-      // 没有缓存，正常加载
+      // 没有缓存或缓存为空，正常加载
       fetchRecords()
       fetchPendingRewards()
     }

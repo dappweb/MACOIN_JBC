@@ -104,7 +104,8 @@ const TransactionHistory: React.FC = () => {
 
       // Query all relevant events
       // If targetUser is null (admin viewing all), don't filter by user address
-      const events = await Promise.all([
+      // 使用 Promise.allSettled 避免单个查询失败导致整体失败
+      const eventResults = await Promise.allSettled([
         protocolContract.queryFilter(protocolContract.filters.TicketPurchased(targetUser), fromBlock),
         protocolContract.queryFilter(protocolContract.filters.LiquidityStaked(targetUser), fromBlock),
         protocolContract.queryFilter(protocolContract.filters.RewardPaid(targetUser), fromBlock),
@@ -114,7 +115,19 @@ const TransactionHistory: React.FC = () => {
         protocolContract.queryFilter(protocolContract.filters.SwappedJBCToMC(targetUser), fromBlock)
       ]);
 
-      const allEvents = events.flat();
+      // 提取成功的结果
+      const allEvents = eventResults
+        .filter(result => result.status === 'fulfilled')
+        .map(result => (result as PromiseFulfilledResult<any>).value)
+        .flat();
+      
+      // 记录失败的查询
+      eventResults.forEach((result, index) => {
+        if (result.status === 'rejected') {
+          const eventNames = ['TicketPurchased', 'LiquidityStaked', 'RewardPaid', 'RewardClaimed', 'Redeemed', 'SwappedMCToJBC', 'SwappedJBCToMC'];
+          console.warn(`⚠️ [TransactionHistory] Failed to fetch ${eventNames[index]} events:`, result.reason);
+        }
+      });
 
       // Parse events into transactions
       const txs: Transaction[] = [];

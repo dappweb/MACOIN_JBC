@@ -5,7 +5,6 @@
   TEAM = 'TEAM',
   SWAP = 'SWAP',
   HISTORY = 'HISTORY',
-  EARNINGS = 'EARNINGS',
   ADMIN = 'ADMIN'
 }
 

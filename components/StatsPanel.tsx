@@ -6,6 +6,8 @@ import { useLanguage } from "../src/LanguageContext"
 import { useWeb3 } from "../src/Web3Context"
 import { useGlobalRefresh, useEventRefresh } from "../hooks/useGlobalRefresh"
 import { useRealTimePrice } from "../hooks/useRealTimePrice"
+import { useRevenueCache } from "../hooks/useRevenueCache"
+import { useIncrementalRevenue } from "../hooks/useIncrementalRevenue"
 import { ethers } from "ethers"
 import toast from "react-hot-toast"
 import { formatContractError } from "../utils/errorFormatter"
@@ -183,6 +185,12 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
   // 使用实时价格更新
   const { priceHistory: rawPriceHistory, priceStats, currentPrice } = useRealTimePrice()
   
+  // 使用收益缓存
+  const { getCache, setCache, clearCache, isCacheValid } = useRevenueCache(account)
+  
+  // 使用增量更新
+  const { fetchIncrementalReferralRevenue, fetchIncrementalRewardEvents } = useIncrementalRevenue()
+  
   const [displayStats, setDisplayStats] = useState<UserStats>(initialStats)
   const [rewardTotals, setRewardTotals] = useState({ mc: 0, jbc: 0 })
   const [dynamicRewards, setDynamicRewards] = useState({
@@ -234,9 +242,31 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
   const [isBinding, setIsBinding] = useState(false)
 
   // 提取fetchData函数，以便在事件监听器中使用
-  const fetchData = useCallback(async () => {
-    if (isConnected && account && jbcContract && protocolContract) {
+  const fetchData = useCallback(async (useCache: boolean = true) => {
+    if (isConnected && account && jbcContract && protocolContract && provider) {
       try {
+        // 1. 尝试从缓存读取（如果启用缓存且缓存有效）
+        if (useCache) {
+          const cached = getCache();
+          if (cached) {
+            const currentBlock = await provider.getBlockNumber();
+            if (isCacheValid(currentBlock)) {
+              // 使用缓存数据快速显示
+              setDisplayStats((prev: UserStats) => ({
+                ...prev,
+                totalRevenue: cached.combinedRevenue,
+                balanceMC: parseFloat(balances.mc),
+                balanceJBC: parseFloat(balances.jbc),
+              }));
+              
+              // 后台静默更新（不阻塞UI）
+              setTimeout(() => fetchData(false), 100);
+              return;
+            }
+          }
+        }
+
+        // 2. 从链上获取最新数据
         // 余额数据现在从全局状态获取，不需要重复获取
 
         // Fetch Protocol Info
@@ -276,32 +306,80 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
         let referralRevenue = 0
         let rewardMc = 0
         let rewardJbc = 0
+        let lastUpdatedBlock = 0
+        
         try {
           if (provider) {
-            const currentBlock = await provider.getBlockNumber()
-            // 统一查询范围到 50,000 区块，与 EarningsDetail 保持一致
-            const fromBlock = Math.max(0, currentBlock - 50000)
+            // 尝试使用增量更新
+            const cached = getCache();
+            const lastBlock = cached?.lastUpdatedBlock || 0;
             
-            const [referralEvents, rewardEvents] = await Promise.all([
-              protocolContract.queryFilter(protocolContract.filters.ReferralRewardPaid(account), fromBlock),
-              protocolContract.queryFilter(protocolContract.filters.RewardClaimed(account), fromBlock),
-            ])
-            
-            for (const event of referralEvents) {
-              if (event.args) {
-                referralRevenue += parseFloat(ethers.formatEther(event.args[2]))
+            try {
+              // 使用增量更新获取推荐奖励
+              const referralResult = await fetchIncrementalReferralRevenue({
+                account,
+                protocolContract,
+                provider,
+                lastBlock,
+              });
+              
+              if (referralResult.isIncremental && cached) {
+                // 增量更新：累加到缓存值
+                referralRevenue = (cached.referralRevenue || 0) + referralResult.revenue;
+              } else {
+                // 全量查询
+                referralRevenue = referralResult.revenue;
               }
-            }
-            for (const event of rewardEvents) {
-              if (event.args) {
-                rewardMc += parseFloat(ethers.formatEther(event.args[1]))
-                rewardJbc += parseFloat(ethers.formatEther(event.args[2]))
+              
+              // 使用增量更新获取奖励事件
+              const rewardResult = await fetchIncrementalRewardEvents({
+                account,
+                protocolContract,
+                provider,
+                lastBlock,
+              });
+              
+              if (rewardResult.isIncremental && cached) {
+                // 增量更新：累加到缓存值（如果有缓存）
+                // 注意：rewardMc 和 rewardJbc 通常不需要累加，因为它们是总领取量
+                rewardMc = rewardResult.rewardMc;
+                rewardJbc = rewardResult.rewardJbc;
+              } else {
+                // 全量查询
+                rewardMc = rewardResult.rewardMc;
+                rewardJbc = rewardResult.rewardJbc;
               }
+              
+              lastUpdatedBlock = referralResult.lastBlock;
+            } catch (incrementalError) {
+              console.warn("Incremental update failed, falling back to full query:", incrementalError);
+              
+              // 降级到全量查询
+              const currentBlock = await provider.getBlockNumber();
+              const fromBlock = Math.max(0, currentBlock - 50000);
+              
+              const [referralEvents, rewardEvents] = await Promise.all([
+                protocolContract.queryFilter(protocolContract.filters.ReferralRewardPaid(account), fromBlock),
+                protocolContract.queryFilter(protocolContract.filters.RewardClaimed(account), fromBlock),
+              ]);
+              
+              for (const event of referralEvents) {
+                if (event.args) {
+                  referralRevenue += parseFloat(ethers.formatEther(event.args[2]));
+                }
+              }
+              for (const event of rewardEvents) {
+                if (event.args) {
+                  rewardMc += parseFloat(ethers.formatEther(event.args[1]));
+                  rewardJbc += parseFloat(ethers.formatEther(event.args[2]));
+                }
+              }
+              
+              lastUpdatedBlock = currentBlock;
             }
-            
           }
         } catch (err) {
-          console.error("Failed to fetch referral rewards", err)
+          console.error("Failed to fetch referral rewards", err);
           // 不要因为事件查询失败就阻止整个数据更新
         }
 
@@ -326,7 +404,40 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
 
         const baseRevenue = parseFloat(ethers.formatEther(userInfo[3]))
         // 累计收益 = 合约状态的基础收益 + 推荐奖励 + 动态奖励
-        const combinedRevenue = baseRevenue + referralRevenue + dynamicTotalEarned
+        let combinedRevenue = baseRevenue + referralRevenue + dynamicTotalEarned
+        
+        // 4. 数据验证：检查计算值与合约状态的一致性
+        // 注意：合约的 totalRevenue 只包含静态奖励，不包含推荐奖励和动态奖励
+        // 所以我们需要验证：combinedRevenue >= baseRevenue
+        if (combinedRevenue < baseRevenue) {
+          console.warn('Revenue calculation error: combined < base, using base revenue');
+          combinedRevenue = baseRevenue + dynamicTotalEarned; // 至少使用基础收益
+        }
+        
+        // 验证推荐奖励的合理性（不应该超过基础收益的某个倍数）
+        // 推荐奖励通常不会超过基础收益的10倍（根据业务逻辑调整）
+        const maxExpectedReferralRevenue = baseRevenue * 10;
+        if (referralRevenue > maxExpectedReferralRevenue) {
+          console.warn('Referral revenue seems unusually high, verifying...', {
+            referralRevenue,
+            baseRevenue,
+            ratio: referralRevenue / baseRevenue
+          });
+          // 不阻止显示，但记录警告
+        }
+        
+        // 3. 更新缓存
+        if (provider) {
+          const currentBlock = lastUpdatedBlock || await provider.getBlockNumber();
+          setCache({
+            baseRevenue,
+            referralRevenue,
+            dynamicTotalEarned,
+            combinedRevenue,
+            lastUpdatedBlock: currentBlock,
+          });
+        }
+        
         setRewardTotals({
           mc: rewardMc + referralRevenue,
           jbc: rewardJbc,
@@ -343,28 +454,74 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
         
       } catch (err) {
         console.error("Error fetching stats", err)
+        // 如果查询失败，尝试使用缓存数据
+        const cached = getCache();
+        if (cached) {
+          setDisplayStats((prev: UserStats) => ({
+            ...prev,
+            totalRevenue: cached.combinedRevenue,
+          }));
+        }
       }
     } else {
       // Not ready to fetch data
     }
-  }, [isConnected, account, jbcContract, protocolContract, provider, balances.mc, balances.jbc, referrer])
+  }, [isConnected, account, jbcContract, protocolContract, provider, balances.mc, balances.jbc, referrer, getCache, setCache, isCacheValid, fetchIncrementalReferralRevenue, fetchIncrementalRewardEvents])
 
   // 监听用户等级变化事件
   useEventRefresh('userLevelChanged', () => {
-    fetchData();
+    clearCache(); // 清除缓存，强制刷新
+    fetchData(false); // 不使用缓存，立即刷新
   });
 
   // 监听门票状态变化事件（可能影响等级）
   useEventRefresh('ticketStatusChanged', () => {
-    fetchData();
+    clearCache(); // 清除缓存，强制刷新
+    fetchData(false); // 不使用缓存，立即刷新
   });
 
-  // 初始化数据获取和定期刷新
+  // 监听收益变化事件
+  useEventRefresh('rewardsChanged', () => {
+    clearCache(); // 清除缓存，强制刷新
+    fetchData(false); // 不使用缓存，立即刷新
+  });
+
+  // 初始化数据获取和智能刷新
   useEffect(() => {
-    const timer = setInterval(fetchData, 5000) // Refresh every 5s
-    fetchData()
-    return () => clearInterval(timer)
-  }, [fetchData])
+    if (!isConnected || !account) return;
+
+    // 初始加载
+    fetchData(true); // 使用缓存
+
+    // 根据页面可见性调整刷新频率
+    const getRefreshInterval = () => {
+      if (document.hidden) {
+        return 5 * 60 * 1000; // 后台：5分钟
+      }
+      return 30 * 1000; // 活跃：30秒
+    };
+
+    let refreshInterval = getRefreshInterval();
+    let timer = setInterval(() => {
+      fetchData(true); // 使用缓存
+    }, refreshInterval);
+
+    // 页面可见性变化时调整刷新频率
+    const handleVisibilityChange = () => {
+      clearInterval(timer);
+      refreshInterval = getRefreshInterval();
+      timer = setInterval(() => {
+        fetchData(true); // 使用缓存
+      }, refreshInterval);
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      clearInterval(timer);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [fetchData, isConnected, account, clearCache])
 
   const handleBind = async () => {
     if (referrer.trim() && protocolContract) {

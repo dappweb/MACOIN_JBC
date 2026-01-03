@@ -103,7 +103,7 @@ export default defineConfig(({ mode }) => {
                 if (match) {
                   const componentName = match[1];
                   // 大型组件单独打包
-                  if (['MiningPanel', 'EarningsDetail', 'TeamLevel', 'SwapPanel'].includes(componentName)) {
+                  if (['MiningPanel', 'TeamLevel', 'SwapPanel'].includes(componentName)) {
                     return `component-${componentName.toLowerCase()}`;
                   }
                 }

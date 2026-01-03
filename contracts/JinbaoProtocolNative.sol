@@ -488,11 +488,9 @@ contract JinbaoProtocolNative is Initializable, OwnableUpgradeable, UUPSUpgradea
 
     /**
      * @dev 购买门票 - 使用原生MC代币 (payable)
-     * @notice 必须先绑定推荐人才能购买门票
+     * @notice 允许在没有推荐人的情况下购买门票，推荐奖励将发送到营销钱包
      */
     function buyTicket() external payable nonReentrant whenNotPaused {
-        require(userInfo[msg.sender].referrer != address(0), "Must bind referrer first");
-        
         uint256 amount = msg.value;
         _expireTicketIfNeeded(msg.sender);
         

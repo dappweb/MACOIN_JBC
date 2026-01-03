@@ -193,9 +193,30 @@ const TransactionHistory: React.FC = () => {
     }
   };
 
+  // Initial load and when dependencies change
   useEffect(() => {
-    fetchTransactions();
+    if (protocolContract && account && provider) {
+      fetchTransactions();
+    }
   }, [protocolContract, account, viewMode, isOwner]);
+
+  // Auto-refresh every 5 minutes (300000ms)
+  useEffect(() => {
+    if (!protocolContract || !account || !provider) {
+      return;
+    }
+
+    // Set up 5-minute interval for auto-refresh
+    const autoRefreshInterval = setInterval(() => {
+      console.log('🔄 [TransactionHistory] Auto-refreshing earnings records (5 minutes)');
+      fetchTransactions();
+    }, 5 * 60 * 1000); // 5 minutes = 300000ms
+
+    // Cleanup interval on unmount or when dependencies change
+    return () => {
+      clearInterval(autoRefreshInterval);
+    };
+  }, [protocolContract, account, provider]);
 
   const getTypeIcon = (type: Transaction['type']) => {
     switch (type) {

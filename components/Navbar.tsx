@@ -174,13 +174,6 @@ const Navbar: React.FC<NavbarProps> = ({ currentTab, setTab }) => {
               >
                 <FileText size={18} /> {t.nav.history}
               </button>
-              <button
-                onClick={() => setTab(AppTab.EARNINGS)}
-                className={`flex items-center gap-2 font-bold transition-colors ${currentTab === AppTab.EARNINGS ? "text-emerald-400" : "text-gray-400 hover:text-white"
-                  }`}
-              >
-                <Gift size={18} /> {t.nav.earnings || "Earnings"}
-              </button>
               {isOwner && (
                 <button
                   onClick={() => setTab(AppTab.ADMIN)}
@@ -377,15 +370,6 @@ const Navbar: React.FC<NavbarProps> = ({ currentTab, setTab }) => {
           >
             <FileText size={20} />
             <span className="text-[10px] font-medium">{t.nav.history}</span>
-          </button>
-          <button
-            onClick={() => setTab(AppTab.EARNINGS)}
-            className={`p-2 rounded-lg flex flex-col items-center gap-1 ${currentTab === AppTab.EARNINGS ? "bg-[#10b981]/10" : ""
-              }`}
-            style={{ color: currentTab === AppTab.EARNINGS ? "#10b981" : "#6B7280" }}
-          >
-            <Gift size={20} />
-            <span className="text-[10px] font-medium">{t.nav.earnings || "Earnings"}</span>
           </button>
           <button
             onClick={() => setTab(AppTab.TEAM)}

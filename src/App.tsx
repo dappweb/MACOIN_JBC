@@ -26,7 +26,6 @@ const TeamLevel = lazy(() => import("../components/TeamLevel"))
 const SwapPanel = lazy(() => import("../components/SwapPanel"))
 const AdminPanel = lazy(() => import("../components/AdminPanel"))
 const TransactionHistory = lazy(() => import("../components/TransactionHistory"))
-const EarningsDetail = lazy(() => import("../components/EarningsDetail"))
 
 // Optimize QueryClient with better defaults
 const queryClient = new QueryClient({
@@ -89,9 +88,6 @@ const AppContent: React.FC = () => {
       case AppTab.HISTORY:
         import("../components/TransactionHistory")
         break
-      case AppTab.EARNINGS:
-        import("../components/EarningsDetail")
-        break
       case AppTab.ADMIN:
         import("../components/AdminPanel")
         break
@@ -149,8 +145,7 @@ const AppContent: React.FC = () => {
       [AppTab.BUY_TICKET]: '/bg-16.png',
       [AppTab.TEAM]: '/bg-11.png',
       [AppTab.SWAP]: '/bg-2.png',
-      [AppTab.HISTORY]: '/bg-14.png',
-      [AppTab.EARNINGS]: '/bg-14.png'
+      [AppTab.HISTORY]: '/bg-14.png'
     };
     
     const bgPath = bgMap[currentTab] || '/bg-11.png';
@@ -245,14 +240,6 @@ const AppContent: React.FC = () => {
             <ErrorBoundary onError={handleAppError}>
               <Suspense fallback={<SkeletonCard />}>
                 <TransactionHistory />
-              </Suspense>
-            </ErrorBoundary>
-          )}
-
-          {currentTab === AppTab.EARNINGS && (
-            <ErrorBoundary onError={handleAppError}>
-              <Suspense fallback={<SkeletonCard />}>
-                <EarningsDetail onNavigateToMining={() => setCurrentTab(AppTab.MINING)} />
               </Suspense>
             </ErrorBoundary>
           )}

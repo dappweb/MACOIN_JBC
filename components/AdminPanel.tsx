@@ -1433,6 +1433,82 @@ const AdminPanel: React.FC = () => {
               </div>
             </div>
 
+            {/* Contract Addresses Display */}
+            <div className="mb-6 p-4 bg-gray-800/50 rounded-lg border border-gray-700">
+              <h4 className="text-sm font-bold text-gray-300 mb-3 flex items-center gap-2">
+                <Settings className="text-gray-400" size={16} />
+                合约地址信息
+              </h4>
+              <div className="space-y-2 text-xs">
+                <div className="flex items-start justify-between gap-2">
+                  <span className="text-gray-400 font-medium">协议合约:</span>
+                  <div className="flex items-center gap-2 flex-1 justify-end">
+                    <code className="text-white font-mono break-all text-right">
+                      {CONTRACT_ADDRESSES.PROTOCOL}
+                    </code>
+                    <a
+                      href={`https://mcerscan.com/address/${CONTRACT_ADDRESSES.PROTOCOL}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-400 hover:text-blue-300 flex-shrink-0"
+                      title="在区块浏览器中查看"
+                    >
+                      🔗
+                    </a>
+                  </div>
+                </div>
+                <div className="flex items-start justify-between gap-2">
+                  <span className="text-gray-400 font-medium">JBC 代币:</span>
+                  <div className="flex items-center gap-2 flex-1 justify-end">
+                    <code className="text-white font-mono break-all text-right">
+                      {CONTRACT_ADDRESSES.JBC_TOKEN}
+                    </code>
+                    <a
+                      href={`https://mcerscan.com/address/${CONTRACT_ADDRESSES.JBC_TOKEN}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-400 hover:text-blue-300 flex-shrink-0"
+                      title="在区块浏览器中查看"
+                    >
+                      🔗
+                    </a>
+                  </div>
+                </div>
+                <div className="flex items-start justify-between gap-2">
+                  <span className="text-gray-400 font-medium">燃烧管理:</span>
+                  <div className="flex items-center gap-2 flex-1 justify-end">
+                    <code className="text-white font-mono break-all text-right">
+                      {CONTRACT_ADDRESSES.DAILY_BURN_MANAGER}
+                    </code>
+                    <a
+                      href={`https://mcerscan.com/address/${CONTRACT_ADDRESSES.DAILY_BURN_MANAGER}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-400 hover:text-blue-300 flex-shrink-0"
+                      title="在区块浏览器中查看"
+                    >
+                      🔗
+                    </a>
+                  </div>
+                </div>
+                <div className="mt-3 pt-3 border-t border-gray-700">
+                  <div className="flex items-center gap-2 text-gray-500">
+                    <span className="text-xs">网络:</span>
+                    <span className="text-xs font-bold text-gray-400">MC Chain (88813)</span>
+                    <span className="text-xs">|</span>
+                    <a
+                      href="https://mcerscan.com"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs text-blue-400 hover:text-blue-300"
+                    >
+                      区块浏览器
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             {/* Balance Overview */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
               {/* Protocol Balance */}

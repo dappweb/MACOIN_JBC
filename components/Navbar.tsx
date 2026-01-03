@@ -160,14 +160,13 @@ const Navbar: React.FC<NavbarProps> = ({ currentTab, setTab }) => {
               >
                 <Users size={18} /> {t.nav.team}
               </button>
-              {/* Swap button hidden */}
-              {/* <button
+              <button
                 onClick={() => setTab(AppTab.SWAP)}
                 className={`flex items-center gap-2 font-bold transition-colors ${currentTab === AppTab.SWAP ? "text-emerald-400" : "text-gray-400 hover:text-white"
                   }`}
               >
                 <ArrowLeftRight size={18} /> Swap
-              </button> */}
+              </button>
               <button
                 onClick={() => setTab(AppTab.HISTORY)}
                 className={`flex items-center gap-2 font-bold transition-colors ${currentTab === AppTab.HISTORY ? "text-emerald-400" : "text-gray-400 hover:text-white"
@@ -354,8 +353,7 @@ const Navbar: React.FC<NavbarProps> = ({ currentTab, setTab }) => {
             <Pickaxe size={20} />
             <span className="text-[10px] font-medium">{t.nav.mining}</span>
           </button>
-          {/* Swap button hidden */}
-          {/* <button
+          <button
             onClick={() => setTab(AppTab.SWAP)}
             className={`p-2 rounded-lg flex flex-col items-center gap-1 ${currentTab === AppTab.SWAP ? "bg-[#10b981]/10" : ""
               }`}
@@ -363,7 +361,7 @@ const Navbar: React.FC<NavbarProps> = ({ currentTab, setTab }) => {
           >
             <ArrowLeftRight size={20} />
             <span className="text-[10px] font-medium">Swap</span>
-          </button> */}
+          </button>
           <button
             onClick={() => setTab(AppTab.HISTORY)}
             className={`p-2 rounded-lg flex flex-col items-center gap-1 ${currentTab === AppTab.HISTORY ? "bg-[#10b981]/10" : ""

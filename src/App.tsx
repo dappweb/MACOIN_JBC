@@ -83,10 +83,9 @@ const AppContent: React.FC = () => {
       case AppTab.TEAM:
         import("../components/TeamLevel")
         break
-      // Swap Panel hidden
-      // case AppTab.SWAP:
-      //   import("../components/SwapPanel")
-      //   break
+      case AppTab.SWAP:
+        import("../components/SwapPanel")
+        break
       case AppTab.HISTORY:
         import("../components/TransactionHistory")
         break
@@ -230,14 +229,13 @@ const AppContent: React.FC = () => {
             </ErrorBoundary>
           )}
 
-          {/* Swap Panel hidden */}
-          {/* {currentTab === AppTab.SWAP && (
+          {currentTab === AppTab.SWAP && (
             <ErrorBoundary onError={handleAppError}>
               <Suspense fallback={<SkeletonCard />}>
                 <SwapPanel />
               </Suspense>
             </ErrorBoundary>
-          )} */}
+          )}
 
           {currentTab === AppTab.HISTORY && (
             <ErrorBoundary onError={handleAppError}>

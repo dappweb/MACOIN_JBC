@@ -259,6 +259,13 @@ const EarningsDetail: React.FC<{ onNavigateToMining?: () => void }> = ({ onNavig
         }
       }
       
+      // 检查用户是否有活跃的质押（提供流动性）
+      // 如果没有活跃质押，不应该显示JBC收益
+      if (activeStakesCount === 0) {
+        setPendingRewards({mc: 0, jbc: 0});
+        return;
+      }
+      
       // 应用收益上限约束
       const actualClaimable = totalPendingRewards > remainingCap ? remainingCap : totalPendingRewards;
       
@@ -266,10 +273,6 @@ const EarningsDetail: React.FC<{ onNavigateToMining?: () => void }> = ({ onNavig
         setPendingRewards({mc: 0, jbc: 0});
         return;
       }
-      
-      // 分配50%MC和50%JBC（按价值计算）
-      const mcPart = BigInt(actualClaimable) / 2n;
-      const jbcValuePart = BigInt(actualClaimable) / 2n;
       
       // 获取JBC价格来计算JBC数量
       const reserveMC = await protocolContract.swapReserveMC();
@@ -281,6 +284,21 @@ const EarningsDetail: React.FC<{ onNavigateToMining?: () => void }> = ({ onNavig
         jbc: ethers.formatEther(reserveJBC)
       });
       
+      // 检查是否有流动性池中的JBC
+      // 如果没有JBC流动性，不应该显示JBC收益
+      if (reserveJBC === 0n) {
+        // 只有MC收益，没有JBC收益
+        setPendingRewards({
+          mc: Number(ethers.formatEther(actualClaimable)),
+          jbc: 0
+        });
+        return;
+      }
+      
+      // 分配50%MC和50%JBC（按价值计算）
+      const mcPart = BigInt(actualClaimable) / 2n;
+      const jbcValuePart = BigInt(actualClaimable) / 2n;
+      
       let jbcAmount = 0;
       let calculatedJBCPrice = 0;
       if (reserveMC > 0n && reserveJBC > 0n) {
@@ -289,9 +307,12 @@ const EarningsDetail: React.FC<{ onNavigateToMining?: () => void }> = ({ onNavig
         jbcAmount = Number(ethers.formatEther(jbcAmountBigInt));
         calculatedJBCPrice = Number(ethers.formatEther(jbcPrice));
       } else {
-        // 如果没有流动性，按1:1计算
-        jbcAmount = Number(ethers.formatEther(jbcValuePart));
-        calculatedJBCPrice = 1;
+        // 如果没有流动性，不应该显示JBC收益
+        setPendingRewards({
+          mc: Number(ethers.formatEther(actualClaimable)),
+          jbc: 0
+        });
+        return;
       }
       
       // 更新JBC价格状态

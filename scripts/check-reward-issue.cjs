@@ -122,42 +122,57 @@ async function main() {
     });
     
     console.log(`\n✅ 找到 ${referralEvents.length} 个推荐奖励事件（作为受益人）:`);
+    
+    // 解析事件
+    const iface = new ethers.Interface([
+      "event ReferralRewardPaid(address indexed user, address indexed from, uint256 mcAmount, uint256 jbcAmount, uint8 rewardType, uint256 ticketId)"
+    ]);
+    
     for (let i = 0; i < Math.min(referralEvents.length, 10); i++) {
-      const event = referralEvents[i];
-      const block = await provider.getBlock(event.blockNumber);
-      const args = event.args;
+      const log = referralEvents[i];
+      const parsed = iface.parseLog(log);
+      const block = await provider.getBlock(log.blockNumber);
       
       console.log(`\n  事件 #${i + 1}:`);
-      console.log("    - 交易哈希:", event.transactionHash);
-      console.log("    - 区块号:", event.blockNumber);
+      console.log("    - 交易哈希:", log.transactionHash);
+      console.log("    - 区块号:", log.blockNumber);
       console.log("    - 时间:", new Date(block.timestamp * 1000).toLocaleString());
-      console.log("    - 来源用户:", args[1]);
-      console.log("    - MC金额:", ethers.formatEther(args[2] || 0), "MC");
-      console.log("    - JBC金额:", ethers.formatEther(args[3] || 0), "JBC");
-      console.log("    - 奖励类型:", args[4]?.toString() || "N/A");
-      console.log("    - 票据ID:", args[5]?.toString() || "N/A");
+      console.log("    - 受益人:", parsed.args[0]);
+      console.log("    - 来源用户:", parsed.args[1]);
+      console.log("    - MC金额:", ethers.formatEther(parsed.args[2] || 0), "MC");
+      console.log("    - JBC金额:", ethers.formatEther(parsed.args[3] || 0), "JBC");
+      console.log("    - 奖励类型:", parsed.args[4]?.toString() || "N/A");
+      console.log("    - 票据ID:", parsed.args[5]?.toString() || "N/A");
     }
     
-    // 查询作为来源的事件（该账户购买门票，推荐人收到奖励）
-    const sourceEvents = await protocolContract.queryFilter(
-      protocolContract.filters.ReferralRewardPaid(null, PROBLEM_ACCOUNT),
-      fromBlock
-    );
+    // 查询作为来源的事件（第二个参数是来源）
+    const sourceAccountTopic = ethers.zeroPadValue(PROBLEM_ACCOUNT, 32);
+    const sourceEventsFilter = {
+      address: proxyAddress,
+      topics: [referralRewardPaidTopic, null, sourceAccountTopic]
+    };
+    
+    const sourceEvents = await provider.getLogs({
+      ...sourceEventsFilter,
+      fromBlock,
+      toBlock: currentBlock
+    });
     
     console.log(`\n✅ 找到 ${sourceEvents.length} 个推荐奖励事件（作为来源）:`);
     for (let i = 0; i < Math.min(sourceEvents.length, 10); i++) {
-      const event = sourceEvents[i];
-      const block = await provider.getBlock(event.blockNumber);
-      const args = event.args;
+      const log = sourceEvents[i];
+      const parsed = iface.parseLog(log);
+      const block = await provider.getBlock(log.blockNumber);
       
       console.log(`\n  事件 #${i + 1}:`);
-      console.log("    - 交易哈希:", event.transactionHash);
-      console.log("    - 区块号:", event.blockNumber);
+      console.log("    - 交易哈希:", log.transactionHash);
+      console.log("    - 区块号:", log.blockNumber);
       console.log("    - 时间:", new Date(block.timestamp * 1000).toLocaleString());
-      console.log("    - 受益人:", args[0]);
-      console.log("    - MC金额:", ethers.formatEther(args[2] || 0), "MC");
-      console.log("    - JBC金额:", ethers.formatEther(args[3] || 0), "JBC");
-      console.log("    - 奖励类型:", args[4]?.toString() || "N/A");
+      console.log("    - 受益人:", parsed.args[0]);
+      console.log("    - 来源用户:", parsed.args[1]);
+      console.log("    - MC金额:", ethers.formatEther(parsed.args[2] || 0), "MC");
+      console.log("    - JBC金额:", ethers.formatEther(parsed.args[3] || 0), "JBC");
+      console.log("    - 奖励类型:", parsed.args[4]?.toString() || "N/A");
     }
     
   } catch (error) {

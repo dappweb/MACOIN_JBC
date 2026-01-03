@@ -129,6 +129,7 @@ contract JinbaoProtocolNative is Initializable, OwnableUpgradeable, UUPSUpgradea
     // 错误定义
     error InvalidAmount();
     error InvalidAddress();
+    error MustBindReferrer();
     error InvalidRate();
     error InvalidTax();
     error InvalidFee();
@@ -488,9 +489,14 @@ contract JinbaoProtocolNative is Initializable, OwnableUpgradeable, UUPSUpgradea
 
     /**
      * @dev 购买门票 - 使用原生MC代币 (payable)
-     * @notice 允许在没有推荐人的情况下购买门票，推荐奖励将发送到营销钱包
+     * @notice 必须先绑定推荐人才能购买门票
      */
     function buyTicket() external payable nonReentrant whenNotPaused {
+        // 检查是否已绑定推荐人
+        if (userInfo[msg.sender].referrer == address(0)) {
+            revert MustBindReferrer();
+        }
+        
         uint256 amount = msg.value;
         _expireTicketIfNeeded(msg.sender);
         
@@ -554,8 +560,11 @@ contract JinbaoProtocolNative is Initializable, OwnableUpgradeable, UUPSUpgradea
 
         _transferNativeMC(marketingWallet, (amount * marketingPercent) / 100);
 
+        // 回购销毁：先转到回购钱包，由回购钱包执行回购
         uint256 buybackAmt = (amount * buybackPercent) / 100;
-        _internalBuybackAndBurn(buybackAmt);
+        if (buybackAmt > 0) {
+            _transferNativeMC(buybackWallet, buybackAmt);
+        }
 
         _transferNativeMC(lpInjectionWallet, (amount * lpInjectionPercent) / 100);
         _transferNativeMC(treasuryWallet, (amount * treasuryPercent) / 100);
@@ -774,6 +783,22 @@ contract JinbaoProtocolNative is Initializable, OwnableUpgradeable, UUPSUpgradea
         lastBurnTime = block.timestamp;
         
         emit BuybackAndBurn(0, burnAmount);
+    }
+
+    /**
+     * @dev 回购钱包执行回购销毁
+     * @notice 回购钱包可以调用此函数（payable），将 MC 发送到协议合约并执行回购销毁
+     *         回购钱包需要先接收来自门票购买的资金，然后调用此函数执行回购
+     */
+    function executeBuybackAndBurn() external payable nonReentrant whenNotPaused {
+        // 只允许回购钱包调用
+        if (msg.sender != buybackWallet) revert Unauthorized();
+        
+        uint256 mcAmount = msg.value;
+        if (mcAmount == 0) revert InvalidAmount();
+        
+        // 执行内部回购（资金已经通过 msg.value 转到协议合约）
+        _internalBuybackAndBurn(mcAmount);
     }
     // === 内部逻辑函数 ===
 

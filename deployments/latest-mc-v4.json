@@ -6,7 +6,7 @@
   "contracts": {
     "JBC": "0xAAb88c0Bc9f4A73019e4Dbfc5c8De82A8dCb970D",
     "Protocol": "0x77601aC473dB1195A1A9c82229C9bD008a69987A",
-    "ProtocolImplementation": "0x07dbBe0f629e63E55AD06b98FAc8a0d3Dd4b184C",
+    "ProtocolImplementation": "0x00F3b8e6755D2cb0AD9388C71dF740E0A919A590",
     "DailyBurnManager": "0x298578A691f10A85f027BDD2D9a8D007540FCBB4"
   },
   "wallets": {
@@ -15,5 +15,16 @@
     "lpInjection": "0x03c5d3cf3e358a00fa446e3376eab047d1ce46f2",
     "buyback": "0x979373c675c25e6cb2fd49b571dcadcb15a5a6d8"
   },
-  "lastUpdate": "2026-01-01T03:00:27.359Z"
+  "lastUpdate": "2026-01-01T03:00:27.359Z",
+  "lastUpgrade": "2026-01-03T13:00:22.494Z",
+  "upgradeInfo": {
+    "version": "buyback-mechanism-update",
+    "description": "回购机制更新 + 恢复推荐人要求",
+    "changes": [
+      "修改 buyTicket() 函数：回购资金先转到回购钱包（不再直接执行）",
+      "新增 executeBuybackAndBurn() 函数：回购钱包执行回购",
+      "恢复推荐人要求：购买门票必须先绑定推荐人"
+    ],
+    "timestamp": "2026-01-03T13:00:22.494Z"
+  }
 }

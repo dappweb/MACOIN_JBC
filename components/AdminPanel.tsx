@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useWeb3, CONTRACT_ADDRESSES } from '../src/Web3Context';
-import { Settings, Save, AlertTriangle, Megaphone, CheckCircle, XCircle, Users, Crown } from 'lucide-react';
+import { useWeb3, CONTRACT_ADDRESSES, DAILY_BURN_MANAGER_ABI } from '../src/Web3Context';
+import { Settings, Save, AlertTriangle, Megaphone, CheckCircle, XCircle, Users, Crown, Flame, Coins } from 'lucide-react';
 import { useLanguage } from '../src/LanguageContext';
 import { ethers } from 'ethers';
 import toast from 'react-hot-toast';
@@ -16,9 +16,21 @@ import NotificationSettings from './NotificationSettings';
 
 const AdminPanel: React.FC = () => {
   const { t } = useLanguage();
-  const { protocolContract, isConnected, account, provider, jbcContract, isOwner, mcBalance, refreshMcBalance } = useWeb3();
+  const { protocolContract, isConnected, account, provider, jbcContract, isOwner, mcBalance, refreshMcBalance, signer } = useWeb3();
   const [loading, setLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'levels' | 'settings'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'levels' | 'settings' | 'burn' | 'jbc'>('overview');
+  
+  // Daily Burn Manager Contract
+  const [burnManagerContract, setBurnManagerContract] = useState<ethers.Contract | null>(null);
+  
+  // Daily Burn Manager State
+  const [canBurn, setCanBurn] = useState(false);
+  const [nextBurnTime, setNextBurnTime] = useState<bigint | null>(null);
+  const [lastBurnTime, setLastBurnTime] = useState<bigint | null>(null);
+  const [burnAmount, setBurnAmount] = useState<bigint | null>(null);
+  const [timeUntilNextBurn, setTimeUntilNextBurn] = useState<bigint | null>(null);
+  const [burnManagerOwner, setBurnManagerOwner] = useState<string | null>(null);
+  const [isBurnManagerOwner, setIsBurnManagerOwner] = useState(false);
 
   // Distribution Percents
   const [direct, setDirect] = useState('25');
@@ -46,6 +58,10 @@ const AdminPanel: React.FC = () => {
   const [currentTreasury, setCurrentTreasury] = useState('');
   const [currentLp, setCurrentLp] = useState('');
   const [currentBuyback, setCurrentBuyback] = useState('');
+  
+  // Buyback Management
+  const [buybackWalletBalance, setBuybackWalletBalance] = useState('0');
+  const [isBuybackWallet, setIsBuybackWallet] = useState(false);
 
   // Announcement Management
   const [announceZh, setAnnounceZh] = useState('');
@@ -124,11 +140,60 @@ const AdminPanel: React.FC = () => {
     }
   }, [protocolContract, loading]); // Refresh on loading change (after tx)
 
+  // Fetch JBC Token Data
+  const fetchJbcData = async () => {
+    if (!jbcContract || !protocolContract || !account) return;
+
+    try {
+      // Protocol JBC Balance
+      const protocolBalance = await jbcContract.balanceOf(CONTRACT_ADDRESSES.PROTOCOL);
+      setProtocolJbcBalance(ethers.formatEther(protocolBalance));
+
+      // Total Supply
+      const totalSupply = await jbcContract.totalSupply();
+      setJbcTotalSupply(ethers.formatEther(totalSupply));
+
+      // Account Balance
+      const accountBalance = await jbcContract.balanceOf(account);
+      setAccountJbcBalance(ethers.formatEther(accountBalance));
+
+      // Calculate JBC Price from swap reserves
+      const reserveMC = await protocolContract.swapReserveMC();
+      const reserveJBC = await protocolContract.swapReserveJBC();
+      
+      if (reserveJBC > 0n && reserveMC > 0n) {
+        const price = Number(reserveMC) / Number(reserveJBC);
+        setJbcPrice(price.toFixed(6));
+      } else {
+        setJbcPrice('1.0');
+      }
+    } catch (err) {
+      console.error('Failed to fetch JBC data:', err);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'jbc') {
+      fetchJbcData();
+      const interval = setInterval(fetchJbcData, 10000); // Refresh every 10 seconds
+      return () => clearInterval(interval);
+    }
+  }, [activeTab, jbcContract, protocolContract, account, loading]);
+
   // Contract address validation
   const [contractAddressWarning, setContractAddressWarning] = useState(false);
 
   // Level Reward Pool Management
   const [levelRewardPool, setLevelRewardPool] = useState('0');
+
+  // JBC Token Manager State
+  const [protocolJbcBalance, setProtocolJbcBalance] = useState('0');
+  const [jbcTotalSupply, setJbcTotalSupply] = useState('0');
+  const [accountJbcBalance, setAccountJbcBalance] = useState('0');
+  const [jbcPrice, setJbcPrice] = useState('0');
+  const [jbcTransferAmount, setJbcTransferAmount] = useState('');
+  const [jbcTransferTo, setJbcTransferTo] = useState('');
+  const [jbcTransferType, setJbcTransferType] = useState<'toProtocol' | 'fromProtocol' | 'toAddress'>('toProtocol');
 
   useEffect(() => {
     const checkContractAddress = async () => {
@@ -145,6 +210,199 @@ const AdminPanel: React.FC = () => {
   const [liquidityEnabled, setLiquidityEnabled] = useState(true);
   const [redeemEnabled, setRedeemEnabled] = useState(true);
 
+  // Initialize Daily Burn Manager Contract
+  useEffect(() => {
+    if (signer || provider) {
+      const contract = new ethers.Contract(
+        CONTRACT_ADDRESSES.DAILY_BURN_MANAGER,
+        DAILY_BURN_MANAGER_ABI,
+        signer || provider
+      );
+      setBurnManagerContract(contract);
+    } else {
+      setBurnManagerContract(null);
+    }
+  }, [signer, provider]);
+
+  // Fetch Daily Burn Manager Status
+  const fetchBurnManagerStatus = async () => {
+    if (!burnManagerContract) return;
+
+    try {
+      const [canBurnValue, nextBurn, lastBurn, amount, timeUntil, owner] = await Promise.all([
+        burnManagerContract.canBurn().catch(() => false),
+        burnManagerContract.nextBurnTime().catch(() => 0n),
+        burnManagerContract.lastBurnTime().catch(() => 0n),
+        burnManagerContract.getBurnAmount().catch(() => 0n),
+        burnManagerContract.timeUntilNextBurn().catch(() => 0n),
+        burnManagerContract.owner().catch(() => ethers.ZeroAddress),
+      ]);
+
+      setCanBurn(canBurnValue);
+      setNextBurnTime(nextBurn);
+      setLastBurnTime(lastBurn);
+      setBurnAmount(amount);
+      setTimeUntilNextBurn(timeUntil);
+      setBurnManagerOwner(owner);
+
+      if (account && owner) {
+        setIsBurnManagerOwner(owner.toLowerCase() === account.toLowerCase());
+      }
+    } catch (error) {
+      console.error('Failed to fetch burn manager status:', error);
+    }
+  };
+
+  // Fetch burn manager status on mount and when contract changes
+  useEffect(() => {
+    if (burnManagerContract) {
+      fetchBurnManagerStatus();
+      // Refresh every 30 seconds
+      const interval = setInterval(fetchBurnManagerStatus, 30000);
+      return () => clearInterval(interval);
+    }
+  }, [burnManagerContract, account]);
+
+  // Execute Daily Burn
+  const handleDailyBurn = async () => {
+    if (!burnManagerContract || !canBurn) {
+      toast.error('无法执行燃烧：当前不可用');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const tx = await burnManagerContract.dailyBurn();
+      toast.loading('执行每日燃烧中...', { id: 'daily-burn' });
+      await tx.wait();
+      toast.success('每日燃烧执行成功！', { id: 'daily-burn' });
+      await fetchBurnManagerStatus();
+    } catch (err: any) {
+      toast.error(formatContractError(err), { id: 'daily-burn' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Emergency Pause
+  const handleEmergencyPause = async () => {
+    if (!burnManagerContract || !isBurnManagerOwner) {
+      toast.error('无权限执行此操作');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const tx = await burnManagerContract.emergencyPause();
+      toast.loading('紧急暂停中...', { id: 'emergency-pause' });
+      await tx.wait();
+      toast.success('已紧急暂停燃烧功能', { id: 'emergency-pause' });
+      await fetchBurnManagerStatus();
+    } catch (err: any) {
+      toast.error(formatContractError(err), { id: 'emergency-pause' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Resume Burn
+  const handleResumeBurn = async () => {
+    if (!burnManagerContract || !isBurnManagerOwner) {
+      toast.error('无权限执行此操作');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const tx = await burnManagerContract.resumeBurn();
+      toast.loading('恢复燃烧功能中...', { id: 'resume-burn' });
+      await tx.wait();
+      toast.success('已恢复燃烧功能', { id: 'resume-burn' });
+      await fetchBurnManagerStatus();
+    } catch (err: any) {
+      toast.error(formatContractError(err), { id: 'resume-burn' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Format time
+  const formatTime = (seconds: bigint | null): string => {
+    if (!seconds || seconds === 0n) return 'N/A';
+    const totalSeconds = Number(seconds);
+    const days = Math.floor(totalSeconds / 86400);
+    const hours = Math.floor((totalSeconds % 86400) / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const secs = totalSeconds % 60;
+
+    if (days > 0) return `${days}天 ${hours}小时 ${minutes}分钟`;
+    if (hours > 0) return `${hours}小时 ${minutes}分钟`;
+    if (minutes > 0) return `${minutes}分钟 ${secs}秒`;
+    return `${secs}秒`;
+  };
+
+  // Format timestamp
+  const formatTimestamp = (timestamp: bigint | null): string => {
+    if (!timestamp || timestamp === 0n) return '从未执行';
+    const date = new Date(Number(timestamp) * 1000);
+    return date.toLocaleString('zh-CN', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+    });
+  };
+
+  // Execute Buyback and Burn
+  const handleExecuteBuybackAndBurn = async () => {
+    if (!protocolContract || !provider || !currentBuyback) {
+      toast.error('无法执行回购：缺少必要信息');
+      return;
+    }
+
+    if (!isBuybackWallet) {
+      toast.error('只有回购钱包可以执行回购操作');
+      return;
+    }
+
+    const balance = await provider.getBalance(currentBuyback);
+    if (balance === 0n) {
+      toast.error('回购钱包余额为 0，无法执行回购');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      toast.loading('执行回购销毁中...', { id: 'buyback-burn' });
+      const tx = await protocolContract.executeBuybackAndBurn({ value: balance });
+      await tx.wait();
+      toast.success('回购销毁执行成功！', { id: 'buyback-burn' });
+      
+      // Refresh balance
+      const newBalance = await provider.getBalance(currentBuyback);
+      setBuybackWalletBalance(ethers.formatEther(newBalance));
+      await refreshMcBalance();
+    } catch (err: any) {
+      console.error('Buyback and burn error:', err);
+      toast.error(formatContractError(err), { id: 'buyback-burn' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Refresh buyback wallet balance
+  const refreshBuybackBalance = async () => {
+    if (!provider || !currentBuyback) return;
+    try {
+      const balance = await provider.getBalance(currentBuyback);
+      setBuybackWalletBalance(ethers.formatEther(balance));
+    } catch (err) {
+      console.error('Failed to refresh buyback balance:', err);
+    }
+  };
+
   useEffect(() => {
     if (protocolContract) {
       // Check if functions exist to avoid errors on old deployments if not fully updated
@@ -157,7 +415,19 @@ const AdminPanel: React.FC = () => {
       protocolContract.marketingWallet().then(setCurrentMarketing).catch(console.error);
       protocolContract.treasuryWallet().then(setCurrentTreasury).catch(console.error);
       protocolContract.lpInjectionWallet().then(setCurrentLp).catch(console.error);
-      protocolContract.buybackWallet().then(setCurrentBuyback).catch(console.error);
+      protocolContract.buybackWallet().then((wallet: string) => {
+        setCurrentBuyback(wallet);
+        // Check if current account is buyback wallet
+        if (account && wallet) {
+          setIsBuybackWallet(account.toLowerCase() === wallet.toLowerCase());
+        }
+        // Fetch buyback wallet balance
+        if (provider && wallet) {
+          provider.getBalance(wallet).then((balance: bigint) => {
+            setBuybackWalletBalance(ethers.formatEther(balance));
+          }).catch(console.error);
+        }
+      }).catch(console.error);
 
       // Fetch level reward pool balance
       protocolContract.levelRewardPool().then((balance: any) => {
@@ -564,6 +834,120 @@ const AdminPanel: React.FC = () => {
       }
   };
 
+  // JBC Transfer Functions
+  const transferJbcToProtocol = async () => {
+    if (!jbcContract || !account || !jbcTransferAmount) {
+      toast.error('请填写转账数量');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const amount = ethers.parseEther(jbcTransferAmount);
+      const balance = await jbcContract.balanceOf(account);
+      
+      if (balance < amount) {
+        toast.error('JBC余额不足');
+        return;
+      }
+
+      // Check allowance
+      const allowance = await jbcContract.allowance(account, CONTRACT_ADDRESSES.PROTOCOL);
+      if (allowance < amount) {
+        toast.loading('正在授权JBC...', { id: 'approve-jbc' });
+        const approveTx = await jbcContract.approve(CONTRACT_ADDRESSES.PROTOCOL, amount);
+        await approveTx.wait();
+        toast.success('JBC授权成功', { id: 'approve-jbc' });
+      }
+
+      // Transfer to protocol
+      toast.loading('正在转账JBC到协议合约...', { id: 'transfer-jbc' });
+      const tx = await jbcContract.transfer(CONTRACT_ADDRESSES.PROTOCOL, amount);
+      await tx.wait();
+      toast.success(`成功转账 ${jbcTransferAmount} JBC 到协议合约`, { id: 'transfer-jbc' });
+      
+      setJbcTransferAmount('');
+      await fetchJbcData();
+    } catch (err: any) {
+      toast.dismiss('approve-jbc');
+      toast.dismiss('transfer-jbc');
+      toast.error(formatContractError(err));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const transferJbcFromProtocol = async () => {
+    if (!protocolContract || !jbcContract || !account || !jbcTransferAmount) {
+      toast.error('请填写转账数量');
+      return;
+    }
+
+    if (!window.confirm(`确认从协议合约提取 ${jbcTransferAmount} JBC 到您的地址？`)) {
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const amount = ethers.parseEther(jbcTransferAmount);
+      const jbcTokenAddress = await jbcContract.getAddress();
+      
+      toast.loading('正在从协议合约提取JBC...', { id: 'rescue-jbc' });
+      const tx = await protocolContract.rescueTokens(jbcTokenAddress, account, amount);
+      await tx.wait();
+      toast.success(`成功提取 ${jbcTransferAmount} JBC`, { id: 'rescue-jbc' });
+      
+      setJbcTransferAmount('');
+      await fetchJbcData();
+    } catch (err: any) {
+      toast.dismiss('rescue-jbc');
+      toast.error(formatContractError(err));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const transferJbcToAddress = async () => {
+    if (!jbcContract || !account || !jbcTransferAmount || !jbcTransferTo) {
+      toast.error('请填写转账数量和接收地址');
+      return;
+    }
+
+    if (!ethers.isAddress(jbcTransferTo)) {
+      toast.error('无效的接收地址');
+      return;
+    }
+
+    if (!window.confirm(`确认转账 ${jbcTransferAmount} JBC 到 ${jbcTransferTo}？`)) {
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const amount = ethers.parseEther(jbcTransferAmount);
+      const balance = await jbcContract.balanceOf(account);
+      
+      if (balance < amount) {
+        toast.error('JBC余额不足');
+        return;
+      }
+
+      toast.loading('正在转账JBC...', { id: 'transfer-jbc-addr' });
+      const tx = await jbcContract.transfer(jbcTransferTo, amount);
+      await tx.wait();
+      toast.success(`成功转账 ${jbcTransferAmount} JBC`, { id: 'transfer-jbc-addr' });
+      
+      setJbcTransferAmount('');
+      setJbcTransferTo('');
+      await fetchJbcData();
+    } catch (err: any) {
+      toast.dismiss('transfer-jbc-addr');
+      toast.error(formatContractError(err));
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const withdrawAll = async (tokenType: 'MC' | 'JBC') => {
       if (!protocolContract || !jbcContract) return;
       if (!window.confirm(t.admin.confirmWithdraw)) return;
@@ -674,6 +1058,28 @@ const AdminPanel: React.FC = () => {
             <Settings className="inline mr-2" size={16} />
             通知设置
           </button>
+          <button
+            onClick={() => setActiveTab('burn')}
+            className={`px-6 py-3 rounded-lg font-bold text-sm transition-all ${
+              activeTab === 'burn'
+                ? 'bg-red-600 text-white shadow-lg'
+                : 'text-gray-400 hover:text-white hover:bg-gray-800/50'
+            }`}
+          >
+            <Flame className="inline mr-2" size={16} />
+            每日燃烧
+          </button>
+          <button
+            onClick={() => setActiveTab('jbc')}
+            className={`px-6 py-3 rounded-lg font-bold text-sm transition-all ${
+              activeTab === 'jbc'
+                ? 'bg-yellow-600 text-white shadow-lg'
+                : 'text-gray-400 hover:text-white hover:bg-gray-800/50'
+            }`}
+          >
+            <Coins className="inline mr-2" size={16} />
+            JBC管理
+          </button>
         </div>
       </div>
 
@@ -738,6 +1144,347 @@ const AdminPanel: React.FC = () => {
       ) : activeTab === 'settings' ? (
         <div className="space-y-6">
           <NotificationSettings />
+        </div>
+      ) : activeTab === 'burn' ? (
+        <div className="space-y-6">
+          {/* Daily Burn Manager Panel */}
+          <div className="glass-panel p-6 md:p-8 rounded-xl md:rounded-2xl bg-gradient-to-br from-red-900/30 to-orange-800/30 border-2 border-red-500/50 backdrop-blur-sm">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="p-2 bg-red-500/20 rounded-lg border border-red-500/30">
+                <Flame className="text-red-400" size={24} />
+              </div>
+              <div>
+                <h3 className="text-xl md:text-2xl font-bold text-white">每日燃烧管理</h3>
+                <p className="text-sm text-gray-400">管理 JBC 代币的每日自动燃烧功能</p>
+              </div>
+            </div>
+
+            {/* Contract Info */}
+            <div className="mb-6 p-4 bg-gray-800/50 rounded-lg border border-gray-700">
+              <p className="text-xs text-gray-400 mb-1">合约地址</p>
+              <p className="text-sm font-mono text-white break-all">{CONTRACT_ADDRESSES.DAILY_BURN_MANAGER}</p>
+              {burnManagerOwner && (
+                <>
+                  <p className="text-xs text-gray-400 mt-3 mb-1">合约所有者</p>
+                  <p className="text-sm font-mono text-white break-all">{burnManagerOwner}</p>
+                </>
+              )}
+            </div>
+
+            {/* Status Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+              {/* Can Burn Status */}
+              <div className={`p-4 rounded-lg border-2 ${canBurn ? 'bg-green-900/30 border-green-500/50' : 'bg-gray-800/50 border-gray-700'}`}>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm text-gray-300">燃烧状态</span>
+                  {canBurn ? (
+                    <CheckCircle className="text-green-400" size={20} />
+                  ) : (
+                    <XCircle className="text-gray-400" size={20} />
+                  )}
+                </div>
+                <p className={`text-lg font-bold ${canBurn ? 'text-green-400' : 'text-gray-400'}`}>
+                  {canBurn ? '可以执行燃烧' : '暂不可执行'}
+                </p>
+              </div>
+
+              {/* Burn Amount */}
+              <div className="p-4 rounded-lg border-2 bg-gray-800/50 border-gray-700">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm text-gray-300">燃烧数量</span>
+                  <Flame className="text-orange-400" size={20} />
+                </div>
+                <p className="text-lg font-bold text-orange-400">
+                  {burnAmount ? ethers.formatEther(burnAmount) : '0'} JBC
+                </p>
+              </div>
+            </div>
+
+            {/* Time Information */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+              {/* Next Burn Time */}
+              <div className="p-4 rounded-lg border-2 bg-gray-800/50 border-gray-700">
+                <p className="text-sm text-gray-300 mb-2">下次燃烧时间</p>
+                <p className="text-base font-mono text-white">
+                  {nextBurnTime ? formatTimestamp(nextBurnTime) : 'N/A'}
+                </p>
+                {timeUntilNextBurn !== null && timeUntilNextBurn > 0n && (
+                  <p className="text-xs text-gray-400 mt-2">
+                    剩余时间: {formatTime(timeUntilNextBurn)}
+                  </p>
+                )}
+              </div>
+
+              {/* Last Burn Time */}
+              <div className="p-4 rounded-lg border-2 bg-gray-800/50 border-gray-700">
+                <p className="text-sm text-gray-300 mb-2">最后燃烧时间</p>
+                <p className="text-base font-mono text-white">
+                  {lastBurnTime ? formatTimestamp(lastBurnTime) : '从未执行'}
+                </p>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="space-y-4">
+              {/* Execute Daily Burn */}
+              <button
+                onClick={handleDailyBurn}
+                disabled={loading || !canBurn || !isBurnManagerOwner}
+                className={`w-full py-3 px-4 rounded-lg font-bold text-white transition-all ${
+                  canBurn && isBurnManagerOwner
+                    ? 'bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-500 hover:to-orange-500 shadow-lg shadow-red-500/30'
+                    : 'bg-gray-700 text-gray-400 cursor-not-allowed'
+                }`}
+              >
+                <Flame className="inline mr-2" size={18} />
+                {loading ? '执行中...' : '执行每日燃烧'}
+              </button>
+
+              {/* Emergency Controls */}
+              {isBurnManagerOwner && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <button
+                    onClick={handleEmergencyPause}
+                    disabled={loading}
+                    className="w-full py-3 px-4 rounded-lg font-bold text-white bg-red-700 hover:bg-red-600 disabled:opacity-50 transition-all border border-red-500"
+                  >
+                    <AlertTriangle className="inline mr-2" size={18} />
+                    紧急暂停
+                  </button>
+                  <button
+                    onClick={handleResumeBurn}
+                    disabled={loading}
+                    className="w-full py-3 px-4 rounded-lg font-bold text-white bg-green-700 hover:bg-green-600 disabled:opacity-50 transition-all border border-green-500"
+                  >
+                    <CheckCircle className="inline mr-2" size={18} />
+                    恢复燃烧
+                  </button>
+                </div>
+              )}
+
+              {/* Permission Warning */}
+              {!isBurnManagerOwner && account && (
+                <div className="p-4 bg-yellow-900/30 border border-yellow-500/50 rounded-lg">
+                  <div className="flex items-start gap-2">
+                    <AlertTriangle className="text-yellow-400 mt-0.5" size={20} />
+                    <div>
+                      <p className="text-yellow-400 font-bold text-sm">权限提示</p>
+                      <p className="text-yellow-200/80 text-xs mt-1">
+                        当前地址不是燃烧管理合约的所有者，无法执行燃烧操作。
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Refresh Button */}
+              <button
+                onClick={fetchBurnManagerStatus}
+                disabled={loading || !burnManagerContract}
+                className="w-full py-2 px-4 rounded-lg font-bold text-gray-300 bg-gray-800 hover:bg-gray-700 disabled:opacity-50 transition-all border border-gray-700"
+              >
+                刷新状态
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : activeTab === 'jbc' ? (
+        <div className="space-y-6">
+          {/* JBC Token Manager Panel */}
+          <div className="glass-panel p-6 md:p-8 rounded-xl md:rounded-2xl bg-gradient-to-br from-yellow-900/30 to-amber-800/30 border-2 border-yellow-500/50 backdrop-blur-sm">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="p-2 bg-yellow-500/20 rounded-lg border border-yellow-500/30">
+                <Coins className="text-yellow-400" size={24} />
+              </div>
+              <div>
+                <h3 className="text-xl md:text-2xl font-bold text-white">JBC 代币管理</h3>
+                <p className="text-sm text-gray-400">管理 JBC 代币余额和转账</p>
+              </div>
+            </div>
+
+            {/* Balance Overview */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+              {/* Protocol Balance */}
+              <div className="p-4 rounded-lg border-2 bg-gray-800/50 border-gray-700">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm text-gray-300">协议合约余额</span>
+                  <Coins className="text-yellow-400" size={20} />
+                </div>
+                <p className="text-lg font-bold text-yellow-400">
+                  {parseFloat(protocolJbcBalance).toLocaleString('en-US', { maximumFractionDigits: 2 })} JBC
+                </p>
+                {parseFloat(protocolJbcBalance) < 1000000 && (
+                  <p className="text-xs text-red-400 mt-1">⚠️ 余额偏低</p>
+                )}
+              </div>
+
+              {/* Total Supply */}
+              <div className="p-4 rounded-lg border-2 bg-gray-800/50 border-gray-700">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm text-gray-300">总供应量</span>
+                  <Coins className="text-blue-400" size={20} />
+                </div>
+                <p className="text-lg font-bold text-blue-400">
+                  {parseFloat(jbcTotalSupply).toLocaleString('en-US', { maximumFractionDigits: 2 })} JBC
+                </p>
+              </div>
+
+              {/* Account Balance */}
+              <div className="p-4 rounded-lg border-2 bg-gray-800/50 border-gray-700">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm text-gray-300">当前账户余额</span>
+                  <Coins className="text-green-400" size={20} />
+                </div>
+                <p className="text-lg font-bold text-green-400">
+                  {parseFloat(accountJbcBalance).toLocaleString('en-US', { maximumFractionDigits: 2 })} JBC
+                </p>
+              </div>
+
+              {/* JBC Price */}
+              <div className="p-4 rounded-lg border-2 bg-gray-800/50 border-gray-700">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm text-gray-300">JBC 价格</span>
+                  <Coins className="text-purple-400" size={20} />
+                </div>
+                <p className="text-lg font-bold text-purple-400">
+                  {jbcPrice} MC
+                </p>
+                <p className="text-xs text-gray-400 mt-1">基于交换储备池</p>
+              </div>
+            </div>
+
+            {/* Warning Alert */}
+            {parseFloat(protocolJbcBalance) < 1000000 && (
+              <div className="mb-6 p-4 bg-red-900/30 border-l-4 border-red-500 rounded-r">
+                <div className="flex items-start">
+                  <AlertTriangle className="text-red-400 mt-0.5 mr-3 flex-shrink-0" size={20} />
+                  <div>
+                    <h3 className="text-red-400 font-bold text-base">JBC 余额警告</h3>
+                    <p className="text-red-200/80 text-sm mt-1">
+                      协议合约 JBC 余额低于 100 万，可能影响奖励分配。建议及时补充。
+                    </p>
+                    <div className="mt-2 p-2 bg-black/40 rounded border border-red-500/20">
+                      <p className="text-gray-400 text-xs">
+                        当前余额: <span className="text-white font-bold">{parseFloat(protocolJbcBalance).toLocaleString('en-US', { maximumFractionDigits: 2 })} JBC</span>
+                      </p>
+                      <p className="text-gray-400 text-xs mt-1">
+                        建议余额: <span className="text-white">1,000,000+ JBC</span>
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Transfer Section */}
+            <div className="space-y-6">
+              <h4 className="text-lg font-bold text-white border-b border-gray-700 pb-2">JBC 转账管理</h4>
+              
+              {/* Transfer Type Selection */}
+              <div className="flex gap-2 mb-4">
+                <button
+                  onClick={() => setJbcTransferType('toProtocol')}
+                  className={`px-4 py-2 rounded-lg font-bold text-sm transition-all ${
+                    jbcTransferType === 'toProtocol'
+                      ? 'bg-yellow-600 text-white'
+                      : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+                  }`}
+                >
+                  转入协议
+                </button>
+                <button
+                  onClick={() => setJbcTransferType('fromProtocol')}
+                  className={`px-4 py-2 rounded-lg font-bold text-sm transition-all ${
+                    jbcTransferType === 'fromProtocol'
+                      ? 'bg-yellow-600 text-white'
+                      : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+                  }`}
+                >
+                  从协议提取
+                </button>
+                <button
+                  onClick={() => setJbcTransferType('toAddress')}
+                  className={`px-4 py-2 rounded-lg font-bold text-sm transition-all ${
+                    jbcTransferType === 'toAddress'
+                      ? 'bg-yellow-600 text-white'
+                      : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+                  }`}
+                >
+                  转账到地址
+                </button>
+              </div>
+
+              {/* Transfer Form */}
+              <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-700 space-y-4">
+                {jbcTransferType === 'toAddress' && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">接收地址</label>
+                    <input
+                      type="text"
+                      value={jbcTransferTo}
+                      onChange={(e) => setJbcTransferTo(e.target.value)}
+                      className="w-full p-2 border border-gray-700 bg-gray-900/50 rounded text-white text-sm font-mono placeholder-gray-600"
+                      placeholder="0x..."
+                    />
+                  </div>
+                )}
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">转账数量 (JBC)</label>
+                  <input
+                    type="number"
+                    value={jbcTransferAmount}
+                    onChange={(e) => setJbcTransferAmount(e.target.value)}
+                    className="w-full p-2 border border-gray-700 bg-gray-900/50 rounded text-white text-sm placeholder-gray-600"
+                    placeholder="0.0"
+                  />
+                </div>
+
+                <button
+                  onClick={() => {
+                    if (jbcTransferType === 'toProtocol') {
+                      transferJbcToProtocol();
+                    } else if (jbcTransferType === 'fromProtocol') {
+                      transferJbcFromProtocol();
+                    } else {
+                      transferJbcToAddress();
+                    }
+                  }}
+                  disabled={loading || !jbcTransferAmount || (jbcTransferType === 'toAddress' && !jbcTransferTo)}
+                  className={`w-full py-3 px-4 rounded-lg font-bold text-white transition-all ${
+                    loading || !jbcTransferAmount || (jbcTransferType === 'toAddress' && !jbcTransferTo)
+                      ? 'bg-gray-700 text-gray-400 cursor-not-allowed'
+                      : 'bg-gradient-to-r from-yellow-600 to-amber-600 hover:from-yellow-500 hover:to-amber-500 shadow-lg shadow-yellow-500/30'
+                  }`}
+                >
+                  {loading ? '处理中...' : 
+                   jbcTransferType === 'toProtocol' ? '转入协议合约' :
+                   jbcTransferType === 'fromProtocol' ? '从协议合约提取' :
+                   '转账到地址'}
+                </button>
+              </div>
+
+              {/* Additional Info */}
+              <div className="bg-gray-800/30 rounded-lg p-4 border border-gray-700">
+                <h5 className="text-sm font-bold text-gray-300 mb-2">说明</h5>
+                <ul className="text-xs text-gray-400 space-y-1">
+                  <li>• <strong>转入协议</strong>: 将您的 JBC 转入协议合约，用于奖励分配</li>
+                  <li>• <strong>从协议提取</strong>: 从协议合约提取 JBC 到您的地址（需要管理员权限）</li>
+                  <li>• <strong>转账到地址</strong>: 将您的 JBC 转账到任意地址</li>
+                  <li>• 协议合约余额建议保持在 100 万 JBC 以上以确保正常奖励分配</li>
+                </ul>
+              </div>
+
+              {/* Refresh Button */}
+              <button
+                onClick={fetchJbcData}
+                disabled={loading || !jbcContract}
+                className="w-full py-2 px-4 rounded-lg font-bold text-gray-300 bg-gray-800 hover:bg-gray-700 disabled:opacity-50 transition-all border border-gray-700"
+              >
+                刷新数据
+              </button>
+            </div>
+          </div>
         </div>
       ) : (
         <>
@@ -1108,6 +1855,93 @@ const AdminPanel: React.FC = () => {
               <button onClick={updateWallets} disabled={loading} className="w-full py-2 md:py-2.5 bg-gradient-to-r from-neon-500 to-neon-600 hover:from-neon-400 hover:to-neon-500 text-black font-bold rounded-lg mt-2 disabled:opacity-50 text-sm md:text-base shadow-lg shadow-neon-500/30">
                   {t.admin.updateWallets}
               </button>
+          </div>
+      </div>
+
+      {/* Buyback Management */}
+      <div className="glass-panel p-4 md:p-6 rounded-xl md:rounded-2xl bg-gradient-to-br from-orange-900/30 to-red-800/30 border-2 border-orange-500/50 backdrop-blur-sm">
+          <div className="flex items-center gap-3 mb-4">
+              <div className="p-2 bg-orange-500/20 rounded-lg border border-orange-500/30">
+                  <Flame className="text-orange-400" size={24} />
+              </div>
+              <div>
+                  <h3 className="text-xl md:text-2xl font-bold text-white">回购管理</h3>
+                  <p className="text-sm text-gray-400">管理回购钱包和执行回购销毁</p>
+              </div>
+          </div>
+
+          {/* Buyback Wallet Info */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+              <div className="p-4 rounded-lg border-2 bg-gray-800/50 border-gray-700">
+                  <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm text-gray-300">回购钱包地址</span>
+                      <Coins className="text-orange-400" size={20} />
+                  </div>
+                  <p className="text-sm font-mono text-orange-400 break-all">
+                      {currentBuyback || '加载中...'}
+                  </p>
+              </div>
+
+              <div className="p-4 rounded-lg border-2 bg-gray-800/50 border-gray-700">
+                  <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm text-gray-300">回购钱包余额</span>
+                      <Coins className="text-red-400" size={20} />
+                  </div>
+                  <p className="text-lg font-bold text-red-400">
+                      {parseFloat(buybackWalletBalance).toLocaleString('en-US', { maximumFractionDigits: 4 })} MC
+                  </p>
+                  <button
+                      onClick={refreshBuybackBalance}
+                      className="mt-2 text-xs text-gray-400 hover:text-gray-300 underline"
+                  >
+                      刷新余额
+                  </button>
+              </div>
+          </div>
+
+          {/* Permission Warning */}
+          {!isBuybackWallet && account && (
+              <div className="mb-6 p-4 bg-yellow-900/30 border border-yellow-500/50 rounded-lg">
+                  <div className="flex items-start gap-2">
+                      <AlertTriangle className="text-yellow-400 mt-0.5" size={20} />
+                      <div>
+                          <p className="text-yellow-400 font-bold text-sm">权限提示</p>
+                          <p className="text-yellow-200/80 text-xs mt-1">
+                              当前地址不是回购钱包，无法执行回购操作。
+                          </p>
+                          <p className="text-yellow-200/80 text-xs mt-1">
+                              回购钱包地址: <span className="font-mono">{currentBuyback}</span>
+                          </p>
+                      </div>
+                  </div>
+              </div>
+          )}
+
+          {/* Execute Buyback Button */}
+          <div className="space-y-4">
+              <button
+                  onClick={handleExecuteBuybackAndBurn}
+                  disabled={loading || !isBuybackWallet || parseFloat(buybackWalletBalance) === 0}
+                  className={`w-full py-3 px-4 rounded-lg font-bold text-white transition-all ${
+                      loading || !isBuybackWallet || parseFloat(buybackWalletBalance) === 0
+                          ? 'bg-gray-700 text-gray-400 cursor-not-allowed'
+                          : 'bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-500 hover:to-red-500 shadow-lg shadow-orange-500/30'
+                  }`}
+              >
+                  {loading ? '执行中...' : `执行回购销毁 (${parseFloat(buybackWalletBalance).toLocaleString('en-US', { maximumFractionDigits: 4 })} MC)`}
+              </button>
+
+              <div className="p-4 bg-gray-800/50 rounded-lg border border-gray-700">
+                  <p className="text-xs text-gray-400">
+                      <strong className="text-gray-300">说明：</strong>
+                      <br />
+                      • 回购钱包会接收门票购买金额的 5% 作为回购资金
+                      <br />
+                      • 点击"执行回购销毁"会将回购钱包中的所有 MC 用于购买并销毁 JBC
+                      <br />
+                      • 只有回购钱包地址可以执行此操作
+                  </p>
+              </div>
           </div>
       </div>
 

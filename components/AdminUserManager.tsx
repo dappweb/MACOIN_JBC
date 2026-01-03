@@ -124,21 +124,52 @@ const AdminUserManager: React.FC = () => {
             // 准备更新数据
             const newActiveDirects = parseInt(editData.activeDirects);
             const newTeamCount = parseInt(editData.teamCount);
+            const newReferrer = editData.referrer.trim();
             
+            // 检查推荐人地址是否有效
+            const shouldUpdateReferrer = newReferrer !== '' && 
+                                        ethers.isAddress(newReferrer) && 
+                                        newReferrer.toLowerCase() !== userInfo.referrer.toLowerCase();
             const shouldUpdateActiveDirects = !isNaN(newActiveDirects) && newActiveDirects !== userInfo.activeDirects;
             const shouldUpdateTeamCount = !isNaN(newTeamCount) && newTeamCount !== userInfo.teamCount;
 
-            if (!shouldUpdateActiveDirects && !shouldUpdateTeamCount) {
+            if (!shouldUpdateReferrer && !shouldUpdateActiveDirects && !shouldUpdateTeamCount) {
                 toast('没有需要更新的数据', { icon: 'ℹ️', duration: 3000 });
                 setEditMode(false);
                 setLoading(false);
                 return;
             }
 
+            // 验证推荐人地址格式
+            if (shouldUpdateReferrer && !ethers.isAddress(newReferrer)) {
+                toast.error('推荐人地址格式无效');
+                setLoading(false);
+                return;
+            }
+
+            // 检查是否将推荐人设置为自己的地址
+            if (shouldUpdateReferrer && newReferrer.toLowerCase() === userInfo.address.toLowerCase()) {
+                toast.error('不能将自己设置为推荐人');
+                setLoading(false);
+                return;
+            }
+
             console.log('🚀 [AdminUserManager] Updating user data...');
             
-            // 使用 adminUpdateUserData 一次性更新所有数据
-            if (protocolContract.adminUpdateUserData) {
+            // 先处理推荐人修改（如果合约支持）
+            if (shouldUpdateReferrer && protocolContract.adminSetReferrer) {
+                console.log('📝 [AdminUserManager] Updating referrer...');
+                const referrerTx = await protocolContract.adminSetReferrer(
+                    userInfo.address,
+                    newReferrer
+                );
+                console.log('⏳ [AdminUserManager] Waiting for referrer update confirmation...');
+                await referrerTx.wait();
+                console.log('✅ [AdminUserManager] Referrer update confirmed:', referrerTx.hash);
+            }
+            
+            // 使用 adminUpdateUserData 一次性更新其他数据
+            if (protocolContract.adminUpdateUserData && (shouldUpdateActiveDirects || shouldUpdateTeamCount)) {
                 const tx = await protocolContract.adminUpdateUserData(
                     userInfo.address,
                     shouldUpdateActiveDirects, shouldUpdateActiveDirects ? newActiveDirects : 0,
@@ -151,7 +182,7 @@ const AdminUserManager: React.FC = () => {
                 console.log('⏳ [AdminUserManager] Waiting for transaction confirmation...');
                 await tx.wait();
                 console.log('✅ [AdminUserManager] Transaction confirmed:', tx.hash);
-            } else {
+            } else if (shouldUpdateActiveDirects || shouldUpdateTeamCount) {
                 // 如果 adminUpdateUserData 不存在，尝试回退到旧的单独函数（为了兼容性，虽然可能不存在）
                 console.warn('⚠️ [AdminUserManager] adminUpdateUserData not found, trying individual setters...');
                 const updates: Promise<any>[] = [];
@@ -207,8 +238,9 @@ const AdminUserManager: React.FC = () => {
                     <AlertTriangle className="text-green-400 mt-0.5 flex-shrink-0" size={20} />
                     <div className="text-sm text-green-200">
                         <div className="font-bold mb-1">管理员功能</div>
-                        <p>作为合约所有者，您可以修改用户的活跃直推数量和团队成员数量。这些修改会影响用户的层级奖励层级和等级。</p>
+                        <p>作为合约所有者，您可以修改用户的推荐人、活跃直推数量和团队成员数量。这些修改会影响用户的层级奖励层级和等级。</p>
                         <ul className="list-disc list-inside mt-2 space-y-1">
+                            <li><strong>推荐人：</strong>修改用户的推荐关系，将重新计算整个推荐链的团队人数</li>
                             <li>活跃直推数：影响层级奖励的可获得层级数（1个=5层，2个=10层，3+=15层）</li>
                             <li>团队成员数：影响用户的等级（V0-V9）和极差奖励比例</li>
                         </ul>
@@ -463,7 +495,9 @@ const AdminUserManager: React.FC = () => {
                                 <div className="text-sm text-yellow-200">
                                     <div className="font-bold mb-1">修改用户数据注意事项：</div>
                                     <ul className="list-disc list-inside space-y-1 text-xs">
-                                        <li>修改推荐人将重新计算整个推荐链的团队人数</li>
+                                        <li><strong>修改推荐人：</strong>将重新计算整个推荐链的团队人数，并更新旧推荐人和新推荐人的直推列表</li>
+                                        <li><strong>修改活跃直推数：</strong>影响层级奖励的可获得层级数（1个=5层，2个=10层，3+=15层）</li>
+                                        <li><strong>修改团队人数：</strong>影响用户的等级（V0-V9）和极差奖励比例</li>
                                         <li>修改收益数据可能影响用户的出局状态</li>
                                         <li>请确保数据的准确性，错误的修改可能影响系统稳定性</li>
                                         <li>建议在修改前备份相关数据</li>

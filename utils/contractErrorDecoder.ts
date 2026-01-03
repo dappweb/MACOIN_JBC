@@ -52,7 +52,7 @@ export function getErrorMessage(error: any, t: any): string {
     if (decodedError) {
       switch (decodedError) {
         case 'OwnableUnauthorizedAccount':
-          return `${t.admin.onlyOwner} - You are not the contract owner.`;
+          return t.admin.onlyOwner || '只有合约所有者可以执行此操作';
         case 'OwnableInvalidOwner':
           return 'Invalid owner address provided.';
         case 'ReentrancyGuardReentrantCall':
@@ -71,7 +71,7 @@ export function getErrorMessage(error: any, t: any): string {
   if (error.message) {
     if (error.message.includes('Ownable: caller is not the owner') || 
         error.message.includes('OwnableUnauthorizedAccount')) {
-      return `${t.admin.onlyOwner} - You are not the contract owner.`;
+      return t.admin.onlyOwner || '只有合约所有者可以执行此操作';
     }
     if (error.message.includes('insufficient funds')) {
       return t.admin.insufficientFunds;

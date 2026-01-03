@@ -6,7 +6,7 @@ import { ethers } from 'ethers';
 import toast from 'react-hot-toast';
 import { API_BASE_URL } from '../src/constants';
 import { formatContractError } from '../utils/errorFormatter';
-import { formatEnhancedContractError, decodeContractError } from '../utils/contractErrorDecoder';
+import { formatEnhancedContractError } from '../utils/contractErrorDecoder';
 import { isUsingLatestContract } from '../utils/contractAddressResolver';
 import AdminUserManager from './AdminUserManager';
 import LevelDisplay from './LevelDisplay';
@@ -129,6 +129,7 @@ const AdminPanel: React.FC = () => {
   const [searchUserAddress, setSearchUserAddress] = useState('');
   const [searchedUserInfo, setSearchedUserInfo] = useState<any>(null);
   const [newTeamCount, setNewTeamCount] = useState('');
+  const [newReferrer, setNewReferrer] = useState('');
   const [fundAmount, setFundAmount] = useState('');
   const [fundToken, setFundToken] = useState<'MC' | 'JBC'>('MC');
 
@@ -687,9 +688,9 @@ const AdminPanel: React.FC = () => {
         return;
     }
 
-    // 检查是否是合约拥有者
+    // 检查是否为合约所有者
     if (!isOwner) {
-        toast.error('权限错误：只有合约拥有者可以添加流动性');
+        toast.error(t.admin.onlyOwner || '只有合约所有者可以执行此操作');
         return;
     }
 
@@ -750,22 +751,8 @@ const AdminPanel: React.FC = () => {
         toast.dismiss('approve');
         toast.dismiss('addLiq');
         
-        // 检查是否是权限错误
-        let errorMessage = formatEnhancedContractError(err, t);
-        if (err.data) {
-            const decodedError = decodeContractError(err.data);
-            if (decodedError === 'OwnableUnauthorizedAccount') {
-                errorMessage = '权限错误：您不是合约拥有者，只有合约拥有者可以添加流动性';
-            }
-        } else if (err.message && (
-            err.message.includes('OwnableUnauthorizedAccount') || 
-            err.message.includes('caller is not the owner') ||
-            err.message.includes('Ownable: caller is not the owner')
-        )) {
-            errorMessage = '权限错误：您不是合约拥有者，只有合约拥有者可以添加流动性';
-        }
-        
-        toast.error(errorMessage, { duration: 5000 });
+        // Use enhanced error handling
+        toast.error(formatEnhancedContractError(err, t));
     } finally {
         setLoading(false);
     }
@@ -774,6 +761,12 @@ const AdminPanel: React.FC = () => {
   const removeLiquidity = async (tokenType: 'MC' | 'JBC') => {
     if (!protocolContract || !isConnected || !account) {
         toast.error(t.admin.failed);
+        return;
+    }
+
+    // 检查是否为合约所有者
+    if (!isOwner) {
+        toast.error(t.admin.onlyOwner || '只有合约所有者可以执行此操作');
         return;
     }
 
@@ -831,6 +824,7 @@ const AdminPanel: React.FC = () => {
             level: level
         });
         setNewTeamCount(info.teamCount.toString());
+        setNewReferrer(info.referrer || '');
     } catch (err: any) {
         console.error(err);
         toast.error(formatContractError(err));
@@ -869,6 +863,38 @@ const AdminPanel: React.FC = () => {
         );
         await tx.wait();
         toast.success(t.admin.success);
+        fetchUserInfo(); // Refresh
+    } catch (err: any) {
+        console.error(err);
+        toast.error(formatContractError(err));
+    } finally {
+        setLoading(false);
+    }
+  };
+
+  const updateReferrer = async () => {
+    if (!protocolContract || !searchUserAddress) return;
+    
+    // 验证推荐人地址格式
+    if (!ethers.isAddress(newReferrer)) {
+        toast.error('推荐人地址格式无效');
+        return;
+    }
+    
+    // 检查是否将推荐人设置为自己的地址
+    if (newReferrer.toLowerCase() === searchUserAddress.toLowerCase()) {
+        toast.error('不能将自己设置为推荐人');
+        return;
+    }
+    
+    setLoading(true);
+    try {
+        const tx = await protocolContract.adminSetReferrer(
+            searchUserAddress,
+            newReferrer
+        );
+        await tx.wait();
+        toast.success('推荐人更新成功！');
         fetchUserInfo(); // Refresh
     } catch (err: any) {
         console.error(err);
@@ -1957,7 +1983,7 @@ const AdminPanel: React.FC = () => {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                         <div>
                             <span className="text-gray-400 block">{t.admin.referrer}</span>
-                            <span className="text-white font-mono break-all">{searchedUserInfo.referrer}</span>
+                            <span className="text-white font-mono break-all">{searchedUserInfo.referrer || '无推荐人'}</span>
                         </div>
                         <div>
                             <span className="text-gray-400 block">{t.admin.activeDirects}</span>
@@ -1975,6 +2001,27 @@ const AdminPanel: React.FC = () => {
                         </div>
                     </div>
                     
+                    <div className="pt-3 border-t border-gray-700">
+                        <label className="block text-sm font-medium text-gray-300 mb-2">修改推荐人 (Referrer)</label>
+                        <div className="flex gap-2">
+                            <input 
+                                type="text" 
+                                value={newReferrer} 
+                                onChange={e => setNewReferrer(e.target.value)} 
+                                className="flex-1 p-2 border border-gray-700 bg-gray-900/50 rounded text-white text-sm font-mono placeholder-gray-600" 
+                                placeholder="0x..."
+                            />
+                            <button 
+                                onClick={updateReferrer} 
+                                disabled={loading || !newReferrer || newReferrer === searchedUserInfo.referrer} 
+                                className="px-4 py-2 bg-blue-600/20 text-blue-400 border border-blue-500/30 rounded hover:bg-blue-600/30 disabled:opacity-50 text-sm font-bold"
+                            >
+                                {t.admin.update}
+                            </button>
+                        </div>
+                        <p className="text-xs text-gray-500 mt-1">修改推荐人将重新计算整个推荐链的团队人数</p>
+                    </div>
+
                     <div className="pt-3 border-t border-gray-700">
                         <label className="block text-sm font-medium text-gray-300 mb-2">活跃直推数量 (Active Directs)</label>
                         <div className="flex gap-2">

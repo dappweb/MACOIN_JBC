@@ -4,7 +4,6 @@ import { useGlobalRefresh, useEventRefresh } from '../hooks/useGlobalRefresh';
 import { ethers } from 'ethers';
 import toast from 'react-hot-toast';
 import { RotateCw, Plus, Minus, Info, TrendingUp } from 'lucide-react';
-import { formatEnhancedContractError, decodeContractError } from '../utils/contractErrorDecoder';
 
 const AdminLiquidityPanel: React.FC = () => {
   const { jbcContract, protocolContract, account, isConnected, isOwner, mcBalance, refreshMcBalance } = useWeb3();
@@ -180,48 +179,18 @@ const AdminLiquidityPanel: React.FC = () => {
         data: error.data
       });
       
-      // 尝试解码错误代码
       let errorMessage = '添加流动性失败';
-      
-      // 检查错误数据
-      if (error.data) {
-        const decodedError = decodeContractError(error.data);
-        if (decodedError === 'OwnableUnauthorizedAccount') {
-          errorMessage = '权限错误：您不是合约拥有者，只有合约拥有者可以添加流动性';
-          toast.error(errorMessage, { id: 'add-liquidity', duration: 5000 });
-          setIsLoading(false);
-          return;
-        }
-      }
-      
-      // 检查错误消息
-      if (error.message) {
-        if (error.message.includes('OwnableUnauthorizedAccount') || 
-            error.message.includes('caller is not the owner') ||
-            error.message.includes('Ownable: caller is not the owner')) {
-          errorMessage = '权限错误：您不是合约拥有者，只有合约拥有者可以添加流动性';
-        } else if (error.message.includes('invalid BigNumberish value')) {
-          errorMessage = '参数格式错误，请检查输入的数量';
-        } else if (error.message.includes('execution reverted')) {
-          // 尝试从错误数据中解码
-          if (error.data) {
-            const decodedError = decodeContractError(error.data);
-            if (decodedError) {
-              errorMessage = `交易失败: ${decodedError}`;
-            } else {
-              errorMessage = '交易失败: execution reverted';
-            }
-          } else {
-            errorMessage = '交易失败: execution reverted';
-          }
-        } else {
-          errorMessage = error.message;
-        }
+      if (error.message.includes('OwnableUnauthorizedAccount')) {
+        errorMessage = '权限错误：您不是合约拥有者';
+      } else if (error.message.includes('invalid BigNumberish value')) {
+        errorMessage = '参数格式错误，请检查输入的数量';
       } else if (error.reason) {
         errorMessage = `失败原因: ${error.reason}`;
+      } else if (error.message) {
+        errorMessage = error.message;
       }
       
-      toast.error(errorMessage, { id: 'add-liquidity', duration: 5000 });
+      toast.error(errorMessage, { id: 'add-liquidity' });
     } finally {
       setIsLoading(false);
     }

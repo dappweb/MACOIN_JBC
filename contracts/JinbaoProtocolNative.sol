@@ -199,6 +199,7 @@ contract JinbaoProtocolNative is Initializable, OwnableUpgradeable, UUPSUpgradea
     event DistributionConfigUpdated(uint256 direct, uint256 level, uint256 marketing, uint256 buyback, uint256 lpInjection, uint256 treasury);
     event SwapTaxesUpdated(uint256 buyTax, uint256 sellTax);
     event RedemptionFeeUpdated(uint256 newFee);
+    event JbcTokenUpdated(address indexed oldJbcToken, address indexed newJbcToken);
     event SwapReservesWithdrawn(uint256 mcAmount, uint256 jbcAmount);
     event TokensRescued(address token, address to, uint256 amount);
     event EmergencyPaused();
@@ -319,6 +320,13 @@ contract JinbaoProtocolNative is Initializable, OwnableUpgradeable, UUPSUpgradea
         redeemEnabled = _redeemEnabled;
         emit LiquidityStatusUpdated(_liquidityEnabled);
         emit RedeemStatusUpdated(_redeemEnabled);
+    }
+
+    function setJbcToken(address _newJbcToken) external onlyOwner {
+        require(_newJbcToken != address(0), "Invalid address");
+        address oldJbcToken = address(jbcToken);
+        jbcToken = IJBC(_newJbcToken);
+        emit JbcTokenUpdated(oldJbcToken, _newJbcToken);
     }
 
     function setTicketFlexibilityDuration(uint256 _duration) external onlyOwner {

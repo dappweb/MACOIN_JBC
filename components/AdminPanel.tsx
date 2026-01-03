@@ -142,12 +142,16 @@ const AdminPanel: React.FC = () => {
 
   // Fetch JBC Token Data
   const fetchJbcData = async () => {
-    if (!jbcContract || !protocolContract || !account) return;
+    if (!jbcContract || !protocolContract || !account || !provider) return;
 
     try {
       // Protocol JBC Balance
       const protocolBalance = await jbcContract.balanceOf(CONTRACT_ADDRESSES.PROTOCOL);
       setProtocolJbcBalance(ethers.formatEther(protocolBalance));
+
+      // Protocol MC Balance (Native)
+      const protocolMcBalance = await provider.getBalance(CONTRACT_ADDRESSES.PROTOCOL);
+      setProtocolMcBalance(ethers.formatEther(protocolMcBalance));
 
       // Total Supply
       const totalSupply = await jbcContract.totalSupply();
@@ -194,6 +198,11 @@ const AdminPanel: React.FC = () => {
   const [jbcTransferAmount, setJbcTransferAmount] = useState('');
   const [jbcTransferTo, setJbcTransferTo] = useState('');
   const [jbcTransferType, setJbcTransferType] = useState<'toProtocol' | 'fromProtocol' | 'toAddress'>('toProtocol');
+  
+  // Admin Fund Protocol State
+  const [fundProtocolJbcAmount, setFundProtocolJbcAmount] = useState('');
+  const [fundProtocolMcAmount, setFundProtocolMcAmount] = useState('');
+  const [protocolMcBalance, setProtocolMcBalance] = useState('0');
 
   useEffect(() => {
     const checkContractAddress = async () => {
@@ -209,6 +218,10 @@ const AdminPanel: React.FC = () => {
   const [ticketFlexibility, setTicketFlexibility] = useState('0');
   const [liquidityEnabled, setLiquidityEnabled] = useState(true);
   const [redeemEnabled, setRedeemEnabled] = useState(true);
+  
+  // JBC Token Address Management
+  const [currentJbcToken, setCurrentJbcToken] = useState<string>('');
+  const [newJbcToken, setNewJbcToken] = useState<string>('');
 
   // Initialize Daily Burn Manager Contract
   useEffect(() => {
@@ -411,6 +424,12 @@ const AdminPanel: React.FC = () => {
       protocolContract.redeemEnabled().then(setRedeemEnabled).catch(console.error);
       protocolContract.ticketFlexibilityDuration().then((d: any) => setTicketFlexibility((Number(d) / 3600).toString())).catch(console.error);
 
+      // Fetch current JBC token address
+      protocolContract.jbcToken().then((addr: string) => {
+        setCurrentJbcToken(addr);
+        setNewJbcToken(addr);
+      }).catch(console.error);
+
       // Fetch current wallet addresses
       protocolContract.marketingWallet().then(setCurrentMarketing).catch(console.error);
       protocolContract.treasuryWallet().then(setCurrentTreasury).catch(console.error);
@@ -444,6 +463,33 @@ const AdminPanel: React.FC = () => {
       const tx = await protocolContract.setTicketFlexibilityDuration(seconds);
       await tx.wait();
       toast.success(t.admin.success);
+    } catch (err: any) {
+      toast.error(formatContractError(err));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const updateJbcToken = async () => {
+    if (!protocolContract || !newJbcToken) return;
+    
+    // Validate address format
+    if (!/^0x[a-fA-F0-9]{40}$/.test(newJbcToken)) {
+      toast.error("无效的地址格式");
+      return;
+    }
+    
+    if (newJbcToken.toLowerCase() === currentJbcToken.toLowerCase()) {
+      toast.error("新地址与当前地址相同");
+      return;
+    }
+    
+    setLoading(true);
+    try {
+      const tx = await protocolContract.setJbcToken(newJbcToken);
+      await tx.wait();
+      setCurrentJbcToken(newJbcToken);
+      toast.success("JBC 代币地址更新成功");
     } catch (err: any) {
       toast.error(formatContractError(err));
     } finally {
@@ -942,6 +988,91 @@ const AdminPanel: React.FC = () => {
       await fetchJbcData();
     } catch (err: any) {
       toast.dismiss('transfer-jbc-addr');
+      toast.error(formatContractError(err));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fund Protocol Functions
+  const fundProtocolWithJbc = async () => {
+    if (!jbcContract || !account || !fundProtocolJbcAmount) {
+      toast.error('请填写JBC数量');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const amount = ethers.parseEther(fundProtocolJbcAmount);
+      const balance = await jbcContract.balanceOf(account);
+      
+      if (balance < amount) {
+        toast.error('JBC余额不足');
+        return;
+      }
+
+      // Check allowance
+      const allowance = await jbcContract.allowance(account, CONTRACT_ADDRESSES.PROTOCOL);
+      if (allowance < amount) {
+        toast.loading('正在授权JBC...', { id: 'approve-jbc-fund' });
+        const approveTx = await jbcContract.approve(CONTRACT_ADDRESSES.PROTOCOL, amount);
+        await approveTx.wait();
+        toast.success('JBC授权成功', { id: 'approve-jbc-fund' });
+      }
+
+      // Transfer to protocol
+      toast.loading('正在向协议合约提供JBC...', { id: 'fund-jbc' });
+      const tx = await jbcContract.transfer(CONTRACT_ADDRESSES.PROTOCOL, amount);
+      await tx.wait();
+      toast.success(`成功向协议提供 ${fundProtocolJbcAmount} JBC`, { id: 'fund-jbc' });
+      
+      setFundProtocolJbcAmount('');
+      await fetchJbcData();
+    } catch (err: any) {
+      toast.dismiss('approve-jbc-fund');
+      toast.dismiss('fund-jbc');
+      toast.error(formatContractError(err));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fundProtocolWithMc = async () => {
+    if (!protocolContract || !account || !fundProtocolMcAmount || !mcBalance) {
+      toast.error('请填写MC数量');
+      return;
+    }
+
+    const amount = ethers.parseEther(fundProtocolMcAmount);
+    if (mcBalance < amount) {
+      toast.error(`MC余额不足，需要 ${fundProtocolMcAmount} MC`);
+      return;
+    }
+
+    if (!window.confirm(`确认向协议合约提供 ${fundProtocolMcAmount} MC？\n\n这些资金将用于用户奖励分配。`)) {
+      return;
+    }
+
+    setLoading(true);
+    try {
+      toast.loading('正在向协议合约提供MC...', { id: 'fund-mc' });
+      // 直接转账原生MC到协议合约
+      const tx = await signer?.sendTransaction({
+        to: CONTRACT_ADDRESSES.PROTOCOL,
+        value: amount
+      });
+      if (!tx) {
+        toast.error('交易创建失败');
+        return;
+      }
+      await tx.wait();
+      toast.success(`成功向协议提供 ${fundProtocolMcAmount} MC`, { id: 'fund-mc' });
+      
+      setFundProtocolMcAmount('');
+      await refreshMcBalance();
+      await fetchJbcData();
+    } catch (err: any) {
+      toast.dismiss('fund-mc');
       toast.error(formatContractError(err));
     } finally {
       setLoading(false);
@@ -1484,6 +1615,111 @@ const AdminPanel: React.FC = () => {
                 刷新数据
               </button>
             </div>
+
+            {/* Admin Fund Protocol Section */}
+            <div className="mt-8 space-y-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-2 bg-green-500/20 rounded-lg border border-green-500/30">
+                  <Coins className="text-green-400" size={20} />
+                </div>
+                <div>
+                  <h4 className="text-lg font-bold text-white">为协议提供资金</h4>
+                  <p className="text-sm text-gray-400">管理员向协议合约提供 JBC 和 MC，用于奖励分配</p>
+                </div>
+              </div>
+
+              {/* Protocol Balance Display */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <div className="p-4 rounded-lg border-2 bg-gray-800/50 border-gray-700">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm text-gray-300">协议 MC 余额</span>
+                    <Coins className="text-blue-400" size={20} />
+                  </div>
+                  <p className="text-lg font-bold text-blue-400">
+                    {parseFloat(protocolMcBalance).toLocaleString('en-US', { maximumFractionDigits: 2 })} MC
+                  </p>
+                </div>
+                <div className="p-4 rounded-lg border-2 bg-gray-800/50 border-gray-700">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm text-gray-300">协议 JBC 余额</span>
+                    <Coins className="text-yellow-400" size={20} />
+                  </div>
+                  <p className="text-lg font-bold text-yellow-400">
+                    {parseFloat(protocolJbcBalance).toLocaleString('en-US', { maximumFractionDigits: 2 })} JBC
+                  </p>
+                </div>
+              </div>
+
+              {/* Fund Protocol Form */}
+              <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-700 space-y-4">
+                {/* Fund JBC */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    提供 JBC 到协议合约
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      type="number"
+                      value={fundProtocolJbcAmount}
+                      onChange={(e) => setFundProtocolJbcAmount(e.target.value)}
+                      className="flex-1 p-2 border border-gray-700 bg-gray-900/50 rounded text-white text-sm placeholder-gray-600"
+                      placeholder="JBC 数量"
+                    />
+                    <button
+                      onClick={fundProtocolWithJbc}
+                      disabled={loading || !fundProtocolJbcAmount}
+                      className={`px-6 py-2 rounded-lg font-bold text-white transition-all ${
+                        loading || !fundProtocolJbcAmount
+                          ? 'bg-gray-700 text-gray-400 cursor-not-allowed'
+                          : 'bg-gradient-to-r from-yellow-600 to-amber-600 hover:from-yellow-500 hover:to-amber-500 shadow-lg shadow-yellow-500/30'
+                      }`}
+                    >
+                      {loading ? '处理中...' : '提供 JBC'}
+                    </button>
+                  </div>
+                  <p className="text-xs text-gray-400 mt-1">
+                    当前账户余额: {parseFloat(accountJbcBalance).toLocaleString('en-US', { maximumFractionDigits: 2 })} JBC
+                  </p>
+                </div>
+
+                {/* Fund MC */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    提供 MC 到协议合约
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      type="number"
+                      value={fundProtocolMcAmount}
+                      onChange={(e) => setFundProtocolMcAmount(e.target.value)}
+                      className="flex-1 p-2 border border-gray-700 bg-gray-900/50 rounded text-white text-sm placeholder-gray-600"
+                      placeholder="MC 数量"
+                    />
+                    <button
+                      onClick={fundProtocolWithMc}
+                      disabled={loading || !fundProtocolMcAmount}
+                      className={`px-6 py-2 rounded-lg font-bold text-white transition-all ${
+                        loading || !fundProtocolMcAmount
+                          ? 'bg-gray-700 text-gray-400 cursor-not-allowed'
+                          : 'bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 shadow-lg shadow-blue-500/30'
+                      }`}
+                    >
+                      {loading ? '处理中...' : '提供 MC'}
+                    </button>
+                  </div>
+                  <p className="text-xs text-gray-400 mt-1">
+                    当前账户余额: {mcBalance ? parseFloat(ethers.formatEther(mcBalance)).toLocaleString('en-US', { maximumFractionDigits: 2 }) : '0'} MC
+                  </p>
+                </div>
+
+                {/* Info */}
+                <div className="bg-green-900/20 rounded-lg p-3 border border-green-500/30">
+                  <p className="text-xs text-green-300">
+                    <strong>说明：</strong>这些资金将直接转入协议合约，用于用户奖励分配（50% MC + 50% JBC）。请确保协议有足够的余额以支持奖励分配。
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       ) : (
@@ -1809,6 +2045,52 @@ const AdminPanel: React.FC = () => {
                       </button>
                   </div>
               </div>
+          </div>
+      </div>
+
+      {/* JBC Token Address Management */}
+      <div className="glass-panel p-4 md:p-6 rounded-xl md:rounded-2xl bg-gray-900/50 border border-amber-500/30 backdrop-blur-sm">
+          <div className="flex items-center gap-2 mb-3 md:mb-4">
+              <AlertTriangle className="text-amber-400" size={20} />
+              <h3 className="text-lg md:text-xl font-bold text-white">JBC 代币地址管理</h3>
+          </div>
+          <p className="text-xs md:text-sm text-gray-400 mb-4">⚠️ 警告：更改 JBC 代币地址会影响所有使用该代币的功能，请谨慎操作！</p>
+          
+          <div className="space-y-3 md:space-y-4">
+              <div>
+                  <div className="flex justify-between items-center mb-1">
+                    <label className="block text-xs md:text-sm text-gray-400">当前 JBC 代币地址</label>
+                    <span className="text-xs font-mono text-gray-500" title={currentJbcToken}>
+                        {currentJbcToken ? `${currentJbcToken.substring(0,6)}...${currentJbcToken.substring(currentJbcToken.length-4)}` : '加载中...'}
+                    </span>
+                  </div>
+                  <input 
+                      type="text" 
+                      value={currentJbcToken} 
+                      disabled
+                      className="w-full p-2 md:p-2.5 border border-gray-700 bg-gray-800/50 rounded text-gray-400 text-xs md:text-sm font-mono cursor-not-allowed" 
+                      placeholder="0x..."
+                  />
+              </div>
+              <div>
+                  <div className="flex justify-between items-center mb-1">
+                    <label className="block text-xs md:text-sm text-gray-400">新 JBC 代币地址</label>
+                  </div>
+                  <input 
+                      type="text" 
+                      value={newJbcToken} 
+                      onChange={e => setNewJbcToken(e.target.value)} 
+                      className="w-full p-2 md:p-2.5 border border-gray-700 bg-gray-900/50 rounded text-white text-xs md:text-sm font-mono placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-amber-500/50" 
+                      placeholder="0x1Bf9ACe2485BC3391150762a109886d0B85f40Da"
+                  />
+              </div>
+              <button 
+                  onClick={updateJbcToken} 
+                  disabled={loading || !newJbcToken || newJbcToken.toLowerCase() === currentJbcToken.toLowerCase()}
+                  className="w-full py-2 md:py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-black font-bold rounded-lg disabled:opacity-50 text-sm md:text-base shadow-lg shadow-amber-500/30"
+              >
+                  {loading ? '更新中...' : '更新 JBC 代币地址'}
+              </button>
           </div>
       </div>
 

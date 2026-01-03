@@ -9,7 +9,7 @@ async function main() {
   console.log("账户余额:", ethers.formatEther(balance), "MC\n");
 
   // 合约地址
-  const JBC_ADDRESS = "0xAAb88c0Bc9f4A73019e4Dbfc5c8De82A8dCb970D";
+  const JBC_ADDRESS = "0x1Bf9ACe2485BC3391150762a109886d0B85f40Da";
   const PROTOCOL_ADDRESS = "0x77601aC473dB1195A1A9c82229C9bD008a69987A";
 
   // 获取合约实例

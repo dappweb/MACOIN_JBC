@@ -54,6 +54,8 @@ export const PROTOCOL_ABI = [
   "function transferOwnership(address newOwner) external",
   "function setOperationalStatus(bool _liquidityEnabled, bool _redeemEnabled) external",
   "function setTicketFlexibilityDuration(uint256 _duration) external",
+  "function setJbcToken(address _newJbcToken) external",
+  "function jbcToken() view returns (address)",
   "function adminSetReferrer(address user, address newReferrer) external",
   "function adminSetActiveDirects(address user, uint256 newActiveDirects) external",
   "function adminSetTeamCount(address user, uint256 newTeamCount) external",
@@ -70,6 +72,7 @@ export const PROTOCOL_ABI = [
   "event Redeemed(address indexed user, uint256 principal, uint256 fee)",
   "event SwappedMCToJBC(address indexed user, uint256 mcAmount, uint256 jbcAmount, uint256 tax)",
   "event SwappedJBCToMC(address indexed user, uint256 jbcAmount, uint256 mcAmount, uint256 tax)",
+  "event JbcTokenUpdated(address indexed oldJbcToken, address indexed newJbcToken)",
 ]
 
 export const DAILY_BURN_MANAGER_ABI = [
@@ -87,7 +90,7 @@ export const DAILY_BURN_MANAGER_ABI = [
 
 // Contract Addresses - MC Chain V4 (Native MC Version)
 export const CONTRACT_ADDRESSES = {
-  JBC_TOKEN: "0xAAb88c0Bc9f4A73019e4Dbfc5c8De82A8dCb970D",
+  JBC_TOKEN: "0x1Bf9ACe2485BC3391150762a109886d0B85f40Da",
   PROTOCOL: "0x77601aC473dB1195A1A9c82229C9bD008a69987A",
   DAILY_BURN_MANAGER: "0x298578A691f10A85f027BDD2D9a8D007540FCBB4"
 };

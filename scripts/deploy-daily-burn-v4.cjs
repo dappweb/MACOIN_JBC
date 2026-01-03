@@ -12,7 +12,7 @@ async function main() {
 
   // V4 合约地址
   const PROTOCOL_ADDRESS = "0x77601aC473dB1195A1A9c82229C9bD008a69987A";
-  const JBC_TOKEN_ADDRESS = "0xAAb88c0Bc9f4A73019e4Dbfc5c8De82A8dCb970D";
+  const JBC_TOKEN_ADDRESS = "0x1Bf9ACe2485BC3391150762a109886d0B85f40Da";
 
   console.log("协议合约:", PROTOCOL_ADDRESS);
   console.log("JBC 代币:", JBC_TOKEN_ADDRESS);

@@ -23,8 +23,7 @@ const StatsPanel = lazy(() => import("../components/StatsPanel"))
 const MiningPanel = lazy(() => import("../components/MiningPanel"))
 const BuyTicketPanel = lazy(() => import("../components/BuyTicketPanel"))
 const TeamLevel = lazy(() => import("../components/TeamLevel"))
-// Swap Panel hidden
-// const SwapPanel = lazy(() => import("../components/SwapPanel"))
+const SwapPanel = lazy(() => import("../components/SwapPanel"))
 const AdminPanel = lazy(() => import("../components/AdminPanel"))
 const TransactionHistory = lazy(() => import("../components/TransactionHistory"))
 

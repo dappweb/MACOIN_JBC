@@ -222,43 +222,38 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   }
 
-  // Debounced owner check to avoid excessive calls
+  // Owner check - execute immediately and also on changes
   useEffect(() => {
     if (!protocolContract || !address) {
+      console.log("⚠️ [Web3Context] 无法检查owner - 缺少合约或地址", {
+        hasContract: !!protocolContract,
+        hasAddress: !!address
+      });
       setIsOwner(false)
       return
     }
     
-    // Debounce owner check
-    const timeoutId = setTimeout(() => {
-      checkOwner()
-    }, 300)
+    // Immediate check
+    checkOwner()
     
-    return () => clearTimeout(timeoutId)
+    // Also set up a periodic check (every 5 seconds) to ensure owner status is up to date
+    const intervalId = setInterval(() => {
+      checkOwner()
+    }, 5000)
+    
+    return () => clearInterval(intervalId)
   }, [protocolContract, address])
 
   // 检查推荐人状态
   const checkReferrerStatus = async () => {
     if (!protocolContract || !address) {
       setHasReferrer(false)
-      setIsOwner(false)
       setReferrerAddress(null)
+      // 注意：不在这里设置 isOwner，由 checkOwner 函数统一管理
       return
     }
 
     try {
-      // 检查是否是管理员
-      const owner = await protocolContract.owner()
-      const ownerStatus = owner.toLowerCase() === address.toLowerCase()
-      setIsOwner(ownerStatus)
-
-      // 如果是管理员，不需要推荐人
-      if (ownerStatus) {
-        setHasReferrer(true)
-        setReferrerAddress(null)
-        return
-      }
-
       // 检查是否有推荐人
       const userInfo = await protocolContract.userInfo(address)
       const referrer = userInfo[0] // referrer is first return value
@@ -266,10 +261,12 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setHasReferrer(hasRef)
       setReferrerAddress(hasRef ? referrer : null)
       
+      // 如果是 owner，自动设置 hasReferrer 为 true（owner 不需要推荐人）
+      // 但 isOwner 状态由 checkOwner 函数统一管理，这里不重复设置
+      
     } catch (err) {
       console.error("Error checking referrer status:", err)
       setHasReferrer(false)
-      setIsOwner(false)
       setReferrerAddress(null)
     }
   }
@@ -283,10 +280,15 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   }, [])
 
-  // 检查推荐人状态
+  // 检查推荐人状态（owner 不需要推荐人，但普通用户需要）
   useEffect(() => {
+    // 如果已经是 owner，不需要检查推荐人
+    if (isOwner) {
+      setHasReferrer(true)
+      return
+    }
     checkReferrerStatus()
-  }, [protocolContract, address])
+  }, [protocolContract, address, isOwner])
 
   // Auto-bind referrer when connected
   useEffect(() => {

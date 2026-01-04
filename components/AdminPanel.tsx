@@ -20,6 +20,49 @@ const AdminPanel: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'levels' | 'settings' | 'burn' | 'jbc'>('overview');
   
+  // 双重保护：如果通过其他方式访问，检查 owner 状态
+  useEffect(() => {
+    if (isConnected && !isOwner) {
+      console.warn("⚠️ [AdminPanel] 非 owner 用户尝试访问管理面板", {
+        account,
+        isConnected,
+        isOwner
+      });
+    }
+  }, [isConnected, isOwner, account]);
+  
+  // 如果不是 owner，显示访问被拒绝的提示
+  if (isConnected && !isOwner) {
+    return (
+      <div className="max-w-4xl mx-auto p-6 text-center">
+        <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-8">
+          <AlertTriangle className="w-16 h-16 text-red-400 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold text-white mb-2">访问被拒绝</h2>
+          <p className="text-gray-400 mb-4">
+            只有合约拥有者才能访问管理面板
+          </p>
+          <p className="text-gray-500 text-sm mb-4">
+            当前地址: {account}
+          </p>
+        </div>
+      </div>
+    );
+  }
+  
+  if (!isConnected) {
+    return (
+      <div className="max-w-4xl mx-auto p-6 text-center">
+        <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-xl p-8">
+          <AlertTriangle className="w-16 h-16 text-yellow-400 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold text-white mb-2">请先连接钱包</h2>
+          <p className="text-gray-400 mb-4">
+            需要连接钱包才能访问管理面板
+          </p>
+        </div>
+      </div>
+    );
+  }
+  
   // Daily Burn Manager Contract
   const [burnManagerContract, setBurnManagerContract] = useState<ethers.Contract | null>(null);
   

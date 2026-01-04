@@ -6,7 +6,7 @@ import ErrorBoundary from "../components/ErrorBoundary"
 import { SkeletonCard } from "../components/LoadingSkeletons"
 import { AppTab } from "./types"
 import { MOCK_USER_STATS } from "./constants"
-import { ArrowLeftRight } from "lucide-react"
+import { ArrowLeftRight, AlertTriangle } from "lucide-react"
 import { LanguageProvider, useLanguage } from "./LanguageContext"
 import { Web3Provider, useWeb3 } from "./Web3Context"
 import { GlobalRefreshProvider } from "../hooks/useGlobalRefresh"
@@ -45,6 +45,7 @@ const AppContent: React.FC = () => {
   const [appError, setAppError] = useState<string | null>(null)
   const [isInitialized, setIsInitialized] = useState(false)
   const { t } = useLanguage()
+  const { isOwner, isConnected } = useWeb3()
 
   const handleRefresh = async () => {
     // Small delay for visual feedback
@@ -244,12 +245,30 @@ const AppContent: React.FC = () => {
             </ErrorBoundary>
           )}
 
-          {currentTab === AppTab.ADMIN && (
+          {currentTab === AppTab.ADMIN && isOwner && isConnected && (
             <ErrorBoundary onError={handleAppError}>
               <Suspense fallback={<SkeletonCard />}>
                 <AdminPanel />
               </Suspense>
             </ErrorBoundary>
+          )}
+          
+          {currentTab === AppTab.ADMIN && (!isOwner || !isConnected) && (
+            <div className="max-w-4xl mx-auto p-6 text-center">
+              <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-8">
+                <AlertTriangle className="w-16 h-16 text-red-400 mx-auto mb-4" />
+                <h2 className="text-2xl font-bold text-white mb-2">访问被拒绝</h2>
+                <p className="text-gray-400 mb-4">
+                  {!isConnected ? "请先连接钱包" : "只有合约拥有者才能访问管理面板"}
+                </p>
+                <button
+                  onClick={() => setCurrentTab(AppTab.HOME)}
+                  className="px-6 py-2 bg-neon-500 hover:bg-neon-400 text-black font-bold rounded-lg transition-colors"
+                >
+                  返回首页
+                </button>
+              </div>
+            </div>
           )}
         </main>
       </PullToRefresh>

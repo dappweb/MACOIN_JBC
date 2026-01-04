@@ -1,0 +1,58 @@
+{
+  "timestamp": "2026-01-04T10:09:02.517Z",
+  "blockNumber": 2119494,
+  "contractAddress": "0x77601aC473dB1195A1A9c82229C9bD008a69987A",
+  "currentOwner": "0x1Bf9ACe2485BC3391150762a109886d0B85f40Da",
+  "newOwner": "0x4C10831CBcF9884ba72051b5287b6c87E4F74A48",
+  "jbcTokenOwner": "0x4C10831CBcF9884ba72051b5287b6c87E4F74A48",
+  "config": {
+    "directRewardPercent": "25",
+    "levelRewardPercent": "15",
+    "marketingWallet": "0xDb817e0d21a134f649d24b91E39d42E7eeC52a65",
+    "treasuryWallet": "0x5067D182D5f15511F0C71194a25cC67b05C20b02",
+    "lpInjectionWallet": "0x03C5d3cF3E358A00fA446e3376eaB047D1ce46F2",
+    "buybackWallet": "0x979373c675c25e6cb2FD49B571dcADcB15a5a6D8",
+    "jbcToken": "0xAAb88c0Bc9f4A73019e4Dbfc5c8De82A8dCb970D"
+  },
+  "balances": {
+    "swapReserveMC": "1000000000000000209",
+    "swapReserveJBC": "1000001000000000000000001",
+    "contractBalance": "31990000000000000000000"
+  },
+  "sampleUsers": [
+    {
+      "address": "0xb6A10c3F6492e5FEfdC03909E1638FE3A8ce5C75",
+      "userInfo": {
+        "referrer": "0xF9b0159672FD54AcF4E279a5c848a3bf431321fC",
+        "activeDirects": "0",
+        "teamCount": "1",
+        "totalRevenue": "0",
+        "currentCap": "300000000000000000000",
+        "isActive": true
+      },
+      "ticket": {
+        "ticketId": "1767210104",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767426065",
+        "exited": false
+      }
+    },
+    {
+      "address": "0xaA4D3862ea0A72d83D6399D6700FcA1952d8e64d",
+      "userInfo": {
+        "referrer": "0xb6A10c3F6492e5FEfdC03909E1638FE3A8ce5C75",
+        "activeDirects": "0",
+        "teamCount": "0",
+        "totalRevenue": "0",
+        "currentCap": "300000000000000000000",
+        "isActive": true
+      },
+      "ticket": {
+        "ticketId": "1767210144",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767495269",
+        "exited": false
+      }
+    }
+  ]
+}

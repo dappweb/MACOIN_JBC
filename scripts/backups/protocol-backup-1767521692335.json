@@ -1,0 +1,38 @@
+{
+  "timestamp": "2026-01-04T10:14:47.467Z",
+  "protocolAddress": "0x77601aC473dB1195A1A9c82229C9bD008a69987A",
+  "network": "MC Chain",
+  "rpcUrl": "https://chain.mcerscan.com/",
+  "config": {
+    "owner": "0x1Bf9ACe2485BC3391150762a109886d0B85f40Da",
+    "directRewardPercent": "25",
+    "levelRewardPercent": "15",
+    "marketingPercent": "5",
+    "buybackPercent": "5",
+    "lpInjectionPercent": "25",
+    "treasuryPercent": "25",
+    "marketingWallet": "0xDb817e0d21a134f649d24b91E39d42E7eeC52a65",
+    "treasuryWallet": "0x5067D182D5f15511F0C71194a25cC67b05C20b02",
+    "lpInjectionWallet": "0x03C5d3cF3E358A00fA446e3376eaB047D1ce46F2",
+    "buybackWallet": "0x979373c675c25e6cb2FD49B571dcADcB15a5a6D8",
+    "jbcToken": "0xAAb88c0Bc9f4A73019e4Dbfc5c8De82A8dCb970D",
+    "redemptionFeePercent": "1",
+    "swapBuyTax": "50",
+    "swapSellTax": "25",
+    "ticketFlexibilityDuration": "100000000000000000000",
+    "liquidityEnabled": false,
+    "redeemEnabled": false,
+    "emergencyPaused": false
+  },
+  "balances": {
+    "swapReserveMC": "1000000000000000209",
+    "swapReserveJBC": "1000001000000000000000001",
+    "levelRewardPool": "2804000000000000000000",
+    "contractBalance": "31990000000000000000000"
+  },
+  "users": [],
+  "events": {
+    "ticketPurchases": [],
+    "referrerBindings": []
+  }
+}

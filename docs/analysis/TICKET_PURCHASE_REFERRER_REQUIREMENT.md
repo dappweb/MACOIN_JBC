@@ -165,3 +165,9 @@ function bindReferrer(address _referrer) external {
 
 **结论**: 用户**不需要**推荐人就可以购买门票。推荐人只影响奖励分配，不影响购买权限。
 
+
+
+
+
+
+

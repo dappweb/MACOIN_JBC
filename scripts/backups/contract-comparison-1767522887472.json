@@ -1,0 +1,502 @@
+{
+  "comparison": {
+    "timestamp": "2026-01-04T10:34:47.471Z",
+    "oldContract": "0x77601aC473dB1195A1A9c82229C9bD008a69987A",
+    "newContract": "0x0897Cee05E43B2eCf331cd80f881c211eb86844E",
+    "matches": [
+      {
+        "function": "directRewardPercent",
+        "value": "25"
+      },
+      {
+        "function": "levelRewardPercent",
+        "value": "15"
+      },
+      {
+        "function": "marketingPercent",
+        "value": "5"
+      },
+      {
+        "function": "buybackPercent",
+        "value": "5"
+      },
+      {
+        "function": "lpInjectionPercent",
+        "value": "25"
+      },
+      {
+        "function": "treasuryPercent",
+        "value": "25"
+      },
+      {
+        "function": "marketingWallet",
+        "value": "0xDb817e0d21a134f649d24b91E39d42E7eeC52a65"
+      },
+      {
+        "function": "treasuryWallet",
+        "value": "0x5067D182D5f15511F0C71194a25cC67b05C20b02"
+      },
+      {
+        "function": "lpInjectionWallet",
+        "value": "0x03C5d3cF3E358A00fA446e3376eaB047D1ce46F2"
+      },
+      {
+        "function": "buybackWallet",
+        "value": "0x979373c675c25e6cb2FD49B571dcADcB15a5a6D8"
+      },
+      {
+        "function": "jbcToken",
+        "value": "0xAAb88c0Bc9f4A73019e4Dbfc5c8De82A8dCb970D"
+      },
+      {
+        "function": "redemptionFeePercent",
+        "value": "1"
+      },
+      {
+        "function": "swapBuyTax",
+        "value": "50"
+      },
+      {
+        "function": "swapSellTax",
+        "value": "25"
+      },
+      {
+        "function": "ticketFlexibilityDuration",
+        "value": "100000000000000000000"
+      },
+      {
+        "function": "liquidityEnabled",
+        "value": "false"
+      },
+      {
+        "function": "redeemEnabled",
+        "value": "false"
+      },
+      {
+        "function": "emergencyPaused",
+        "value": "false"
+      }
+    ],
+    "mismatches": [
+      {
+        "function": "owner",
+        "oldValue": "0x1Bf9ACe2485BC3391150762a109886d0B85f40Da",
+        "newValue": "0x4C10831CBcF9884ba72051b5287b6c87E4F74A48"
+      },
+      {
+        "function": "swapReserveMC",
+        "oldValue": "1000000000000000209",
+        "newValue": "0"
+      },
+      {
+        "function": "swapReserveJBC",
+        "oldValue": "1000001000000000000000001",
+        "newValue": "0"
+      },
+      {
+        "function": "levelRewardPool",
+        "oldValue": "2820000000000000000000",
+        "newValue": "0"
+      },
+      {
+        "function": "nextTicketId",
+        "oldValue": "1767210192",
+        "newValue": "0"
+      },
+      {
+        "function": "nextStakeId",
+        "oldValue": "47",
+        "newValue": "0"
+      },
+      {
+        "function": "lastBurnTime",
+        "oldValue": "0",
+        "newValue": "1767522845"
+      },
+      {
+        "function": "userInfo",
+        "oldValue": [
+          "0x2D68a5850a4805C6Fe6648E5870b68456e2A7c82",
+          "1",
+          "460",
+          "74000000000000000000",
+          "600000000000000000000",
+          "true",
+          "0",
+          "109600000000000000000000",
+          "0",
+          "200000000000000000000",
+          "100000000000000000000"
+        ],
+        "newValue": [
+          "0x0000000000000000000000000000000000000000",
+          "0",
+          "0",
+          "0",
+          "0",
+          "false",
+          "0",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      },
+      {
+        "function": "userTicket",
+        "oldValue": [
+          "1",
+          "200000000000000000000",
+          "1767261299",
+          "false"
+        ],
+        "newValue": [
+          "0",
+          "0",
+          "0",
+          "false"
+        ]
+      }
+    ],
+    "missing": [
+      {
+        "function": "hasReferrer",
+        "issue": "旧合约中不存在"
+      }
+    ]
+  },
+  "oldResults": {
+    "contractAddress": "0x77601aC473dB1195A1A9c82229C9bD008a69987A",
+    "contractName": "旧合约",
+    "timestamp": "2026-01-04T10:34:37.685Z",
+    "functions": {
+      "owner": {
+        "exists": true,
+        "value": "0x1Bf9ACe2485BC3391150762a109886d0B85f40Da",
+        "type": "address"
+      },
+      "directRewardPercent": {
+        "exists": true,
+        "value": "25",
+        "type": "uint256"
+      },
+      "levelRewardPercent": {
+        "exists": true,
+        "value": "15",
+        "type": "uint256"
+      },
+      "marketingPercent": {
+        "exists": true,
+        "value": "5",
+        "type": "uint256"
+      },
+      "buybackPercent": {
+        "exists": true,
+        "value": "5",
+        "type": "uint256"
+      },
+      "lpInjectionPercent": {
+        "exists": true,
+        "value": "25",
+        "type": "uint256"
+      },
+      "treasuryPercent": {
+        "exists": true,
+        "value": "25",
+        "type": "uint256"
+      },
+      "marketingWallet": {
+        "exists": true,
+        "value": "0xDb817e0d21a134f649d24b91E39d42E7eeC52a65",
+        "type": "address"
+      },
+      "treasuryWallet": {
+        "exists": true,
+        "value": "0x5067D182D5f15511F0C71194a25cC67b05C20b02",
+        "type": "address"
+      },
+      "lpInjectionWallet": {
+        "exists": true,
+        "value": "0x03C5d3cF3E358A00fA446e3376eaB047D1ce46F2",
+        "type": "address"
+      },
+      "buybackWallet": {
+        "exists": true,
+        "value": "0x979373c675c25e6cb2FD49B571dcADcB15a5a6D8",
+        "type": "address"
+      },
+      "jbcToken": {
+        "exists": true,
+        "value": "0xAAb88c0Bc9f4A73019e4Dbfc5c8De82A8dCb970D",
+        "type": "address"
+      },
+      "redemptionFeePercent": {
+        "exists": true,
+        "value": "1",
+        "type": "uint256"
+      },
+      "swapBuyTax": {
+        "exists": true,
+        "value": "50",
+        "type": "uint256"
+      },
+      "swapSellTax": {
+        "exists": true,
+        "value": "25",
+        "type": "uint256"
+      },
+      "ticketFlexibilityDuration": {
+        "exists": true,
+        "value": "100000000000000000000",
+        "type": "uint256"
+      },
+      "liquidityEnabled": {
+        "exists": true,
+        "value": "false",
+        "type": "bool"
+      },
+      "redeemEnabled": {
+        "exists": true,
+        "value": "false",
+        "type": "bool"
+      },
+      "emergencyPaused": {
+        "exists": true,
+        "value": "false",
+        "type": "bool"
+      },
+      "swapReserveMC": {
+        "exists": true,
+        "value": "1000000000000000209",
+        "type": "uint256"
+      },
+      "swapReserveJBC": {
+        "exists": true,
+        "value": "1000001000000000000000001",
+        "type": "uint256"
+      },
+      "levelRewardPool": {
+        "exists": true,
+        "value": "2820000000000000000000",
+        "type": "uint256"
+      },
+      "nextTicketId": {
+        "exists": true,
+        "value": "1767210192",
+        "type": "uint256"
+      },
+      "nextStakeId": {
+        "exists": true,
+        "value": "47",
+        "type": "uint256"
+      },
+      "lastBurnTime": {
+        "exists": true,
+        "value": "0",
+        "type": "uint256"
+      },
+      "userInfo": {
+        "exists": true,
+        "value": [
+          "0x2D68a5850a4805C6Fe6648E5870b68456e2A7c82",
+          "1",
+          "460",
+          "74000000000000000000",
+          "600000000000000000000",
+          "true",
+          "0",
+          "109600000000000000000000",
+          "0",
+          "200000000000000000000",
+          "100000000000000000000"
+        ]
+      },
+      "userTicket": {
+        "exists": true,
+        "value": [
+          "1",
+          "200000000000000000000",
+          "1767261299",
+          "false"
+        ]
+      },
+      "hasReferrer": {
+        "exists": false,
+        "error": "missing revert data (action=\"call\", data=null, reason=null, transaction={ \"data\": \"0x18452cd80000000000000000000000004c10831cbcf9884ba72051b5287b6c87e4f74a48\", \"to\": \"0x77601aC473dB1195A1A9c82229C9bD008a69987A\" }, invocation=null, revert=null, code=CALL_EXCEPTION, version=6.16.0)"
+      }
+    },
+    "errors": [
+      {
+        "function": "hasReferrer",
+        "error": "missing revert data (action=\"call\", data=null, reason=null, transaction={ \"data\": \"0x18452cd80000000000000000000000004c10831cbcf9884ba72051b5287b6c87e4f74a48\", \"to\": \"0x77601aC473dB1195A1A9c82229C9bD008a69987A\" }, invocation=null, revert=null, code=CALL_EXCEPTION, version=6.16.0)"
+      }
+    ]
+  },
+  "newResults": {
+    "contractAddress": "0x0897Cee05E43B2eCf331cd80f881c211eb86844E",
+    "contractName": "新合约",
+    "timestamp": "2026-01-04T10:34:42.644Z",
+    "functions": {
+      "owner": {
+        "exists": true,
+        "value": "0x4C10831CBcF9884ba72051b5287b6c87E4F74A48",
+        "type": "address"
+      },
+      "directRewardPercent": {
+        "exists": true,
+        "value": "25",
+        "type": "uint256"
+      },
+      "levelRewardPercent": {
+        "exists": true,
+        "value": "15",
+        "type": "uint256"
+      },
+      "marketingPercent": {
+        "exists": true,
+        "value": "5",
+        "type": "uint256"
+      },
+      "buybackPercent": {
+        "exists": true,
+        "value": "5",
+        "type": "uint256"
+      },
+      "lpInjectionPercent": {
+        "exists": true,
+        "value": "25",
+        "type": "uint256"
+      },
+      "treasuryPercent": {
+        "exists": true,
+        "value": "25",
+        "type": "uint256"
+      },
+      "marketingWallet": {
+        "exists": true,
+        "value": "0xDb817e0d21a134f649d24b91E39d42E7eeC52a65",
+        "type": "address"
+      },
+      "treasuryWallet": {
+        "exists": true,
+        "value": "0x5067D182D5f15511F0C71194a25cC67b05C20b02",
+        "type": "address"
+      },
+      "lpInjectionWallet": {
+        "exists": true,
+        "value": "0x03C5d3cF3E358A00fA446e3376eaB047D1ce46F2",
+        "type": "address"
+      },
+      "buybackWallet": {
+        "exists": true,
+        "value": "0x979373c675c25e6cb2FD49B571dcADcB15a5a6D8",
+        "type": "address"
+      },
+      "jbcToken": {
+        "exists": true,
+        "value": "0xAAb88c0Bc9f4A73019e4Dbfc5c8De82A8dCb970D",
+        "type": "address"
+      },
+      "redemptionFeePercent": {
+        "exists": true,
+        "value": "1",
+        "type": "uint256"
+      },
+      "swapBuyTax": {
+        "exists": true,
+        "value": "50",
+        "type": "uint256"
+      },
+      "swapSellTax": {
+        "exists": true,
+        "value": "25",
+        "type": "uint256"
+      },
+      "ticketFlexibilityDuration": {
+        "exists": true,
+        "value": "100000000000000000000",
+        "type": "uint256"
+      },
+      "liquidityEnabled": {
+        "exists": true,
+        "value": "false",
+        "type": "bool"
+      },
+      "redeemEnabled": {
+        "exists": true,
+        "value": "false",
+        "type": "bool"
+      },
+      "emergencyPaused": {
+        "exists": true,
+        "value": "false",
+        "type": "bool"
+      },
+      "swapReserveMC": {
+        "exists": true,
+        "value": "0",
+        "type": "uint256"
+      },
+      "swapReserveJBC": {
+        "exists": true,
+        "value": "0",
+        "type": "uint256"
+      },
+      "levelRewardPool": {
+        "exists": true,
+        "value": "0",
+        "type": "uint256"
+      },
+      "nextTicketId": {
+        "exists": true,
+        "value": "0",
+        "type": "uint256"
+      },
+      "nextStakeId": {
+        "exists": true,
+        "value": "0",
+        "type": "uint256"
+      },
+      "lastBurnTime": {
+        "exists": true,
+        "value": "1767522845",
+        "type": "uint256"
+      },
+      "userInfo": {
+        "exists": true,
+        "value": [
+          "0x0000000000000000000000000000000000000000",
+          "0",
+          "0",
+          "0",
+          "0",
+          "false",
+          "0",
+          "0",
+          "0",
+          "0",
+          "0"
+        ]
+      },
+      "userTicket": {
+        "exists": true,
+        "value": [
+          "0",
+          "0",
+          "0",
+          "false"
+        ]
+      },
+      "hasReferrer": {
+        "exists": false,
+        "error": "missing revert data (action=\"call\", data=null, reason=null, transaction={ \"data\": \"0x18452cd80000000000000000000000004c10831cbcf9884ba72051b5287b6c87e4f74a48\", \"to\": \"0x0897Cee05E43B2eCf331cd80f881c211eb86844E\" }, invocation=null, revert=null, code=CALL_EXCEPTION, version=6.16.0)"
+      }
+    },
+    "errors": [
+      {
+        "function": "hasReferrer",
+        "error": "missing revert data (action=\"call\", data=null, reason=null, transaction={ \"data\": \"0x18452cd80000000000000000000000004c10831cbcf9884ba72051b5287b6c87e4f74a48\", \"to\": \"0x0897Cee05E43B2eCf331cd80f881c211eb86844E\" }, invocation=null, revert=null, code=CALL_EXCEPTION, version=6.16.0)"
+      }
+    ]
+  }
+}

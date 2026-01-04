@@ -224,3 +224,9 @@ event BuybackAndBurn(uint256 mcAmount, uint256 jbcBurned);
 - [钱包分配详情](./WALLET_ALLOCATION_DETAILS.md)
 - [JBC 生成机制分析](./JBC_GENERATION_ANALYSIS.md)
 
+
+
+
+
+
+

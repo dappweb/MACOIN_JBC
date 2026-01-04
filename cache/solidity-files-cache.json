@@ -46,11 +46,11 @@
       "solcConfig": {
         "version": "0.8.22",
         "settings": {
+          "viaIR": true,
           "optimizer": {
             "enabled": true,
             "runs": 1
           },
-          "viaIR": true,
           "evmVersion": "paris",
           "outputSelection": {
             "*": {
@@ -80,17 +80,17 @@
       ]
     },
     "/home/zyj_dev/Documents/MACOIN_JBC-p-prod/contracts/JinbaoProtocol.sol": {
-      "lastModificationDate": 1767259665910,
-      "contentHash": "16f047ce47da903eaa563d1f9c8241e3",
+      "lastModificationDate": 1767448369007,
+      "contentHash": "9d4cd43aff1e7ca72e35e2abc81cb562",
       "sourceName": "contracts/JinbaoProtocol.sol",
       "solcConfig": {
         "version": "0.8.22",
         "settings": {
+          "viaIR": true,
           "optimizer": {
             "enabled": true,
             "runs": 1
           },
-          "viaIR": true,
           "evmVersion": "paris",
           "outputSelection": {
             "*": {
@@ -765,17 +765,17 @@
       ]
     },
     "/home/zyj_dev/Documents/MACOIN_JBC-p-prod/contracts/JinbaoProtocolV4.sol": {
-      "lastModificationDate": 1767366134605,
-      "contentHash": "590a24cb980fd515f8b96130a30df7ee",
+      "lastModificationDate": 1767448369007,
+      "contentHash": "9c341aa6e519fb1ce9fab39942b40dae",
       "sourceName": "contracts/JinbaoProtocolV4.sol",
       "solcConfig": {
         "version": "0.8.22",
         "settings": {
+          "viaIR": true,
           "optimizer": {
             "enabled": true,
             "runs": 1
           },
-          "viaIR": true,
           "evmVersion": "paris",
           "outputSelection": {
             "*": {
@@ -1180,11 +1180,11 @@
       "solcConfig": {
         "version": "0.8.22",
         "settings": {
+          "viaIR": true,
           "optimizer": {
             "enabled": true,
             "runs": 1
           },
-          "viaIR": true,
           "evmVersion": "paris",
           "outputSelection": {
             "*": {
@@ -1295,17 +1295,17 @@
       ]
     },
     "/home/zyj_dev/Documents/MACOIN_JBC-p-prod/contracts/JinbaoProtocolNative.sol": {
-      "lastModificationDate": 1767445042251,
-      "contentHash": "a638be2d80947c4257bf1962fa259c90",
+      "lastModificationDate": 1767448369007,
+      "contentHash": "12382d8cb09bb5df74d16468ef34456b",
       "sourceName": "contracts/JinbaoProtocolNative.sol",
       "solcConfig": {
         "version": "0.8.22",
         "settings": {
+          "viaIR": true,
           "optimizer": {
             "enabled": true,
             "runs": 1
           },
-          "viaIR": true,
           "evmVersion": "paris",
           "outputSelection": {
             "*": {
@@ -1634,6 +1634,45 @@
       ],
       "artifacts": [
         "TestSimple"
+      ]
+    },
+    "/home/zyj_dev/Documents/MACOIN_JBC-p-prod/contracts/OwnershipTransferHelper.sol": {
+      "lastModificationDate": 1767521520484,
+      "contentHash": "cefbb8a35e221a24e394d077eab87690",
+      "sourceName": "contracts/OwnershipTransferHelper.sol",
+      "solcConfig": {
+        "version": "0.8.22",
+        "settings": {
+          "viaIR": true,
+          "optimizer": {
+            "enabled": true,
+            "runs": 1
+          },
+          "evmVersion": "paris",
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata",
+                "storageLayout"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.20"
+      ],
+      "artifacts": [
+        "IProtocol",
+        "OwnershipTransferHelper"
       ]
     }
   }

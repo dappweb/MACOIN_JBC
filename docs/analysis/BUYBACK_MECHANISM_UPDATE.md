@@ -236,3 +236,9 @@ const totalSupply = await jbcToken.totalSupply();
 3. 监控回购钱包余额
 4. 定期或批量执行回购
 
+
+
+
+
+
+

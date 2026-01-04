@@ -87,7 +87,10 @@ const BuyTicketPanel: React.FC<BuyTicketPanelProps> = ({ onBack }) => {
 
     // 检查是否已绑定推荐人（合约要求必须先绑定推荐人）
     if (!hasReferrer) {
-      toast.error("购买门票前必须先绑定推荐人，请先前往首页绑定推荐人")
+      toast.error("❌ 购买门票前必须先绑定推荐人！请先前往首页绑定推荐人后再购买。", {
+        duration: 5000,
+        icon: '⚠️'
+      })
       return
     }
 
@@ -273,16 +276,21 @@ const BuyTicketPanel: React.FC<BuyTicketPanelProps> = ({ onBack }) => {
           </ul>
         </div>
 
-        {/* 推荐人检查提示 */}
+        {/* 推荐人检查提示 - 更醒目的警告 */}
         {!hasReferrer && isConnected && (
-          <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4 mb-6">
-            <div className="flex items-center gap-2 mb-2">
-              <AlertCircle className="text-red-400" size={20} />
-              <h3 className="font-bold text-red-400">需要先绑定推荐人</h3>
+          <div className="bg-red-500/20 border-2 border-red-500/50 rounded-lg p-5 mb-6 animate-pulse">
+            <div className="flex items-start gap-3 mb-3">
+              <AlertCircle className="text-red-400 flex-shrink-0" size={24} />
+              <div className="flex-1">
+                <h3 className="font-bold text-red-400 text-lg mb-2">⚠️ 必须绑定推荐人才能购买门票</h3>
+                <p className="text-sm text-red-300 mb-2">
+                  根据协议规则，<strong className="text-red-200">购买门票前必须先绑定推荐人</strong>。未绑定推荐人时无法购买门票。
+                </p>
+                <p className="text-xs text-red-400 mt-2">
+                  💡 请先前往首页绑定推荐人，然后再返回购买门票。
+                </p>
+              </div>
             </div>
-            <p className="text-sm text-red-300">
-              根据协议规则，购买门票前必须先绑定推荐人。请先前往首页绑定推荐人后再购买门票。
-            </p>
           </div>
         )}
 
@@ -295,10 +303,23 @@ const BuyTicketPanel: React.FC<BuyTicketPanelProps> = ({ onBack }) => {
           <button
             onClick={handleBuyTicket}
             disabled={isLoading || !mcBalance || mcBalance < ethers.parseEther(selectedTier.toString()) || !hasReferrer}
-            className="w-full py-4 bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-400 hover:to-yellow-500 disabled:opacity-50 disabled:cursor-not-allowed text-black font-bold rounded-lg transition-colors flex items-center justify-center gap-2"
+            className={`w-full py-4 font-bold rounded-lg transition-colors flex items-center justify-center gap-2 ${
+              !hasReferrer 
+                ? "bg-red-600 hover:bg-red-700 text-white cursor-not-allowed opacity-75" 
+                : "bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-400 hover:to-yellow-500 text-black disabled:opacity-50 disabled:cursor-not-allowed"
+            }`}
           >
-            <Ticket size={20} />
-            {isLoading ? "购买中..." : !hasReferrer ? "请先绑定推荐人" : `直接购买 ${selectedTier} MC 门票`}
+            {!hasReferrer ? (
+              <>
+                <AlertCircle size={20} />
+                <span>❌ 请先绑定推荐人才能购买</span>
+              </>
+            ) : (
+              <>
+                <Ticket size={20} />
+                {isLoading ? "购买中..." : `直接购买 ${selectedTier} MC 门票`}
+              </>
+            )}
           </button>
         )}
       </div>

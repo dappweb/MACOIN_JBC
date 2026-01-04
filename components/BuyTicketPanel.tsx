@@ -16,7 +16,7 @@ const TICKET_TIERS = CONST_TIERS.map(t => t.amount)
 
 const BuyTicketPanel: React.FC<BuyTicketPanelProps> = ({ onBack }) => {
   const { t } = useLanguage()
-  const { provider, protocolContract, account, isConnected, mcBalance } = useWeb3()
+  const { provider, protocolContract, account, isConnected, mcBalance, hasReferrer, checkReferrerStatus } = useWeb3()
   const { balances, refreshAll, onTransactionSuccess } = useGlobalRefresh()
   
   const [selectedTier, setSelectedTier] = useState<number>(100)
@@ -25,6 +25,13 @@ const BuyTicketPanel: React.FC<BuyTicketPanelProps> = ({ onBack }) => {
   const [hasActiveTicket, setHasActiveTicket] = useState(false)
   const [maxTicketAmount, setMaxTicketAmount] = useState<number>(0)
   const [maxSingleTicketAmount, setMaxSingleTicketAmount] = useState<number>(0)
+
+  // 检查推荐人状态
+  useEffect(() => {
+    if (protocolContract && account) {
+      checkReferrerStatus()
+    }
+  }, [protocolContract, account, checkReferrerStatus])
 
   // 检查用户当前门票状态和历史记录
   useEffect(() => {
@@ -75,6 +82,12 @@ const BuyTicketPanel: React.FC<BuyTicketPanelProps> = ({ onBack }) => {
   const handleBuyTicket = async () => {
     if (!protocolContract || !provider || !account) {
       toast.error("请先连接钱包")
+      return
+    }
+
+    // 检查是否已绑定推荐人（合约要求必须先绑定推荐人）
+    if (!hasReferrer) {
+      toast.error("购买门票前必须先绑定推荐人，请先前往首页绑定推荐人")
       return
     }
 
@@ -260,6 +273,19 @@ const BuyTicketPanel: React.FC<BuyTicketPanelProps> = ({ onBack }) => {
           </ul>
         </div>
 
+        {/* 推荐人检查提示 */}
+        {!hasReferrer && isConnected && (
+          <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4 mb-6">
+            <div className="flex items-center gap-2 mb-2">
+              <AlertCircle className="text-red-400" size={20} />
+              <h3 className="font-bold text-red-400">需要先绑定推荐人</h3>
+            </div>
+            <p className="text-sm text-red-300">
+              根据协议规则，购买门票前必须先绑定推荐人。请先前往首页绑定推荐人后再购买门票。
+            </p>
+          </div>
+        )}
+
         {/* 操作按钮 - 简化为单步操作 */}
         {!isConnected ? (
           <div className="text-center py-8">
@@ -268,11 +294,11 @@ const BuyTicketPanel: React.FC<BuyTicketPanelProps> = ({ onBack }) => {
         ) : (
           <button
             onClick={handleBuyTicket}
-            disabled={isLoading || !mcBalance || mcBalance < ethers.parseEther(selectedTier.toString())}
+            disabled={isLoading || !mcBalance || mcBalance < ethers.parseEther(selectedTier.toString()) || !hasReferrer}
             className="w-full py-4 bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-400 hover:to-yellow-500 disabled:opacity-50 disabled:cursor-not-allowed text-black font-bold rounded-lg transition-colors flex items-center justify-center gap-2"
           >
             <Ticket size={20} />
-            {isLoading ? "购买中..." : `直接购买 ${selectedTier} MC 门票`}
+            {isLoading ? "购买中..." : !hasReferrer ? "请先绑定推荐人" : `直接购买 ${selectedTier} MC 门票`}
           </button>
         )}
       </div>

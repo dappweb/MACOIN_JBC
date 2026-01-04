@@ -148,21 +148,6 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   }
 
-  // Debounced owner check to avoid excessive calls
-  useEffect(() => {
-    if (!protocolContract || !address) {
-      setIsOwner(false)
-      return
-    }
-    
-    // Debounce owner check
-    const timeoutId = setTimeout(() => {
-      checkOwner()
-    }, 300)
-    
-    return () => clearTimeout(timeoutId)
-  }, [protocolContract, address])
-
   useEffect(() => {
     if (signer) {
       // Init Contracts with Signer (Write access) - No MC contract needed
@@ -198,32 +183,59 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, [provider, address])
 
   const checkOwner = async () => {
-    if (protocolContract && address) {
-      try {
-        console.log("🔍 [Web3Context] 检查owner状态...", {
-          address,
-          contractAddress: await protocolContract.getAddress().catch(() => "Unknown")
-        });
-        
-        const owner = await protocolContract.owner()
-        const isOwnerAccount = owner.toLowerCase() === address.toLowerCase()
-        
-        console.log("✅ [Web3Context] Owner检查结果:", {
-          contractOwner: owner,
-          userAddress: address,
-          isOwner: isOwnerAccount
-        });
-        
-        setIsOwner(isOwnerAccount)
-      } catch (e) {
-        console.error("❌ [Web3Context] Failed to check owner:", e)
-        setIsOwner(false)
-      }
-    } else {
-      console.log("⚠️ [Web3Context] 无法检查owner - 缺少合约或地址");
+    if (!protocolContract || !address) {
+      console.log("⚠️ [Web3Context] 无法检查owner - 缺少合约或地址", {
+        hasProtocolContract: !!protocolContract,
+        hasAddress: !!address,
+        address: address || "null"
+      });
+      setIsOwner(false)
+      return
+    }
+    
+    try {
+      const contractAddress = await protocolContract.getAddress().catch(() => "Unknown")
+      console.log("🔍 [Web3Context] 检查owner状态...", {
+        userAddress: address,
+        contractAddress: contractAddress
+      });
+      
+      const owner = await protocolContract.owner()
+      const isOwnerAccount = owner.toLowerCase() === address.toLowerCase()
+      
+      console.log("✅ [Web3Context] Owner检查结果:", {
+        contractOwner: owner,
+        userAddress: address,
+        isOwner: isOwnerAccount,
+        ownerLower: owner.toLowerCase(),
+        addressLower: address.toLowerCase()
+      });
+      
+      setIsOwner(isOwnerAccount)
+    } catch (e) {
+      console.error("❌ [Web3Context] Failed to check owner:", e)
+      console.error("❌ [Web3Context] Error details:", {
+        error: e instanceof Error ? e.message : String(e),
+        stack: e instanceof Error ? e.stack : undefined
+      })
       setIsOwner(false)
     }
   }
+
+  // Debounced owner check to avoid excessive calls
+  useEffect(() => {
+    if (!protocolContract || !address) {
+      setIsOwner(false)
+      return
+    }
+    
+    // Debounce owner check
+    const timeoutId = setTimeout(() => {
+      checkOwner()
+    }, 300)
+    
+    return () => clearTimeout(timeoutId)
+  }, [protocolContract, address])
 
   // 检查推荐人状态
   const checkReferrerStatus = async () => {

@@ -329,15 +329,27 @@ const AdminLiquidityPanel: React.FC = () => {
       } catch (staticError: any) {
         console.error('❌ [AdminLiquidityPanel] 静态调用失败:', staticError);
         
-        // 尝试解码静态调用的错误
+        // 尝试解码静态调用的错误 - 处理嵌套的RPC错误结构
         let decodedError: string | null = null;
-        if (staticError.data) {
-          decodedError = decodeContractError(staticError.data);
+        let staticErrorData: string | null = null;
+        
+        // 检查嵌套的错误数据结构（MetaMask RPC错误）
+        if (staticError.data?.data) {
+          // 错误数据在 staticError.data.data 中
+          staticErrorData = staticError.data.data;
+          console.log('   [静态调用错误结构] 检测到嵌套错误数据:', staticErrorData);
+        } else if (staticError.data) {
+          // 错误数据直接在 staticError.data 中
+          staticErrorData = staticError.data;
+        }
+        
+        if (staticErrorData) {
+          decodedError = decodeContractError(staticErrorData);
           console.log('   解码的错误:', decodedError);
-          console.log('   错误数据:', staticError.data);
+          console.log('   错误数据:', staticErrorData);
           
           // 检查是否是TransferFromFailedLowLevel错误
-          if (staticError.data === '0x82a6e09c' || staticError.data.startsWith('0x82a6e09c')) {
+          if (staticErrorData === '0x82a6e09c' || staticErrorData.startsWith('0x82a6e09c')) {
             console.log('   ⚠️  [静态调用] 检测到TransferFromFailedLowLevel错误 - JBC转账失败');
           }
         }
@@ -349,10 +361,12 @@ const AdminLiquidityPanel: React.FC = () => {
           staticErrorMessage = '权限错误：静态调用检查发现您不是合约拥有者';
         } else if (decodedError === 'TransferFromFailedLowLevel' || 
                    decodedError === 'TransferFromFailed' ||
-                   staticError.data === '0x82a6e09c' ||
-                   staticError.data?.startsWith('0x82a6e09c') ||
-                   staticError.data === '0x87a26b75' ||
-                   staticError.data?.startsWith('0x87a26b75') ||
+                   staticErrorData === '0x82a6e09c' ||
+                   staticErrorData?.startsWith('0x82a6e09c') ||
+                   staticErrorData === '0x87a26b75' ||
+                   staticErrorData?.startsWith('0x87a26b75') ||
+                   (staticError.data?.data === '0x82a6e09c') ||
+                   (staticError.data?.data?.startsWith('0x82a6e09c')) ||
                    staticError.message?.includes('TransferFromFailed')) {
           // TransferFromFailed错误 - JBC转账失败
           staticErrorMessage = 'JBC代币转账失败（预检查）';
@@ -513,15 +527,27 @@ const AdminLiquidityPanel: React.FC = () => {
         data: error.data
       });
       
-      // 尝试解码错误
+      // 尝试解码错误 - 处理嵌套的RPC错误结构
       let decodedError: string | null = null;
-      if (error.data) {
-        decodedError = decodeContractError(error.data);
+      let errorData: string | null = null;
+      
+      // 检查嵌套的错误数据结构（MetaMask RPC错误）
+      if (error.data?.data) {
+        // 错误数据在 error.data.data 中
+        errorData = error.data.data;
+        console.log('   [错误结构] 检测到嵌套错误数据:', errorData);
+      } else if (error.data) {
+        // 错误数据直接在 error.data 中
+        errorData = error.data;
+      }
+      
+      if (errorData) {
+        decodedError = decodeContractError(errorData);
         console.log('   解码的错误:', decodedError);
-        console.log('   错误数据:', error.data);
+        console.log('   错误数据:', errorData);
         
         // 如果是0x82a6e09c，这是TransferFromFailedLowLevel
-        if (error.data === '0x82a6e09c' || error.data.startsWith('0x82a6e09c')) {
+        if (errorData === '0x82a6e09c' || errorData.startsWith('0x82a6e09c')) {
           console.log('   ⚠️  检测到TransferFromFailedLowLevel错误 - JBC转账失败');
           console.log('   💡 可能原因：JBC授权不足或JBC余额不足');
         }
@@ -529,9 +555,9 @@ const AdminLiquidityPanel: React.FC = () => {
       
       // 检查错误消息中是否包含execution reverted
       if (error.message?.includes('execution reverted') || error.message?.includes('Internal JSON-RPC error')) {
-        console.log('   ⚠️  检测到execution reverted错误');
-        if (error.data) {
-          console.log('   错误选择器:', error.data.slice(0, 10));
+        console.log('   ⚠️  检测到execution reverted或Internal JSON-RPC error');
+        if (errorData) {
+          console.log('   错误选择器:', errorData.slice(0, 10));
         }
       }
       
@@ -546,10 +572,12 @@ const AdminLiquidityPanel: React.FC = () => {
         suggestion = '请确认：1) 使用正确的钱包地址（必须是合约Owner） 2) 检查网络连接 3) 刷新页面重新检查权限';
       } else if (decodedError === 'TransferFromFailedLowLevel' || 
                  decodedError === 'TransferFromFailed' ||
-                 error.data === '0x82a6e09c' ||
-                 error.data?.startsWith('0x82a6e09c') ||
-                 error.data === '0x87a26b75' ||
-                 error.data?.startsWith('0x87a26b75')) {
+                 errorData === '0x82a6e09c' ||
+                 errorData?.startsWith('0x82a6e09c') ||
+                 errorData === '0x87a26b75' ||
+                 errorData?.startsWith('0x87a26b75') ||
+                 (error.data?.data === '0x82a6e09c') ||
+                 (error.data?.data?.startsWith('0x82a6e09c'))) {
         // TransferFromFailed错误 - JBC转账失败
         errorMessage = 'JBC代币转账失败';
         suggestion = '可能原因：1) JBC授权不足 - 请先授权JBC代币 2) JBC余额不足 - 请检查JBC余额 3) 授权未生效 - 等待几秒后重试';

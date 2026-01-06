@@ -1,0 +1,27 @@
+{
+  "timestamp": "2026-01-04T17:08:27.035Z",
+  "newProtocolAddress": "0x0897Cee05E43B2eCf331cd80f881c211eb86844E",
+  "restored": {
+    "swapReserves": {
+      "status": "success",
+      "swapReserveMC": "1.000000000000000209",
+      "swapReserveJBC": "1000001.000000000000000001"
+    },
+    "nextTicketId": {
+      "status": "success",
+      "value": "1767210189"
+    },
+    "nextStakeId": {
+      "status": "success",
+      "value": "47"
+    },
+    "lastBurnTime": {
+      "status": "success",
+      "value": "0"
+    },
+    "refundFeeAmount": {
+      "status": "skipped"
+    }
+  },
+  "failed": []
+}

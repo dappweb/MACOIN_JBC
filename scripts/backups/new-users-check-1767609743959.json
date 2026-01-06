@@ -1,0 +1,22 @@
+{
+  "timestamp": "2026-01-05T10:42:23.959Z",
+  "backupFile": "scripts/backups/protocol-backup-1767522095585.json",
+  "backupTimestamp": "2026-01-04T10:19:10.255Z",
+  "backupProtocolAddress": "0x77601aC473dB1195A1A9c82229C9bD008a69987A",
+  "newProtocolAddress": "0x0897Cee05E43B2eCf331cd80f881c211eb86844E",
+  "oldProtocolAddress": "0x77601aC473dB1195A1A9c82229C9bD008a69987A",
+  "summary": {
+    "backupUsers": 367,
+    "backupUsersWithReferrer": 367,
+    "newContractUsers": 367,
+    "newContractUsersWithReferrer": 367,
+    "notMigratedUsers": 1
+  },
+  "notMigratedUsers": [
+    {
+      "address": "0x4c10831cbcf9884ba72051b5287b6c87e4f74a48",
+      "backupReferrer": "0x2d68a5850a4805c6fe6648e5870b68456e2a7c82",
+      "newContractReferrer": "0x3e436e9ef8a44cb65b00fcefe4ac1952384ed21e"
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "timestamp": "2026-01-04T17:01:02.906Z",
+  "newProtocolAddress": "0x0897Cee05E43B2eCf331cd80f881c211eb86844E",
+  "restored": {
+    "levelRewardPool": {
+      "status": "success",
+      "oldValue": "50.0",
+      "newValue": "2805.0"
+    }
+  },
+  "failed": []
+}

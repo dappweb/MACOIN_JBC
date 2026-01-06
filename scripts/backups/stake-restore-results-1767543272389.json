@@ -1,0 +1,730 @@
+{
+  "timestamp": "2026-01-04T16:11:22.379Z",
+  "newProtocolAddress": "0x0897Cee05E43B2eCf331cd80f881c211eb86844E",
+  "totalUsers": 48,
+  "totalStakes": 48,
+  "restored": [
+    {
+      "address": "0xdb817e0d21a134f649d24b91e39d42e7eec52a65",
+      "status": "success",
+      "stakes": 1,
+      "stakeData": [
+        {
+          "id": "1",
+          "amount": "150000000000000000000",
+          "startTime": "1767238079",
+          "cycleDays": "7",
+          "active": true,
+          "paid": "0"
+        }
+      ]
+    },
+    {
+      "address": "0xa5b6131d4f7c407bbf557f95aaab0dcb1b382929",
+      "status": "success",
+      "stakes": 1,
+      "stakeData": [
+        {
+          "id": "23",
+          "amount": "150000000000000000000",
+          "startTime": "1767445547",
+          "cycleDays": "30",
+          "active": true,
+          "paid": "0"
+        }
+      ]
+    },
+    {
+      "address": "0xd5cfe4e34d13ac239c2e4a59662ce9faec2fedaa",
+      "status": "success",
+      "stakes": 1,
+      "stakeData": [
+        {
+          "id": "24",
+          "amount": "750000000000000000000",
+          "startTime": "1767446561",
+          "cycleDays": "30",
+          "active": true,
+          "paid": "0"
+        }
+      ]
+    },
+    {
+      "address": "0xa96d40edf9b91747641dc40a2fea6de1fc3ccc06",
+      "status": "success",
+      "stakes": 1,
+      "stakeData": [
+        {
+          "id": "26",
+          "amount": "750000000000000000000",
+          "startTime": "1767447146",
+          "cycleDays": "30",
+          "active": true,
+          "paid": "0"
+        }
+      ]
+    },
+    {
+      "address": "0x80e0b6a4eada66ac7c731c1e9bcd4a88a9f00a9b",
+      "status": "success",
+      "stakes": 1,
+      "stakeData": [
+        {
+          "id": "33",
+          "amount": "150000000000000000000",
+          "startTime": "1767448733",
+          "cycleDays": "30",
+          "active": true,
+          "paid": "0"
+        }
+      ]
+    },
+    {
+      "address": "0xd19fe0623e4810a283a3475b91fc7450d6a96286",
+      "status": "success",
+      "stakes": 1,
+      "stakeData": [
+        {
+          "id": "25",
+          "amount": "150000000000000000000",
+          "startTime": "1767446996",
+          "cycleDays": "30",
+          "active": true,
+          "paid": "0"
+        }
+      ]
+    },
+    {
+      "address": "0x4bb746155d90df0f1dc663f1bb39a10838b569a7",
+      "status": "success",
+      "stakes": 1,
+      "stakeData": [
+        {
+          "id": "4",
+          "amount": "150000000000000000000",
+          "startTime": "1767356648",
+          "cycleDays": "30",
+          "active": true,
+          "paid": "0"
+        }
+      ]
+    },
+    {
+      "address": "0x42cb9081ae512554e02b24c3ae28fe8380e52e00",
+      "status": "success",
+      "stakes": 1,
+      "stakeData": [
+        {
+          "id": "1",
+          "amount": "150000000000000000000",
+          "startTime": "1767356303",
+          "cycleDays": "30",
+          "active": true,
+          "paid": "0"
+        }
+      ]
+    },
+    {
+      "address": "0xa867b3ac9fc9611c45604f4e4575d8e72a810d84",
+      "status": "success",
+      "stakes": 1,
+      "stakeData": [
+        {
+          "id": "2",
+          "amount": "150000000000000000000",
+          "startTime": "1767356543",
+          "cycleDays": "30",
+          "active": true,
+          "paid": "0"
+        }
+      ]
+    },
+    {
+      "address": "0xa0c656ad8f656bafd650e6b830652af7a95215ff",
+      "status": "success",
+      "stakes": 1,
+      "stakeData": [
+        {
+          "id": "3",
+          "amount": "150000000000000000000",
+          "startTime": "1767356588",
+          "cycleDays": "30",
+          "active": true,
+          "paid": "0"
+        }
+      ]
+    },
+    {
+      "address": "0xb0a2275cea4a33edee03ad512e140b4b6a8deebb",
+      "status": "success",
+      "stakes": 1,
+      "stakeData": [
+        {
+          "id": "5",
+          "amount": "1500000000000000000000",
+          "startTime": "1767364415",
+          "cycleDays": "30",
+          "active": true,
+          "paid": "0"
+        }
+      ]
+    },
+    {
+      "address": "0x40ee97d7b8d424489938bfa0a523ae39b59d7f5b",
+      "status": "success",
+      "stakes": 1,
+      "stakeData": [
+        {
+          "id": "16",
+          "amount": "150000000000000000000",
+          "startTime": "1767437465",
+          "cycleDays": "30",
+          "active": true,
+          "paid": "0"
+        }
+      ]
+    },
+    {
+      "address": "0xf976b269213569d3ef64e1d2b023fba5a0c32cbb",
+      "status": "success",
+      "stakes": 1,
+      "stakeData": [
+        {
+          "id": "44",
+          "amount": "150000000000000000000",
+          "startTime": "1767501263",
+          "cycleDays": "7",
+          "active": true,
+          "paid": "0"
+        }
+      ]
+    },
+    {
+      "address": "0xbf1a9d04c37081dedb9a2b5733de89b4006971f7",
+      "status": "success",
+      "stakes": 1,
+      "stakeData": [
+        {
+          "id": "45",
+          "amount": "150000000000000000000",
+          "startTime": "1767501797",
+          "cycleDays": "7",
+          "active": true,
+          "paid": "0"
+        }
+      ]
+    },
+    {
+      "address": "0xa63c756404ddd1f56468501f92bcc1b2dfe7f56b",
+      "status": "success",
+      "stakes": 1,
+      "stakeData": [
+        {
+          "id": "46",
+          "amount": "150000000000000000000",
+          "startTime": "1767502043",
+          "cycleDays": "15",
+          "active": true,
+          "paid": "0"
+        }
+      ]
+    },
+    {
+      "address": "0xee9f6229c5aafe38110000cf41a5924bfd749487",
+      "status": "success",
+      "stakes": 1,
+      "stakeData": [
+        {
+          "id": "47",
+          "amount": "150000000000000000000",
+          "startTime": "1767502133",
+          "cycleDays": "30",
+          "active": true,
+          "paid": "0"
+        }
+      ]
+    },
+    {
+      "address": "0x6f2cee169de4e8e10a8373e6bd857c046d8484d8",
+      "status": "success",
+      "stakes": 1,
+      "stakeData": [
+        {
+          "id": "31",
+          "amount": "150000000000000000000",
+          "startTime": "1767448562",
+          "cycleDays": "30",
+          "active": true,
+          "paid": "0"
+        }
+      ]
+    },
+    {
+      "address": "0xd96082b927f330aa6bd793f4b90f658d7bed4a01",
+      "status": "success",
+      "stakes": 1,
+      "stakeData": [
+        {
+          "id": "30",
+          "amount": "750000000000000000000",
+          "startTime": "1767448460",
+          "cycleDays": "30",
+          "active": true,
+          "paid": "0"
+        }
+      ]
+    },
+    {
+      "address": "0x6fb89cdf8e4e8f26d02b1bf705d4892d0e5a14ce",
+      "status": "success",
+      "stakes": 1,
+      "stakeData": [
+        {
+          "id": "32",
+          "amount": "750000000000000000000",
+          "startTime": "1767448598",
+          "cycleDays": "30",
+          "active": true,
+          "paid": "0"
+        }
+      ]
+    },
+    {
+      "address": "0xe79da8df8f785164af78a9e8b47aed8fe85b511e",
+      "status": "success",
+      "stakes": 1,
+      "stakeData": [
+        {
+          "id": "27",
+          "amount": "150000000000000000000",
+          "startTime": "1767447428",
+          "cycleDays": "30",
+          "active": true,
+          "paid": "0"
+        }
+      ]
+    },
+    {
+      "address": "0x29394c5eeeb80e0f4b2d5f7d8233c7df9e0d1660",
+      "status": "success",
+      "stakes": 1,
+      "stakeData": [
+        {
+          "id": "29",
+          "amount": "750000000000000000000",
+          "startTime": "1767447803",
+          "cycleDays": "30",
+          "active": true,
+          "paid": "0"
+        }
+      ]
+    },
+    {
+      "address": "0x24f646f11554a2580b34ba0f331fcf0a9123eb78",
+      "status": "success",
+      "stakes": 1,
+      "stakeData": [
+        {
+          "id": "28",
+          "amount": "150000000000000000000",
+          "startTime": "1767447569",
+          "cycleDays": "30",
+          "active": true,
+          "paid": "0"
+        }
+      ]
+    },
+    {
+      "address": "0x0424b3cc93ac553d5831d32690f509edb1f455ba",
+      "status": "success",
+      "stakes": 1,
+      "stakeData": [
+        {
+          "id": "34",
+          "amount": "150000000000000000000",
+          "startTime": "1767448847",
+          "cycleDays": "30",
+          "active": true,
+          "paid": "0"
+        }
+      ]
+    },
+    {
+      "address": "0x67fba935e255a08ebf3727bee1b4eeba1326c3c7",
+      "status": "success",
+      "stakes": 1,
+      "stakeData": [
+        {
+          "id": "6",
+          "amount": "150000000000000000000",
+          "startTime": "1767411287",
+          "cycleDays": "30",
+          "active": true,
+          "paid": "0"
+        }
+      ]
+    },
+    {
+      "address": "0x3efa2823c808576c53d9e90d45f808bb90adfc03",
+      "status": "success",
+      "stakes": 1,
+      "stakeData": [
+        {
+          "id": "7",
+          "amount": "1500000000000000000000",
+          "startTime": "1767424025",
+          "cycleDays": "30",
+          "active": true,
+          "paid": "0"
+        }
+      ]
+    },
+    {
+      "address": "0xe5140aa143b82a29c06476a4afb4b1dc62f9154c",
+      "status": "success",
+      "stakes": 1,
+      "stakeData": [
+        {
+          "id": "8",
+          "amount": "1500000000000000000000",
+          "startTime": "1767424436",
+          "cycleDays": "30",
+          "active": true,
+          "paid": "0"
+        }
+      ]
+    },
+    {
+      "address": "0x44758d031e0dad498fea48bc7555e0a0bec60d3f",
+      "status": "success",
+      "stakes": 1,
+      "stakeData": [
+        {
+          "id": "10",
+          "amount": "1500000000000000000000",
+          "startTime": "1767424661",
+          "cycleDays": "30",
+          "active": true,
+          "paid": "0"
+        }
+      ]
+    },
+    {
+      "address": "0x9ceefa1407c0575bcb602da75675f52ed927056a",
+      "status": "success",
+      "stakes": 1,
+      "stakeData": [
+        {
+          "id": "9",
+          "amount": "1500000000000000000000",
+          "startTime": "1767424583",
+          "cycleDays": "30",
+          "active": true,
+          "paid": "0"
+        }
+      ]
+    },
+    {
+      "address": "0xa238fc9b19280140dca7d8be5a961998a8a47415",
+      "status": "success",
+      "stakes": 1,
+      "stakeData": [
+        {
+          "id": "11",
+          "amount": "450000000000000000000",
+          "startTime": "1767424919",
+          "cycleDays": "30",
+          "active": true,
+          "paid": "0"
+        }
+      ]
+    },
+    {
+      "address": "0x05a91cb27adc7a13a5ccaa1ed795eaf476e37c8e",
+      "status": "success",
+      "stakes": 1,
+      "stakeData": [
+        {
+          "id": "12",
+          "amount": "750000000000000000000",
+          "startTime": "1767426092",
+          "cycleDays": "30",
+          "active": true,
+          "paid": "0"
+        }
+      ]
+    },
+    {
+      "address": "0xb6a10c3f6492e5fefdc03909e1638fe3a8ce5c75",
+      "status": "success",
+      "stakes": 1,
+      "stakeData": [
+        {
+          "id": "37",
+          "amount": "150000000000000000000",
+          "startTime": "1767492344",
+          "cycleDays": "30",
+          "active": true,
+          "paid": "0"
+        }
+      ]
+    },
+    {
+      "address": "0x482794724cfc363a73fda7c26ba50309c0caf7f9",
+      "status": "success",
+      "stakes": 1,
+      "stakeData": [
+        {
+          "id": "13",
+          "amount": "150000000000000000000",
+          "startTime": "1767434546",
+          "cycleDays": "30",
+          "active": true,
+          "paid": "0"
+        }
+      ]
+    },
+    {
+      "address": "0x05facd87392c203683fec1b459dc791075ad77a9",
+      "status": "success",
+      "stakes": 1,
+      "stakeData": [
+        {
+          "id": "14",
+          "amount": "150000000000000000000",
+          "startTime": "1767435215",
+          "cycleDays": "30",
+          "active": true,
+          "paid": "0"
+        }
+      ]
+    },
+    {
+      "address": "0x0cb72b63bab10bcebf70f5f54e1a96a05d89722b",
+      "status": "success",
+      "stakes": 1,
+      "stakeData": [
+        {
+          "id": "17",
+          "amount": "450000000000000000000",
+          "startTime": "1767437675",
+          "cycleDays": "30",
+          "active": true,
+          "paid": "0"
+        }
+      ]
+    },
+    {
+      "address": "0xac923c231bb4f583908783c7ef00a64ed5fc55e1",
+      "status": "success",
+      "stakes": 1,
+      "stakeData": [
+        {
+          "id": "15",
+          "amount": "150000000000000000000",
+          "startTime": "1767437162",
+          "cycleDays": "30",
+          "active": true,
+          "paid": "0"
+        }
+      ]
+    },
+    {
+      "address": "0x79ab675d49f53e3e68901bd6d840c5b6650dda58",
+      "status": "success",
+      "stakes": 1,
+      "stakeData": [
+        {
+          "id": "18",
+          "amount": "450000000000000000000",
+          "startTime": "1767440384",
+          "cycleDays": "30",
+          "active": true,
+          "paid": "0"
+        }
+      ]
+    },
+    {
+      "address": "0x267691e4cb19277136863ff41b0c7ad6cf8c44f4",
+      "status": "success",
+      "stakes": 1,
+      "stakeData": [
+        {
+          "id": "39",
+          "amount": "750000000000000000000",
+          "startTime": "1767495653",
+          "cycleDays": "30",
+          "active": true,
+          "paid": "0"
+        }
+      ]
+    },
+    {
+      "address": "0x916445a42b676e6ff0c7992ea20d6e030d05bb9a",
+      "status": "success",
+      "stakes": 1,
+      "stakeData": [
+        {
+          "id": "19",
+          "amount": "750000000000000000000",
+          "startTime": "1767441611",
+          "cycleDays": "30",
+          "active": true,
+          "paid": "0"
+        }
+      ]
+    },
+    {
+      "address": "0xce35ac115fa7a29cc223c62bf6bf8fae09a5e4cf",
+      "status": "success",
+      "stakes": 1,
+      "stakeData": [
+        {
+          "id": "20",
+          "amount": "750000000000000000000",
+          "startTime": "1767442109",
+          "cycleDays": "30",
+          "active": true,
+          "paid": "0"
+        }
+      ]
+    },
+    {
+      "address": "0x0f09c127347625f14b798ad3956c1077426c6be0",
+      "status": "success",
+      "stakes": 1,
+      "stakeData": [
+        {
+          "id": "21",
+          "amount": "150000000000000000000",
+          "startTime": "1767444746",
+          "cycleDays": "30",
+          "active": true,
+          "paid": "0"
+        }
+      ]
+    },
+    {
+      "address": "0x5c303bb07237ad95cdf7ab9ead0bcdbeff934743",
+      "status": "success",
+      "stakes": 1,
+      "stakeData": [
+        {
+          "id": "22",
+          "amount": "150000000000000000000",
+          "startTime": "1767445133",
+          "cycleDays": "30",
+          "active": true,
+          "paid": "0"
+        }
+      ]
+    },
+    {
+      "address": "0xbbe6ce8f9c6feb4d696838432ecbd17fae5218fa",
+      "status": "success",
+      "stakes": 1,
+      "stakeData": [
+        {
+          "id": "35",
+          "amount": "150000000000000000000",
+          "startTime": "1767450515",
+          "cycleDays": "30",
+          "active": true,
+          "paid": "0"
+        }
+      ]
+    },
+    {
+      "address": "0x9378e817b96c7f67856e4c280b62fe7fcf056292",
+      "status": "success",
+      "stakes": 1,
+      "stakeData": [
+        {
+          "id": "36",
+          "amount": "150000000000000000000",
+          "startTime": "1767492206",
+          "cycleDays": "30",
+          "active": true,
+          "paid": "0"
+        }
+      ]
+    },
+    {
+      "address": "0xaa4d3862ea0a72d83d6399d6700fca1952d8e64d",
+      "status": "success",
+      "stakes": 1,
+      "stakeData": [
+        {
+          "id": "38",
+          "amount": "150000000000000000000",
+          "startTime": "1767495296",
+          "cycleDays": "30",
+          "active": true,
+          "paid": "0"
+        }
+      ]
+    },
+    {
+      "address": "0xc4e081ecb17fc4ead659c3b47de49a5070f5cc65",
+      "status": "success",
+      "stakes": 1,
+      "stakeData": [
+        {
+          "id": "40",
+          "amount": "150000000000000000000",
+          "startTime": "1767496121",
+          "cycleDays": "30",
+          "active": true,
+          "paid": "0"
+        }
+      ]
+    },
+    {
+      "address": "0xf9e1cab9c0f38369d2addbb187a71c56fd5a22ed",
+      "status": "success",
+      "stakes": 1,
+      "stakeData": [
+        {
+          "id": "41",
+          "amount": "750000000000000000000",
+          "startTime": "1767497264",
+          "cycleDays": "30",
+          "active": true,
+          "paid": "0"
+        }
+      ]
+    },
+    {
+      "address": "0x181259be8173ba87ba335375bcd490337cf12312",
+      "status": "success",
+      "stakes": 1,
+      "stakeData": [
+        {
+          "id": "42",
+          "amount": "150000000000000000000",
+          "startTime": "1767498065",
+          "cycleDays": "30",
+          "active": true,
+          "paid": "0"
+        }
+      ]
+    },
+    {
+      "address": "0x3b6ca62f1d7c014d069edb432f6c7bbd67abb1e9",
+      "status": "success",
+      "stakes": 1,
+      "stakeData": [
+        {
+          "id": "43",
+          "amount": "150000000000000000000",
+          "startTime": "1767500942",
+          "cycleDays": "30",
+          "active": true,
+          "paid": "0"
+        }
+      ]
+    }
+  ],
+  "failed": [],
+  "skipped": []
+}

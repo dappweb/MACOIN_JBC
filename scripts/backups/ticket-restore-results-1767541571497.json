@@ -1,0 +1,3559 @@
+{
+  "timestamp": "2026-01-04T15:24:25.610Z",
+  "newProtocolAddress": "0x0897Cee05E43B2eCf331cd80f881c211eb86844E",
+  "totalUsers": 355,
+  "restored": [
+    {
+      "address": "0xdb817e0d21a134f649d24b91e39d42e7eec52a65",
+      "status": "success",
+      "ticket": {
+        "ticketId": "2",
+        "amount": "200000000000000000000",
+        "purchaseTime": "1767248798",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x4c10831cbcf9884ba72051b5287b6c87e4f74a48",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1",
+        "amount": "200000000000000000000",
+        "purchaseTime": "1767261299",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x5067d182d5f15511f0c71194a25cc67b05c20b02",
+      "status": "success",
+      "ticket": {
+        "ticketId": "3",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767238682",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x5b7e080daa6a6437b50eb881d84b66158bb10fe5",
+      "status": "success",
+      "ticket": {
+        "ticketId": "4",
+        "amount": "500000000000000000000",
+        "purchaseTime": "1767348494",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x0435aff9777dafbd0552b54951501d3169a02062",
+      "status": "success",
+      "ticket": {
+        "ticketId": "5",
+        "amount": "200000000000000000000",
+        "purchaseTime": "1767343580",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x4544c0cf9d62d3bb441c04a5f31c1ba0e432d37e",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210060",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767368861",
+        "exited": true
+      }
+    },
+    {
+      "address": "0x9d90a5c3054ea380b4e7ff9c53334a7c21b40aa7",
+      "status": "success",
+      "ticket": {
+        "ticketId": "7",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767241520",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x1441042bd8229045017eeb3a94a13703e18aebc2",
+      "status": "success",
+      "ticket": {
+        "ticketId": "8",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767244133",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x6fe03fd383e987e70927dbb0e04d610563e9eb31",
+      "status": "success",
+      "ticket": {
+        "ticketId": "9",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767245750",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x09d381c02afbb8c76551b9450fd329eb2a823154",
+      "status": "success",
+      "ticket": {
+        "ticketId": "10",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767245810",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x25a5bc4ecbaf2bf42e1ca89d08e98d800fb939dc",
+      "status": "success",
+      "ticket": {
+        "ticketId": "11",
+        "amount": "1000000000000000000000",
+        "purchaseTime": "1767245933",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x5edff8081ce1cfd6b41b9a325c35e4cd25c6a121",
+      "status": "success",
+      "ticket": {
+        "ticketId": "12",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767245945",
+        "exited": false
+      }
+    },
+    {
+      "address": "0xdd1a5471d8f8b70500bae23cc28bc34c7c9ef3b6",
+      "status": "success",
+      "ticket": {
+        "ticketId": "13",
+        "amount": "1000000000000000000000",
+        "purchaseTime": "1767245996",
+        "exited": false
+      }
+    },
+    {
+      "address": "0xd9e9cebaa4c7d66a4acd5bcd2458265ad65791a7",
+      "status": "success",
+      "ticket": {
+        "ticketId": "14",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767246197",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x16bb613511bfca0fda28b0b55c966fb6b8987b38",
+      "status": "success",
+      "ticket": {
+        "ticketId": "15",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767246233",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x76e8bf31e867c8f0f557d5fd95f62a3a22d1c579",
+      "status": "success",
+      "ticket": {
+        "ticketId": "16",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767246344",
+        "exited": false
+      }
+    },
+    {
+      "address": "0xc166a4ed390928da1941834bd0201739403ef63d",
+      "status": "success",
+      "ticket": {
+        "ticketId": "17",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767246704",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x5f7cdfdcf017731dc131c622fec515914b5f889d",
+      "status": "success",
+      "ticket": {
+        "ticketId": "18",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767246818",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x52c6b0c5b19e382adb37df9e3ae882fe49dd91c1",
+      "status": "success",
+      "ticket": {
+        "ticketId": "19",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767247082",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x98e120c962b08e2a5ce07781819f0117c92ad03b",
+      "status": "success",
+      "ticket": {
+        "ticketId": "20",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767247172",
+        "exited": false
+      }
+    },
+    {
+      "address": "0xf7f556041fa301f6974b713976b5f7fe1faf1817",
+      "status": "success",
+      "ticket": {
+        "ticketId": "21",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767247202",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x6ae9ae7ea9001ecc25fc7ea68b037e529bf938ae",
+      "status": "success",
+      "ticket": {
+        "ticketId": "22",
+        "amount": "200000000000000000000",
+        "purchaseTime": "1767408263",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x16534f0dae6602c8e20d25000f9691c9b7a68462",
+      "status": "success",
+      "ticket": {
+        "ticketId": "23",
+        "amount": "500000000000000000000",
+        "purchaseTime": "1767247373",
+        "exited": false
+      }
+    },
+    {
+      "address": "0xab75927c641a4545dc52b9c02562fde3d09a9b1d",
+      "status": "success",
+      "ticket": {
+        "ticketId": "24",
+        "amount": "200000000000000000000",
+        "purchaseTime": "1767408194",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x645145578f06ff345b35e7169d445199a4ad86fd",
+      "status": "success",
+      "ticket": {
+        "ticketId": "25",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767247706",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x734b97b05224d6a533bdacdfd5bac3b52883b020",
+      "status": "success",
+      "ticket": {
+        "ticketId": "26",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767247772",
+        "exited": false
+      }
+    },
+    {
+      "address": "0xbc6b9be0cf3023f724e44c18388bf1bd52180578",
+      "status": "success",
+      "ticket": {
+        "ticketId": "27",
+        "amount": "200000000000000000000",
+        "purchaseTime": "1767248198",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x86bb1ca9e161af5df49249918368f37aaec19ad3",
+      "status": "success",
+      "ticket": {
+        "ticketId": "28",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767247967",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x854d31c29fab36cdbb66bc32295d963aec65ed4f",
+      "status": "success",
+      "ticket": {
+        "ticketId": "29",
+        "amount": "300000000000000000000",
+        "purchaseTime": "1767248057",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x0c9ab232b28bf37f7a153c1acc7784814de250ee",
+      "status": "success",
+      "ticket": {
+        "ticketId": "30",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767248279",
+        "exited": false
+      }
+    },
+    {
+      "address": "0xa5b6131d4f7c407bbf557f95aaab0dcb1b382929",
+      "status": "success",
+      "ticket": {
+        "ticketId": "34",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767249404",
+        "exited": false
+      }
+    },
+    {
+      "address": "0xe8990be70a3027c228cbd48f4cece37b15505007",
+      "status": "success",
+      "ticket": {
+        "ticketId": "31",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767248345",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x5a5c3d07b30f7cdd39130a0f2377784b6d4576cd",
+      "status": "success",
+      "ticket": {
+        "ticketId": "32",
+        "amount": "1000000000000000000000",
+        "purchaseTime": "1767248597",
+        "exited": false
+      }
+    },
+    {
+      "address": "0xb7276250369a9e53236c26ebfc2a8fffdaf25e26",
+      "status": "success",
+      "ticket": {
+        "ticketId": "33",
+        "amount": "1000000000000000000000",
+        "purchaseTime": "1767249209",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x40043c16e297f7308a25914b5adfa1983504ca29",
+      "status": "success",
+      "ticket": {
+        "ticketId": "35",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767249437",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x8efb0848a6de28ddd290224dc2dd87174a0e29f1",
+      "status": "success",
+      "ticket": {
+        "ticketId": "42",
+        "amount": "200000000000000000000",
+        "purchaseTime": "1767412352",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x72a48b013bf4e18a6acf59910875f601b68bf049",
+      "status": "success",
+      "ticket": {
+        "ticketId": "36",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767249521",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x2d68a5850a4805c6fe6648e5870b68456e2a7c82",
+      "status": "success",
+      "ticket": {
+        "ticketId": "44",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767251201",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x06fa0c2463f86c34513597d6f203233e838e4c86",
+      "status": "success",
+      "ticket": {
+        "ticketId": "45",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767251321",
+        "exited": false
+      }
+    },
+    {
+      "address": "0xd5cfe4e34d13ac239c2e4a59662ce9faec2fedaa",
+      "status": "success",
+      "ticket": {
+        "ticketId": "37",
+        "amount": "500000000000000000000",
+        "purchaseTime": "1767249668",
+        "exited": false
+      }
+    },
+    {
+      "address": "0xa96d40edf9b91747641dc40a2fea6de1fc3ccc06",
+      "status": "success",
+      "ticket": {
+        "ticketId": "43",
+        "amount": "500000000000000000000",
+        "purchaseTime": "1767251180",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x7efad6bef04631be34de71b2df9378c727f185b7",
+      "status": "success",
+      "ticket": {
+        "ticketId": "46",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767251345",
+        "exited": false
+      }
+    },
+    {
+      "address": "0xc26731f7b6521b9ddf58b2ef3f70658dc28a5513",
+      "status": "success",
+      "ticket": {
+        "ticketId": "47",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767251372",
+        "exited": false
+      }
+    },
+    {
+      "address": "0xc418c1287c62cde6b8434e88e33f8d4feecf5e95",
+      "status": "success",
+      "ticket": {
+        "ticketId": "48",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767251402",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x1b14f52ad00dba781a87e4afa3f849ee0b854fc5",
+      "status": "success",
+      "ticket": {
+        "ticketId": "38",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767250745",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x80e0b6a4eada66ac7c731c1e9bcd4a88a9f00a9b",
+      "status": "success",
+      "ticket": {
+        "ticketId": "40",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767251018",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x87ad05edc441ad32b38c2791d2e2deb7b903f0c6",
+      "status": "success",
+      "ticket": {
+        "ticketId": "39",
+        "amount": "1000000000000000000000",
+        "purchaseTime": "1767250892",
+        "exited": false
+      }
+    },
+    {
+      "address": "0xb30951489e70a5e6f249cc763e770cd2f1fbcf06",
+      "status": "success",
+      "ticket": {
+        "ticketId": "41",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767251096",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x4429ae0804a583940685abb0aab926d64d041105",
+      "status": "success",
+      "ticket": {
+        "ticketId": "49",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767251714",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x66bb2cfb68847051cd047bf35716a83646564ef7",
+      "status": "success",
+      "ticket": {
+        "ticketId": "50",
+        "amount": "1000000000000000000000",
+        "purchaseTime": "1767251729",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x42b3d7fbe0f2496ae27d2c77759f6f7f46ed70e9",
+      "status": "success",
+      "ticket": {
+        "ticketId": "51",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767251822",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x6ba8221531a30ef41260367fde92a034c178bb2b",
+      "status": "success",
+      "ticket": {
+        "ticketId": "63",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767253592",
+        "exited": true
+      }
+    },
+    {
+      "address": "0xdae0a99e2e8d6e46be5a3443bb20fcaa7e36a7b6",
+      "status": "success",
+      "ticket": {
+        "ticketId": "53",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767252386",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x468f8c39ef1db73fe6ecc311b10e1828875273f3",
+      "status": "success",
+      "ticket": {
+        "ticketId": "52",
+        "amount": "200000000000000000000",
+        "purchaseTime": "1767329957",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x96665cfb0624bd4a5aaf60fea544c8ae22d3f55e",
+      "status": "success",
+      "ticket": {
+        "ticketId": "54",
+        "amount": "300000000000000000000",
+        "purchaseTime": "1767252485",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x7c08c768822149affa8e5122f88656a4362f54e4",
+      "status": "success",
+      "ticket": {
+        "ticketId": "55",
+        "amount": "200000000000000000000",
+        "purchaseTime": "1767330308",
+        "exited": false
+      }
+    },
+    {
+      "address": "0xd2de4ac72252e90bf570902aac4a176b218c8ca4",
+      "status": "success",
+      "ticket": {
+        "ticketId": "56",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767252590",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x4acbd4864503ed3dc968e680dbc0580b483dbc76",
+      "status": "success",
+      "ticket": {
+        "ticketId": "57",
+        "amount": "1000000000000000000000",
+        "purchaseTime": "1767252761",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x5900abadc6faf0ca1be912060ec484fdfaca8df5",
+      "status": "success",
+      "ticket": {
+        "ticketId": "58",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767253004",
+        "exited": false
+      }
+    },
+    {
+      "address": "0xbda179ab93e76ee0b1458877d45a85536813b3dc",
+      "status": "success",
+      "ticket": {
+        "ticketId": "59",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767253193",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x35590d7ccbfead403ea9af251a9eeee555353dcb",
+      "status": "success",
+      "ticket": {
+        "ticketId": "60",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767253283",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x7011c7d399b564844023fda42b9bbc357da1dde4",
+      "status": "success",
+      "ticket": {
+        "ticketId": "61",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767253340",
+        "exited": false
+      }
+    },
+    {
+      "address": "0xd19fe0623e4810a283a3475b91fc7450d6a96286",
+      "status": "success",
+      "ticket": {
+        "ticketId": "62",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767253499",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x64668f492589a10127a46a7ee26152932a73cd8e",
+      "status": "success",
+      "ticket": {
+        "ticketId": "64",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767254360",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x015bd2fb7a8eee47bc041d2cc4318c12dc6f8abb",
+      "status": "success",
+      "ticket": {
+        "ticketId": "65",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767254426",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x613c5d746fad200d6ad28bd96052b4dab7a086dd",
+      "status": "success",
+      "ticket": {
+        "ticketId": "66",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767254927",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x2915122c18a6b1c62ce32dd25da47a1278428b93",
+      "status": "success",
+      "ticket": {
+        "ticketId": "67",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767254996",
+        "exited": false
+      }
+    },
+    {
+      "address": "0xf625a33f27e43e9fcba2257640c453cbfc938ecb",
+      "status": "success",
+      "ticket": {
+        "ticketId": "68",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767255086",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x125369f8234cf917b79e81988e8b8b079789bcc6",
+      "status": "success",
+      "ticket": {
+        "ticketId": "69",
+        "amount": "1000000000000000000000",
+        "purchaseTime": "1767255167",
+        "exited": false
+      }
+    },
+    {
+      "address": "0xe679256e5de06638e57e560e5ee55b756f8741f7",
+      "status": "success",
+      "ticket": {
+        "ticketId": "70",
+        "amount": "600000000000000000000",
+        "purchaseTime": "1767405980",
+        "exited": false
+      }
+    },
+    {
+      "address": "0xe97a6ddd80fe80f8c7e5492ab70c2c2a42adf6ab",
+      "status": "success",
+      "ticket": {
+        "ticketId": "72",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767256274",
+        "exited": false
+      }
+    },
+    {
+      "address": "0xa60802c9720d1ad81f07e3384e92cccdd5cb654b",
+      "status": "success",
+      "ticket": {
+        "ticketId": "71",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767256265",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x450ef3ce569dd13cfe35ba14f24942ca47d2dddb",
+      "status": "success",
+      "ticket": {
+        "ticketId": "73",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767256430",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x912f4168c618b7570b4d63fc635f5139fd776cb1",
+      "status": "success",
+      "ticket": {
+        "ticketId": "74",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767256505",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x53a1c3ad7244aef0136d21ac4381c2769bee8a5c",
+      "status": "success",
+      "ticket": {
+        "ticketId": "75",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767256805",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x293ba423b0a4bf19805ad25fb0425aa168753737",
+      "status": "success",
+      "ticket": {
+        "ticketId": "197",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767343991",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x8928ce56a777e56df829f480a8bbffbf27f0245b",
+      "status": "success",
+      "ticket": {
+        "ticketId": "76",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767257549",
+        "exited": false
+      }
+    },
+    {
+      "address": "0xf7bcdcae70c44f98225e443388122440f78a7ac1",
+      "status": "success",
+      "ticket": {
+        "ticketId": "77",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767257717",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x0a46b10a425ed91e909186b7c153923baa75a384",
+      "status": "success",
+      "ticket": {
+        "ticketId": "78",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767257873",
+        "exited": false
+      }
+    },
+    {
+      "address": "0xf51e69bfe316015cfb5ad54477077dd82bdf79bd",
+      "status": "success",
+      "ticket": {
+        "ticketId": "79",
+        "amount": "200000000000000000000",
+        "purchaseTime": "1767258500",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x52a06e7fc6a1234a776fe9844e5daae74f599f7c",
+      "status": "success",
+      "ticket": {
+        "ticketId": "80",
+        "amount": "500000000000000000000",
+        "purchaseTime": "1767258815",
+        "exited": false
+      }
+    },
+    {
+      "address": "0xf8ea5a6b83fecaf1998e1a52ec192974260f4bb5",
+      "status": "success",
+      "ticket": {
+        "ticketId": "81",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767258998",
+        "exited": false
+      }
+    },
+    {
+      "address": "0xe5db18dbca03eddf659320707de58942f7b1f053",
+      "status": "success",
+      "ticket": {
+        "ticketId": "82",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767259064",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x700dd3b3e0d3b473a398ba16179881691bfa3518",
+      "status": "success",
+      "ticket": {
+        "ticketId": "83",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767261362",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x3d9d46d4b49e07e0f6073039e2de1bdac85557e5",
+      "status": "success",
+      "ticket": {
+        "ticketId": "84",
+        "amount": "300000000000000000000",
+        "purchaseTime": "1767261464",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x71b5163387c347349ce9678d6d4ceea09c70a0cf",
+      "status": "success",
+      "ticket": {
+        "ticketId": "85",
+        "amount": "300000000000000000000",
+        "purchaseTime": "1767261560",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x604e293e7783e0473fef5cdf4cee4cc76e20f139",
+      "status": "success",
+      "ticket": {
+        "ticketId": "86",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767261608",
+        "exited": false
+      }
+    },
+    {
+      "address": "0xf9b0159672fd54acf4e279a5c848a3bf431321fc",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210058",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767366833",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x49e715f6a8b03884bc361c739fcd552f0d43d744",
+      "status": "success",
+      "ticket": {
+        "ticketId": "87",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767265853",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x0a11723909d7eebe51cf5b437669911126c69be4",
+      "status": "success",
+      "ticket": {
+        "ticketId": "88",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767266009",
+        "exited": false
+      }
+    },
+    {
+      "address": "0xdc1e8fc91c4677b858fecc8f09fadd360e6c69cf",
+      "status": "success",
+      "ticket": {
+        "ticketId": "151",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767323879",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x9bce07bcc8790b348ef542be0cea229687cc3c69",
+      "status": "success",
+      "ticket": {
+        "ticketId": "89",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767268727",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x39439b2f70bef5e992c5ca26d07eb6dcf25b0a1d",
+      "status": "success",
+      "ticket": {
+        "ticketId": "90",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767268850",
+        "exited": false
+      }
+    },
+    {
+      "address": "0xa05830e0945fb23eecb05472c77d48b1e9908fab",
+      "status": "success",
+      "ticket": {
+        "ticketId": "91",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767270692",
+        "exited": false
+      }
+    },
+    {
+      "address": "0xeff34b9372f08826daf738bb82e647b8a491129b",
+      "status": "success",
+      "ticket": {
+        "ticketId": "92",
+        "amount": "500000000000000000000",
+        "purchaseTime": "1767270839",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x5aea405235b0ec37b2cb7d48fde6fb7384496e42",
+      "status": "success",
+      "ticket": {
+        "ticketId": "93",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767271322",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x42e0b14adc2eec940f337b1b747542222608ccd4",
+      "status": "success",
+      "ticket": {
+        "ticketId": "94",
+        "amount": "500000000000000000000",
+        "purchaseTime": "1767272345",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x68cbfcf6c722cd41adabc472fe37912bff77d6f1",
+      "status": "success",
+      "ticket": {
+        "ticketId": "95",
+        "amount": "500000000000000000000",
+        "purchaseTime": "1767272420",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x7590e5c8857ca7aa6cddc09d2c84f80efccc865f",
+      "status": "success",
+      "ticket": {
+        "ticketId": "96",
+        "amount": "500000000000000000000",
+        "purchaseTime": "1767273680",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x8f2cbc204bb7249faa6dd6ff132637cb3a783b0d",
+      "status": "success",
+      "ticket": {
+        "ticketId": "97",
+        "amount": "300000000000000000000",
+        "purchaseTime": "1767275537",
+        "exited": false
+      }
+    },
+    {
+      "address": "0xa693a9407cbbfa17a584930c5acdcb10ae97d9d0",
+      "status": "success",
+      "ticket": {
+        "ticketId": "98",
+        "amount": "300000000000000000000",
+        "purchaseTime": "1767276371",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x2676dea897b8f0bf2a7d69275b94f1f97425387e",
+      "status": "success",
+      "ticket": {
+        "ticketId": "99",
+        "amount": "500000000000000000000",
+        "purchaseTime": "1767277517",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x21399a59b6513fee1348f71ad784a6517f8c16f1",
+      "status": "success",
+      "ticket": {
+        "ticketId": "101",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767278297",
+        "exited": false
+      }
+    },
+    {
+      "address": "0xc65f043ad84561e262c3ae54230f74b1071befe3",
+      "status": "success",
+      "ticket": {
+        "ticketId": "100",
+        "amount": "1000000000000000000000",
+        "purchaseTime": "1767277775",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x8a03a19c5ca3c12567fab33cad28976aec16e2fa",
+      "status": "success",
+      "ticket": {
+        "ticketId": "102",
+        "amount": "300000000000000000000",
+        "purchaseTime": "1767278651",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x52da5fc79b7044c5424f44304f54ea288fb9323a",
+      "status": "success",
+      "ticket": {
+        "ticketId": "103",
+        "amount": "300000000000000000000",
+        "purchaseTime": "1767278900",
+        "exited": false
+      }
+    },
+    {
+      "address": "0xd6b93380baa72a4ad126b2e8985a33dd8c13d98f",
+      "status": "success",
+      "ticket": {
+        "ticketId": "104",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767279554",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x3d579273a0b858556d7130354e350376f82dd064",
+      "status": "success",
+      "ticket": {
+        "ticketId": "106",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767279821",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x1e0f0ec3420bc4524f8ae9aca6788e7b7921d46b",
+      "status": "success",
+      "ticket": {
+        "ticketId": "105",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767279698",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x9a7ad00c35133469fa843ec56a9d8791f61917ea",
+      "status": "success",
+      "ticket": {
+        "ticketId": "107",
+        "amount": "300000000000000000000",
+        "purchaseTime": "1767280841",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x9770f9a075b89a8b2bf47d926d7a34610424d3d8",
+      "status": "success",
+      "ticket": {
+        "ticketId": "136",
+        "amount": "500000000000000000000",
+        "purchaseTime": "1767305300",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x44029bc1ee87edc79ca1734597f709323e1f5d43",
+      "status": "success",
+      "ticket": {
+        "ticketId": "109",
+        "amount": "300000000000000000000",
+        "purchaseTime": "1767281327",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x14e61d12a61849836f90f391dc0e021f6406c101",
+      "status": "success",
+      "ticket": {
+        "ticketId": "137",
+        "amount": "500000000000000000000",
+        "purchaseTime": "1767305420",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x2b5d8fb85156c395fc6cd97da68d33e164b4db19",
+      "status": "success",
+      "ticket": {
+        "ticketId": "138",
+        "amount": "500000000000000000000",
+        "purchaseTime": "1767305555",
+        "exited": false
+      }
+    },
+    {
+      "address": "0xff7fb942e9e9cb00468a58b89cadc410bed61a93",
+      "status": "success",
+      "ticket": {
+        "ticketId": "139",
+        "amount": "500000000000000000000",
+        "purchaseTime": "1767305852",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x1ec8982b380784179770059f34bc77782c01a45d",
+      "status": "success",
+      "ticket": {
+        "ticketId": "108",
+        "amount": "300000000000000000000",
+        "purchaseTime": "1767281072",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x07b82e614e7837f041f633aed388d25a6f82d7a8",
+      "status": "success",
+      "ticket": {
+        "ticketId": "140",
+        "amount": "500000000000000000000",
+        "purchaseTime": "1767305936",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x3418ff672ec72f9d267dbb767b61b3d19ac55447",
+      "status": "success",
+      "ticket": {
+        "ticketId": "110",
+        "amount": "300000000000000000000",
+        "purchaseTime": "1767281330",
+        "exited": false
+      }
+    },
+    {
+      "address": "0xf90292a05d67174e4c40e3454e80f501f9708abf",
+      "status": "success",
+      "ticket": {
+        "ticketId": "111",
+        "amount": "1000000000000000000000",
+        "purchaseTime": "1767281813",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x5768f6d17cf7736fddcf9b33e32f30ed5df8c4bb",
+      "status": "success",
+      "ticket": {
+        "ticketId": "112",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767282107",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x6700e1c19253f2865223c277ae4a5124bea2bef7",
+      "status": "success",
+      "ticket": {
+        "ticketId": "113",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767282188",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x72cb29268b9a95b17a62f5b37be56ea1b0eed80f",
+      "status": "success",
+      "ticket": {
+        "ticketId": "114",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767282284",
+        "exited": false
+      }
+    },
+    {
+      "address": "0xd31f34df8525c3095ca90bf0417406f0d53ca69a",
+      "status": "success",
+      "ticket": {
+        "ticketId": "115",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767282356",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x9054a459333255e349554082d824282d38c80c7a",
+      "status": "success",
+      "ticket": {
+        "ticketId": "116",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767282554",
+        "exited": false
+      }
+    },
+    {
+      "address": "0xbea3a294eebb5fb2b159511fdc73e576a88c2892",
+      "status": "success",
+      "ticket": {
+        "ticketId": "117",
+        "amount": "300000000000000000000",
+        "purchaseTime": "1767282638",
+        "exited": false
+      }
+    },
+    {
+      "address": "0xc6c9512e66e732826ccdf67774b44edd65faf60d",
+      "status": "success",
+      "ticket": {
+        "ticketId": "118",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767282686",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x14776c30afd1485fd3ea919e71fc57099083706f",
+      "status": "success",
+      "ticket": {
+        "ticketId": "119",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767282803",
+        "exited": false
+      }
+    },
+    {
+      "address": "0xb2a3829a4e70748929d96a856e5994be1b4a1222",
+      "status": "success",
+      "ticket": {
+        "ticketId": "120",
+        "amount": "500000000000000000000",
+        "purchaseTime": "1767282929",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x32ca43a2d783739e1ca940c263b703e2bbc147f1",
+      "status": "success",
+      "ticket": {
+        "ticketId": "121",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767283322",
+        "exited": false
+      }
+    },
+    {
+      "address": "0xc3500a735fcf12388c5a19fc0f3cc98cc0e8791f",
+      "status": "success",
+      "ticket": {
+        "ticketId": "206",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767349514",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x2735181ee425b34f751dcbc52dbe036052a72fc8",
+      "status": "success",
+      "ticket": {
+        "ticketId": "124",
+        "amount": "1000000000000000000000",
+        "purchaseTime": "1767284090",
+        "exited": false
+      }
+    },
+    {
+      "address": "0xc3ad63a0d0e0cb27f97577e9b4be4cb88d7e3e4c",
+      "status": "success",
+      "ticket": {
+        "ticketId": "122",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767283541",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x15fd038755fe6dcae3d0bfecff419a9ff316b000",
+      "status": "success",
+      "ticket": {
+        "ticketId": "123",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767283745",
+        "exited": false
+      }
+    },
+    {
+      "address": "0xf0283f0c713a1cec3a74062b5119386376280506",
+      "status": "success",
+      "ticket": {
+        "ticketId": "125",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767284153",
+        "exited": false
+      }
+    },
+    {
+      "address": "0xd38c568fafd56a8d9643d87db64d23d51c38c174",
+      "status": "success",
+      "ticket": {
+        "ticketId": "126",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767284297",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x178a565b9c44e09ec96f6e52f7314110980c8c80",
+      "status": "success",
+      "ticket": {
+        "ticketId": "128",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767285020",
+        "exited": false
+      }
+    },
+    {
+      "address": "0xdf1729282c8b5409a4abed28087024ed22fd9f52",
+      "status": "success",
+      "ticket": {
+        "ticketId": "127",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767284696",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x9eb646a51810a6032da6edceb7afe43255ac0410",
+      "status": "success",
+      "ticket": {
+        "ticketId": "129",
+        "amount": "200000000000000000000",
+        "purchaseTime": "1767285212",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x7b1a4cf4ba1abf46cbef6c52d7f7aaabf3a677bc",
+      "status": "success",
+      "ticket": {
+        "ticketId": "130",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767285434",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x1c9c2285aa499940581c3e8614d7555ab6d54547",
+      "status": "success",
+      "ticket": {
+        "ticketId": "131",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767286292",
+        "exited": false
+      }
+    },
+    {
+      "address": "0xfb90a45a0f7e09c3727796154c96365db0d60ccc",
+      "status": "success",
+      "ticket": {
+        "ticketId": "132",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767286367",
+        "exited": false
+      }
+    },
+    {
+      "address": "0xb06cf678fb120273b48df6fd2bacaa5fa85da240",
+      "status": "success",
+      "ticket": {
+        "ticketId": "133",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767286628",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x187887cfa0b170294f90f2f6f030842769a3dad3",
+      "status": "success",
+      "ticket": {
+        "ticketId": "134",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767286724",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x56f7b2b027a076da85f7695ea884b06908697d50",
+      "status": "success",
+      "ticket": {
+        "ticketId": "135",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767289571",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x81a57e273233102553c5a11fd54b93b619fd5281",
+      "status": "success",
+      "ticket": {
+        "ticketId": "141",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767306272",
+        "exited": false
+      }
+    },
+    {
+      "address": "0xe6a17e940667a318ce0b4f90a18231db16624b14",
+      "status": "success",
+      "ticket": {
+        "ticketId": "142",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767306605",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x247a8862b6ad116b732052bf48c9bab02e8f8045",
+      "status": "success",
+      "ticket": {
+        "ticketId": "143",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767307094",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x3672e1cde02a1848fe8e8e2f08a42b7542531f31",
+      "status": "success",
+      "ticket": {
+        "ticketId": "144",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767307322",
+        "exited": false
+      }
+    },
+    {
+      "address": "0xa0d8233e74fee3e27836763888bc6b3b57b83ae9",
+      "status": "success",
+      "ticket": {
+        "ticketId": "145",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767318170",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x0fb2ee2a95fca69dbf7f8fd30057efde0567b6ba",
+      "status": "success",
+      "ticket": {
+        "ticketId": "146",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767318266",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x4bb746155d90df0f1dc663f1bb39a10838b569a7",
+      "status": "success",
+      "ticket": {
+        "ticketId": "147",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767321080",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x76bc8155fe5730c3d929f16694c5c715348fd177",
+      "status": "success",
+      "ticket": {
+        "ticketId": "148",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767321560",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x42cb9081ae512554e02b24c3ae28fe8380e52e00",
+      "status": "success",
+      "ticket": {
+        "ticketId": "149",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767322448",
+        "exited": false
+      }
+    },
+    {
+      "address": "0xa867b3ac9fc9611c45604f4e4575d8e72a810d84",
+      "status": "success",
+      "ticket": {
+        "ticketId": "150",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767322724",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x71e61a1cd9f03e0d9957384a686e8fa91bd29753",
+      "status": "success",
+      "ticket": {
+        "ticketId": "152",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767323888",
+        "exited": false
+      }
+    },
+    {
+      "address": "0xeec24a4c2ecbaf678243bd0efd72656fb40a1993",
+      "status": "success",
+      "ticket": {
+        "ticketId": "153",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767324335",
+        "exited": false
+      }
+    },
+    {
+      "address": "0xa0c656ad8f656bafd650e6b830652af7a95215ff",
+      "status": "success",
+      "ticket": {
+        "ticketId": "154",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767324539",
+        "exited": false
+      }
+    },
+    {
+      "address": "0xb0a2275cea4a33edee03ad512e140b4b6a8deebb",
+      "status": "success",
+      "ticket": {
+        "ticketId": "155",
+        "amount": "1000000000000000000000",
+        "purchaseTime": "1767324764",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x4bfd3e347e79244dabe52e5d478233a7b544d3cd",
+      "status": "success",
+      "ticket": {
+        "ticketId": "156",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767326069",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x8b782db17476c96696aac91277fa90f1c8a21580",
+      "status": "success",
+      "ticket": {
+        "ticketId": "157",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767326798",
+        "exited": false
+      }
+    },
+    {
+      "address": "0xf8434a30f98bf279c2f375780f5992fe434eaaab",
+      "status": "success",
+      "ticket": {
+        "ticketId": "158",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767327209",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x40ee97d7b8d424489938bfa0a523ae39b59d7f5b",
+      "status": "success",
+      "ticket": {
+        "ticketId": "159",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767327356",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x7b461808d33bdb8a0eecf25724011fde0aba9c85",
+      "status": "success",
+      "ticket": {
+        "ticketId": "160",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767327716",
+        "exited": false
+      }
+    },
+    {
+      "address": "0xf976b269213569d3ef64e1d2b023fba5a0c32cbb",
+      "status": "success",
+      "ticket": {
+        "ticketId": "161",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767327923",
+        "exited": false
+      }
+    },
+    {
+      "address": "0xce567cab828809bbcced1254126000e941ca08d6",
+      "status": "success",
+      "ticket": {
+        "ticketId": "162",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767327950",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x67b0bd23a7a7e17289f651e3d162c13ff0696f71",
+      "status": "success",
+      "ticket": {
+        "ticketId": "163",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767328040",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x2b9956b74bd164342e8c7d23fd28167fac9885d3",
+      "status": "success",
+      "ticket": {
+        "ticketId": "164",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767328097",
+        "exited": false
+      }
+    },
+    {
+      "address": "0xb10337a067f9ce1093d1af452d36fda57ac2ec42",
+      "status": "success",
+      "ticket": {
+        "ticketId": "165",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767328148",
+        "exited": false
+      }
+    },
+    {
+      "address": "0xdd3c23c95e3fdfc51f3f368d6cb18f4e9cb0dc94",
+      "status": "success",
+      "ticket": {
+        "ticketId": "166",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767328280",
+        "exited": false
+      }
+    },
+    {
+      "address": "0xd1b6ed412b00e00f987eceb6861e1b8076591919",
+      "status": "success",
+      "ticket": {
+        "ticketId": "167",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767328406",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x9cca61f1df31bc07ba814f956204cfadb46c1ba2",
+      "status": "success",
+      "ticket": {
+        "ticketId": "169",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767328550",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x1986b14abc1192f075cade0d71ab422706adc9a2",
+      "status": "success",
+      "ticket": {
+        "ticketId": "168",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767328529",
+        "exited": false
+      }
+    },
+    {
+      "address": "0xbf1a9d04c37081dedb9a2b5733de89b4006971f7",
+      "status": "success",
+      "ticket": {
+        "ticketId": "171",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767330647",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x3e436e9ef8a44cb65b00fcefe4ac1952384ed21e",
+      "status": "success",
+      "ticket": {
+        "ticketId": "170",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767330332",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x574c4953252cf721c19edf4b7c2f164f0bea6492",
+      "status": "success",
+      "ticket": {
+        "ticketId": "172",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767330707",
+        "exited": false
+      }
+    },
+    {
+      "address": "0xa63c756404ddd1f56468501f92bcc1b2dfe7f56b",
+      "status": "success",
+      "ticket": {
+        "ticketId": "174",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767330851",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x4b8e054c55e9923478827eac1ce76fac2b20a364",
+      "status": "success",
+      "ticket": {
+        "ticketId": "173",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767330797",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x6475c6e12c3044d6e90c8456439c39a0f532274d",
+      "status": "success",
+      "ticket": {
+        "ticketId": "175",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767331229",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x9ce5993df85d95dd9b8761bb6f5b4827134e2a36",
+      "status": "success",
+      "ticket": {
+        "ticketId": "176",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767331886",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x8e76224d2318f7e296f80639593f48ad56010fd8",
+      "status": "success",
+      "ticket": {
+        "ticketId": "177",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767332204",
+        "exited": false
+      }
+    },
+    {
+      "address": "0xee9f6229c5aafe38110000cf41a5924bfd749487",
+      "status": "success",
+      "ticket": {
+        "ticketId": "179",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767332483",
+        "exited": false
+      }
+    },
+    {
+      "address": "0xaaba1637fd10552d7246915e0eca82bf9a59a110",
+      "status": "success",
+      "ticket": {
+        "ticketId": "178",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767332444",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x652bc83f169985720624f788715f7c61f0d75d8e",
+      "status": "success",
+      "ticket": {
+        "ticketId": "180",
+        "amount": "200000000000000000000",
+        "purchaseTime": "1767332708",
+        "exited": false
+      }
+    },
+    {
+      "address": "0xaa953930b868a5fe34de8b4533d55f48c0350c9b",
+      "status": "success",
+      "ticket": {
+        "ticketId": "181",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767333197",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x039f99a5946f77a73fe48781ea83a61a9d7bb676",
+      "status": "success",
+      "ticket": {
+        "ticketId": "182",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767335705",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x2cf554445ac11680637d6e740e2f80ecbe361c49",
+      "status": "success",
+      "ticket": {
+        "ticketId": "183",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767335843",
+        "exited": false
+      }
+    },
+    {
+      "address": "0xe37bf47647edd03b9369cd93830a96adf4f73c3b",
+      "status": "success",
+      "ticket": {
+        "ticketId": "184",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767335948",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x98351959ecfeefb9570165bc5aeddce03dbcea8e",
+      "status": "success",
+      "ticket": {
+        "ticketId": "185",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767336365",
+        "exited": false
+      }
+    },
+    {
+      "address": "0xce28cc46ae2fd88d50d5968dc443b8d44f58c603",
+      "status": "success",
+      "ticket": {
+        "ticketId": "186",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767337457",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x1ee9fbe59498f08aaf4e4b285cf5b8db25f52722",
+      "status": "success",
+      "ticket": {
+        "ticketId": "187",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767338234",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x5dfbfdb9f429af7b697e4b583ce890309a81bed3",
+      "status": "success",
+      "ticket": {
+        "ticketId": "188",
+        "amount": "300000000000000000000",
+        "purchaseTime": "1767339791",
+        "exited": false
+      }
+    },
+    {
+      "address": "0xef1930511b1a7bfcd99211fb58d6661b78a02e1a",
+      "status": "success",
+      "ticket": {
+        "ticketId": "189",
+        "amount": "500000000000000000000",
+        "purchaseTime": "1767340499",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x56413adffbd74d37503988a68fd543006c65b8f7",
+      "status": "success",
+      "ticket": {
+        "ticketId": "191",
+        "amount": "300000000000000000000",
+        "purchaseTime": "1767341828",
+        "exited": false
+      }
+    },
+    {
+      "address": "0xfd11ffa0d7135e9a9dcfe808f6b6bd081108e60c",
+      "status": "success",
+      "ticket": {
+        "ticketId": "190",
+        "amount": "1000000000000000000000",
+        "purchaseTime": "1767341225",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x43177460f031b39fbf19bb01befbd9833e2948f2",
+      "status": "success",
+      "ticket": {
+        "ticketId": "192",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767342104",
+        "exited": false
+      }
+    },
+    {
+      "address": "0xbab985a2df36991bb4de084b3b93834d3874f093",
+      "status": "success",
+      "ticket": {
+        "ticketId": "193",
+        "amount": "500000000000000000000",
+        "purchaseTime": "1767342479",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x9281beca0fc867678dfbe593c137f1b845f61392",
+      "status": "success",
+      "ticket": {
+        "ticketId": "194",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767342602",
+        "exited": false
+      }
+    },
+    {
+      "address": "0xc0849fbf3d9e2404ab34728fbb59ca212874789e",
+      "status": "success",
+      "ticket": {
+        "ticketId": "195",
+        "amount": "500000000000000000000",
+        "purchaseTime": "1767343151",
+        "exited": false
+      }
+    },
+    {
+      "address": "0xd84dc4bf9c3d83c99b02ad208c5184e8b084b1c1",
+      "status": "success",
+      "ticket": {
+        "ticketId": "196",
+        "amount": "500000000000000000000",
+        "purchaseTime": "1767343565",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x942820d7fa90dd2c195f9486fc7d229e1911d416",
+      "status": "success",
+      "ticket": {
+        "ticketId": "198",
+        "amount": "1000000000000000000000",
+        "purchaseTime": "1767344027",
+        "exited": false
+      }
+    },
+    {
+      "address": "0xfcca57f8b46e334f29275a1670b80f4826aa5934",
+      "status": "success",
+      "ticket": {
+        "ticketId": "199",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767344153",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x44664758e086cabb4ec88e054e2ad0a95b71762d",
+      "status": "success",
+      "ticket": {
+        "ticketId": "200",
+        "amount": "1000000000000000000000",
+        "purchaseTime": "1767344381",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x6313085f2a244a625ef229390fb4f85152ae5a6e",
+      "status": "success",
+      "ticket": {
+        "ticketId": "201",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767345404",
+        "exited": false
+      }
+    },
+    {
+      "address": "0xe54b97b061ff324a9e4c390233b8cf092e419195",
+      "status": "success",
+      "ticket": {
+        "ticketId": "202",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767345560",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x5a038e104dee0fdd437ab4212905cfcb2e608691",
+      "status": "success",
+      "ticket": {
+        "ticketId": "203",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767345731",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x9e880d197eab5158143922cfaccd31206f631ca2",
+      "status": "success",
+      "ticket": {
+        "ticketId": "204",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767345821",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x5a76a9eef8d473e3e77399fc4f11ff6e41eb3f1b",
+      "status": "success",
+      "ticket": {
+        "ticketId": "205",
+        "amount": "500000000000000000000",
+        "purchaseTime": "1767346037",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x830b89f49e3db724a88e6141906d8d2b18a96198",
+      "status": "success",
+      "ticket": {
+        "ticketId": "207",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767349733",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x038a9aa1f6263158e195cad9992f1a1711d255d6",
+      "status": "success",
+      "ticket": {
+        "ticketId": "208",
+        "amount": "300000000000000000000",
+        "purchaseTime": "1767350183",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x48c5aa01959025cdce2eb742196dc210ab4578fd",
+      "status": "success",
+      "ticket": {
+        "ticketId": "209",
+        "amount": "1000000000000000000000",
+        "purchaseTime": "1767350543",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x6f2cee169de4e8e10a8373e6bd857c046d8484d8",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210042",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767355274",
+        "exited": false
+      }
+    },
+    {
+      "address": "0xd96082b927f330aa6bd793f4b90f658d7bed4a01",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210043",
+        "amount": "500000000000000000000",
+        "purchaseTime": "1767355610",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x6fb89cdf8e4e8f26d02b1bf705d4892d0e5a14ce",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210044",
+        "amount": "500000000000000000000",
+        "purchaseTime": "1767357038",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x172b0aff66fb0610d9b1ba14330b96d3c402abf4",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210045",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767360479",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x999f09515679dae660131aad90e28ed03805a052",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210047",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767360989",
+        "exited": false
+      }
+    },
+    {
+      "address": "0xe79da8df8f785164af78a9e8b47aed8fe85b511e",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210046",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767360947",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x6c69efd1098d8b94ff51ebf2631942ea1134eb9c",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210048",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767362102",
+        "exited": false
+      }
+    },
+    {
+      "address": "0xb7fae5187155eea960af424a2c070702981f1f5c",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210049",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767362552",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x096e9b1a59c4d5a66a782fdcad20aa1540215bb8",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210050",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767363623",
+        "exited": false
+      }
+    },
+    {
+      "address": "0xd5eeb66d5532356f2453fafc61e31c2cb91babcf",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210051",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767363698",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x19f61ad74cbf454948238222d0950e35b2498fbf",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210052",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767364178",
+        "exited": false
+      }
+    },
+    {
+      "address": "0xd3c6ffa8e10a387f0d6bb960b20fbde2d6355dae",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210053",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767364988",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x90c95c09ed0d52a88ea59d8acdc3adfa4f74c155",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210054",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767365306",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x29394c5eeeb80e0f4b2d5f7d8233c7df9e0d1660",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210055",
+        "amount": "500000000000000000000",
+        "purchaseTime": "1767365666",
+        "exited": false
+      }
+    },
+    {
+      "address": "0xd5a07e0ad30c7247477c08b43dc6e7f0e2b7186c",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210056",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767366656",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x8b8049673f63f2cc06d8cc8f8e3041904f438e51",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210057",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767366833",
+        "exited": false
+      }
+    },
+    {
+      "address": "0xfacd07bfefbdcec2c7b6ca705b255ce73967f7c3",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210061",
+        "amount": "500000000000000000000",
+        "purchaseTime": "1767403031",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x26eb59b940efd97e1a5c4ad3de6891f959dc04aa",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210062",
+        "amount": "500000000000000000000",
+        "purchaseTime": "1767403349",
+        "exited": false
+      }
+    },
+    {
+      "address": "0xee467d6ff96059e3b84e2dd2faf69646211c94d5",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210063",
+        "amount": "500000000000000000000",
+        "purchaseTime": "1767403643",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x7167654eb65e861119494dc7e8fc76d1f919ed6f",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210064",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767405134",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x74dc7a7250a10357fa858457726c2892f4bb3d6c",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210071",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767408650",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x19fca93a39e13c69d63bb869760a5a43089f0b7e",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210065",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767407234",
+        "exited": false
+      }
+    },
+    {
+      "address": "0xf9a596588565266d83f8c40cb417ee46c0b2c4c6",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210066",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767407438",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x2b615e937f7a9dc9068ce1db61a0eec09dd5c074",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210067",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767407534",
+        "exited": false
+      }
+    },
+    {
+      "address": "0xbdc27a19b20ea598be983436fafaa254792e4685",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210068",
+        "amount": "1000000000000000000000",
+        "purchaseTime": "1767407738",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x24f646f11554a2580b34ba0f331fcf0a9123eb78",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210069",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767408002",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x0424b3cc93ac553d5831d32690f509edb1f455ba",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210070",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767408269",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x36d8642b4bdd047c694ae960429c714d187b29a8",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210072",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767409019",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x30629b300a8aadfa12c69f369003af36da03d1a2",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210073",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767409574",
+        "exited": false
+      }
+    },
+    {
+      "address": "0xe8365ce269fd1d49828459c51c0347597c0d1e63",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210079",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767412571",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x75b4d1f459c2c6fd99ead806429208d961816319",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210074",
+        "amount": "1000000000000000000000",
+        "purchaseTime": "1767410639",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x0645c5c9f2dd3b6a52702f83a51a3cab6ad7102d",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210075",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767410798",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x5183dbd434f62f845bba54d2f501b106580f361a",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210080",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767412664",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x67fba935e255a08ebf3727bee1b4eeba1326c3c7",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210076",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767411215",
+        "exited": false
+      }
+    },
+    {
+      "address": "0xda14648811af6610b50c51ebe4128e366a188b04",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210081",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767412754",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x933105941df66f996a3045527b4d7782c02def42",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210082",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767412820",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x495a868cdc4e57e1bc17b4a712f02b2bae3f223f",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210143",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767494627",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x5da67cf6ae090a37fc970832a45b52134bc1df0c",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210077",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767411956",
+        "exited": false
+      }
+    },
+    {
+      "address": "0xa40b5e73b3ac6f65963aa667675f14b2c73ba63f",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210078",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767411974",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x0e55257efdc3fe33d94152ab488ddc334ba86a34",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210083",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767412883",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x9a66ff13ec51778c9855157d922b1c3c54bd8d98",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210084",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767412937",
+        "exited": false
+      }
+    },
+    {
+      "address": "0xf22f4fb30f3e1f918354371a8c8b758687b30421",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210106",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767430661",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x26c4eb4da8afaf32e7c3b29ecb5931c785095e8e",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210085",
+        "amount": "1000000000000000000000",
+        "purchaseTime": "1767412952",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x3efa2823c808576c53d9e90d45f808bb90adfc03",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210086",
+        "amount": "1000000000000000000000",
+        "purchaseTime": "1767413399",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x86187c9e61bd32597f4840426927a0d05f7ef8fe",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210087",
+        "amount": "1000000000000000000000",
+        "purchaseTime": "1767413837",
+        "exited": false
+      }
+    },
+    {
+      "address": "0xe5140aa143b82a29c06476a4afb4b1dc62f9154c",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210088",
+        "amount": "1000000000000000000000",
+        "purchaseTime": "1767414110",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x44758d031e0dad498fea48bc7555e0a0bec60d3f",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210090",
+        "amount": "1000000000000000000000",
+        "purchaseTime": "1767415613",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x9ceefa1407c0575bcb602da75675f52ed927056a",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210091",
+        "amount": "1000000000000000000000",
+        "purchaseTime": "1767415952",
+        "exited": false
+      }
+    },
+    {
+      "address": "0xd65d6f5bac4288cd7db85698d09ea0e66dbf3c3a",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210092",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767416483",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x4efd637f74aba3de436e40a654bae0432de6b9ec",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210093",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767416690",
+        "exited": false
+      }
+    },
+    {
+      "address": "0xe0745a69a0f065b9c0184324b10f46d1ebda7afb",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210094",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767416879",
+        "exited": false
+      }
+    },
+    {
+      "address": "0xa238fc9b19280140dca7d8be5a961998a8a47415",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210095",
+        "amount": "300000000000000000000",
+        "purchaseTime": "1767417875",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x3c82fcb5f8676fe9755b7abef04c838985dfee5e",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210096",
+        "amount": "1000000000000000000000",
+        "purchaseTime": "1767417914",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x1f9c8f8d986a82db0bdc86023a25e2a10a3cabba",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210097",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767418613",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x05a91cb27adc7a13a5ccaa1ed795eaf476e37c8e",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210098",
+        "amount": "500000000000000000000",
+        "purchaseTime": "1767419339",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x79f30994e57942263415bf6a81cc2da4f40ce9bc",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210099",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767423164",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x552d4b53c7f63e58bd09727f2a58047341cb346c",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210100",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767424340",
+        "exited": false
+      }
+    },
+    {
+      "address": "0xbda8f2420af9d55a9a4cc98666808b449e08c6b9",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210101",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767424472",
+        "exited": false
+      }
+    },
+    {
+      "address": "0xf010f1fddc8e9411efe4175e54acc6d5731d46bf",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210102",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767425426",
+        "exited": false
+      }
+    },
+    {
+      "address": "0xe34ca1cdf35ac268bf788a69ee62c931fc300fdb",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210103",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767425561",
+        "exited": false
+      }
+    },
+    {
+      "address": "0xb6a10c3f6492e5fefdc03909e1638fe3a8ce5c75",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210104",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767426065",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x7becc31dc3ce21bbb204ec928db9b18b1426f183",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210105",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767429680",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x7fc7151eb43f986b87e9db73239a81f2b621dde5",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210107",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767432962",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x604c120059db3133cc401c35ad519c19aac710ce",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210108",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767433661",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x482794724cfc363a73fda7c26ba50309c0caf7f9",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210109",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767434483",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x05facd87392c203683fec1b459dc791075ad77a9",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210110",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767435047",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x0cb72b63bab10bcebf70f5f54e1a96a05d89722b",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210112",
+        "amount": "300000000000000000000",
+        "purchaseTime": "1767437597",
+        "exited": false
+      }
+    },
+    {
+      "address": "0xac923c231bb4f583908783c7ef00a64ed5fc55e1",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210111",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767437123",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x79ab675d49f53e3e68901bd6d840c5b6650dda58",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210113",
+        "amount": "300000000000000000000",
+        "purchaseTime": "1767440309",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x267691e4cb19277136863ff41b0c7ad6cf8c44f4",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210146",
+        "amount": "500000000000000000000",
+        "purchaseTime": "1767495611",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x46fabbc22b8b5f7792a6baea7d6e4314bfd307a2",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210114",
+        "amount": "300000000000000000000",
+        "purchaseTime": "1767441188",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x916445a42b676e6ff0c7992ea20d6e030d05bb9a",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210115",
+        "amount": "500000000000000000000",
+        "purchaseTime": "1767441509",
+        "exited": false
+      }
+    },
+    {
+      "address": "0xd0826c698741dca45b14baa4f42d352f06415fb5",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210116",
+        "amount": "1000000000000000000000",
+        "purchaseTime": "1767441767",
+        "exited": false
+      }
+    },
+    {
+      "address": "0xce35ac115fa7a29cc223c62bf6bf8fae09a5e4cf",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210117",
+        "amount": "500000000000000000000",
+        "purchaseTime": "1767442058",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x8d4d08301c766dd375b3ec8a88bcb95d5a80bcd2",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210118",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767442178",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x39df520b75715352bf13c90f0d62ef90de99b3c5",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210119",
+        "amount": "500000000000000000000",
+        "purchaseTime": "1767442502",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x1fa4d249456530ebb208132282b59eb43fd61488",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210120",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767442574",
+        "exited": false
+      }
+    },
+    {
+      "address": "0xd851413ea29bd38616579ed2bc083dbf6f5041df",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210121",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767442919",
+        "exited": false
+      }
+    },
+    {
+      "address": "0xa5e29c80bab2474a8f9273c30bb8be4401cfa921",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210178",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767515681",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x4a8f968ac20fbfd9ab245a66252ee32933bc5a66",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210123",
+        "amount": "500000000000000000000",
+        "purchaseTime": "1767443192",
+        "exited": false
+      }
+    },
+    {
+      "address": "0xb0c29a5a6ce012729a8f0bfb7898bc53d202ed31",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210122",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767443066",
+        "exited": false
+      }
+    },
+    {
+      "address": "0xc99b5ce78c65307afd76284ece7a365d312d96c6",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210179",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767515732",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x0f09c127347625f14b798ad3956c1077426c6be0",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210124",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767444668",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x0f1868da5c4fe2bf3a5fa56fff51304ae3624d24",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210125",
+        "amount": "500000000000000000000",
+        "purchaseTime": "1767444941",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x5c303bb07237ad95cdf7ab9ead0bcdbeff934743",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210127",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767445073",
+        "exited": false
+      }
+    },
+    {
+      "address": "0xdcef104d889f82a99a12d3288ee9472cd1bf97b1",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210126",
+        "amount": "500000000000000000000",
+        "purchaseTime": "1767445040",
+        "exited": false
+      }
+    },
+    {
+      "address": "0xe9a1b61878b59bf36bac0c539c0cf283db8e1e6c",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210128",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767447614",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x88872878f79b7c85a4c997e34e58d7d3664f29bb",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210129",
+        "amount": "300000000000000000000",
+        "purchaseTime": "1767448424",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x6394a8706041d2f1e2cb0e3adf9946db435dec28",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210130",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767449225",
+        "exited": false
+      }
+    },
+    {
+      "address": "0xe9e36f886d42e13eaa53caa7c5b25a397d824f0b",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210131",
+        "amount": "300000000000000000000",
+        "purchaseTime": "1767449444",
+        "exited": false
+      }
+    },
+    {
+      "address": "0xd2e4dc2fa8b8f2b6f1bb5345e78bbd6585e1fd8c",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210132",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767449501",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x4a56fff992f281dfff0fa11b9dbd0dadc4049b05",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210133",
+        "amount": "300000000000000000000",
+        "purchaseTime": "1767449570",
+        "exited": false
+      }
+    },
+    {
+      "address": "0xbbe6ce8f9c6feb4d696838432ecbd17fae5218fa",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210134",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767450455",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x0bcd058048f6711d91c951b68ca5d2627a5e9e22",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210135",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767488546",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x7db896b8128a1a996017c56f29e726b064bd59ae",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210136",
+        "amount": "300000000000000000000",
+        "purchaseTime": "1767490385",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x2a3aea087550251ef8562c069265f5d293fae141",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210137",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767490571",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x24db322450fc1653079ebeaad89e98b19bc43fc4",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210138",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767490844",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x6973ad39b022f425b5f88e42f027698354f81cca",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210139",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767491057",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x9662992562dcd487254b8396b540f84d06788568",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210140",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767491246",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x7238eaf7c01c159f272be7bb2b4d5dc5aa0e39b5",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210141",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767491450",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x9378e817b96c7f67856e4c280b62fe7fcf056292",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210142",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767492134",
+        "exited": false
+      }
+    },
+    {
+      "address": "0xaa4d3862ea0a72d83d6399d6700fca1952d8e64d",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210144",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767495269",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x3884a13324844299d0c7b3d904843b0cee45b1f8",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210145",
+        "amount": "1000000000000000000000",
+        "purchaseTime": "1767495485",
+        "exited": false
+      }
+    },
+    {
+      "address": "0xc4e081ecb17fc4ead659c3b47de49a5070f5cc65",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210147",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767496067",
+        "exited": false
+      }
+    },
+    {
+      "address": "0xf9e1cab9c0f38369d2addbb187a71c56fd5a22ed",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210148",
+        "amount": "500000000000000000000",
+        "purchaseTime": "1767497075",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x181259be8173ba87ba335375bcd490337cf12312",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210149",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767498032",
+        "exited": false
+      }
+    },
+    {
+      "address": "0xa1091f12ec438dd01b72572c5e384951ee8ac695",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210089",
+        "amount": "1100000000000000000000",
+        "purchaseTime": "1767499238",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x565a2145aceac18c7e6be80328349ac42f548cfb",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210150",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767499724",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x7f00a8409f5d4ca3d760743df694b8e6d67db251",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210151",
+        "amount": "500000000000000000000",
+        "purchaseTime": "1767499895",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x1cdfa3e850c51f9e3d0ecb69d312b429562fdc20",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210152",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767500024",
+        "exited": false
+      }
+    },
+    {
+      "address": "0xaf6a0dc14d2b169a434efb6bc43e2ec8fb15c6f4",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210153",
+        "amount": "200000000000000000000",
+        "purchaseTime": "1767500612",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x3b6ca62f1d7c014d069edb432f6c7bbd67abb1e9",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210154",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767500462",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x85076355e710017f70b0032e9db6754ea064f77c",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210155",
+        "amount": "500000000000000000000",
+        "purchaseTime": "1767500729",
+        "exited": false
+      }
+    },
+    {
+      "address": "0xd2ae172eaefe28418ccc2866105f2c3eca4332c1",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210156",
+        "amount": "200000000000000000000",
+        "purchaseTime": "1767500885",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x23442ccea2e92c24ea70369601a6305cb6569cc8",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210157",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767501212",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x3b9e445fe0db166dfffef06b0dce10aff2b3249f",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210158",
+        "amount": "300000000000000000000",
+        "purchaseTime": "1767501572",
+        "exited": false
+      }
+    },
+    {
+      "address": "0xea58efb93a50db38e491b51fc624ae6c7b9139ae",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210159",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767505226",
+        "exited": false
+      }
+    },
+    {
+      "address": "0xd2b0c11ddc14355bf4564b32cc8ffdfb64121f74",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210160",
+        "amount": "1000000000000000000000",
+        "purchaseTime": "1767506072",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x681c18fd07576dda3f7649b9466f63f733d4b1b9",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210161",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767506882",
+        "exited": false
+      }
+    },
+    {
+      "address": "0xb7c2211cf93574408b4acef7ad5c8ace9a9bcdda",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210162",
+        "amount": "1000000000000000000000",
+        "purchaseTime": "1767507239",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x4cdd91c158d9ce405190d322c3b6213b09f803f7",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210163",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767507803",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x8dc6bad44e4626fe582f50af058a3f0557fce83e",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210164",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767507899",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x969954e7190905cb2e531c3926e113a26d5a5aab",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210165",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767509012",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x9d1884e9bea16d3928121d406f55f16f652c990b",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210166",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767509135",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x290686dccc9a566a3f2e0ce822998b19a4756b71",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210167",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767509237",
+        "exited": false
+      }
+    },
+    {
+      "address": "0xee0f71741af4eb5c007ff55192af31cfac17894b",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210168",
+        "amount": "1000000000000000000000",
+        "purchaseTime": "1767512291",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x56519505d35122fa43ff1af54a0d5f66e3efe89b",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210180",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767516062",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x757106bdd695d3d6374e3222bf72eb7370d3587c",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210181",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767516110",
+        "exited": false
+      }
+    },
+    {
+      "address": "0xc73c1fafecea21f5131b62f3b192a7ff3a5339e3",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210169",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767512660",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x9c575cc880da8409fdbe2b1e97230a6577965eed",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210170",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767512708",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x9e0766a228e1148f68ff2665f1fb67cb9b221414",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210171",
+        "amount": "1000000000000000000000",
+        "purchaseTime": "1767512753",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x9d49cca381431a428169690ec8aa4cf48abb7055",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210172",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767513005",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x08e9af0e73785aa541ff53d10bccc2660e566b58",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210173",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767513050",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x71ff0c95d72e80cd978a6d3ade29a90f748c4ea0",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210174",
+        "amount": "1000000000000000000000",
+        "purchaseTime": "1767513098",
+        "exited": false
+      }
+    },
+    {
+      "address": "0xb9c85eb32cd37947bb44544287fe6788ae1943e1",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210175",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767513209",
+        "exited": false
+      }
+    },
+    {
+      "address": "0xa62009ab3eda7fbecb7600e6792182822590172b",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210176",
+        "amount": "1000000000000000000000",
+        "purchaseTime": "1767514805",
+        "exited": false
+      }
+    },
+    {
+      "address": "0xb3fcde0cb5e17e97ec8e23e27e5d6ce809ac57a6",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210177",
+        "amount": "1000000000000000000000",
+        "purchaseTime": "1767515378",
+        "exited": false
+      }
+    },
+    {
+      "address": "0xe138d678ce0ba85f3ff79bf81a6113392707703d",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210182",
+        "amount": "500000000000000000000",
+        "purchaseTime": "1767517412",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x3a8c6870c07d7344521d63e11b43b62a35433350",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210183",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767518276",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x475c19d4461499ba8583a07ad0987503f4eee881",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210184",
+        "amount": "500000000000000000000",
+        "purchaseTime": "1767518555",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x308c1266a461337ea95656fa45976dc133beba43",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210185",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767518588",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x9a189a784f48ef656e6102d83d2b01ac2291222b",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210186",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767518654",
+        "exited": false
+      }
+    },
+    {
+      "address": "0xb8166273a3fc27266de814891d78d7abec4e53a0",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210187",
+        "amount": "500000000000000000000",
+        "purchaseTime": "1767518684",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x31470c0a29f26634cddc5947539ba4912836856c",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210189",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767521768",
+        "exited": false
+      }
+    },
+    {
+      "address": "0x1be3cc72471f2a92c33d13bde3f7681f2c849788",
+      "status": "success",
+      "ticket": {
+        "ticketId": "1767210188",
+        "amount": "100000000000000000000",
+        "purchaseTime": "1767521255",
+        "exited": false
+      }
+    }
+  ],
+  "failed": [],
+  "skipped": []
+}

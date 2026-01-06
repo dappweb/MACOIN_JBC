@@ -1,0 +1,12 @@
+{
+  "timestamp": "2026-01-04T16:11:14.726Z",
+  "proxyAddress": "0x0897Cee05E43B2eCf331cd80f881c211eb86844E",
+  "implementationAddress": "0x0a0A83D19A96a4256AffeB9D6987659e78bDe432",
+  "deployer": "0x4C10831CBcF9884ba72051b5287b6c87E4F74A48",
+  "network": "mc",
+  "chainId": "88813",
+  "upgrade": {
+    "addedFunction": "adminSetUserTicket",
+    "purpose": "恢复门票数据"
+  }
+}

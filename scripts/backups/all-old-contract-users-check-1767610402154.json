@@ -1,0 +1,79 @@
+{
+  "timestamp": "2026-01-05T10:53:22.154Z",
+  "oldProtocolAddress": "0x77601aC473dB1195A1A9c82229C9bD008a69987A",
+  "newProtocolAddress": "0x0897Cee05E43B2eCf331cd80f881c211eb86844E",
+  "summary": {
+    "totalEvents": {
+      "boundReferrer": 376,
+      "ticketPurchased": 384,
+      "liquidityStaked": 48
+    },
+    "totalUsers": 377,
+    "notMigratedUsers": 9,
+    "referrerMismatchUsers": 1
+  },
+  "notMigratedUsers": [
+    {
+      "address": "0x30a1d966e4c30fc07a972a8d0261925fea0d6f07",
+      "oldReferrer": "0xb3fcde0cb5e17e97ec8e23e27e5d6ce809ac57a6",
+      "newReferrer": null,
+      "status": "not_migrated"
+    },
+    {
+      "address": "0x1e33131ebf57e8d65f221280ba0fe5cf9e1f30fe",
+      "oldReferrer": "0x30a1d966e4c30fc07a972a8d0261925fea0d6f07",
+      "newReferrer": null,
+      "status": "not_migrated"
+    },
+    {
+      "address": "0x637f879a4625f067824f95d7d5a5b4e771b771af",
+      "oldReferrer": "0x30a1d966e4c30fc07a972a8d0261925fea0d6f07",
+      "newReferrer": null,
+      "status": "not_migrated"
+    },
+    {
+      "address": "0x7f26fdb3ddeb8c3868da3d52af0300ffd97f6987",
+      "oldReferrer": "0x30a1d966e4c30fc07a972a8d0261925fea0d6f07",
+      "newReferrer": null,
+      "status": "not_migrated"
+    },
+    {
+      "address": "0x1095ac56d0e2b579ed8935e610a94b9c5249f525",
+      "oldReferrer": "0x7f26fdb3ddeb8c3868da3d52af0300ffd97f6987",
+      "newReferrer": null,
+      "status": "not_migrated"
+    },
+    {
+      "address": "0x71877cba63c96f8ad3be3495b9d597f317c09e2f",
+      "oldReferrer": "0x7f26fdb3ddeb8c3868da3d52af0300ffd97f6987",
+      "newReferrer": null,
+      "status": "not_migrated"
+    },
+    {
+      "address": "0xd789977de408e7325a757b31e49cf4c6e3add3e8",
+      "oldReferrer": "0x7f26fdb3ddeb8c3868da3d52af0300ffd97f6987",
+      "newReferrer": null,
+      "status": "not_migrated"
+    },
+    {
+      "address": "0x1d02cc58dcc1b24b071d17e354033925fa0540c9",
+      "oldReferrer": "0xd2b0c11ddc14355bf4564b32cc8ffdfb64121f74",
+      "newReferrer": null,
+      "status": "not_migrated"
+    },
+    {
+      "address": "0xc7c9693f26b10b5b93ccac2469eb3ae7b4638dac",
+      "oldReferrer": "0x1d02cc58dcc1b24b071d17e354033925fa0540c9",
+      "newReferrer": null,
+      "status": "not_migrated"
+    }
+  ],
+  "referrerMismatchUsers": [
+    {
+      "address": "0x4c10831cbcf9884ba72051b5287b6c87e4f74a48",
+      "oldReferrer": "0x2d68a5850a4805c6fe6648e5870b68456e2a7c82",
+      "newReferrer": "0x3e436e9ef8a44cb65b00fcefe4ac1952384ed21e",
+      "status": "referrer_mismatch"
+    }
+  ]
+}

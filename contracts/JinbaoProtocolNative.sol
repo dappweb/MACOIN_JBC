@@ -1305,7 +1305,201 @@ contract JinbaoProtocolNative is Initializable, OwnableUpgradeable, UUPSUpgradea
         
         emit ReferrerChanged(user, oldReferrer, newReferrer);
     }
-    
+
+    /**
+     * @dev 管理员设置用户门票数据（用于数据迁移）
+     * @param user 用户地址
+     * @param ticketId 门票 ID
+     * @param amount 门票金额
+     * @param purchaseTime 购买时间
+     * @param exited 是否已退出
+     */
+    function adminSetUserTicket(
+        address user,
+        uint256 ticketId,
+        uint256 amount,
+        uint256 purchaseTime,
+        bool exited
+    ) external onlyOwner {
+        if (user == address(0)) revert InvalidAddress();
+        
+        Ticket storage ticket = userTicket[user];
+        ticket.ticketId = ticketId;
+        ticket.amount = amount;
+        ticket.purchaseTime = purchaseTime;
+        ticket.exited = exited;
+        
+        // 更新 ticketOwner 映射
+        if (ticketId > 0) {
+            ticketOwner[ticketId] = user;
+        }
+        
+        // 更新用户状态
+        if (amount > 0 && !exited) {
+            // 更新 maxTicketAmount 和 maxSingleTicketAmount
+            if (amount > userInfo[user].maxTicketAmount) {
+                userInfo[user].maxTicketAmount = amount;
+            }
+            if (amount > userInfo[user].maxSingleTicketAmount) {
+                userInfo[user].maxSingleTicketAmount = amount;
+            }
+            // 更新 currentCap
+            userInfo[user].currentCap = amount * 3;
+            // 更新活跃状态
+            _updateActiveStatus(user);
+        }
+    }
+
+    /**
+     * @dev 管理员设置用户活跃直推数量（用于数据迁移）
+     * @param user 用户地址
+     * @param newActiveDirects 新的活跃直推数量
+     */
+    function adminSetActiveDirects(address user, uint256 newActiveDirects) external onlyOwner {
+        if (user == address(0)) revert InvalidAddress();
+        userInfo[user].activeDirects = newActiveDirects;
+    }
+
+    /**
+     * @dev 管理员设置用户团队数量（用于数据迁移）
+     * @param user 用户地址
+     * @param newTeamCount 新的团队数量
+     */
+    function adminSetTeamCount(address user, uint256 newTeamCount) external onlyOwner {
+        if (user == address(0)) revert InvalidAddress();
+        uint256 oldTeamCount = userInfo[user].teamCount;
+        userInfo[user].teamCount = newTeamCount;
+        emit TeamCountUpdated(user, oldTeamCount, newTeamCount);
+    }
+
+    /**
+     * @dev 管理员设置用户总收益（用于数据迁移）
+     * @param user 用户地址
+     * @param newTotalRevenue 新的总收益
+     */
+    function adminSetTotalRevenue(address user, uint256 newTotalRevenue) external onlyOwner {
+        if (user == address(0)) revert InvalidAddress();
+        userInfo[user].totalRevenue = newTotalRevenue;
+    }
+
+    /**
+     * @dev 管理员设置用户收益上限（用于数据迁移）
+     * @param user 用户地址
+     * @param newCurrentCap 新的收益上限
+     */
+    function adminSetCurrentCap(address user, uint256 newCurrentCap) external onlyOwner {
+        if (user == address(0)) revert InvalidAddress();
+        userInfo[user].currentCap = newCurrentCap;
+    }
+
+    /**
+     * @dev 管理员设置用户最大门票金额（用于数据迁移）
+     * @param user 用户地址
+     * @param newMaxTicketAmount 新的最大门票金额
+     * @param newMaxSingleTicketAmount 新的最大单次门票金额
+     */
+    function adminSetMaxTicketAmounts(
+        address user,
+        uint256 newMaxTicketAmount,
+        uint256 newMaxSingleTicketAmount
+    ) external onlyOwner {
+        if (user == address(0)) revert InvalidAddress();
+        userInfo[user].maxTicketAmount = newMaxTicketAmount;
+        userInfo[user].maxSingleTicketAmount = newMaxSingleTicketAmount;
+    }
+
+    /**
+     * @dev 管理员设置等级奖励池余额（用于数据迁移）
+     * @param newLevelRewardPool 新的等级奖励池余额
+     */
+    function adminSetLevelRewardPool(uint256 newLevelRewardPool) external onlyOwner {
+        levelRewardPool = newLevelRewardPool;
+        emit LevelRewardPoolUpdated(0, newLevelRewardPool);
+    }
+
+    /**
+     * @dev 管理员添加质押的极差奖励（用于数据迁移）
+     * @param stakeId 质押 ID
+     * @param upline 上级地址
+     * @param amount 奖励金额
+     */
+    function adminAddStakePendingReward(
+        uint256 stakeId,
+        address upline,
+        uint256 amount
+    ) external onlyOwner {
+        if (upline == address(0)) revert InvalidAddress();
+        stakePendingRewards[stakeId].push(PendingReward({
+            upline: upline,
+            amount: amount
+        }));
+        emit DifferentialRewardRecorded(stakeId, upline, amount);
+    }
+
+    /**
+     * @dev 管理员添加门票的等级奖励（用于数据迁移）
+     * @param ticketId 门票 ID
+     * @param upline 上级地址
+     * @param amount 奖励金额
+     */
+    function adminAddTicketPendingReward(
+        uint256 ticketId,
+        address upline,
+        uint256 amount
+    ) external onlyOwner {
+        if (upline == address(0)) revert InvalidAddress();
+        ticketPendingRewards[ticketId].push(PendingReward({
+            upline: upline,
+            amount: amount
+        }));
+        emit LevelRewardRecorded(ticketId, upline, amount);
+    }
+
+    /**
+     * @dev 管理员设置交换储备（用于数据迁移）
+     * @param newSwapReserveMC 新的 MC 储备
+     * @param newSwapReserveJBC 新的 JBC 储备
+     */
+    function adminSetSwapReserves(uint256 newSwapReserveMC, uint256 newSwapReserveJBC) external onlyOwner {
+        swapReserveMC = newSwapReserveMC;
+        swapReserveJBC = newSwapReserveJBC;
+        emit LiquidityAdded(0, 0); // 触发事件但不实际添加
+    }
+
+    /**
+     * @dev 管理员设置下一个门票 ID（用于数据迁移）
+     * @param newNextTicketId 新的下一个门票 ID
+     */
+    function adminSetNextTicketId(uint256 newNextTicketId) external onlyOwner {
+        nextTicketId = newNextTicketId;
+    }
+
+    /**
+     * @dev 管理员设置下一个质押 ID（用于数据迁移）
+     * @param newNextStakeId 新的下一个质押 ID
+     */
+    function adminSetNextStakeId(uint256 newNextStakeId) external onlyOwner {
+        nextStakeId = newNextStakeId;
+    }
+
+    /**
+     * @dev 管理员设置最后燃烧时间（用于数据迁移）
+     * @param newLastBurnTime 新的最后燃烧时间
+     */
+    function adminSetLastBurnTime(uint256 newLastBurnTime) external onlyOwner {
+        lastBurnTime = newLastBurnTime;
+    }
+
+    /**
+     * @dev 管理员设置用户退款手续费金额（用于数据迁移）
+     * @param user 用户地址
+     * @param newRefundFeeAmount 新的退款手续费金额
+     */
+    function adminSetRefundFeeAmount(address user, uint256 newRefundFeeAmount) external onlyOwner {
+        if (user == address(0)) revert InvalidAddress();
+        userInfo[user].refundFeeAmount = newRefundFeeAmount;
+    }
+     
     function _updateTeamCountRecursive(address startNode, uint256 amount, bool isAdd) private {
         address current = startNode;
         uint256 iterations = 0;

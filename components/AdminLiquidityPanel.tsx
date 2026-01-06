@@ -334,6 +334,12 @@ const AdminLiquidityPanel: React.FC = () => {
         if (staticError.data) {
           decodedError = decodeContractError(staticError.data);
           console.log('   解码的错误:', decodedError);
+          console.log('   错误数据:', staticError.data);
+          
+          // 检查是否是TransferFromFailedLowLevel错误
+          if (staticError.data === '0x82a6e09c' || staticError.data.startsWith('0x82a6e09c')) {
+            console.log('   ⚠️  [静态调用] 检测到TransferFromFailedLowLevel错误 - JBC转账失败');
+          }
         }
         
         // 提供详细的错误信息
@@ -341,9 +347,41 @@ const AdminLiquidityPanel: React.FC = () => {
         if (decodedError === 'OwnableUnauthorizedAccount' || 
             staticError.message?.includes('OwnableUnauthorizedAccount')) {
           staticErrorMessage = '权限错误：静态调用检查发现您不是合约拥有者';
-        } else if (decodedError === 'ERC20InsufficientAllowance' ||
-                   staticError.message?.includes('insufficient allowance') ||
+        } else if (decodedError === 'TransferFromFailedLowLevel' || 
+                   decodedError === 'TransferFromFailed' ||
+                   staticError.data === '0x82a6e09c' ||
+                   staticError.data?.startsWith('0x82a6e09c') ||
+                   staticError.data === '0x87a26b75' ||
+                   staticError.data?.startsWith('0x87a26b75') ||
                    staticError.message?.includes('TransferFromFailed')) {
+          // TransferFromFailed错误 - JBC转账失败
+          staticErrorMessage = 'JBC代币转账失败（预检查）';
+          
+          // 重新检查授权和余额
+          if (jbcAmountWei > 0n && jbcContract && account) {
+            try {
+              const currentAllowance = await jbcContract.allowance(account, CONTRACT_ADDRESSES.PROTOCOL);
+              const currentBalance = await jbcContract.balanceOf(account);
+              console.log('   [静态调用失败] 当前JBC授权:', ethers.formatEther(currentAllowance));
+              console.log('   [静态调用失败] 当前JBC余额:', ethers.formatEther(currentBalance));
+              console.log('   [静态调用失败] 需要数量:', ethers.formatEther(jbcAmountWei));
+              
+              if (currentAllowance < jbcAmountWei) {
+                staticErrorMessage = `JBC授权不足：当前授权 ${ethers.formatEther(currentAllowance)}，需要 ${ethers.formatEther(jbcAmountWei)}。请先授权JBC代币。`;
+              } else if (currentBalance < jbcAmountWei) {
+                staticErrorMessage = `JBC余额不足：当前余额 ${ethers.formatEther(currentBalance)}，需要 ${ethers.formatEther(jbcAmountWei)}。请充值JBC代币。`;
+              } else {
+                staticErrorMessage = 'JBC授权和余额都足够，可能是授权未完全生效，请等待几秒后重试';
+              }
+            } catch (checkError) {
+              console.error('   [静态调用失败] 检查授权和余额失败:', checkError);
+              staticErrorMessage = 'JBC授权或余额检查失败，请确认已正确授权JBC代币且余额充足';
+            }
+          } else {
+            staticErrorMessage = 'JBC转账失败，请检查授权和余额';
+          }
+        } else if (decodedError === 'ERC20InsufficientAllowance' ||
+                   staticError.message?.includes('insufficient allowance')) {
           // 重新检查授权额度
           if (jbcAmountWei > 0n) {
             try {
@@ -371,7 +409,18 @@ const AdminLiquidityPanel: React.FC = () => {
           staticErrorMessage = `预检查失败: ${staticError.message}`;
         }
         
-        toast.error(staticErrorMessage, { duration: 6000 });
+        // 显示详细的错误信息
+        if (decodedError === 'TransferFromFailedLowLevel' || 
+            decodedError === 'TransferFromFailed' ||
+            staticError.data === '0x82a6e09c' ||
+            staticError.data?.startsWith('0x82a6e09c')) {
+          // TransferFromFailed错误，显示更详细的提示
+          toast.error(`${staticErrorMessage}\n💡 请检查JBC授权和余额，然后重试`, { 
+            duration: 10000 
+          });
+        } else {
+          toast.error(staticErrorMessage, { duration: 6000 });
+        }
         setIsLoading(false);
         return;
       }

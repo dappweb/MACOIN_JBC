@@ -13,9 +13,11 @@ const OPENZEPPELIN_ERRORS: Record<string, string> = {
   '0xe602df05': 'ERC20InvalidSpender',        // ERC20: invalid spender
 };
 
-// Custom protocol error signatures (if any)
+// Custom protocol error signatures
 const PROTOCOL_ERRORS: Record<string, string> = {
-  // Add custom error signatures here when available
+  '0x82a6e09c': 'TransferFromFailedLowLevel', // TransferFromFailedLowLevel()
+  '0x87a26b75': 'TransferFromFailed',         // TransferFromFailed(string)
+  // Add more custom error signatures here when available
 };
 
 /**
@@ -61,6 +63,9 @@ export function getErrorMessage(error: any, t: any): string {
           return 'Insufficient token balance.';
         case 'ERC20InsufficientAllowance':
           return 'Insufficient token allowance. Please approve tokens first.';
+        case 'TransferFromFailed':
+        case 'TransferFromFailedLowLevel':
+          return 'Token transfer failed. Please check your token balance and allowance.';
         default:
           return `Contract error: ${decodedError}`;
       }

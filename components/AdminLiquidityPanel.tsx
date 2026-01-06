@@ -74,21 +74,42 @@ const AdminLiquidityPanel: React.FC = () => {
 
   // 添加流动性
   const handleAddLiquidity = async () => {
+    console.log('🚀 [AdminLiquidityPanel] 开始添加流动性流程');
+    
     if (!protocolContract || !jbcContract) {
+      console.error('❌ [AdminLiquidityPanel] 合约未连接');
       toast.error('合约未连接，请检查网络连接');
       return;
     }
     
     if (!account) {
+      console.error('❌ [AdminLiquidityPanel] 账户未连接');
       toast.error('请先连接钱包');
       return;
     }
     
     // 前置检查：权限
     if (!isOwner) {
-      toast.error('权限错误：您不是合约拥有者。请确认使用正确的钱包地址。');
+      console.error('❌ [AdminLiquidityPanel] 权限检查失败 - isOwner:', isOwner);
+      // 尝试从链上再次检查权限
+      try {
+        const owner = await protocolContract.owner();
+        const isOwnerOnChain = owner.toLowerCase() === account.toLowerCase();
+        console.log('   [链上检查] 合约Owner:', owner);
+        console.log('   [链上检查] 当前账户:', account);
+        console.log('   [链上检查] 是否Owner:', isOwnerOnChain);
+        if (!isOwnerOnChain) {
+          toast.error(`权限错误：您不是合约拥有者。合约Owner: ${owner.slice(0, 6)}...${owner.slice(-4)}`);
+        } else {
+          console.warn('⚠️ [AdminLiquidityPanel] 前端isOwner状态可能未更新，但链上检查通过');
+        }
+      } catch (error) {
+        console.error('   [链上检查] 检查Owner失败:', error);
+      }
       return;
     }
+    
+    console.log('✅ [AdminLiquidityPanel] 权限检查通过');
     
     // 确保输入值是有效的数字字符串
     const mcAmountStr = mcAmount?.trim() || '0';
@@ -224,12 +245,22 @@ const AdminLiquidityPanel: React.FC = () => {
         }
         
         // 最终检查：确保授权足够
+        console.log('🔍 [AdminLiquidityPanel] 执行最终授权检查...');
         const finalAllowance = await jbcContract.allowance(account, CONTRACT_ADDRESSES.PROTOCOL);
+        const finalAllowanceFormatted = ethers.formatEther(finalAllowance);
+        const requiredFormatted = ethers.formatEther(jbcAmountWei);
+        console.log('   最终授权额度:', finalAllowanceFormatted, 'JBC');
+        console.log('   需要数量:', requiredFormatted, 'JBC');
+        console.log('   授权是否足够:', finalAllowance >= jbcAmountWei);
+        
         if (finalAllowance < jbcAmountWei) {
-          toast.error(`JBC授权不足：当前授权 ${ethers.formatEther(finalAllowance)}，需要 ${ethers.formatEther(jbcAmountWei)}`);
+          const shortfall = ethers.formatEther(jbcAmountWei - finalAllowance);
+          console.error('   ❌ JBC授权不足，缺少:', shortfall, 'JBC');
+          toast.error(`JBC授权不足：当前授权 ${finalAllowanceFormatted} JBC，需要 ${requiredFormatted} JBC，缺少 ${shortfall} JBC`);
           setIsLoading(false);
           return;
         }
+        console.log('   ✅ JBC授权充足');
       }
 
       // 重要：授权JBC后，重新检查MC余额（因为授权交易消耗了Gas）
@@ -346,13 +377,66 @@ const AdminLiquidityPanel: React.FC = () => {
       }
       
       // 执行交易 - 原生MC作为value发送，JBC作为参数
-      const tx = await protocolContract.addLiquidity(jbcAmountWei, txParams);
-      console.log('📝 [AdminLiquidityPanel] 交易哈希:', tx.hash);
+      console.log('📤 [AdminLiquidityPanel] 准备发送交易...');
+      let tx;
+      try {
+        tx = await protocolContract.addLiquidity(jbcAmountWei, txParams);
+        console.log('📝 [AdminLiquidityPanel] 交易已发送，哈希:', tx.hash);
+        console.log('   可以在区块浏览器查看: https://explorer.mcchain.io/tx/' + tx.hash);
+      } catch (txError: any) {
+        console.error('❌ [AdminLiquidityPanel] 交易发送失败:', txError);
+        toast.dismiss('add-liquidity');
+        
+        let txErrorMessage = '交易发送失败';
+        if (txError.message?.includes('user rejected') || txError.message?.includes('User denied')) {
+          txErrorMessage = '用户取消了交易';
+        } else if (txError.message?.includes('insufficient funds')) {
+          txErrorMessage = 'Gas费用不足，请确保有足够的MC用于支付Gas费用';
+        } else if (txError.reason) {
+          txErrorMessage = `交易发送失败: ${txError.reason}`;
+        } else if (txError.message) {
+          txErrorMessage = `交易发送失败: ${txError.message}`;
+        }
+        
+        toast.error(txErrorMessage, { id: 'add-liquidity', duration: 8000 });
+        setIsLoading(false);
+        return;
+      }
       
-      await tx.wait();
-      console.log('✅ [AdminLiquidityPanel] 交易确认');
-      
-      toast.success('流动性添加成功！', { id: 'add-liquidity' });
+      // 等待交易确认，添加超时处理
+      console.log('⏳ [AdminLiquidityPanel] 等待交易确认...');
+      try {
+        // 设置超时（5分钟）
+        const timeoutPromise = new Promise((_, reject) => {
+          setTimeout(() => reject(new Error('交易确认超时（5分钟）')), 5 * 60 * 1000);
+        });
+        
+        const receipt = await Promise.race([
+          tx.wait(),
+          timeoutPromise
+        ]) as any;
+        
+        console.log('✅ [AdminLiquidityPanel] 交易已确认');
+        console.log('   区块号:', receipt.blockNumber);
+        console.log('   Gas使用:', receipt.gasUsed?.toString());
+        
+        toast.success('流动性添加成功！', { id: 'add-liquidity' });
+      } catch (waitError: any) {
+        console.error('❌ [AdminLiquidityPanel] 交易确认失败:', waitError);
+        toast.dismiss('add-liquidity');
+        
+        let waitErrorMessage = '交易确认失败';
+        if (waitError.message?.includes('超时')) {
+          waitErrorMessage = '交易确认超时，请检查交易状态。交易哈希: ' + tx.hash.slice(0, 10) + '...';
+          console.log('💡 提示：交易可能仍在处理中，可以在区块浏览器查看状态');
+        } else if (waitError.message) {
+          waitErrorMessage = `交易确认失败: ${waitError.message}`;
+        }
+        
+        toast.error(waitErrorMessage, { id: 'add-liquidity', duration: 10000 });
+        setIsLoading(false);
+        return;
+      }
       
       // 清空输入
       setMcAmount('');
@@ -385,6 +469,21 @@ const AdminLiquidityPanel: React.FC = () => {
       if (error.data) {
         decodedError = decodeContractError(error.data);
         console.log('   解码的错误:', decodedError);
+        console.log('   错误数据:', error.data);
+        
+        // 如果是0x82a6e09c，这是TransferFromFailedLowLevel
+        if (error.data === '0x82a6e09c' || error.data.startsWith('0x82a6e09c')) {
+          console.log('   ⚠️  检测到TransferFromFailedLowLevel错误 - JBC转账失败');
+          console.log('   💡 可能原因：JBC授权不足或JBC余额不足');
+        }
+      }
+      
+      // 检查错误消息中是否包含execution reverted
+      if (error.message?.includes('execution reverted') || error.message?.includes('Internal JSON-RPC error')) {
+        console.log('   ⚠️  检测到execution reverted错误');
+        if (error.data) {
+          console.log('   错误选择器:', error.data.slice(0, 10));
+        }
       }
       
       let errorMessage = '添加流动性失败';
@@ -396,9 +495,38 @@ const AdminLiquidityPanel: React.FC = () => {
           error.message?.includes('Ownable: caller is not the owner')) {
         errorMessage = '权限错误：您不是合约拥有者';
         suggestion = '请确认：1) 使用正确的钱包地址（必须是合约Owner） 2) 检查网络连接 3) 刷新页面重新检查权限';
+      } else if (decodedError === 'TransferFromFailedLowLevel' || 
+                 decodedError === 'TransferFromFailed' ||
+                 error.data === '0x82a6e09c' ||
+                 error.data?.startsWith('0x82a6e09c') ||
+                 error.data === '0x87a26b75' ||
+                 error.data?.startsWith('0x87a26b75')) {
+        // TransferFromFailed错误 - JBC转账失败
+        errorMessage = 'JBC代币转账失败';
+        suggestion = '可能原因：1) JBC授权不足 - 请先授权JBC代币 2) JBC余额不足 - 请检查JBC余额 3) 授权未生效 - 等待几秒后重试';
+        
+        // 重新检查授权和余额
+        if (jbcAmountWei > 0n && jbcContract && account) {
+          try {
+            const currentAllowance = await jbcContract.allowance(account, CONTRACT_ADDRESSES.PROTOCOL);
+            const currentBalance = await jbcContract.balanceOf(account);
+            console.log('   [错误后检查] JBC授权:', ethers.formatEther(currentAllowance));
+            console.log('   [错误后检查] JBC余额:', ethers.formatEther(currentBalance));
+            console.log('   [错误后检查] 需要数量:', ethers.formatEther(jbcAmountWei));
+            
+            if (currentAllowance < jbcAmountWei) {
+              suggestion = `JBC授权不足：当前授权 ${ethers.formatEther(currentAllowance)}，需要 ${ethers.formatEther(jbcAmountWei)}。请先授权JBC代币。`;
+            } else if (currentBalance < jbcAmountWei) {
+              suggestion = `JBC余额不足：当前余额 ${ethers.formatEther(currentBalance)}，需要 ${ethers.formatEther(jbcAmountWei)}。请充值JBC代币。`;
+            } else {
+              suggestion = 'JBC授权和余额都足够，可能是授权未完全生效，请等待几秒后重试';
+            }
+          } catch (checkError) {
+            console.error('   [错误后检查] 检查失败:', checkError);
+          }
+        }
       } else if (decodedError === 'ERC20InsufficientAllowance' ||
-                 error.message?.includes('insufficient allowance') ||
-                 error.message?.includes('TransferFromFailed')) {
+                 error.message?.includes('insufficient allowance')) {
         errorMessage = 'JBC代币授权不足';
         suggestion = '请先授权JBC代币。如果已授权，请检查授权额度是否足够';
       } else if (decodedError === 'ERC20InsufficientBalance' ||

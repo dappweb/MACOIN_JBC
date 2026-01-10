@@ -118,4 +118,4 @@ export const MOCK_USER_STATS = {
 };
 
 // Cloudflare Worker API URL for announcements
-export const API_BASE_URL = "https://macoin-jbc-api.dappweb.workers.dev"; 
+export const API_BASE_URL = "https://macoin-jbc-api.suiyiwan1.workers.dev"; 

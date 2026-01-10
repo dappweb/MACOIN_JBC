@@ -80,12 +80,111 @@ export default {
       }
     }
 
+    // GET /level-override?address=0x... - 获取等级覆盖
+    if (request.method === "GET" && url.pathname === "/level-override") {
+      const address = url.searchParams.get("address");
+      if (!address) {
+        return new Response(JSON.stringify({ error: "Missing address" }), {
+          status: 400,
+          headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" }
+        });
+      }
+
+      const result = await env.DB.prepare("SELECT level FROM level_overrides WHERE address = ?")
+        .bind(address.toLowerCase()).first();
+      
+      return new Response(JSON.stringify({ 
+        address: address.toLowerCase(),
+        level: result ? result.level : null,
+        hasOverride: !!result
+      }), {
+        headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" }
+      });
+    }
+
+    // GET /level-overrides - 获取所有等级覆盖 (Admin)
+    if (request.method === "GET" && url.pathname === "/level-overrides") {
+      const { results } = await env.DB.prepare("SELECT address, level, updated_at FROM level_overrides ORDER BY updated_at DESC").all();
+      
+      return new Response(JSON.stringify({ overrides: results || [] }), {
+        headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" }
+      });
+    }
+
+    // POST /level-override - 设置等级覆盖 (Admin only)
+    if (request.method === "POST" && url.pathname === "/level-override") {
+      try {
+        const body = await request.json();
+        const { address, level, adminAddress } = body;
+
+        const OWNER = env.ADMIN_ADDRESS;
+        if (!OWNER) {
+          return new Response("Server Config Error: ADMIN_ADDRESS not set", { status: 500 });
+        }
+
+        if (!adminAddress || adminAddress.toLowerCase() !== OWNER.toLowerCase()) {
+          return new Response(JSON.stringify({ error: "Unauthorized" }), { 
+            status: 401, 
+            headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" } 
+          });
+        }
+
+        if (!address) {
+          return new Response(JSON.stringify({ error: "Missing address" }), { 
+            status: 400, 
+            headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" } 
+          });
+        }
+
+        const normalizedAddress = address.toLowerCase();
+
+        // level = null or 0 means remove override
+        if (level === null || level === 0) {
+          await env.DB.prepare("DELETE FROM level_overrides WHERE address = ?")
+            .bind(normalizedAddress).run();
+          return new Response(JSON.stringify({ success: true, action: "removed" }), {
+            headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" }
+          });
+        }
+
+        // Validate level (1-9)
+        if (level < 1 || level > 9) {
+          return new Response(JSON.stringify({ error: "Invalid level (must be 1-9)" }), { 
+            status: 400, 
+            headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" } 
+          });
+        }
+
+        // UPSERT
+        const exists = await env.DB.prepare("SELECT 1 FROM level_overrides WHERE address = ?")
+          .bind(normalizedAddress).first();
+        
+        if (exists) {
+          await env.DB.prepare("UPDATE level_overrides SET level = ?, updated_at = ? WHERE address = ?")
+            .bind(level, Date.now(), normalizedAddress).run();
+        } else {
+          await env.DB.prepare("INSERT INTO level_overrides (address, level, updated_at) VALUES (?, ?, ?)")
+            .bind(normalizedAddress, level, Date.now()).run();
+        }
+
+        return new Response(JSON.stringify({ success: true, address: normalizedAddress, level }), {
+          headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" }
+        });
+
+      } catch (e) {
+        return new Response(JSON.stringify({ error: e.message }), { 
+          status: 500, 
+          headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" } 
+        });
+      }
+    }
+
     // CORS Preflight
     if (request.method === "OPTIONS") {
       return new Response(null, {
         headers: {
           "Access-Control-Allow-Origin": "*",
-          "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+          "Access-Control-Allow-Methods": "GET, POST, DELETE, OPTIONS",
           "Access-Control-Allow-Headers": "Content-Type"
         }
       });

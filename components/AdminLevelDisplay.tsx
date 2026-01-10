@@ -83,6 +83,7 @@ const AdminLevelDisplay: React.FC<AdminLevelDisplayProps> = ({ account }) => {
       teamCount={teamCount} 
       showDetails={true}
       className="w-full"
+      userAddress={account}
     />
   );
 };

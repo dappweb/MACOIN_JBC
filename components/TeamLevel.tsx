@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from "react"
 import { TEAM_LEVELS } from "../src/constants"
-import { Users, Percent, UserCheck, Copy, Share2, Crown } from "lucide-react"
+import { Users, Percent, UserCheck, Copy, Share2, Crown, Star } from "lucide-react"
 import { useLanguage } from "../src/LanguageContext"
 import { useWeb3 } from "../src/Web3Context"
 import { ethers } from "ethers"
 import toast from "react-hot-toast"
+import { useLevelOverride } from "../src/hooks/useLevelOverride"
 
 const safeFormatEther = (val: any) => {
   if (val === undefined || val === null) return "0"
@@ -24,6 +25,7 @@ interface DirectReferral {
 const TeamLevel: React.FC = () => {
   const { t } = useLanguage()
   const { protocolContract, account, isConnected } = useWeb3()
+  const { overrideLevel, hasOverride } = useLevelOverride(account)
   const [userLevelInfo, setUserLevelInfo] = useState({
     activeDirects: 0,
     teamCount: 0,
@@ -31,6 +33,7 @@ const TeamLevel: React.FC = () => {
     baseLevel: "V0", // Add base level for reward lookup
     teamTotalVolume: 0n,
     teamTotalCap: 0n,
+    isOverride: false,
   })
   const [directReferrals, setDirectReferrals] = useState<DirectReferral[]>([])
   const [isLoadingDirects, setIsLoadingDirects] = useState(false)
@@ -88,31 +91,39 @@ const TeamLevel: React.FC = () => {
           
           let level = "V0"
           let progress = ""
+          let isOverrideLevel = false
           
-          // 更新的极差裂变机制等级标准
-          if (effectiveCount >= 100000) level = "V9"      // V9: 100,000个地址，45%极差收益
-          else if (effectiveCount >= 30000) level = "V8"  // V8: 30,000个地址，40%极差收益
-          else if (effectiveCount >= 10000) level = "V7"  // V7: 10,000个地址，35%极差收益
-          else if (effectiveCount >= 3000) level = "V6"   // V6: 3,000个地址，30%极差收益
-          else if (effectiveCount >= 1000) level = "V5"   // V5: 1,000个地址，25%极差收益
-          else if (effectiveCount >= 300) level = "V4"    // V4: 300个地址，20%极差收益
-          else if (effectiveCount >= 100) level = "V3"    // V3: 100个地址，15%极差收益
-          else if (effectiveCount >= 30) level = "V2"     // V2: 30个地址，10%极差收益
-          else if (effectiveCount >= 10) level = "V1"     // V1: 10个地址，5%极差收益
-          
-          // 计算到下一等级的进度
-          let nextLevelReq = 10
-          if (effectiveCount < 10) nextLevelReq = 10
-          else if (effectiveCount < 30) nextLevelReq = 30
-          else if (effectiveCount < 100) nextLevelReq = 100
-          else if (effectiveCount < 300) nextLevelReq = 300
-          else if (effectiveCount < 1000) nextLevelReq = 1000
-          else if (effectiveCount < 3000) nextLevelReq = 3000
-          else if (effectiveCount < 10000) nextLevelReq = 10000
-          else if (effectiveCount < 30000) nextLevelReq = 30000
-          else if (effectiveCount < 100000) nextLevelReq = 100000
-          
-          progress = effectiveCount < 100000 ? ` (${effectiveCount}/${nextLevelReq})` : ""
+          // 检查是否有等级覆盖
+          if (hasOverride && overrideLevel !== null && overrideLevel >= 1 && overrideLevel <= 9) {
+            level = `V${overrideLevel}`
+            isOverrideLevel = true
+            progress = "" // 覆盖等级不显示进度
+          } else {
+            // 更新的极差裂变机制等级标准
+            if (effectiveCount >= 100000) level = "V9"      // V9: 100,000个地址，45%极差收益
+            else if (effectiveCount >= 30000) level = "V8"  // V8: 30,000个地址，40%极差收益
+            else if (effectiveCount >= 10000) level = "V7"  // V7: 10,000个地址，35%极差收益
+            else if (effectiveCount >= 3000) level = "V6"   // V6: 3,000个地址，30%极差收益
+            else if (effectiveCount >= 1000) level = "V5"   // V5: 1,000个地址，25%极差收益
+            else if (effectiveCount >= 300) level = "V4"    // V4: 300个地址，20%极差收益
+            else if (effectiveCount >= 100) level = "V3"    // V3: 100个地址，15%极差收益
+            else if (effectiveCount >= 30) level = "V2"     // V2: 30个地址，10%极差收益
+            else if (effectiveCount >= 10) level = "V1"     // V1: 10个地址，5%极差收益
+            
+            // 计算到下一等级的进度
+            let nextLevelReq = 10
+            if (effectiveCount < 10) nextLevelReq = 10
+            else if (effectiveCount < 30) nextLevelReq = 30
+            else if (effectiveCount < 100) nextLevelReq = 100
+            else if (effectiveCount < 300) nextLevelReq = 300
+            else if (effectiveCount < 1000) nextLevelReq = 1000
+            else if (effectiveCount < 3000) nextLevelReq = 3000
+            else if (effectiveCount < 10000) nextLevelReq = 10000
+            else if (effectiveCount < 30000) nextLevelReq = 30000
+            else if (effectiveCount < 100000) nextLevelReq = 100000
+            
+            progress = effectiveCount < 100000 ? ` (${effectiveCount}/${nextLevelReq})` : ""
+          }
 
           setUserLevelInfo({
             activeDirects: activeDirects,
@@ -121,6 +132,7 @@ const TeamLevel: React.FC = () => {
             baseLevel: level, // Store base level for reward lookup
             teamTotalVolume: userInfo[7],
             teamTotalCap: userInfo[8],
+            isOverride: isOverrideLevel,
           })
 
           // Fetch Direct Referrals
@@ -156,7 +168,7 @@ const TeamLevel: React.FC = () => {
     fetchTeamInfo()
     const timer = setInterval(fetchTeamInfo, 10000) // Refresh every 10s
     return () => clearInterval(timer)
-  }, [isConnected, account, protocolContract])
+  }, [isConnected, account, protocolContract, overrideLevel, hasOverride])
 
   return (
     <div className="max-w-5xl mx-auto space-y-6 md:space-y-8 animate-fade-in">
@@ -168,8 +180,14 @@ const TeamLevel: React.FC = () => {
       <div className="glass-panel rounded-xl md:rounded-2xl overflow-hidden border border-gray-800 bg-gray-900/50 backdrop-blur-sm">
         <div className="p-4 md:p-6 border-b border-gray-800 flex flex-col sm:flex-row flex-wrap gap-3 md:gap-4 justify-between items-start sm:items-center bg-gray-800/50">
           <div>
-            <h3 className="text-lg md:text-xl font-bold text-white mb-2">
-              {t.team.current}: <span className="text-neon-400 text-2xl ml-1">{userLevelInfo.currentLevel}</span>
+            <h3 className="text-lg md:text-xl font-bold text-white mb-2 flex items-center gap-2">
+              {t.team.current}: <span className="text-neon-400 text-2xl ml-1 flex items-center gap-1">
+                {userLevelInfo.isOverride && <Star className="w-5 h-5 text-yellow-400" />}
+                {userLevelInfo.currentLevel}
+              </span>
+              {userLevelInfo.isOverride && (
+                <span className="text-xs bg-yellow-500/20 text-yellow-400 px-2 py-0.5 rounded">特殊</span>
+              )}
             </h3>
             <div className="flex flex-wrap gap-2">
               <div className="bg-black/30 px-3 py-1.5 rounded-lg border border-gray-700/50 flex items-center gap-2">

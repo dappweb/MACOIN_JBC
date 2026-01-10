@@ -1,39 +1,33 @@
 import React from 'react';
-import { Crown, Users, TrendingUp } from 'lucide-react';
+import { Crown, Users, TrendingUp, Star } from 'lucide-react';
+import { useLevelOverride, getLevelInfoWithOverride } from '../src/hooks/useLevelOverride';
 
 interface LevelDisplayProps {
   teamCount: number;
   showDetails?: boolean;
   className?: string;
+  userAddress?: string | null; // 用于获取等级覆盖
 }
 
 const LevelDisplay: React.FC<LevelDisplayProps> = ({ 
   teamCount, 
   showDetails = false, 
-  className = "" 
+  className = "",
+  userAddress
 }) => {
   
-  // 极差裂变机制等级计算
-  const getLevelInfo = (count: number) => {
-    if (count >= 100000) return { level: 9, percent: 45, name: "V9", color: "from-purple-500 to-pink-500", nextReq: null };
-    if (count >= 30000) return { level: 8, percent: 40, name: "V8", color: "from-indigo-500 to-purple-500", nextReq: 100000 };
-    if (count >= 10000) return { level: 7, percent: 35, name: "V7", color: "from-blue-500 to-indigo-500", nextReq: 30000 };
-    if (count >= 3000) return { level: 6, percent: 30, name: "V6", color: "from-cyan-500 to-blue-500", nextReq: 10000 };
-    if (count >= 1000) return { level: 5, percent: 25, name: "V5", color: "from-teal-500 to-cyan-500", nextReq: 3000 };
-    if (count >= 300) return { level: 4, percent: 20, name: "V4", color: "from-green-500 to-teal-500", nextReq: 1000 };
-    if (count >= 100) return { level: 3, percent: 15, name: "V3", color: "from-yellow-500 to-green-500", nextReq: 300 };
-    if (count >= 30) return { level: 2, percent: 10, name: "V2", color: "from-orange-500 to-yellow-500", nextReq: 100 };
-    if (count >= 10) return { level: 1, percent: 5, name: "V1", color: "from-red-500 to-orange-500", nextReq: 30 };
-    return { level: 0, percent: 0, name: "V0", color: "from-gray-500 to-gray-600", nextReq: 10 };
-  };
-
-  const levelInfo = getLevelInfo(teamCount);
+  // 获取等级覆盖
+  const { overrideLevel, hasOverride } = useLevelOverride(userAddress);
+  
+  // 使用覆盖等级或计算等级
+  const levelInfo = getLevelInfoWithOverride(teamCount, overrideLevel);
   const progress = levelInfo.nextReq ? (teamCount / levelInfo.nextReq) * 100 : 100;
 
   if (!showDetails) {
     return (
       <div className={`inline-flex items-center gap-2 ${className}`}>
-        <div className={`px-3 py-1 rounded-lg bg-gradient-to-r ${levelInfo.color} text-white font-bold text-sm`}>
+        <div className={`px-3 py-1 rounded-lg bg-gradient-to-r ${levelInfo.color} text-white font-bold text-sm flex items-center gap-1`}>
+          {levelInfo.isOverride && <Star className="w-3 h-3" />}
           {levelInfo.name}
         </div>
         <span className="text-sm text-gray-400">
@@ -50,8 +44,14 @@ const LevelDisplay: React.FC<LevelDisplayProps> = ({
         <div className="flex items-center gap-2">
           <Crown className="w-5 h-5 text-yellow-400" />
           <span className="text-lg font-bold text-white">当前等级</span>
+          {levelInfo.isOverride && (
+            <span className="text-xs bg-yellow-500/20 text-yellow-400 px-2 py-0.5 rounded flex items-center gap-1">
+              <Star className="w-3 h-3" /> 特殊
+            </span>
+          )}
         </div>
-        <div className={`px-4 py-2 rounded-lg bg-gradient-to-r ${levelInfo.color} text-white font-bold`}>
+        <div className={`px-4 py-2 rounded-lg bg-gradient-to-r ${levelInfo.color} text-white font-bold flex items-center gap-1`}>
+          {levelInfo.isOverride && <Star className="w-4 h-4" />}
           {levelInfo.name}
         </div>
       </div>

@@ -196,3 +196,7 @@ jq '[.users[] | select(.userTicket.ticketId != "0" and .userTicket.exited == fal
 
 
 
+
+
+
+

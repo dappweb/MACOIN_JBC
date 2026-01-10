@@ -571,7 +571,7 @@ const AdminPanel: React.FC = () => {
     }
   };
 
-  const publishAnnouncement = () => {
+  const publishAnnouncement = async () => {
     try {
       if (!announceZh && !announceEn) return;
 
@@ -581,9 +581,45 @@ const AdminPanel: React.FC = () => {
         en: announceEn
       };
       
+      // Save to localStorage (for admin's local view)
       const newList = [...announcementList, newAnnouncement];
       setAnnouncementList(newList);
       localStorage.setItem('announcements', JSON.stringify(newList));
+      
+      // Also publish to API for all users to see
+      try {
+        // Publish Chinese version
+        if (announceZh) {
+          await fetch(`${API_BASE_URL}/announcement`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              language: 'zh',
+              content: announceZh,
+              adminAddress: account || '',
+              timestamp: Date.now()
+            })
+          });
+        }
+        
+        // Publish English version
+        if (announceEn) {
+          await fetch(`${API_BASE_URL}/announcement`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              language: 'en',
+              content: announceEn,
+              adminAddress: account || '',
+              timestamp: Date.now()
+            })
+          });
+        }
+        
+        console.log('Announcement published to API successfully');
+      } catch (apiErr) {
+        console.warn('Failed to publish to API, saved locally only:', apiErr);
+      }
       
       setAnnounceZh('');
       setAnnounceEn('');

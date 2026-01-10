@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useLanguage } from '../src/LanguageContext';
 import { Megaphone, X, Info } from 'lucide-react';
+import { API_BASE_URL } from '../src/constants';
 
 const NoticeBar: React.FC = () => {
   const { language } = useLanguage();
@@ -14,74 +15,127 @@ const NoticeBar: React.FC = () => {
   const demoAnnouncements: Record<string, string[]> = {
     zh: [
       "🎉 金宝协议正式上线！DeFi 4.0 创新双币模型，开启财富新篇章。",
-      // "⚠️ 请注意：购买门票后可随时提供流动性，无时间限制。", // 已移除红色警告
       "📢 邀请好友加入可享丰厚极差奖励，最高可达 45%！"
     ],
     en: [
       "🎉 Jinbao Protocol is live! DeFi 4.0 Dual-Token Model.",
-      // "⚠️ Notice: Liquidity can be provided at any time after ticket purchase.", // Removed warning
       "📢 Invite friends to earn up to 45% differential rewards!"
     ]
   };
 
-  const loadAnnouncement = () => {
-    // Determine language key: zh and zh-TW use 'zh', others use 'en'
-    const langKey = (language === 'zh' || language === 'zh-TW') ? 'zh' : 'en';
-
-    // 从 localStorage 读取公告
-    const storedAnnouncements = localStorage.getItem('announcements');
-
-    if (storedAnnouncements) {
-      try {
-        const parsed = JSON.parse(storedAnnouncements);
-        
-        // Handle array format (new)
-        if (Array.isArray(parsed)) {
-            const contents = parsed.map((item: any) => item[langKey] || item['en']).filter(Boolean);
-            if (contents.length > 0) {
-                setAnnouncements(contents);
-                setIsVisible(true);
-            } else {
-                setAnnouncements(demoAnnouncements[langKey] || demoAnnouncements['en']);
-                setIsVisible(true);
-            }
-        } 
-        // Handle single object format (legacy/fallback)
-        else {
-            const content = parsed[langKey] || parsed['en'] || '';
-            if (content) {
-                setAnnouncements([content]);
-                setIsVisible(true);
-            } else {
-                setAnnouncements(demoAnnouncements[langKey] || demoAnnouncements['en']);
-                setIsVisible(true);
-            }
-        }
-      } catch (err) {
-        console.error('Failed to parse announcements', err);
-        setAnnouncements(demoAnnouncements[langKey] || demoAnnouncements['en']);
-        setIsVisible(true);
+  // Parse announcements from stored data
+  const parseAnnouncements = useCallback((data: any, langKey: string): string[] => {
+    if (!data) return [];
+    
+    try {
+      const parsed = typeof data === 'string' ? JSON.parse(data) : data;
+      
+      // Handle array format
+      if (Array.isArray(parsed)) {
+        return parsed
+          .map((item: any) => item[langKey] || item['en'] || item)
+          .filter((content: any) => typeof content === 'string' && content.trim());
       }
-    } else {
-      setAnnouncements(demoAnnouncements[langKey] || demoAnnouncements['en']);
-      setIsVisible(true);
+      
+      // Handle single object format
+      const content = parsed[langKey] || parsed['en'] || '';
+      return content ? [content] : [];
+    } catch {
+      return [];
     }
-  };
+  }, []);
+
+  // Fetch announcements from API
+  const fetchFromAPI = useCallback(async (langKey: string): Promise<string[]> => {
+    if (!API_BASE_URL) return [];
+    
+    try {
+      const response = await fetch(`${API_BASE_URL}/announcement?lang=${langKey}`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      
+      if (!response.ok) return [];
+      
+      const data = await response.json();
+      if (data.content) {
+        // Cache to localStorage
+        localStorage.setItem('announcements_api_cache', JSON.stringify({
+          [langKey]: data.content,
+          timestamp: Date.now()
+        }));
+        return [data.content];
+      }
+      return [];
+    } catch (err) {
+      console.warn('Failed to fetch announcements from API:', err);
+      return [];
+    }
+  }, []);
+
+  const loadAnnouncement = useCallback(async () => {
+    const langKey = (language === 'zh' || language === 'zh-TW') ? 'zh' : 'en';
+    
+    // Priority 1: Try to fetch from API (for all users)
+    const apiAnnouncements = await fetchFromAPI(langKey);
+    if (apiAnnouncements.length > 0) {
+      setAnnouncements(apiAnnouncements);
+      setIsVisible(true);
+      return;
+    }
+
+    // Priority 2: Check localStorage (admin's local announcements or cache)
+    const storedAnnouncements = localStorage.getItem('announcements');
+    if (storedAnnouncements) {
+      const contents = parseAnnouncements(storedAnnouncements, langKey);
+      if (contents.length > 0) {
+        setAnnouncements(contents);
+        setIsVisible(true);
+        return;
+      }
+    }
+
+    // Priority 3: Check API cache
+    const apiCache = localStorage.getItem('announcements_api_cache');
+    if (apiCache) {
+      try {
+        const cached = JSON.parse(apiCache);
+        // Cache valid for 1 hour
+        if (cached.timestamp && Date.now() - cached.timestamp < 3600000) {
+          if (cached[langKey]) {
+            setAnnouncements([cached[langKey]]);
+            setIsVisible(true);
+            return;
+          }
+        }
+      } catch {
+        // Ignore cache errors
+      }
+    }
+
+    // Priority 4: Fallback to demo announcements
+    setAnnouncements(demoAnnouncements[langKey] || demoAnnouncements['en']);
+    setIsVisible(true);
+  }, [language, fetchFromAPI, parseAnnouncements]);
 
   useEffect(() => {
     loadAnnouncement();
 
-    // 监听 storage 事件（其他标签页或组件更新时触发）
+    // Listen for storage events (when other tabs update)
     const handleStorageChange = () => {
       loadAnnouncement();
     };
 
     window.addEventListener('storage', handleStorageChange);
+    
+    // Refresh announcements every 5 minutes
+    const refreshInterval = setInterval(loadAnnouncement, 5 * 60 * 1000);
 
     return () => {
       window.removeEventListener('storage', handleStorageChange);
+      clearInterval(refreshInterval);
     };
-  }, [language]);
+  }, [language, loadAnnouncement]);
 
   // 轮播逻辑
   useEffect(() => {

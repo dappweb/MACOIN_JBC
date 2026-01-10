@@ -723,21 +723,6 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
             来自合约状态的真实累计收益
           </div>
           
-          {/* 历史奖励统计（作为补充信息） */}
-          <div className="border-t border-gray-600/50 pt-3">
-            <div className="text-xs text-gray-400 mb-2">历史奖励统计 (事件)</div>
-            <div className="flex flex-col gap-1">
-              <div className="flex items-center justify-between">
-                <span className="text-neon-400 font-bold text-xs">MC</span>
-                <span className="text-sm font-bold text-white font-mono text-right">{rewardTotals.mc.toFixed(2)}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-amber-400 font-bold text-xs">JBC</span>
-                <span className="text-sm font-bold text-white font-mono text-right">{rewardTotals.jbc.toFixed(2)}</span>
-              </div>
-            </div>
-          </div>
-          
           {/* 动态奖励统计 (V3新功能) */}
           {(dynamicRewards.totalEarned > 0 || dynamicRewards.claimableAmount > 0) && (
             <div className="border-t border-gray-600/50 pt-3 mt-3">

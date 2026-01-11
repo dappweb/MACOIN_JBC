@@ -235,9 +235,10 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
     // 余额数据已通过全局状态自动更新
   });
 
-  // 监听价格变化事件
+  // 监听价格变化事件，强制刷新显示
   useEventRefresh('priceUpdated', () => {
-    // 价格数据已通过全局状态和实时价格Hook自动更新
+    // 价格数据已通过全局状态自动更新，这里可以触发额外的UI更新
+    // 由于 priceData 来自 useGlobalRefresh，状态更新会自动触发重新渲染
   });
 
   // Bind Referrer State

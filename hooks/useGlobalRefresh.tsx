@@ -196,11 +196,22 @@ export const GlobalRefreshProvider = ({ children }: { children: ReactNode }) => 
     }
   }, [refreshBalances, refreshPriceData, refreshAll, refreshMcBalance]);
 
-  // 定期刷新价格数据（降低频率到60秒）
+  // 监听池子数据变化事件，实时更新价格
+  useEffect(() => {
+    const handlePoolDataChanged = () => {
+      // 池子变化时立即刷新价格
+      refreshPriceData();
+    };
+
+    window.addEventListener('poolDataChanged', handlePoolDataChanged);
+    return () => window.removeEventListener('poolDataChanged', handlePoolDataChanged);
+  }, [refreshPriceData]);
+
+  // 定期刷新价格数据（30秒间隔，确保价格及时更新）
   useEffect(() => {
     if (isConnected) {
       refreshPriceData(); // 立即刷新一次
-      const interval = setInterval(refreshPriceData, 60000); // 60秒间隔
+      const interval = setInterval(refreshPriceData, 30000); // 30秒间隔
       return () => clearInterval(interval);
     }
   }, [isConnected, refreshPriceData]);

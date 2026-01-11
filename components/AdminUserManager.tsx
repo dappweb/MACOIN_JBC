@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ethers } from 'ethers';
-import { Search, Edit3, Save, X, AlertTriangle, RefreshCw, User, Settings, Droplets, Clock, TrendingUp, CheckCircle, XCircle } from 'lucide-react';
+import { Search, Edit3, Save, X, AlertTriangle, RefreshCw, User, Settings, Crown } from 'lucide-react';
 import { useWeb3 } from '../src/Web3Context';
 import { useLanguage } from '../src/LanguageContext';
 import toast from 'react-hot-toast';
 import { formatContractError } from '../utils/errorFormatter';
+import { API_BASE_URL } from '../src/constants';
 
 interface UserInfo {
     address: string;
@@ -18,29 +19,7 @@ interface UserInfo {
     maxTicketAmount: string;
     level: number;
     levelPercent: number;
-}
-
-interface StakePosition {
-    index: number;
-    id: string;
-    amount: string;
-    startTime: number;
-    cycleDays: number;
-    active: boolean;
-    paid: string;
-    endTime: number;
-    progress: number;
-    status: 'active' | 'completed' | 'redeemed';
-    pendingReward: string;
-}
-
-interface StakeEvent {
-    txHash: string;
-    blockNumber: number;
-    timestamp: number;
-    amount: string;
-    cycleDays: number;
-    stakeId: string;
+    overrideLevel: number | null; // 管理员覆盖的等级
 }
 
 interface EditableUserData {
@@ -53,7 +32,7 @@ interface EditableUserData {
 }
 
 const AdminUserManager: React.FC = () => {
-    const { protocolContract, isOwner, provider } = useWeb3();
+    const { protocolContract, isOwner, account } = useWeb3();
     const { t } = useLanguage();
     
     const [searchAddress, setSearchAddress] = useState('');
@@ -69,11 +48,61 @@ const AdminUserManager: React.FC = () => {
         refundFeeAmount: ''
     });
     
-    // 流动性质押相关状态
-    const [userStakes, setUserStakes] = useState<StakePosition[]>([]);
-    const [stakeEvents, setStakeEvents] = useState<StakeEvent[]>([]);
-    const [loadingStakes, setLoadingStakes] = useState(false);
-    const [secondsInUnit, setSecondsInUnit] = useState(86400); // 默认1天
+    // 等级覆盖状态
+    const [selectedOverrideLevel, setSelectedOverrideLevel] = useState<number | null>(null);
+    const [isUpdatingLevel, setIsUpdatingLevel] = useState(false);
+
+    // 获取用户的等级覆盖
+    const fetchLevelOverride = async (address: string): Promise<number | null> => {
+        try {
+            const response = await fetch(`${API_BASE_URL}/level-override?address=${address.toLowerCase()}`);
+            if (response.ok) {
+                const data = await response.json();
+                return data.hasOverride ? data.level : null;
+            }
+        } catch (error) {
+            console.error('Failed to fetch level override:', error);
+        }
+        return null;
+    };
+
+    // 设置等级覆盖
+    const setLevelOverrideApi = async (address: string, level: number | null) => {
+        if (!account) {
+            toast.error('请先连接钱包');
+            return false;
+        }
+        
+        setIsUpdatingLevel(true);
+        try {
+            const response = await fetch(`${API_BASE_URL}/level-override`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    address: address.toLowerCase(),
+                    level: level,
+                    adminAddress: account
+                })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success) {
+                    toast.success(level ? `等级已设置为 V${level}` : '已清除等级覆盖');
+                    return true;
+                }
+            } else {
+                const errorData = await response.json();
+                toast.error(errorData.error || '设置失败');
+            }
+        } catch (error) {
+            console.error('Failed to set level override:', error);
+            toast.error('网络错误，设置失败');
+        } finally {
+            setIsUpdatingLevel(false);
+        }
+        return false;
+    };
 
     const calculateLevel = (teamCount: number) => {
         // 更新的极差裂变机制等级标准
@@ -89,124 +118,6 @@ const AdminUserManager: React.FC = () => {
         return { level: 0, percent: 0 };
     };
 
-    // 获取收益率 (与合约保持一致)
-    const getRate = (cycleDays: number): bigint => {
-        if (cycleDays === 7) return 13333334n;      // 1.3333334%
-        if (cycleDays === 15) return 16666667n;     // 1.6666667%
-        if (cycleDays === 30) return 20000000n;     // 2.0%
-        return 0n;
-    };
-
-    // 获取用户流动性质押数据
-    const fetchUserStakes = async (userAddress: string) => {
-        if (!protocolContract || !provider) return;
-        
-        setLoadingStakes(true);
-        try {
-            // 获取 SECONDS_IN_UNIT
-            try {
-                const s = await protocolContract.SECONDS_IN_UNIT();
-                setSecondsInUnit(Number(s));
-            } catch (e) {
-                console.warn("Failed to fetch SECONDS_IN_UNIT, using default 86400");
-            }
-
-            const currentTime = Math.floor(Date.now() / 1000);
-            const stakes: StakePosition[] = [];
-            let index = 0;
-
-            // 遍历获取所有质押
-            while (true) {
-                try {
-                    const stakeData = await protocolContract.userStakes(userAddress, index);
-                    // struct Stake { id, amount, startTime, cycleDays, active, paid }
-                    const id = stakeData[0].toString();
-                    const amount = stakeData[1];
-                    const startTime = Number(stakeData[2]);
-                    const cycleDays = Number(stakeData[3]);
-                    const active = stakeData[4];
-                    const paid = stakeData[5];
-
-                    const durationSeconds = cycleDays * secondsInUnit;
-                    const endTime = startTime + durationSeconds;
-                    
-                    let status: StakePosition['status'] = 'redeemed';
-                    if (active) {
-                        status = currentTime >= endTime ? 'completed' : 'active';
-                    }
-
-                    // 计算进度
-                    const elapsed = currentTime - startTime;
-                    const progress = Math.min(100, Math.max(0, (elapsed / durationSeconds) * 100));
-
-                    // 计算待领取收益
-                    const ratePerBillion = getRate(cycleDays);
-                    const unitsPassed = Math.min(cycleDays, Math.floor((currentTime - startTime) / secondsInUnit));
-                    const totalShouldBe = (amount * ratePerBillion * BigInt(unitsPassed)) / 1000000000n;
-                    const pendingReward = totalShouldBe > paid ? totalShouldBe - paid : 0n;
-
-                    stakes.push({
-                        index,
-                        id,
-                        amount: ethers.formatEther(amount),
-                        startTime,
-                        cycleDays,
-                        active,
-                        paid: ethers.formatEther(paid),
-                        endTime,
-                        progress,
-                        status,
-                        pendingReward: ethers.formatEther(pendingReward)
-                    });
-
-                    index++;
-                    if (index > 50) break; // 安全限制
-                } catch (e) {
-                    break; // 遍历完成
-                }
-            }
-
-            setUserStakes(stakes);
-
-            // 获取历史质押事件
-            try {
-                const currentBlock = await provider.getBlockNumber();
-                const fromBlock = Math.max(0, currentBlock - 100000); // 最近10万个区块
-                
-                const filter = protocolContract.filters.LiquidityStaked(userAddress);
-                const events = await protocolContract.queryFilter(filter, fromBlock);
-                
-                const eventList: StakeEvent[] = [];
-                for (const event of events) {
-                    const block = await event.getBlock();
-                    if (event.args) {
-                        eventList.push({
-                            txHash: event.transactionHash,
-                            blockNumber: event.blockNumber,
-                            timestamp: block.timestamp,
-                            amount: ethers.formatEther(event.args[1]),
-                            cycleDays: Number(event.args[2]),
-                            stakeId: event.args[3].toString()
-                        });
-                    }
-                }
-                
-                // 按时间倒序排列
-                eventList.sort((a, b) => b.timestamp - a.timestamp);
-                setStakeEvents(eventList);
-            } catch (e) {
-                console.warn("Failed to fetch stake events:", e);
-                setStakeEvents([]);
-            }
-
-        } catch (error) {
-            console.error('Fetch user stakes error:', error);
-            toast.error('获取质押数据失败');
-        } finally {
-            setLoadingStakes(false);
-        }
-    };
-
     const searchUser = async () => {
         if (!protocolContract || !ethers.isAddress(searchAddress)) {
             toast.error('请输入有效的钱包地址');
@@ -220,6 +131,9 @@ const AdminUserManager: React.FC = () => {
             
             // Get level information
             const { level, percent: levelPercent } = calculateLevel(Number(info.teamCount));
+            
+            // 获取等级覆盖
+            const overrideLevel = await fetchLevelOverride(searchAddress);
 
             const userData: UserInfo = {
                 address: searchAddress,
@@ -232,10 +146,12 @@ const AdminUserManager: React.FC = () => {
                 refundFeeAmount: ethers.formatEther(info.refundFeeAmount),
                 maxTicketAmount: ethers.formatEther(info.maxTicketAmount),
                 level,
-                levelPercent
+                levelPercent,
+                overrideLevel
             };
 
             setUserInfo(userData);
+            setSelectedOverrideLevel(overrideLevel);
             setEditData({
                 referrer: userData.referrer,
                 activeDirects: userData.activeDirects.toString(),
@@ -244,9 +160,6 @@ const AdminUserManager: React.FC = () => {
                 currentCap: userData.currentCap,
                 refundFeeAmount: userData.refundFeeAmount
             });
-
-            // 同时获取用户的质押数据
-            await fetchUserStakes(searchAddress);
 
         } catch (error) {
             console.error('Search user error:', error);
@@ -597,12 +510,79 @@ const AdminUserManager: React.FC = () => {
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-400 mb-1">用户等级</label>
-                                <div className="p-3 bg-gray-800/50 rounded-lg border border-gray-700">
-                                    <span className="text-purple-400 font-bold">
-                                        V{userInfo.level} ({userInfo.levelPercent}%)
+                                <label className="block text-sm font-medium text-gray-400 mb-1">
+                                    <span className="flex items-center gap-2">
+                                        用户等级
+                                        {userInfo.overrideLevel !== null && (
+                                            <Crown className="text-yellow-400" size={14} title="已设置等级覆盖" />
+                                        )}
                                     </span>
+                                </label>
+                                <div className="p-3 bg-gray-800/50 rounded-lg border border-gray-700">
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <span className="text-purple-400 font-bold">
+                                                V{userInfo.overrideLevel !== null ? userInfo.overrideLevel : userInfo.level} 
+                                                {userInfo.overrideLevel === null && ` (${userInfo.levelPercent}%)`}
+                                            </span>
+                                            {userInfo.overrideLevel !== null && (
+                                                <span className="ml-2 text-xs text-yellow-400">(覆盖)</span>
+                                            )}
+                                        </div>
+                                        <span className="text-xs text-gray-500">
+                                            实际等级: V{userInfo.level}
+                                        </span>
+                                    </div>
                                 </div>
+                            </div>
+
+                            {/* 等级覆盖控制 */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-400 mb-1">
+                                    <span className="flex items-center gap-2">
+                                        <Crown className="text-yellow-400" size={14} />
+                                        设置显示等级
+                                    </span>
+                                </label>
+                                <div className="flex items-center gap-2">
+                                    <select
+                                        value={selectedOverrideLevel ?? ''}
+                                        onChange={(e) => setSelectedOverrideLevel(e.target.value ? parseInt(e.target.value) : null)}
+                                        className="flex-1 p-3 border border-gray-700 bg-gray-900/50 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-yellow-500/50"
+                                    >
+                                        <option value="">自动计算 (V{userInfo.level})</option>
+                                        <option value="1">V1 - 5%</option>
+                                        <option value="2">V2 - 10%</option>
+                                        <option value="3">V3 - 15%</option>
+                                        <option value="4">V4 - 20%</option>
+                                        <option value="5">V5 - 25%</option>
+                                        <option value="6">V6 - 30%</option>
+                                        <option value="7">V7 - 35%</option>
+                                        <option value="8">V8 - 40%</option>
+                                        <option value="9">V9 - 45%</option>
+                                    </select>
+                                    <button
+                                        onClick={async () => {
+                                            const success = await setLevelOverrideApi(userInfo.address, selectedOverrideLevel);
+                                            if (success) {
+                                                // 重新加载用户信息
+                                                await searchUser();
+                                            }
+                                        }}
+                                        disabled={isUpdatingLevel || selectedOverrideLevel === userInfo.overrideLevel}
+                                        className="px-4 py-3 bg-yellow-600/20 text-yellow-400 border border-yellow-500/30 rounded-lg hover:bg-yellow-600/30 disabled:opacity-50 disabled:cursor-not-allowed font-bold flex items-center gap-2 transition-all whitespace-nowrap"
+                                    >
+                                        {isUpdatingLevel ? (
+                                            <RefreshCw className="animate-spin" size={16} />
+                                        ) : (
+                                            <Save size={16} />
+                                        )}
+                                        应用
+                                    </button>
+                                </div>
+                                <p className="text-xs text-gray-500 mt-1">
+                                    设置后，该用户在页面上将显示指定等级，选择"自动计算"可清除覆盖
+                                </p>
                             </div>
                         </div>
                     </div>
@@ -653,188 +633,6 @@ const AdminUserManager: React.FC = () => {
                                         <li>建议在修改前备份相关数据</li>
                                     </ul>
                                 </div>
-                            </div>
-                        </div>
-                    )}
-                </div>
-            )}
-
-            {/* 流动性质押明细 */}
-            {userInfo && (
-                <div className="glass-panel p-6 rounded-xl bg-gray-900/50 border border-cyan-500/30">
-                    <div className="flex items-center justify-between mb-6">
-                        <div className="flex items-center gap-3">
-                            <Droplets className="text-cyan-400" size={24} />
-                            <h3 className="text-xl font-bold text-white">流动性质押明细</h3>
-                        </div>
-                        <button
-                            onClick={() => fetchUserStakes(userInfo.address)}
-                            disabled={loadingStakes}
-                            className="px-4 py-2 bg-cyan-600/20 text-cyan-400 border border-cyan-500/30 rounded-lg hover:bg-cyan-600/30 font-bold flex items-center gap-2 text-sm"
-                        >
-                            {loadingStakes ? <RefreshCw className="animate-spin" size={16} /> : <RefreshCw size={16} />}
-                            刷新
-                        </button>
-                    </div>
-
-                    {loadingStakes ? (
-                        <div className="flex items-center justify-center py-8">
-                            <RefreshCw className="animate-spin text-cyan-400" size={32} />
-                            <span className="ml-3 text-gray-400">加载质押数据...</span>
-                        </div>
-                    ) : userStakes.length === 0 ? (
-                        <div className="text-center py-8 text-gray-400">
-                            <Droplets size={48} className="mx-auto mb-3 opacity-50" />
-                            <p>该用户暂无流动性质押记录</p>
-                        </div>
-                    ) : (
-                        <>
-                            {/* 质押统计汇总 */}
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                                <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-700">
-                                    <div className="text-sm text-gray-400 mb-1">总质押数</div>
-                                    <div className="text-xl font-bold text-white">{userStakes.length} 笔</div>
-                                </div>
-                                <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-700">
-                                    <div className="text-sm text-gray-400 mb-1">活跃质押</div>
-                                    <div className="text-xl font-bold text-green-400">
-                                        {userStakes.filter(s => s.status === 'active').length} 笔
-                                    </div>
-                                </div>
-                                <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-700">
-                                    <div className="text-sm text-gray-400 mb-1">总质押金额</div>
-                                    <div className="text-xl font-bold text-cyan-400">
-                                        {userStakes.reduce((sum, s) => sum + parseFloat(s.amount), 0).toFixed(2)} MC
-                                    </div>
-                                </div>
-                                <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-700">
-                                    <div className="text-sm text-gray-400 mb-1">已领取收益</div>
-                                    <div className="text-xl font-bold text-yellow-400">
-                                        {userStakes.reduce((sum, s) => sum + parseFloat(s.paid), 0).toFixed(4)} MC
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* 质押列表 */}
-                            <div className="space-y-4">
-                                <h4 className="text-sm font-bold text-gray-400">当前质押列表</h4>
-                                {userStakes.map((stake) => (
-                                    <div 
-                                        key={stake.index}
-                                        className={`p-4 rounded-lg border ${
-                                            stake.status === 'active' 
-                                                ? 'bg-green-900/20 border-green-500/30' 
-                                                : stake.status === 'completed'
-                                                ? 'bg-yellow-900/20 border-yellow-500/30'
-                                                : 'bg-gray-800/30 border-gray-700/50'
-                                        }`}
-                                    >
-                                        <div className="flex items-center justify-between mb-3">
-                                            <div className="flex items-center gap-3">
-                                                <span className="text-xs font-mono text-gray-500">#{stake.id}</span>
-                                                <span className={`px-2 py-1 rounded text-xs font-bold ${
-                                                    stake.status === 'active' 
-                                                        ? 'bg-green-500/20 text-green-400' 
-                                                        : stake.status === 'completed'
-                                                        ? 'bg-yellow-500/20 text-yellow-400'
-                                                        : 'bg-gray-500/20 text-gray-400'
-                                                }`}>
-                                                    {stake.status === 'active' ? '进行中' : stake.status === 'completed' ? '待赎回' : '已赎回'}
-                                                </span>
-                                            </div>
-                                            <div className="text-right">
-                                                <div className="text-lg font-bold text-white">{parseFloat(stake.amount).toFixed(4)} MC</div>
-                                                <div className="text-xs text-gray-400">{stake.cycleDays} 天周期</div>
-                                            </div>
-                                        </div>
-
-                                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
-                                            <div>
-                                                <div className="text-gray-500 text-xs">开始时间</div>
-                                                <div className="text-gray-300">
-                                                    {new Date(stake.startTime * 1000).toLocaleString('zh-CN', {
-                                                        month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
-                                                    })}
-                                                </div>
-                                            </div>
-                                            <div>
-                                                <div className="text-gray-500 text-xs">结束时间</div>
-                                                <div className="text-gray-300">
-                                                    {new Date(stake.endTime * 1000).toLocaleString('zh-CN', {
-                                                        month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
-                                                    })}
-                                                </div>
-                                            </div>
-                                            <div>
-                                                <div className="text-gray-500 text-xs">已领取</div>
-                                                <div className="text-yellow-400 font-mono">{parseFloat(stake.paid).toFixed(4)} MC</div>
-                                            </div>
-                                            <div>
-                                                <div className="text-gray-500 text-xs">待领取</div>
-                                                <div className="text-green-400 font-mono">{parseFloat(stake.pendingReward).toFixed(4)} MC</div>
-                                            </div>
-                                        </div>
-
-                                        {/* 进度条 */}
-                                        {stake.status !== 'redeemed' && (
-                                            <div className="mt-3">
-                                                <div className="flex justify-between text-xs text-gray-400 mb-1">
-                                                    <span>进度</span>
-                                                    <span>{stake.progress.toFixed(1)}%</span>
-                                                </div>
-                                                <div className="w-full bg-gray-700 rounded-full h-2">
-                                                    <div 
-                                                        className={`h-2 rounded-full transition-all ${
-                                                            stake.status === 'completed' ? 'bg-yellow-500' : 'bg-cyan-500'
-                                                        }`}
-                                                        style={{ width: `${Math.min(100, stake.progress)}%` }}
-                                                    />
-                                                </div>
-                                            </div>
-                                        )}
-                                    </div>
-                                ))}
-                            </div>
-                        </>
-                    )}
-
-                    {/* 历史质押事件 */}
-                    {stakeEvents.length > 0 && (
-                        <div className="mt-6 pt-6 border-t border-gray-700">
-                            <h4 className="text-sm font-bold text-gray-400 mb-4 flex items-center gap-2">
-                                <Clock size={16} />
-                                历史质押事件记录 ({stakeEvents.length} 笔)
-                            </h4>
-                            <div className="space-y-2 max-h-64 overflow-y-auto">
-                                {stakeEvents.map((event, idx) => (
-                                    <div 
-                                        key={idx}
-                                        className="flex items-center justify-between p-3 bg-gray-800/30 rounded-lg border border-gray-700/50 text-sm"
-                                    >
-                                        <div className="flex items-center gap-3">
-                                            <TrendingUp className="text-cyan-400" size={16} />
-                                            <div>
-                                                <div className="text-white font-bold">{parseFloat(event.amount).toFixed(4)} MC</div>
-                                                <div className="text-xs text-gray-500">
-                                                    {event.cycleDays} 天 · ID #{event.stakeId}
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div className="text-right">
-                                            <div className="text-gray-300">
-                                                {new Date(event.timestamp * 1000).toLocaleString('zh-CN')}
-                                            </div>
-                                            <a 
-                                                href={`https://mcerscan.com/tx/${event.txHash}`}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="text-xs text-cyan-400 hover:underline"
-                                            >
-                                                {event.txHash.slice(0, 10)}...{event.txHash.slice(-8)}
-                                            </a>
-                                        </div>
-                                    </div>
-                                ))}
                             </div>
                         </div>
                     )}

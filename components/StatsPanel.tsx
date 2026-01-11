@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo, useCallback } from "react"
 import { UserStats } from "../src/types"
-import { Wallet, TrendingUp, Users, Coins, Link, Ticket } from "lucide-react"
+import { Wallet, TrendingUp, Users, Coins, Link, Ticket, Star } from "lucide-react"
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"
 import { useLanguage } from "../src/LanguageContext"
 import { useWeb3 } from "../src/Web3Context"
@@ -8,6 +8,7 @@ import { useGlobalRefresh, useEventRefresh } from "../hooks/useGlobalRefresh"
 import { useRealTimePrice } from "../hooks/useRealTimePrice"
 import { useRevenueCache } from "../hooks/useRevenueCache"
 import { useIncrementalRevenue } from "../hooks/useIncrementalRevenue"
+import { useLevelOverride } from "../src/hooks/useLevelOverride"
 import { ethers } from "ethers"
 import toast from "react-hot-toast"
 import { formatContractError } from "../utils/errorFormatter"
@@ -191,6 +192,9 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
   // 使用增量更新
   const { fetchIncrementalReferralRevenue, fetchIncrementalRewardEvents } = useIncrementalRevenue()
   
+  // 使用等级覆盖
+  const { overrideLevel, hasOverride } = useLevelOverride(account)
+  
   const [displayStats, setDisplayStats] = useState<UserStats>(initialStats)
   const [rewardTotals, setRewardTotals] = useState({ mc: 0, jbc: 0 })
   const [dynamicRewards, setDynamicRewards] = useState({
@@ -290,18 +294,25 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
 
         // Calculate Level based on teamCount (userInfo[2]) - Updated standards
         let level = "V0"
+        let isOverrideLevel = false
         const teamCount = Number(userInfo[2])
         
-        // 更新的极差裂变机制等级标准
-        if (teamCount >= 100000) level = "V9"      // V9: 100,000个地址，45%极差收益
-        else if (teamCount >= 30000) level = "V8"  // V8: 30,000个地址，40%极差收益
-        else if (teamCount >= 10000) level = "V7"  // V7: 10,000个地址，35%极差收益
-        else if (teamCount >= 3000) level = "V6"   // V6: 3,000个地址，30%极差收益
-        else if (teamCount >= 1000) level = "V5"   // V5: 1,000个地址，25%极差收益
-        else if (teamCount >= 300) level = "V4"    // V4: 300个地址，20%极差收益
-        else if (teamCount >= 100) level = "V3"    // V3: 100个地址，15%极差收益
-        else if (teamCount >= 30) level = "V2"     // V2: 30个地址，10%极差收益
-        else if (teamCount >= 10) level = "V1"     // V1: 10个地址，5%极差收益
+        // 检查是否有等级覆盖
+        if (hasOverride && overrideLevel !== null && overrideLevel >= 1 && overrideLevel <= 9) {
+          level = `V${overrideLevel}`
+          isOverrideLevel = true
+        } else {
+          // 更新的极差裂变机制等级标准
+          if (teamCount >= 100000) level = "V9"      // V9: 100,000个地址，45%极差收益
+          else if (teamCount >= 30000) level = "V8"  // V8: 30,000个地址，40%极差收益
+          else if (teamCount >= 10000) level = "V7"  // V7: 10,000个地址，35%极差收益
+          else if (teamCount >= 3000) level = "V6"   // V6: 3,000个地址，30%极差收益
+          else if (teamCount >= 1000) level = "V5"   // V5: 1,000个地址，25%极差收益
+          else if (teamCount >= 300) level = "V4"    // V4: 300个地址，20%极差收益
+          else if (teamCount >= 100) level = "V3"    // V3: 100个地址，15%极差收益
+          else if (teamCount >= 30) level = "V2"     // V2: 30个地址，10%极差收益
+          else if (teamCount >= 10) level = "V1"     // V1: 10个地址，5%极差收益
+        }
 
         let referralRevenue = 0
         let rewardMc = 0
@@ -450,6 +461,7 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
           totalRevenue: combinedRevenue,
           teamCount: Number(userInfo[2]),
           currentLevel: level,
+          isOverrideLevel: isOverrideLevel,
         }))
         
       } catch (err) {
@@ -466,7 +478,7 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
     } else {
       // Not ready to fetch data
     }
-  }, [isConnected, account, jbcContract, protocolContract, provider, balances.mc, balances.jbc, referrer, getCache, setCache, isCacheValid, fetchIncrementalReferralRevenue, fetchIncrementalRewardEvents])
+  }, [isConnected, account, jbcContract, protocolContract, provider, balances.mc, balances.jbc, referrer, getCache, setCache, isCacheValid, fetchIncrementalReferralRevenue, fetchIncrementalRewardEvents, overrideLevel, hasOverride])
 
   // 监听用户等级变化事件
   useEventRefresh('userLevelChanged', () => {
@@ -759,10 +771,18 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
         {/* Stat 4 */}
         <div className="glass-panel p-4 md:p-6 rounded-xl md:rounded-2xl hover:border-amber-500/40 transition-colors bg-gradient-to-br from-black/40 to-gray-900/60 border border-gray-700 backdrop-blur-sm">
           <div className="flex items-center justify-between mb-3 md:mb-4">
-            <span className="text-gray-300 text-xs md:text-sm font-medium">{t.stats.level}</span>
+            <span className="text-gray-300 text-xs md:text-sm font-medium flex items-center gap-1">
+              {t.stats.level}
+              {displayStats.isOverrideLevel && (
+                <Star className="text-yellow-400" size={14} title="特殊等级" />
+              )}
+            </span>
             <Users className="text-amber-400" size={18} />
           </div>
-          <div className="text-2xl md:text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-neon-400 to-amber-400 mb-1 text-right">
+          <div className="text-2xl md:text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-neon-400 to-amber-400 mb-1 text-right flex items-center justify-end gap-2">
+            {displayStats.isOverrideLevel && (
+              <span className="text-xs bg-yellow-500/20 text-yellow-400 px-2 py-0.5 rounded font-normal">特殊</span>
+            )}
             {displayStats.currentLevel}
           </div>
           <div className="text-xs text-gray-400 text-right font-mono">

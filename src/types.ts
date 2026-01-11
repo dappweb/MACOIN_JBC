@@ -23,6 +23,7 @@ export interface UserStats {
   balanceJBC: number;
   totalRevenue: number;
   currentLevel: string;
+  isOverrideLevel?: boolean; // 是否是管理员覆盖的等级
   teamCount: number;
   activeInvestment: number; // Total value locked
   pendingRewards: number;

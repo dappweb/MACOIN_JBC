@@ -179,6 +179,61 @@ export default {
       }
     }
 
+    // GET /burn-status - 获取燃烧状态
+    if (request.method === "GET" && url.pathname === "/burn-status") {
+      try {
+        const RPC_URL = 'https://chain.mcerscan.com/';
+        const PROTOCOL_ADDRESS = '0x0897Cee05E43B2eCf331cd80f881c211eb86844E';
+        
+        // 调用合约获取数据
+        const rpcCall = async (method, params) => {
+          const response = await fetch(RPC_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ jsonrpc: '2.0', id: 1, method, params }),
+          });
+          const data = await response.json();
+          if (data.error) throw new Error(data.error.message);
+          return data.result;
+        };
+
+        // lastBurnTime() selector: 0xe3067449
+        const lastBurnTimeHex = await rpcCall('eth_call', [
+          { to: PROTOCOL_ADDRESS, data: '0xe3067449' },
+          'latest',
+        ]);
+        const lastBurnTime = parseInt(lastBurnTimeHex, 16);
+
+        // swapReserveJBC() selector: 0x1d0dac76
+        const jbcReserveHex = await rpcCall('eth_call', [
+          { to: PROTOCOL_ADDRESS, data: '0x1d0dac76' },
+          'latest',
+        ]);
+        const jbcReserve = BigInt(jbcReserveHex);
+
+        const now = Math.floor(Date.now() / 1000);
+        const nextBurnTime = lastBurnTime + 24 * 3600;
+        const canBurn = now >= nextBurnTime;
+        const expectedBurn = jbcReserve / 100n;
+
+        return new Response(JSON.stringify({
+          canBurn,
+          lastBurnTime: new Date(lastBurnTime * 1000).toISOString(),
+          nextBurnTime: new Date(nextBurnTime * 1000).toISOString(),
+          secondsUntilBurn: Math.max(0, nextBurnTime - now),
+          jbcReserve: Number(jbcReserve) / 1e18,
+          expectedBurnAmount: Number(expectedBurn) / 1e18,
+        }), {
+          headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" }
+        });
+      } catch (e) {
+        return new Response(JSON.stringify({ error: e.message }), {
+          status: 500,
+          headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" }
+        });
+      }
+    }
+
     // CORS Preflight
     if (request.method === "OPTIONS") {
       return new Response(null, {

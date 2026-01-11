@@ -20,7 +20,7 @@ const SwapPanel: React.FC = () => {
   const { jbcContract, protocolContract, account, isConnected, provider, hasReferrer, isOwner, mcBalance } = useWeb3();
   
   // 使用全局刷新机制
-  const { balances, onTransactionSuccess } = useGlobalRefresh();
+  const { balances, priceData, onTransactionSuccess } = useGlobalRefresh();
   
   const [payAmount, setPayAmount] = useState('');
   const [getAmount, setGetAmount] = useState('');
@@ -497,19 +497,28 @@ const SwapPanel: React.FC = () => {
             </div>
 
             {/* Pool Liquidity Info */}
-            <div className="bg-gray-800/50 p-3 rounded-lg text-xs text-gray-400 flex justify-between items-center border border-gray-700">
-                <span className="font-bold flex items-center gap-2">
-                    {isLoadingPoolData && <Loader2 className="animate-spin w-3 h-3" />}
-                    {t.swap.poolLiquidity}:
-                </span>
-                <div className="flex gap-3">
-                    <span className="flex items-center gap-1">
-                        <div className="w-2 h-2 rounded-full bg-neon-500"></div> 
-                        {isLoadingPoolData ? '...' : parseFloat(poolMC).toLocaleString()} MC
+            <div className="bg-gray-800/50 p-3 rounded-lg text-xs text-gray-400 border border-gray-700">
+                <div className="flex justify-between items-center mb-2">
+                    <span className="font-bold flex items-center gap-2">
+                        {isLoadingPoolData && <Loader2 className="animate-spin w-3 h-3" />}
+                        {t.swap.poolLiquidity}:
                     </span>
-                    <span className="flex items-center gap-1">
-                        <div className="w-2 h-2 rounded-full bg-amber-500"></div> 
-                        {isLoadingPoolData ? '...' : parseFloat(poolJBC).toLocaleString()} JBC
+                    <div className="flex gap-3">
+                        <span className="flex items-center gap-1">
+                            <div className="w-2 h-2 rounded-full bg-neon-500"></div> 
+                            {isLoadingPoolData ? '...' : parseFloat(poolMC).toLocaleString()} MC
+                        </span>
+                        <span className="flex items-center gap-1">
+                            <div className="w-2 h-2 rounded-full bg-amber-500"></div> 
+                            {isLoadingPoolData ? '...' : parseFloat(poolJBC).toLocaleString()} JBC
+                        </span>
+                    </div>
+                </div>
+                {/* JBC Price Display - 与首页同步 */}
+                <div className="pt-2 border-t border-gray-700/50 flex justify-between items-center">
+                    <span className="text-gray-500">JBC 价格:</span>
+                    <span className="text-amber-400 font-bold font-mono">
+                        1 JBC = {parseFloat(priceData.jbcPrice.toString()).toFixed(6)} MC
                     </span>
                 </div>
             </div>

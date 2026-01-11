@@ -415,28 +415,21 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
         }
 
         const baseRevenue = parseFloat(ethers.formatEther(userInfo[3]))
-        // 累计收益 = 合约状态的基础收益 + 推荐奖励 + 动态奖励
-        let combinedRevenue = baseRevenue + referralRevenue + dynamicTotalEarned
+        // 累计收益计算说明：
+        // - baseRevenue (totalRevenue) 已经包含了所有奖励：挖矿奖励 + 推荐奖励 + 级差奖励
+        // - 推荐奖励通过 _distributeReward 函数分配时，会执行 u.totalRevenue += payout
+        // - 所以不应该再把 referralRevenue 加一次，否则会重复计算
+        // - 动态奖励（dynamicTotalEarned）是独立的，不包含在 totalRevenue 中
+        let combinedRevenue = baseRevenue + dynamicTotalEarned
         
-        // 4. 数据验证：检查计算值与合约状态的一致性
-        // 注意：合约的 totalRevenue 只包含静态奖励，不包含推荐奖励和动态奖励
-        // 所以我们需要验证：combinedRevenue >= baseRevenue
+        // 数据验证：确保累计收益不小于基础收益
         if (combinedRevenue < baseRevenue) {
           console.warn('Revenue calculation error: combined < base, using base revenue');
-          combinedRevenue = baseRevenue + dynamicTotalEarned; // 至少使用基础收益
+          combinedRevenue = baseRevenue + dynamicTotalEarned;
         }
         
-        // 验证推荐奖励的合理性（不应该超过基础收益的某个倍数）
-        // 推荐奖励通常不会超过基础收益的10倍（根据业务逻辑调整）
-        const maxExpectedReferralRevenue = baseRevenue * 10;
-        if (referralRevenue > maxExpectedReferralRevenue) {
-          console.warn('Referral revenue seems unusually high, verifying...', {
-            referralRevenue,
-            baseRevenue,
-            ratio: referralRevenue / baseRevenue
-          });
-          // 不阻止显示，但记录警告
-        }
+        // 记录推荐奖励用于历史统计显示（但不加到累计收益中）
+        // referralRevenue 仅用于"历史奖励统计"部分的显示
         
         // 3. 更新缓存
         if (provider) {

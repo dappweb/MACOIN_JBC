@@ -110,17 +110,42 @@ export const useRealTimePrice = () => {
   // 初始化历史价格数据
   useEffect(() => {
     const initializePriceHistory = async () => {
-      if (!protocolContract || !provider) return;
+      if (!protocolContract || !provider) {
+        console.log('⚠️ [RealTimePrice] 协议合约或提供者未就绪，使用默认数据');
+        // 即使没有合约，也生成一些默认数据点以确保图表显示
+        const now = Math.floor(Date.now() / 1000);
+        const defaultPoints: PricePoint[] = [];
+        for (let i = 24; i > 0; i--) {
+          defaultPoints.push({
+            timestamp: now - (i * 3600),
+            price: 1.0
+          });
+        }
+        setPriceHistory(defaultPoints);
+        calculatePriceStats(defaultPoints);
+        setCurrentPrice(1.0);
+        return;
+      }
 
       try {
+        console.log('📊 [RealTimePrice] 开始初始化价格历史...');
         const currentBlock = await provider.getBlockNumber();
         const fromBlock = Math.max(0, currentBlock - 50000); // 减少查询范围提高性能
+        console.log(`📊 [RealTimePrice] 查询区块范围: ${fromBlock} - ${currentBlock}`);
 
         // 查询最近的兑换事件
         const [mcToJbcEvents, jbcToMcEvents] = await Promise.all([
-          protocolContract.queryFilter(protocolContract.filters.SwappedMCToJBC(), fromBlock),
-          protocolContract.queryFilter(protocolContract.filters.SwappedJBCToMC(), fromBlock),
+          protocolContract.queryFilter(protocolContract.filters.SwappedMCToJBC(), fromBlock).catch(err => {
+            console.warn('⚠️ [RealTimePrice] 查询SwappedMCToJBC事件失败:', err);
+            return [];
+          }),
+          protocolContract.queryFilter(protocolContract.filters.SwappedJBCToMC(), fromBlock).catch(err => {
+            console.warn('⚠️ [RealTimePrice] 查询SwappedJBCToMC事件失败:', err);
+            return [];
+          }),
         ]);
+
+        console.log(`📊 [RealTimePrice] 找到 ${mcToJbcEvents.length} 个MC->JBC事件, ${jbcToMcEvents.length} 个JBC->MC事件`);
 
         const pricePoints: PricePoint[] = [];
 
@@ -167,8 +192,11 @@ export const useRealTimePrice = () => {
         // 按时间排序
         pricePoints.sort((a, b) => a.timestamp - b.timestamp);
         
+        console.log(`📊 [RealTimePrice] 处理完成，共 ${pricePoints.length} 个价格点`);
+        
         // 如果数据点太少，添加一些基础数据点
         if (pricePoints.length < 10) {
+          console.log('⚠️ [RealTimePrice] 数据点不足，补充默认数据点');
           const now = Math.floor(Date.now() / 1000);
           const basePrice = pricePoints.length > 0 ? pricePoints[pricePoints.length - 1].price : 1.0;
           
@@ -187,8 +215,22 @@ export const useRealTimePrice = () => {
           setCurrentPrice(pricePoints[pricePoints.length - 1].price);
         }
 
+        console.log('✅ [RealTimePrice] 价格历史初始化完成');
+
       } catch (error) {
         console.error('❌ [RealTimePrice] 初始化价格历史失败:', error);
+        // 即使出错，也生成默认数据点以确保图表显示
+        const now = Math.floor(Date.now() / 1000);
+        const defaultPoints: PricePoint[] = [];
+        for (let i = 24; i > 0; i--) {
+          defaultPoints.push({
+            timestamp: now - (i * 3600),
+            price: 1.0
+          });
+        }
+        setPriceHistory(defaultPoints);
+        calculatePriceStats(defaultPoints);
+        setCurrentPrice(1.0);
       }
     };
 

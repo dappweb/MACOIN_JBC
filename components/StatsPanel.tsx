@@ -52,6 +52,17 @@ const generateMockPriceData = (): PriceDataPoint[] => {
 
 // Memoized Chart Component
 const MemoizedPriceChart = React.memo(({ priceHistory, t }: { priceHistory: PriceDataPoint[], t: any }) => {
+  console.log('📈 [MemoizedPriceChart] 渲染图表，数据点数量:', priceHistory.length);
+  
+  if (!priceHistory || priceHistory.length === 0) {
+    console.warn('⚠️ [MemoizedPriceChart] 价格历史数据为空，显示占位符');
+    return (
+      <div className="h-[200px] sm:h-[300px] md:h-[400px] w-full flex items-center justify-center bg-gray-900/50 rounded border border-gray-700">
+        <p className="text-gray-400 text-sm">暂无价格数据</p>
+      </div>
+    );
+  }
+  
   return (
     <div className="h-[200px] sm:h-[300px] md:h-[400px] w-full overflow-x-auto">
       <ResponsiveContainer width="100%" height="100%" minWidth={300}>
@@ -210,12 +221,15 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
 
   // 格式化价格历史数据用于图表显示
   const priceHistory: PriceDataPoint[] = useMemo(() => {
+    console.log('📊 [StatsPanel] 格式化价格历史数据, rawPriceHistory长度:', rawPriceHistory.length);
+    
     if (rawPriceHistory.length === 0) {
+      console.log('⚠️ [StatsPanel] 价格历史为空，使用模拟数据');
       return generateMockPriceData()
     }
 
     // 转换实时价格数据为图表格式
-    return rawPriceHistory.map((point: any) => {
+    const formatted = rawPriceHistory.map((point: any) => {
       const date = new Date(point.timestamp * 1000)
       const timeStr = `${date.getHours().toString().padStart(2, "0")}:${date.getMinutes().toString().padStart(2, "0")}`
       
@@ -228,6 +242,9 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
         change: 0
       }
     })
+    
+    console.log('✅ [StatsPanel] 格式化完成，共', formatted.length, '个数据点');
+    return formatted;
   }, [rawPriceHistory])
 
   // 监听余额变化事件

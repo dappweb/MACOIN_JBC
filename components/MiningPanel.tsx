@@ -1408,7 +1408,7 @@ const MiningPanel: React.FC = () => {
                             </div>
                             {jbcPrice > 0 && (
                                 <div className="text-xs text-gray-600 text-right mt-1 px-1">
-                                    1 JBC ≈ {jbcPrice.toFixed(4)} MC
+                                    1 JBC ≈ {jbcPrice.toFixed(6)} MC
                                 </div>
                             )}
                          </div>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useWeb3, CONTRACT_ADDRESSES, DAILY_BURN_MANAGER_ABI } from '../src/Web3Context';
-import { Settings, Save, AlertTriangle, Megaphone, CheckCircle, XCircle, Users, Crown, Flame, Coins } from 'lucide-react';
+import { Settings, Save, AlertTriangle, Megaphone, CheckCircle, XCircle, Users, Crown, Flame, Coins, Database } from 'lucide-react';
 import { useLanguage } from '../src/LanguageContext';
 import { ethers } from 'ethers';
 import toast from 'react-hot-toast';
@@ -13,12 +13,13 @@ import LevelDisplay from './LevelDisplay';
 import LevelSystemInfo from './LevelSystemInfo';
 import AdminLevelDisplay from './AdminLevelDisplay';
 import NotificationSettings from './NotificationSettings';
+import AdminFinancialDataUpdater from './AdminFinancialDataUpdater';
 
 const AdminPanel: React.FC = () => {
   const { t } = useLanguage();
   const { protocolContract, isConnected, account, provider, jbcContract, isOwner, mcBalance, refreshMcBalance, signer } = useWeb3();
   const [loading, setLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'levels' | 'settings' | 'burn' | 'jbc'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'levels' | 'settings' | 'burn' | 'jbc' | 'financial'>('overview');
   
   // 双重保护：如果通过其他方式访问，检查 owner 状态
   useEffect(() => {
@@ -1357,6 +1358,17 @@ const AdminPanel: React.FC = () => {
             <Coins className="inline mr-2" size={16} />
             JBC管理
           </button>
+          <button
+            onClick={() => setActiveTab('financial')}
+            className={`px-6 py-3 rounded-lg font-bold text-sm transition-all ${
+              activeTab === 'financial'
+                ? 'bg-indigo-600 text-white shadow-lg'
+                : 'text-gray-400 hover:text-white hover:bg-gray-800/50'
+            }`}
+          >
+            <Database className="inline mr-2" size={16} />
+            财务数据
+          </button>
         </div>
       </div>
 
@@ -1405,6 +1417,8 @@ const AdminPanel: React.FC = () => {
       {/* Tab Content */}
       {activeTab === 'users' ? (
         <AdminUserManager />
+      ) : activeTab === 'financial' ? (
+        <AdminFinancialDataUpdater />
       ) : activeTab === 'levels' ? (
         <div className="space-y-6">
           {/* 等级系统说明 */}

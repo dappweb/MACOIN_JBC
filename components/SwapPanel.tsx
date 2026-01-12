@@ -46,6 +46,16 @@ const SwapPanel: React.FC = () => {
     isApproving: boolean;
   }>({ isApproved: false, isChecking: false, isApproving: false });
 
+  // 价格波动检测
+  const [priceImpact, setPriceImpact] = useState<{
+    currentPrice: number;
+    expectedPrice: number;
+    priceChange: number;
+    isHighImpact: boolean;
+    tradeRatio?: number; // 交易金额占池子的比例
+    showWarning?: boolean; // 是否显示警告
+  } | null>(null);
+
   // 从全局状态和原生余额获取余额
   const balanceMC = mcBalance ? ethers.formatEther(mcBalance) : '0';
   const balanceJBC = balances.jbc;
@@ -106,6 +116,15 @@ const SwapPanel: React.FC = () => {
   }, [isConnected, account, jbcContract, protocolContract, provider]);
 
   // Debounce effect for calculating estimate and validation
+  // 调试：验证价格同步（与首页同步）
+  useEffect(() => {
+    console.log('💱 [SwapPanel] JBC价格更新:', {
+      price: parseFloat(priceData.jbcPrice.toString()).toFixed(6),
+      source: 'useGlobalRefresh',
+      timestamp: priceData.lastUpdated
+    });
+  }, [priceData.jbcPrice, priceData.lastUpdated]);
+
   useEffect(() => {
     const timer = setTimeout(() => {
       calculateEstimate(payAmount);
@@ -310,19 +329,32 @@ const SwapPanel: React.FC = () => {
   const calculateEstimate = (val: string) => {
       if (!val) {
           setGetAmount('');
+          setPriceImpact(null);
           return;
       }
       
       const amount = parseFloat(val);
       if (isNaN(amount) || amount <= 0) {
           setGetAmount('');
+          setPriceImpact(null);
           return;
       }
 
       const rMc = parseFloat(poolMC);
       const rJbc = parseFloat(poolJBC);
 
+      if (rMc <= 0 || rJbc <= 0) {
+          setGetAmount('');
+          setPriceImpact(null);
+          return;
+      }
+
+      // 计算当前价格
+      const currentPrice = rMc / rJbc;
+
       let received = 0;
+      let newReserveMC = rMc;
+      let newReserveJBC = rJbc;
 
       // AMM Formula: dy = (y * dx) / (x + dx)
       // x = ReserveIn, y = ReserveOut, dx = AmountIn
@@ -335,25 +367,69 @@ const SwapPanel: React.FC = () => {
           
           // 2. AMM Swap (Input JBC, Output MC)
           // ReserveIn = JBC Pool, ReserveOut = MC Pool
-          if (rJbc > 0 && rMc > 0) {
-              // Note: rJbc is current pool.
-              received = (amountToSwap * rMc) / (rJbc + amountToSwap);
-          }
+          received = (amountToSwap * rMc) / (rJbc + amountToSwap);
+          
+          // 计算交易后的池子储备
+          newReserveMC = rMc - received;
+          newReserveJBC = rJbc + amountToSwap;
       } else {
           // Buy JBC (Input MC) -> Get JBC
           // 1. AMM Swap (Input MC, Output JBC)
           // ReserveIn = MC Pool, ReserveOut = JBC Pool
-          let outPreTax = 0;
-          if (rMc > 0 && rJbc > 0) {
-              outPreTax = (amount * rJbc) / (rMc + amount);
-          }
+          const outPreTax = (amount * rJbc) / (rMc + amount);
           
           // 2. Tax 50% on Output
           const tax = outPreTax * 0.50;
           received = outPreTax - tax;
+          
+          // 计算交易后的池子储备
+          newReserveMC = rMc + amount;
+          newReserveJBC = rJbc - outPreTax;
       }
       
       setGetAmount(received.toFixed(4));
+
+      // 计算交易后的预期价格
+      const expectedPrice = newReserveMC / newReserveJBC;
+      const priceChange = ((expectedPrice - currentPrice) / currentPrice) * 100;
+      
+      // 计算交易金额占池子的比例
+      let tradeRatio = 0;
+      if (isSelling) {
+          // 卖出JBC，计算输入JBC占池子JBC的比例
+          tradeRatio = (amount / rJbc) * 100;
+      } else {
+          // 买入JBC，计算输入MC占池子MC的比例
+          tradeRatio = (amount / rMc) * 100;
+      }
+      
+      // 动态调整阈值：小额交易（<0.1%池子）不显示警告，中等交易（0.1%-1%）显示提示，大额交易（>1%）显示警告
+      // 价格变化阈值也根据交易规模调整
+      let isHighImpact = false;
+      let showWarning = true;
+      
+      if (tradeRatio < 0.1) {
+          // 极小交易（<0.1%池子），价格影响应该很小，不显示警告
+          showWarning = Math.abs(priceChange) > 0.5; // 只有价格变化>0.5%才显示
+          isHighImpact = Math.abs(priceChange) > 1; // 价格变化>1%才视为高影响
+      } else if (tradeRatio < 1) {
+          // 小额交易（0.1%-1%池子）
+          showWarning = Math.abs(priceChange) > 0.3;
+          isHighImpact = Math.abs(priceChange) > 0.5; // 价格变化>0.5%视为高影响
+      } else {
+          // 大额交易（>1%池子）
+          showWarning = true;
+          isHighImpact = Math.abs(priceChange) > 0.3; // 价格变化>0.3%视为高影响
+      }
+
+      setPriceImpact({
+          currentPrice,
+          expectedPrice,
+          priceChange,
+          isHighImpact,
+          tradeRatio,
+          showWarning
+      });
   };
 
   const handleInput = (val: string) => {
@@ -522,6 +598,45 @@ const SwapPanel: React.FC = () => {
                     </span>
                 </div>
             </div>
+
+            {/* Price Impact Warning - 价格波动警告 */}
+            {priceImpact && payAmount && parseFloat(payAmount) > 0 && priceImpact.showWarning && (
+                <div className={`p-3 rounded-lg text-xs border backdrop-blur-sm ${
+                    priceImpact.isHighImpact 
+                        ? 'bg-red-900/20 border-red-500/30 text-red-300' 
+                        : 'bg-yellow-900/20 border-yellow-500/30 text-yellow-300'
+                }`}>
+                    <div className="flex items-center justify-between mb-1">
+                        <span className="font-bold">价格影响:</span>
+                        <span className={`font-mono font-bold ${
+                            priceImpact.isHighImpact ? 'text-red-400' : 'text-yellow-400'
+                        }`}>
+                            {priceImpact.priceChange > 0 ? '+' : ''}{priceImpact.priceChange.toFixed(4)}%
+                        </span>
+                    </div>
+                    <div className="text-xs opacity-80 space-y-0.5">
+                        <div className="flex justify-between">
+                            <span>当前价格:</span>
+                            <span className="font-mono">{priceImpact.currentPrice.toFixed(6)} MC</span>
+                        </div>
+                        <div className="flex justify-between">
+                            <span>预期价格:</span>
+                            <span className="font-mono">{priceImpact.expectedPrice.toFixed(6)} MC</span>
+                        </div>
+                        {priceImpact.tradeRatio !== undefined && (
+                            <div className="flex justify-between">
+                                <span>交易占比:</span>
+                                <span className="font-mono">{priceImpact.tradeRatio.toFixed(4)}%</span>
+                            </div>
+                        )}
+                    </div>
+                    {priceImpact.isHighImpact && (
+                        <div className="mt-2 pt-2 border-t border-red-500/30 text-red-200">
+                            ⚠️ 警告：此交易将导致价格波动较大，请谨慎操作
+                        </div>
+                    )}
+                </div>
+            )}
 
             {/* Validation Alert */}
             {!validationResult.isValid && (

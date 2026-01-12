@@ -215,9 +215,18 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
     claimableAmount: 0
   })
 
-  // 从全局状态获取价格数据
+  // 从全局状态获取价格数据（与Swap面板同步）
   const jbcPrice = priceData.jbcPrice.toString()
   const mcUsdtPrice = priceData.mcUsdtPrice
+  
+  // 调试：验证价格同步
+  useEffect(() => {
+    console.log('🏠 [StatsPanel] JBC价格更新:', {
+      price: parseFloat(jbcPrice).toFixed(6),
+      source: 'useGlobalRefresh',
+      timestamp: priceData.lastUpdated
+    });
+  }, [jbcPrice, priceData.lastUpdated]);
 
   // 格式化价格历史数据用于图表显示
   const priceHistory: PriceDataPoint[] = useMemo(() => {
@@ -727,7 +736,7 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
           </div>
           <div className="text-xs text-amber-400 text-right font-mono">
             ≈{(displayStats.balanceJBC * parseFloat(jbcPrice)).toFixed(2)} MC (Price:{" "}
-            {parseFloat(jbcPrice).toFixed(4)})
+            {parseFloat(jbcPrice).toFixed(6)})
           </div>
         </div>
 

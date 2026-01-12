@@ -68,13 +68,17 @@ const AdminUserManager: React.FC = () => {
 
     // 设置等级覆盖
     const setLevelOverrideApi = async (address: string, level: number | null) => {
+        console.log('🔧 [LevelOverride] 开始设置等级覆盖:', { address, level, adminAccount: account });
+        
         if (!account) {
             toast.error('请先连接钱包');
+            console.error('❌ [LevelOverride] 未连接钱包');
             return false;
         }
         
         setIsUpdatingLevel(true);
         try {
+            console.log('📡 [LevelOverride] 发送请求到:', `${API_BASE_URL}/level-override`);
             const response = await fetch(`${API_BASE_URL}/level-override`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -85,18 +89,29 @@ const AdminUserManager: React.FC = () => {
                 })
             });
 
+            console.log('📥 [LevelOverride] 响应状态:', response.status, response.statusText);
+
             if (response.ok) {
                 const data = await response.json();
+                console.log('✅ [LevelOverride] 响应数据:', data);
                 if (data.success) {
                     toast.success(level ? `等级已设置为 V${level}` : '已清除等级覆盖');
                     return true;
+                } else {
+                    toast.error('设置失败: 响应无 success 标志');
                 }
             } else {
                 const errorData = await response.json();
+                console.error('❌ [LevelOverride] API错误:', errorData);
                 toast.error(errorData.error || '设置失败');
+                
+                // 特别处理权限问题
+                if (response.status === 401) {
+                    toast.error(`权限验证失败: 当前钱包 ${account.slice(0,10)}... 不是管理员`);
+                }
             }
         } catch (error) {
-            console.error('Failed to set level override:', error);
+            console.error('❌ [LevelOverride] 网络错误:', error);
             toast.error('网络错误，设置失败');
         } finally {
             setIsUpdatingLevel(false);
@@ -188,6 +203,9 @@ const AdminUserManager: React.FC = () => {
             const newActiveDirects = parseInt(editData.activeDirects);
             const newTeamCount = parseInt(editData.teamCount);
             const newReferrer = editData.referrer.trim();
+            const newTotalRevenue = parseFloat(editData.totalRevenue);
+            const newCurrentCap = parseFloat(editData.currentCap);
+            const newRefundFeeAmount = parseFloat(editData.refundFeeAmount);
             
             // 检查推荐人地址是否有效
             const shouldUpdateReferrer = newReferrer !== '' && 
@@ -195,8 +213,15 @@ const AdminUserManager: React.FC = () => {
                                         newReferrer.toLowerCase() !== userInfo.referrer.toLowerCase();
             const shouldUpdateActiveDirects = !isNaN(newActiveDirects) && newActiveDirects !== userInfo.activeDirects;
             const shouldUpdateTeamCount = !isNaN(newTeamCount) && newTeamCount !== userInfo.teamCount;
+            const shouldUpdateTotalRevenue = !isNaN(newTotalRevenue) && 
+                                            Math.abs(newTotalRevenue - parseFloat(userInfo.totalRevenue)) > 0.0001;
+            const shouldUpdateCurrentCap = !isNaN(newCurrentCap) && 
+                                          Math.abs(newCurrentCap - parseFloat(userInfo.currentCap)) > 0.0001;
+            const shouldUpdateRefundFeeAmount = !isNaN(newRefundFeeAmount) && 
+                                               Math.abs(newRefundFeeAmount - parseFloat(userInfo.refundFeeAmount)) > 0.0001;
 
-            if (!shouldUpdateReferrer && !shouldUpdateActiveDirects && !shouldUpdateTeamCount) {
+            if (!shouldUpdateReferrer && !shouldUpdateActiveDirects && !shouldUpdateTeamCount && 
+                !shouldUpdateTotalRevenue && !shouldUpdateCurrentCap && !shouldUpdateRefundFeeAmount) {
                 toast('没有需要更新的数据', { icon: 'ℹ️', duration: 3000 });
                 setEditMode(false);
                 setLoading(false);
@@ -219,50 +244,87 @@ const AdminUserManager: React.FC = () => {
 
             console.log('🚀 [AdminUserManager] Updating user data...');
             
+            // 收集所有需要执行的更新交易
+            const updates: Promise<any>[] = [];
+
             // 先处理推荐人修改（如果合约支持）
             if (shouldUpdateReferrer && protocolContract.adminSetReferrer) {
                 console.log('📝 [AdminUserManager] Updating referrer...');
-                const referrerTx = await protocolContract.adminSetReferrer(
-                    userInfo.address,
-                    newReferrer
+                updates.push(
+                    protocolContract.adminSetReferrer(userInfo.address, newReferrer)
+                        .then(tx => {
+                            console.log('⏳ [AdminUserManager] Waiting for referrer update confirmation...');
+                            return tx.wait();
+                        })
+                        .then(receipt => {
+                            console.log('✅ [AdminUserManager] Referrer update confirmed:', receipt.hash);
+                        })
                 );
-                console.log('⏳ [AdminUserManager] Waiting for referrer update confirmation...');
-                await referrerTx.wait();
-                console.log('✅ [AdminUserManager] Referrer update confirmed:', referrerTx.hash);
             }
-            
-            // 使用 adminUpdateUserData 一次性更新其他数据
-            if (protocolContract.adminUpdateUserData && (shouldUpdateActiveDirects || shouldUpdateTeamCount)) {
-                const tx = await protocolContract.adminUpdateUserData(
-                    userInfo.address,
-                    shouldUpdateActiveDirects, shouldUpdateActiveDirects ? newActiveDirects : 0,
-                    shouldUpdateTeamCount, shouldUpdateTeamCount ? newTeamCount : 0,
-                    false, 0, // updateTotalRevenue
-                    false, 0, // updateCurrentCap
-                    false, 0  // updateRefundFee
+
+            // 更新活跃直推数
+            if (shouldUpdateActiveDirects && protocolContract.adminSetActiveDirects) {
+                console.log('📝 [AdminUserManager] Updating activeDirects...');
+                updates.push(
+                    protocolContract.adminSetActiveDirects(userInfo.address, newActiveDirects)
+                        .then(tx => tx.wait())
                 );
+            }
 
-                console.log('⏳ [AdminUserManager] Waiting for transaction confirmation...');
-                await tx.wait();
-                console.log('✅ [AdminUserManager] Transaction confirmed:', tx.hash);
-            } else if (shouldUpdateActiveDirects || shouldUpdateTeamCount) {
-                // 如果 adminUpdateUserData 不存在，尝试回退到旧的单独函数（为了兼容性，虽然可能不存在）
-                console.warn('⚠️ [AdminUserManager] adminUpdateUserData not found, trying individual setters...');
-                const updates: Promise<any>[] = [];
+            // 更新团队人数
+            if (shouldUpdateTeamCount && protocolContract.adminSetTeamCount) {
+                console.log('📝 [AdminUserManager] Updating teamCount...');
+                updates.push(
+                    protocolContract.adminSetTeamCount(userInfo.address, newTeamCount)
+                        .then(tx => tx.wait())
+                );
+            }
 
-                if (shouldUpdateActiveDirects && protocolContract.adminSetActiveDirects) {
-                    updates.push(protocolContract.adminSetActiveDirects(userInfo.address, newActiveDirects));
-                }
-                
-                if (shouldUpdateTeamCount && protocolContract.adminSetTeamCount) {
-                    updates.push(protocolContract.adminSetTeamCount(userInfo.address, newTeamCount));
-                }
+            // 更新累计收益
+            if (shouldUpdateTotalRevenue && protocolContract.adminSetTotalRevenue) {
+                console.log('📝 [AdminUserManager] Updating totalRevenue...');
+                updates.push(
+                    protocolContract.adminSetTotalRevenue(
+                        userInfo.address, 
+                        ethers.parseEther(newTotalRevenue.toString())
+                    )
+                        .then(tx => tx.wait())
+                );
+            }
 
-                if (updates.length === 0) {
-                    throw new Error('合约不支持此时的用户数据更新操作');
-                }
+            // 更新收益上限
+            if (shouldUpdateCurrentCap && protocolContract.adminSetCurrentCap) {
+                console.log('📝 [AdminUserManager] Updating currentCap...');
+                updates.push(
+                    protocolContract.adminSetCurrentCap(
+                        userInfo.address, 
+                        ethers.parseEther(newCurrentCap.toString())
+                    )
+                        .then(tx => tx.wait())
+                );
+            }
 
-                await Promise.all(updates.map(p => p.then(tx => tx.wait())));
+            // 更新退款费用
+            if (shouldUpdateRefundFeeAmount && protocolContract.adminSetRefundFeeAmount) {
+                console.log('📝 [AdminUserManager] Updating refundFeeAmount...');
+                updates.push(
+                    protocolContract.adminSetRefundFeeAmount(
+                        userInfo.address, 
+                        ethers.parseEther(newRefundFeeAmount.toString())
+                    )
+                        .then(tx => tx.wait())
+                );
+            }
+
+            if (updates.length === 0) {
+                throw new Error('没有需要更新的数据或合约不支持这些操作');
+            }
+
+            // 执行所有更新（顺序执行，避免gas问题）
+            console.log(`🚀 [AdminUserManager] 执行 ${updates.length} 个更新操作...`);
+            for (let i = 0; i < updates.length; i++) {
+                await updates[i];
+                console.log(`✅ [AdminUserManager] 更新 ${i + 1}/${updates.length} 完成`);
             }
 
             toast.success('用户数据更新成功！');
@@ -547,7 +609,15 @@ const AdminUserManager: React.FC = () => {
                                 <div className="flex items-center gap-2">
                                     <select
                                         value={selectedOverrideLevel ?? ''}
-                                        onChange={(e) => setSelectedOverrideLevel(e.target.value ? parseInt(e.target.value) : null)}
+                                        onChange={(e) => {
+                                            const newValue = e.target.value ? parseInt(e.target.value) : null;
+                                            console.log('🎯 [LevelOverride] 下拉框变化:', { 
+                                                rawValue: e.target.value, 
+                                                parsedValue: newValue,
+                                                currentOverride: userInfo.overrideLevel 
+                                            });
+                                            setSelectedOverrideLevel(newValue);
+                                        }}
                                         className="flex-1 p-3 border border-gray-700 bg-gray-900/50 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-yellow-500/50"
                                     >
                                         <option value="">自动计算 (V{userInfo.level})</option>
@@ -563,6 +633,13 @@ const AdminUserManager: React.FC = () => {
                                     </select>
                                     <button
                                         onClick={async () => {
+                                            console.log('🔘 [LevelOverride] 应用按钮点击:', {
+                                                targetAddress: userInfo.address,
+                                                selectedLevel: selectedOverrideLevel,
+                                                currentOverride: userInfo.overrideLevel,
+                                                isUpdating: isUpdatingLevel,
+                                                buttonShouldBeDisabled: isUpdatingLevel || selectedOverrideLevel === userInfo.overrideLevel
+                                            });
                                             const success = await setLevelOverrideApi(userInfo.address, selectedOverrideLevel);
                                             if (success) {
                                                 // 重新加载用户信息
@@ -582,6 +659,11 @@ const AdminUserManager: React.FC = () => {
                                 </div>
                                 <p className="text-xs text-gray-500 mt-1">
                                     设置后，该用户在页面上将显示指定等级，选择"自动计算"可清除覆盖
+                                </p>
+                                {/* 调试信息 */}
+                                <p className="text-xs text-blue-400 mt-1">
+                                    调试: 选中={selectedOverrideLevel ?? '空'}, 当前覆盖={userInfo.overrideLevel ?? '无'}, 
+                                    按钮禁用={String(isUpdatingLevel || selectedOverrideLevel === userInfo.overrideLevel)}
                                 </p>
                             </div>
                         </div>

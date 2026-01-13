@@ -263,16 +263,16 @@ const AdminUserManager: React.FC = () => {
             }
 
             // 更新活跃直推数
-            if (shouldUpdateActiveDirects && protocolContract.adminSetActiveDirects) {
+                if (shouldUpdateActiveDirects && protocolContract.adminSetActiveDirects) {
                 console.log('📝 [AdminUserManager] Updating activeDirects...');
                 updates.push(
                     protocolContract.adminSetActiveDirects(userInfo.address, newActiveDirects)
                         .then(tx => tx.wait())
                 );
-            }
-
+                }
+                
             // 更新团队人数
-            if (shouldUpdateTeamCount && protocolContract.adminSetTeamCount) {
+                if (shouldUpdateTeamCount && protocolContract.adminSetTeamCount) {
                 console.log('📝 [AdminUserManager] Updating teamCount...');
                 updates.push(
                     protocolContract.adminSetTeamCount(userInfo.address, newTeamCount)
@@ -314,11 +314,11 @@ const AdminUserManager: React.FC = () => {
                     )
                         .then(tx => tx.wait())
                 );
-            }
+                }
 
-            if (updates.length === 0) {
+                if (updates.length === 0) {
                 throw new Error('没有需要更新的数据或合约不支持这些操作');
-            }
+                }
 
             // 执行所有更新（顺序执行，避免gas问题）
             console.log(`🚀 [AdminUserManager] 执行 ${updates.length} 个更新操作...`);
@@ -583,7 +583,7 @@ const AdminUserManager: React.FC = () => {
                                 <div className="p-3 bg-gray-800/50 rounded-lg border border-gray-700">
                                     <div className="flex items-center justify-between">
                                         <div>
-                                            <span className="text-purple-400 font-bold">
+                                    <span className="text-purple-400 font-bold">
                                                 V{userInfo.overrideLevel !== null ? userInfo.overrideLevel : userInfo.level} 
                                                 {userInfo.overrideLevel === null && ` (${userInfo.levelPercent}%)`}
                                             </span>

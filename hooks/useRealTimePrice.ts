@@ -68,7 +68,7 @@ export const useRealTimePrice = () => {
         protocolContract.swapReserveMC(),
         protocolContract.swapReserveJBC()
       ]);
-
+      
       // 使用BigNumber进行高精度计算，避免parseFloat精度损失
       const rMC_BN = ethers.getBigInt(reserveMC);
       const rJBC_BN = ethers.getBigInt(reserveJBC);
@@ -297,7 +297,7 @@ export const useRealTimePrice = () => {
         // 实际应用中，可以通过查询历史区块的储备来计算，但这里为了简化，使用当前价格
         const now = Math.floor(Date.now() / 1000);
         const pricePoints: PricePoint[] = [];
-        
+
         // 生成过去24小时的价格点（每15分钟一个点，共96个点）
         const pointsCount = 96; // 24小时 * 60分钟 / 15分钟
         for (let i = pointsCount; i > 0; i--) {
@@ -331,8 +331,8 @@ export const useRealTimePrice = () => {
             const eventTimestamps = new Set<number>();
             
             for (const event of allEvents.slice(0, 100)) { // 只处理最近100个事件
-              try {
-                const block = await provider.getBlock(event.blockNumber);
+          try {
+            const block = await provider.getBlock(event.blockNumber);
                 if (block) {
                   eventTimestamps.add(block.timestamp);
                 }
@@ -371,9 +371,9 @@ export const useRealTimePrice = () => {
               
               pricePoints.length = 0;
               pricePoints.push(...deduplicated.slice(-200)); // 保持最近200个点
+              }
             }
-          }
-        } catch (err) {
+          } catch (err) {
           console.warn('⚠️ [RealTimePrice] 查询Swap事件失败，使用默认时间分布:', err);
         }
 

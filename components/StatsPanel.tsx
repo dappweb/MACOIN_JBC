@@ -45,7 +45,7 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
   // 从全局状态获取价格数据（与Swap面板同步）
   const jbcPrice = priceData.jbcPrice.toString()
   const mcUsdtPrice = priceData.mcUsdtPrice
-  
+
   // 调试：验证价格同步
   useEffect(() => {
     console.log('🏠 [StatsPanel] JBC价格更新:', {
@@ -128,16 +128,16 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
           level = `V${overrideLevel}`
           isOverrideLevel = true
         } else {
-          // 更新的极差裂变机制等级标准
-          if (teamCount >= 100000) level = "V9"      // V9: 100,000个地址，45%极差收益
-          else if (teamCount >= 30000) level = "V8"  // V8: 30,000个地址，40%极差收益
-          else if (teamCount >= 10000) level = "V7"  // V7: 10,000个地址，35%极差收益
-          else if (teamCount >= 3000) level = "V6"   // V6: 3,000个地址，30%极差收益
-          else if (teamCount >= 1000) level = "V5"   // V5: 1,000个地址，25%极差收益
-          else if (teamCount >= 300) level = "V4"    // V4: 300个地址，20%极差收益
-          else if (teamCount >= 100) level = "V3"    // V3: 100个地址，15%极差收益
-          else if (teamCount >= 30) level = "V2"     // V2: 30个地址，10%极差收益
-          else if (teamCount >= 10) level = "V1"     // V1: 10个地址，5%极差收益
+        // 更新的极差裂变机制等级标准
+        if (teamCount >= 100000) level = "V9"      // V9: 100,000个地址，45%极差收益
+        else if (teamCount >= 30000) level = "V8"  // V8: 30,000个地址，40%极差收益
+        else if (teamCount >= 10000) level = "V7"  // V7: 10,000个地址，35%极差收益
+        else if (teamCount >= 3000) level = "V6"   // V6: 3,000个地址，30%极差收益
+        else if (teamCount >= 1000) level = "V5"   // V5: 1,000个地址，25%极差收益
+        else if (teamCount >= 300) level = "V4"    // V4: 300个地址，20%极差收益
+        else if (teamCount >= 100) level = "V3"    // V3: 100个地址，15%极差收益
+        else if (teamCount >= 30) level = "V2"     // V2: 30个地址，10%极差收益
+        else if (teamCount >= 10) level = "V1"     // V1: 10个地址，5%极差收益
         }
 
         let referralRevenue = 0
@@ -194,19 +194,19 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
               // 降级到全量查询
               const currentBlock = await provider.getBlockNumber();
               const fromBlock = Math.max(0, currentBlock - 50000);
-              
-              const [referralEvents, rewardEvents] = await Promise.all([
-                protocolContract.queryFilter(protocolContract.filters.ReferralRewardPaid(account), fromBlock),
-                protocolContract.queryFilter(protocolContract.filters.RewardClaimed(account), fromBlock),
+            
+            const [referralEvents, rewardEvents] = await Promise.all([
+              protocolContract.queryFilter(protocolContract.filters.ReferralRewardPaid(account), fromBlock),
+              protocolContract.queryFilter(protocolContract.filters.RewardClaimed(account), fromBlock),
               ]);
-              
-              for (const event of referralEvents) {
-                if (event.args) {
+            
+            for (const event of referralEvents) {
+              if (event.args) {
                   referralRevenue += parseFloat(ethers.formatEther(event.args[2]));
-                }
               }
-              for (const event of rewardEvents) {
-                if (event.args) {
+            }
+            for (const event of rewardEvents) {
+              if (event.args) {
                   rewardMc += parseFloat(ethers.formatEther(event.args[1]));
                   rewardJbc += parseFloat(ethers.formatEther(event.args[2]));
                 }

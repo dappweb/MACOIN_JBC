@@ -562,7 +562,7 @@ const SwapPanel: React.FC = () => {
           
           // 2. AMM Swap (Input JBC, Output MC)
           // ReserveIn = JBC Pool, ReserveOut = MC Pool
-          received = (amountToSwap * rMc) / (rJbc + amountToSwap);
+              received = (amountToSwap * rMc) / (rJbc + amountToSwap);
           
           // 计算交易后的池子储备
           newReserveMC = rMc - received;

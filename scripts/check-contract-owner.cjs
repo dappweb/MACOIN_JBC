@@ -10,7 +10,7 @@ const PROTOCOL_ADDRESS = process.env.PROTOCOL_ADDRESS || "0x0897Cee05E43B2eCf331
 
 // 协议合约 ABI
 const PROTOCOL_ABI = [
-    "function owner() view returns (address)",
+  "function owner() view returns (address)",
 ];
 
 async function main() {
@@ -19,11 +19,11 @@ async function main() {
     console.log(`🌐 RPC: ${RPC_URL}\n`);
 
     try {
-        const provider = new ethers.JsonRpcProvider(RPC_URL);
-        const protocol = new ethers.Contract(PROTOCOL_ADDRESS, PROTOCOL_ABI, provider);
-        
+  const provider = new ethers.JsonRpcProvider(RPC_URL);
+  const protocol = new ethers.Contract(PROTOCOL_ADDRESS, PROTOCOL_ABI, provider);
+
         console.log("📡 连接RPC...");
-        const owner = await protocol.owner();
+      const owner = await protocol.owner();
         
         console.log("\n" + "=".repeat(80));
         console.log("📊 合约Owner信息");
@@ -37,9 +37,9 @@ async function main() {
         if (error.message.includes('timeout') || error.message.includes('TIMEOUT')) {
             console.error("\n⚠️  RPC连接超时，可能是网络问题");
             console.error("   请稍后重试或检查RPC节点状态");
-        }
-        process.exit(1);
     }
+        process.exit(1);
+  }
 }
 
 main();

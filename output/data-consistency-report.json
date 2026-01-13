@@ -1,0 +1,220 @@
+{
+  "checkTime": "2026-01-13T02:22:16.222Z",
+  "totalUsers": 442,
+  "totalIssues": 247,
+  "issues": {
+    "missingFields": 0,
+    "selfReferrers": 0,
+    "invalidReferrers": 117,
+    "levelMismatches": 129,
+    "logicIssues": 1,
+    "duplicates": 0
+  },
+  "details": [
+    {
+      "type": "invalid_referrer",
+      "user": "0x2d68a5850a4805c6fe6648e5870b68456e2a7c82",
+      "referrer": "0x8efb0848a6de28ddd290224dc2dd87174a0e29f1"
+    },
+    {
+      "type": "invalid_referrer",
+      "user": "0x4544c0cf9d62d3bb441c04a5f31c1ba0e432d37e",
+      "referrer": "0x0435aff9777dafbd0552b54951501d3169a02062"
+    },
+    {
+      "type": "invalid_referrer",
+      "user": "0xc418c1287c62cde6b8434e88e33f8d4feecf5e95",
+      "referrer": "0xc26731f7b6521b9ddf58b2ef3f70658dc28a5513"
+    },
+    {
+      "type": "invalid_referrer",
+      "user": "0x468f8c39ef1db73fe6ecc311b10e1828875273f3",
+      "referrer": "0x6ba8221531a30ef41260367fde92a034c178bb2b"
+    },
+    {
+      "type": "invalid_referrer",
+      "user": "0xab75927c641a4545dc52b9c02562fde3d09a9b1d",
+      "referrer": "0x6ae9ae7ea9001ecc25fc7ea68b037e529bf938ae"
+    },
+    {
+      "type": "invalid_referrer",
+      "user": "0xdc564fafedc96b530c38932ec56e1d47fc8add65",
+      "referrer": "0x3e436e9ef8a44cb65b00fcefe4ac1952384ed21e"
+    },
+    {
+      "type": "invalid_referrer",
+      "user": "0xf7f556041fa301f6974b713976b5f7fe1faf1817",
+      "referrer": "0x52c6b0c5b19e382adb37df9e3ae882fe49dd91c1"
+    },
+    {
+      "type": "invalid_referrer",
+      "user": "0x72a48b013bf4e18a6acf59910875f601b68bf049",
+      "referrer": "0x16534f0dae6602c8e20d25000f9691c9b7a68462"
+    },
+    {
+      "type": "invalid_referrer",
+      "user": "0x652bc83f169985720624f788715f7c61f0d75d8e",
+      "referrer": "0x9ce5993df85d95dd9b8761bb6f5b4827134e2a36"
+    },
+    {
+      "type": "invalid_referrer",
+      "user": "0x06ecae17b8dccc69761dc99d915671402d9e2b2e",
+      "referrer": "0x038a9aa1f6263158e195cad9992f1a1711d255d6"
+    },
+    {
+      "type": "invalid_referrer",
+      "user": "0xe0b778b92fde9d16c1923575f36f00a48b8729fa",
+      "referrer": "0x0fb2ee2a95fca69dbf7f8fd30057efde0567b6ba"
+    },
+    {
+      "type": "invalid_referrer",
+      "user": "0x9a6ebb123af63c8e8c41dcf7d42f4f85ab1d9a2f",
+      "referrer": "0x48c5aa01959025cdce2eb742196dc210ab4578fd"
+    },
+    {
+      "type": "invalid_referrer",
+      "user": "0x9d8a509ce41b6bc9831eeffe9674a4aeb66dbce6",
+      "referrer": "0x48c5aa01959025cdce2eb742196dc210ab4578fd"
+    },
+    {
+      "type": "invalid_referrer",
+      "user": "0x58cb18e72e6f6f7c7f8ae7bc95886a9146584aa4",
+      "referrer": "0x757106bdd695d3d6374e3222bf72eb7370d3587c"
+    },
+    {
+      "type": "invalid_referrer",
+      "user": "0x141cd850c0ba483a353c5dcc0b7cfc287c532f3a",
+      "referrer": "0x52a06e7fc6a1234a776fe9844e5daae74f599f7c"
+    },
+    {
+      "type": "invalid_referrer",
+      "user": "0x6172e49bddd1a3d01beefda495ba30f296eac088",
+      "referrer": "0x0fb2ee2a95fca69dbf7f8fd30057efde0567b6ba"
+    },
+    {
+      "type": "invalid_referrer",
+      "user": "0xb9e6ca71c3e17f910debd5cd28d42bf81417350e",
+      "referrer": "0xf86444b8ec7743e51681de14a3586fb78e671225"
+    },
+    {
+      "type": "invalid_referrer",
+      "user": "0xe37bf47647edd03b9369cd93830a96adf4f73c3b",
+      "referrer": "0x2cf554445ac11680637d6e740e2f80ecbe361c49"
+    },
+    {
+      "type": "invalid_referrer",
+      "user": "0x11136abe2a1800ed460b1e061bf35aa6a2ee1b45",
+      "referrer": "0xe9a1b61878b59bf36bac0c539c0cf283db8e1e6c"
+    },
+    {
+      "type": "invalid_referrer",
+      "user": "0x019c679619064d736f27c4a7831fa67de81e4cc9",
+      "referrer": "0xf90292a05d67174e4c40e3454e80f501f9708abf"
+    },
+    {
+      "type": "level_mismatch",
+      "user": "0x4544c0cf9d62d3bb441c04a5f31c1ba0e432d37e",
+      "level": 4,
+      "teamCount": 804,
+      "expectedRange": "30-99"
+    },
+    {
+      "type": "level_mismatch",
+      "user": "0xc418c1287c62cde6b8434e88e33f8d4feecf5e95",
+      "level": 4,
+      "teamCount": 543,
+      "expectedRange": "30-99"
+    },
+    {
+      "type": "level_mismatch",
+      "user": "0x468f8c39ef1db73fe6ecc311b10e1828875273f3",
+      "level": 4,
+      "teamCount": 467,
+      "expectedRange": "30-99"
+    },
+    {
+      "type": "level_mismatch",
+      "user": "0xab75927c641a4545dc52b9c02562fde3d09a9b1d",
+      "level": 3,
+      "teamCount": 193,
+      "expectedRange": "10-29"
+    },
+    {
+      "type": "level_mismatch",
+      "user": "0xdc564fafedc96b530c38932ec56e1d47fc8add65",
+      "level": 3,
+      "teamCount": 180,
+      "expectedRange": "10-29"
+    },
+    {
+      "type": "level_mismatch",
+      "user": "0xf7f556041fa301f6974b713976b5f7fe1faf1817",
+      "level": 3,
+      "teamCount": 123,
+      "expectedRange": "10-29"
+    },
+    {
+      "type": "level_mismatch",
+      "user": "0x72a48b013bf4e18a6acf59910875f601b68bf049",
+      "level": 2,
+      "teamCount": 48,
+      "expectedRange": "3-9"
+    },
+    {
+      "type": "level_mismatch",
+      "user": "0x293ba423b0a4bf19805ad25fb0425aa168753737",
+      "level": 2,
+      "teamCount": 38,
+      "expectedRange": "3-9"
+    },
+    {
+      "type": "level_mismatch",
+      "user": "0x652bc83f169985720624f788715f7c61f0d75d8e",
+      "level": 2,
+      "teamCount": 31,
+      "expectedRange": "3-9"
+    },
+    {
+      "type": "level_mismatch",
+      "user": "0x06ecae17b8dccc69761dc99d915671402d9e2b2e",
+      "level": 2,
+      "teamCount": 30,
+      "expectedRange": "3-9"
+    },
+    {
+      "type": "logic_error",
+      "user": "0x7aa68892f013d981dffac7ae403faa886938552b",
+      "activeDirects": 6,
+      "teamCount": 0,
+      "message": "团队人数小于直推人数"
+    }
+  ],
+  "statistics": {
+    "reported": {
+      "totalTeamCount": 54301,
+      "avgTeamCount": 122.85,
+      "maxTeamCount": 50770,
+      "minTeamCount": 0,
+      "levelDistribution": {
+        "V8": 1,
+        "V4": 3,
+        "V3": 3,
+        "V2": 6,
+        "V1": 48,
+        "V0": 381
+      }
+    },
+    "calculated": {
+      "totalTeamCount": 54301,
+      "avgTeamCount": 122.85,
+      "levelDistribution": {
+        "V8": 1,
+        "V4": 3,
+        "V3": 3,
+        "V2": 6,
+        "V1": 48,
+        "V0": 381
+      }
+    }
+  }
+}

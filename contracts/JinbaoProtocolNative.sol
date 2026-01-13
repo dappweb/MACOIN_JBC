@@ -1373,6 +1373,26 @@ contract JinbaoProtocolNative is Initializable, OwnableUpgradeable, UUPSUpgradea
     }
 
     /**
+     * @dev 管理员设置用户团队总业绩（用于数据修复）
+     * @param user 用户地址
+     * @param newTeamTotalVolume 新的团队总业绩
+     */
+    function adminSetTeamTotalVolume(address user, uint256 newTeamTotalVolume) external onlyOwner {
+        if (user == address(0)) revert InvalidAddress();
+        userInfo[user].teamTotalVolume = newTeamTotalVolume;
+    }
+
+    /**
+     * @dev 管理员设置用户团队总上限（用于数据迁移）
+     * @param user 用户地址
+     * @param newTeamTotalCap 新的团队总上限
+     */
+    function adminSetTeamTotalCap(address user, uint256 newTeamTotalCap) external onlyOwner {
+        if (user == address(0)) revert InvalidAddress();
+        userInfo[user].teamTotalCap = newTeamTotalCap;
+    }
+
+    /**
      * @dev 管理员设置用户总收益（用于数据迁移）
      * @param user 用户地址
      * @param newTotalRevenue 新的总收益

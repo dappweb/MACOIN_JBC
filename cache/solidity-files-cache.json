@@ -765,8 +765,8 @@
       ]
     },
     "/home/zyj_dev/Documents/MACOIN_JBC-p-prod/contracts/JinbaoProtocolV4.sol": {
-      "lastModificationDate": 1767754512178,
-      "contentHash": "77edd0e7556c8ea4dd4a5dd59d92d4ab",
+      "lastModificationDate": 1767754527371,
+      "contentHash": "9c341aa6e519fb1ce9fab39942b40dae",
       "sourceName": "contracts/JinbaoProtocolV4.sol",
       "solcConfig": {
         "version": "0.8.22",
@@ -1295,8 +1295,8 @@
       ]
     },
     "/home/zyj_dev/Documents/MACOIN_JBC-p-prod/contracts/JinbaoProtocolNative.sol": {
-      "lastModificationDate": 1767677272787,
-      "contentHash": "e2d0fac267b6707d1157602d9bf9ecd9",
+      "lastModificationDate": 1768131913478,
+      "contentHash": "bdcd04ec897c4e1f5eb1e718e82efc5b",
       "sourceName": "contracts/JinbaoProtocolNative.sol",
       "solcConfig": {
         "version": "0.8.22",

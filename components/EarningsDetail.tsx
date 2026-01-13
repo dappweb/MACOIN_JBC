@@ -637,8 +637,39 @@ const EarningsDetail: React.FC<{ onNavigateToMining?: () => void }> = ({ onNavig
       // 按时间戳排序
       rows.sort((a, b) => b.timestamp - a.timestamp)
       
-      setRecords(rows)
-      saveToCache(rows)
+      // 去重：基于交易哈希、奖励类型、金额和区块号，避免重复显示
+      // 使用复合键来识别完全相同的记录
+      const seen = new Set<string>()
+      const uniqueRows: RewardRecord[] = []
+      let duplicateCount = 0
+      
+      for (const row of rows) {
+        // 创建唯一键：交易哈希 + 奖励类型 + MC金额 + JBC金额 + 区块号
+        // 这样可以区分同一交易中的不同奖励，同时避免完全相同的重复记录
+        const uniqueKey = `${row.hash.toLowerCase()}-${row.rewardType}-${row.mcAmount}-${row.jbcAmount}-${row.blockNumber}`
+        
+        if (seen.has(uniqueKey)) {
+          duplicateCount++
+          console.warn(`⚠️ [EarningsDetail] 发现重复记录，已跳过:`, {
+            hash: row.hash,
+            rewardType: row.rewardType,
+            mcAmount: row.mcAmount,
+            jbcAmount: row.jbcAmount,
+            blockNumber: row.blockNumber
+          })
+          continue
+        }
+        
+        seen.add(uniqueKey)
+        uniqueRows.push(row)
+      }
+      
+      if (duplicateCount > 0) {
+        console.log(`🔍 [EarningsDetail] 去重完成: 原始 ${rows.length} 条, 去重后 ${uniqueRows.length} 条, 移除 ${duplicateCount} 条重复记录`)
+      }
+      
+      setRecords(uniqueRows)
+      saveToCache(uniqueRows)
       
       // 显示处理结果
       console.log(`📊 [EarningsDetail] 处理完成: ${processedEvents} 条成功, ${failedEvents} 条失败`)

@@ -492,8 +492,24 @@ const MiningPanel: React.FC = () => {
     setLoadingHistory(true);
     setIsLoadingHistory(true);
     try {
+        console.log('🔍 [fetchHistory] 开始查询门票历史记录...', { account });
         const currentBlock = await provider.getBlockNumber();
-        const fromBlock = Math.max(0, currentBlock - 1000000); 
+        console.log('📊 [fetchHistory] 当前区块:', currentBlock);
+        
+        // 扩大查询范围，从合约部署区块开始（如果知道的话）或从0开始
+        // 先尝试查询最近100万个区块，如果查不到，再扩大范围
+        let fromBlock = Math.max(0, currentBlock - 1000000);
+        
+        // 尝试获取合约部署区块（如果合约有部署事件）
+        try {
+            const deployBlock = await provider.getCode(protocolContract.target as string);
+            // 如果合约存在，尝试从更早的区块开始查询
+            fromBlock = Math.max(0, currentBlock - 2000000); // 扩大到200万个区块
+        } catch (e) {
+            // 如果获取失败，使用默认范围
+        }
+        
+        console.log('📅 [fetchHistory] 查询范围:', { fromBlock, toBlock: currentBlock });
 
         // 获取事件
         const [purchaseEvents, stakeEvents, redeemEvents] = await Promise.all([
@@ -501,6 +517,12 @@ const MiningPanel: React.FC = () => {
             protocolContract.queryFilter(protocolContract.filters.LiquidityStaked(account), fromBlock),
             protocolContract.queryFilter(protocolContract.filters.Redeemed(account), fromBlock)
         ]);
+
+        console.log('📦 [fetchHistory] 查询到的事件数量:', {
+            purchase: purchaseEvents.length,
+            stake: stakeEvents.length,
+            redeem: redeemEvents.length
+        });
 
         // 合并并排序
         const allEvents = [
@@ -514,6 +536,8 @@ const MiningPanel: React.FC = () => {
             return a.event.index - b.event.index;
         });
 
+        console.log('🔄 [fetchHistory] 合并后的事件总数:', allEvents.length);
+
         const historyItems: TicketHistoryItem[] = [];
         let currentItem: TicketHistoryItem | null = null;
         
@@ -521,10 +545,14 @@ const MiningPanel: React.FC = () => {
         const blockTimestamps: Record<number, number> = {};
         const getBlockTimestamp = async (blockNumber: number) => {
             if (blockTimestamps[blockNumber]) return blockTimestamps[blockNumber];
-            const block = await provider.getBlock(blockNumber);
-            if (block) {
-                blockTimestamps[blockNumber] = block.timestamp;
-                return block.timestamp;
+            try {
+                const block = await provider.getBlock(blockNumber);
+                if (block) {
+                    blockTimestamps[blockNumber] = block.timestamp;
+                    return block.timestamp;
+                }
+            } catch (e) {
+                console.warn(`⚠️ [fetchHistory] 获取区块 ${blockNumber} 时间戳失败:`, e);
             }
             return 0;
         };
@@ -562,6 +590,18 @@ const MiningPanel: React.FC = () => {
             historyItems.push(currentItem);
         }
 
+        // 如果没有查询到历史记录，但用户有当前门票，则显示当前门票信息
+        if (historyItems.length === 0 && ticketInfo && ticketInfo.amount > 0n) {
+            console.log('💡 [fetchHistory] 未查询到历史记录，但用户有当前门票，显示当前门票信息');
+            const currentTicket: TicketHistoryItem = {
+                ticketId: ticketInfo.amount.toString(), // 使用金额作为临时ID
+                amount: ethers.formatEther(ticketInfo.amount),
+                purchaseTime: ticketInfo.purchaseTime || Math.floor(Date.now() / 1000),
+                status: ticketInfo.exited ? 'Completed' : (hasStakedLiquidity ? 'Mining' : 'Pending')
+            };
+            historyItems.push(currentTicket);
+        }
+
         const now = Math.floor(Date.now() / 1000);
         // Removed expiration check on frontend to match contract change
         // historyItems.forEach(item => {
@@ -570,6 +610,7 @@ const MiningPanel: React.FC = () => {
         //    }
         // });
 
+        console.log('✅ [fetchHistory] 最终历史记录数量:', historyItems.length);
         setTicketHistory(historyItems.reverse());
         
         // 计算未赎回的最大门票金额
@@ -584,8 +625,18 @@ const MiningPanel: React.FC = () => {
             setMaxUnredeemedTicket(0);
         }
     } catch (err) {
-        console.error("Failed to fetch history", err);
+        console.error("❌ [fetchHistory] 查询历史记录失败:", err);
         toast.error('Failed to load transaction history. Please try again.');
+        // 即使查询失败，也尝试显示当前门票信息
+        if (ticketInfo && ticketInfo.amount > 0n) {
+            const currentTicket: TicketHistoryItem = {
+                ticketId: ticketInfo.amount.toString(),
+                amount: ethers.formatEther(ticketInfo.amount),
+                purchaseTime: ticketInfo.purchaseTime || Math.floor(Date.now() / 1000),
+                status: ticketInfo.exited ? 'Completed' : (hasStakedLiquidity ? 'Mining' : 'Pending')
+            };
+            setTicketHistory([currentTicket]);
+        }
     } finally {
         setLoadingHistory(false);
         setIsLoadingHistory(false);

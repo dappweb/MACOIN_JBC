@@ -684,6 +684,53 @@ const SwapPanel: React.FC = () => {
           </div>
         )}
 
+        {/* JBC Price Chart - 移到顶部，交易前显示价格走势 */}
+        <div className="glass-panel p-3 sm:p-4 md:p-6 rounded-xl md:rounded-2xl bg-black/60 border border-gray-700 backdrop-blur-sm mb-4 relative z-10">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 mb-4 md:mb-6">
+                <h3 className="text-sm sm:text-base md:text-lg font-bold text-white border-l-4 border-neon-500 pl-3">
+                    JBC 价格走势
+                </h3>
+                {priceHistory.length > 1 && (
+                    <div className="grid grid-cols-2 sm:flex sm:gap-2 md:gap-4 text-xs md:text-sm gap-2">
+                        <div className="text-center bg-gray-900/70 p-2 sm:p-3 rounded border border-gray-700">
+                            <div className="text-gray-300 text-[10px] sm:text-xs font-medium">最高</div>
+                            <div className="text-amber-400 font-bold text-xs sm:text-sm font-mono">${priceStats.high.toFixed(6)}</div>
+                        </div>
+                        <div className="text-center bg-gray-900/70 p-2 sm:p-3 rounded border border-gray-700">
+                            <div className="text-gray-300 text-[10px] sm:text-xs font-medium">最低</div>
+                            <div className="text-amber-400 font-bold text-xs sm:text-sm font-mono">${priceStats.low.toFixed(6)}</div>
+                        </div>
+                        <div className="text-center bg-gray-900/70 p-2 sm:p-3 rounded border border-gray-700">
+                            <div className="text-gray-300 text-[10px] sm:text-xs font-medium">涨跌</div>
+                            <div className={`font-bold text-xs sm:text-sm font-mono ${priceStats.change >= 0 ? "text-neon-400" : "text-red-400"}`}>
+                                {priceStats.change >= 0 ? "+" : ""}{priceStats.change.toFixed(2)}%
+                            </div>
+                        </div>
+                        <div className="text-center bg-gray-900/70 p-2 sm:p-3 rounded border border-gray-700">
+                            <div className="text-gray-300 text-[10px] sm:text-xs font-medium">平均</div>
+                            <div className="text-neon-400 font-bold text-xs sm:text-sm font-mono">${priceStats.avgPrice.toFixed(6)}</div>
+                        </div>
+                    </div>
+                )}
+            </div>
+
+            <MemoizedPriceChart priceHistory={priceHistory} t={t} />
+
+            {/* Legend */}
+            <div className="mt-3 sm:mt-4 flex flex-wrap gap-2 sm:gap-4 text-[10px] sm:text-xs text-gray-300">
+                <div className="flex items-center gap-1 sm:gap-2">
+                    <div className="w-2 h-2 sm:w-3 sm:h-3 rounded-full bg-neon-500"></div>
+                    <span>价格</span>
+                </div>
+                {priceHistory.length > 5 && (
+                    <div className="flex items-center gap-1 sm:gap-2">
+                        <div className="w-2 h-0.5 sm:w-3 sm:h-1 bg-amber-400"></div>
+                        <span>EMA(7)</span>
+                    </div>
+                )}
+            </div>
+        </div>
+
         <div className="space-y-3 md:space-y-4 relative z-10">
             {/* Pay Input */}
             <div className="bg-gray-800/50 p-3 md:p-4 rounded-lg md:rounded-xl border border-gray-700 transition-all focus-within:ring-2 focus-within:ring-neon-500/50">
@@ -764,53 +811,6 @@ const SwapPanel: React.FC = () => {
                 <div className={`flex justify-between ${!isSelling ? 'font-bold' : 'opacity-50'}`}>
                     <span>{t.swap.slipBuy}</span>
                     {!isSelling && <span>(Active)</span>}
-                </div>
-            </div>
-
-            {/* JBC Price Chart */}
-            <div className="glass-panel p-3 sm:p-4 md:p-6 rounded-xl md:rounded-2xl bg-black/60 border border-gray-700 backdrop-blur-sm">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 mb-4 md:mb-6">
-                    <h3 className="text-sm sm:text-base md:text-lg font-bold text-white border-l-4 border-neon-500 pl-3">
-                        JBC 价格走势
-                    </h3>
-                    {priceHistory.length > 1 && (
-                        <div className="grid grid-cols-2 sm:flex sm:gap-2 md:gap-4 text-xs md:text-sm gap-2">
-                            <div className="text-center bg-gray-900/70 p-2 sm:p-3 rounded border border-gray-700">
-                                <div className="text-gray-300 text-[10px] sm:text-xs font-medium">最高</div>
-                                <div className="text-amber-400 font-bold text-xs sm:text-sm font-mono">${priceStats.high.toFixed(6)}</div>
-                            </div>
-                            <div className="text-center bg-gray-900/70 p-2 sm:p-3 rounded border border-gray-700">
-                                <div className="text-gray-300 text-[10px] sm:text-xs font-medium">最低</div>
-                                <div className="text-amber-400 font-bold text-xs sm:text-sm font-mono">${priceStats.low.toFixed(6)}</div>
-                            </div>
-                            <div className="text-center bg-gray-900/70 p-2 sm:p-3 rounded border border-gray-700">
-                                <div className="text-gray-300 text-[10px] sm:text-xs font-medium">涨跌</div>
-                                <div className={`font-bold text-xs sm:text-sm font-mono ${priceStats.change >= 0 ? "text-neon-400" : "text-red-400"}`}>
-                                    {priceStats.change >= 0 ? "+" : ""}{priceStats.change.toFixed(2)}%
-                                </div>
-                            </div>
-                            <div className="text-center bg-gray-900/70 p-2 sm:p-3 rounded border border-gray-700">
-                                <div className="text-gray-300 text-[10px] sm:text-xs font-medium">平均</div>
-                                <div className="text-neon-400 font-bold text-xs sm:text-sm font-mono">${priceStats.avgPrice.toFixed(6)}</div>
-                            </div>
-                        </div>
-                    )}
-                </div>
-
-                <MemoizedPriceChart priceHistory={priceHistory} t={t} />
-
-                {/* Legend */}
-                <div className="mt-3 sm:mt-4 flex flex-wrap gap-2 sm:gap-4 text-[10px] sm:text-xs text-gray-300">
-                    <div className="flex items-center gap-1 sm:gap-2">
-                        <div className="w-2 h-2 sm:w-3 sm:h-3 rounded-full bg-neon-500"></div>
-                        <span>价格</span>
-                    </div>
-                    {priceHistory.length > 5 && (
-                        <div className="flex items-center gap-1 sm:gap-2">
-                            <div className="w-2 h-0.5 sm:w-3 sm:h-1 bg-amber-400"></div>
-                            <span>EMA(7)</span>
-                        </div>
-                    )}
                 </div>
             </div>
 

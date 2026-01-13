@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useLanguage } from '../src/LanguageContext';
 import { useWeb3, CONTRACT_ADDRESSES } from '../src/Web3Context';
 import { useGlobalRefresh, useEventRefresh } from '../hooks/useGlobalRefresh';
+import { useRealTimePrice } from '../hooks/useRealTimePrice';
 import { ArrowLeftRight, RotateCw, Loader2 } from 'lucide-react';
 import { ethers } from 'ethers';
 import toast from 'react-hot-toast';
@@ -14,6 +15,173 @@ import DailyBurnPanel from './DailyBurnPanel';
 import { SkeletonSwapPanel } from './LoadingSkeletons';
 import ToastEnhancer from '../utils/toastEnhancer';
 import AnimatedButton from './AnimatedButton';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+
+// 价格数据点类型定义
+interface PriceDataPoint {
+  name: string;
+  uv: number;
+  ema?: number;
+  high: number;
+  low: number;
+  change: number;
+}
+
+// Mock data generator for fallback
+const generateMockPriceData = (): PriceDataPoint[] => {
+  const now = Date.now()
+  const data: PriceDataPoint[] = []
+  const price = 1.0
+  for (let i = 0; i < 24; i++) {
+    const time = now - (24 - i) * 3600 * 1000
+    data.push({
+      name: new Date(time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      uv: price,
+      ema: price,
+      high: price,
+      low: price,
+      change: 0
+    })
+  }
+  return data
+}
+
+// Memoized Chart Component
+const MemoizedPriceChart = React.memo(({ priceHistory, t }: { priceHistory: PriceDataPoint[], t: any }) => {
+  console.log('📈 [MemoizedPriceChart] 渲染图表，数据点数量:', priceHistory.length);
+  
+  if (!priceHistory || priceHistory.length === 0) {
+    console.warn('⚠️ [MemoizedPriceChart] 价格历史数据为空，显示占位符');
+    return (
+      <div className="h-[200px] sm:h-[300px] md:h-[400px] w-full flex items-center justify-center bg-gray-900/50 rounded border border-gray-700">
+        <p className="text-gray-400 text-sm">暂无价格数据</p>
+      </div>
+    );
+  }
+  
+  return (
+    <div className="h-[200px] sm:h-[300px] md:h-[400px] w-full overflow-x-auto">
+      <ResponsiveContainer width="100%" height="100%" minWidth={300}>
+        <AreaChart
+          data={priceHistory}
+          margin={{ top: 5, right: 10, left: 0, bottom: 5 }}
+        >
+          <defs>
+            <linearGradient id="colorUv" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%" stopColor="#01FEAE" stopOpacity={0.3} />
+              <stop offset="95%" stopColor="#01FEAE" stopOpacity={0} />
+            </linearGradient>
+            <linearGradient id="colorEma" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%" stopColor="#FBBF24" stopOpacity={0.3} />
+              <stop offset="95%" stopColor="#FBBF24" stopOpacity={0} />
+            </linearGradient>
+          </defs>
+          <CartesianGrid
+            strokeDasharray="4 4"
+            stroke="#4B5563"
+            vertical={true}
+            horizontalPoints={[]}
+          />
+          <YAxis
+            stroke="#9ca3af"
+            tickFormatter={(value) => value.toFixed(4)}
+            width={60}
+            tick={{ fontSize: 10 }}
+            domain={([dataMin, dataMax]) => {
+              const range = dataMax - dataMin
+              if (range <= 0.000001) {
+                const buffer = dataMin * 0.1 || 0.1
+                return [parseFloat((dataMin - buffer).toFixed(6)), parseFloat((dataMax + buffer).toFixed(6))]
+              }
+              const padding = range * 0.05
+              return [parseFloat((dataMin - padding).toFixed(6)), parseFloat((dataMax + padding).toFixed(6))]
+            }}
+            allowDecimals={true}
+            hide={false}
+          />
+          <XAxis
+            dataKey="name"
+            stroke="#9ca3af"
+            tick={{ fontSize: 9 }}
+            angle={-45}
+            textAnchor="end"
+            height={50}
+            interval={Math.ceil(priceHistory.length / 5) - 1}
+          />
+          <Tooltip
+            contentStyle={{
+              backgroundColor: "#1f2937",
+              border: "2px solid #01FEAE",
+              color: "#f3f4f6",
+              borderRadius: "8px",
+              boxShadow: "0 8px 16px -2px rgba(1, 254, 174, 0.2)",
+              padding: "8px",
+              fontSize: "12px",
+            }}
+            labelStyle={{ color: "#01FEAE", fontWeight: "bold", marginBottom: "4px", fontSize: "11px" }}
+            formatter={(value: number | string) => {
+              if (typeof value === "number") {
+                return value.toFixed(6)
+              }
+              return value
+            }}
+            labelFormatter={(label) => `时间: ${label}`}
+            cursor={{
+              stroke: "#01FEAE",
+              strokeWidth: 2,
+              strokeDasharray: "5 5",
+            }}
+            content={(content: any) => {
+              if (!content.payload || content.payload.length === 0) return null
+              const payload = content.payload[0]?.payload as any
+              return (
+                <div className="bg-gray-900 border border-neon-500 rounded p-2 text-xs">
+                  <p className="text-neon-400 font-bold mb-1">{payload.name}</p>
+                  <p className="text-gray-300">
+                    价格: <span className="text-neon-400 font-mono">${payload.uv.toFixed(6)}</span>
+                  </p>
+                  {payload.ema && (
+                    <p className="text-gray-300">
+                      EMA(7): <span className="text-amber-400 font-mono">${payload.ema.toFixed(6)}</span>
+                    </p>
+                  )}
+                  {payload.high && (
+                    <p className="text-gray-300">
+                      范围: <span className="text-gray-400 font-mono">${payload.low.toFixed(6)}~${payload.high.toFixed(6)}</span>
+                    </p>
+                  )}
+                </div>
+              )
+            }}
+          />
+          <Area
+            type="monotone"
+            dataKey="uv"
+            stroke="#01FEAE"
+            strokeWidth={2}
+            fill="url(#colorUv)"
+            isAnimationActive={false}
+            dot={false}
+            name="价格"
+          />
+          {priceHistory.length > 5 && (
+            <Area
+              type="monotone"
+              dataKey="ema"
+              stroke="#FBBF24"
+              strokeWidth={1.5}
+              strokeDasharray="5 5"
+              fill="url(#colorEma)"
+              isAnimationActive={false}
+              dot={false}
+              name="EMA(7)"
+            />
+          )}
+        </AreaChart>
+      </ResponsiveContainer>
+    </div>
+  )
+});
 
 const SwapPanel: React.FC = () => {
   const { t } = useLanguage();
@@ -21,6 +189,33 @@ const SwapPanel: React.FC = () => {
   
   // 使用全局刷新机制
   const { balances, priceData, onTransactionSuccess } = useGlobalRefresh();
+  
+  // 使用实时价格更新（用于价格图表）
+  const { priceHistory: rawPriceHistory, priceStats, currentPrice } = useRealTimePrice();
+  
+  // 格式化价格历史数据用于图表显示
+  const priceHistory: PriceDataPoint[] = useMemo(() => {
+    if (rawPriceHistory.length === 0) {
+      return generateMockPriceData()
+    }
+
+    // 转换实时价格数据为图表格式
+    const formatted = rawPriceHistory.map((point: any) => {
+      const date = new Date(point.timestamp * 1000)
+      const timeStr = `${date.getHours().toString().padStart(2, "0")}:${date.getMinutes().toString().padStart(2, "0")}`
+      
+      return {
+        name: timeStr,
+        uv: point.price,
+        ema: point.price, // EMA 计算已在 hook 中处理
+        high: point.price,
+        low: point.price,
+        change: 0
+      }
+    })
+    
+    return formatted;
+  }, [rawPriceHistory])
   
   const [payAmount, setPayAmount] = useState('');
   const [getAmount, setGetAmount] = useState('');
@@ -569,6 +764,53 @@ const SwapPanel: React.FC = () => {
                 <div className={`flex justify-between ${!isSelling ? 'font-bold' : 'opacity-50'}`}>
                     <span>{t.swap.slipBuy}</span>
                     {!isSelling && <span>(Active)</span>}
+                </div>
+            </div>
+
+            {/* JBC Price Chart */}
+            <div className="glass-panel p-3 sm:p-4 md:p-6 rounded-xl md:rounded-2xl bg-black/60 border border-gray-700 backdrop-blur-sm">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 mb-4 md:mb-6">
+                    <h3 className="text-sm sm:text-base md:text-lg font-bold text-white border-l-4 border-neon-500 pl-3">
+                        JBC 价格走势
+                    </h3>
+                    {priceHistory.length > 1 && (
+                        <div className="grid grid-cols-2 sm:flex sm:gap-2 md:gap-4 text-xs md:text-sm gap-2">
+                            <div className="text-center bg-gray-900/70 p-2 sm:p-3 rounded border border-gray-700">
+                                <div className="text-gray-300 text-[10px] sm:text-xs font-medium">最高</div>
+                                <div className="text-amber-400 font-bold text-xs sm:text-sm font-mono">${priceStats.high.toFixed(6)}</div>
+                            </div>
+                            <div className="text-center bg-gray-900/70 p-2 sm:p-3 rounded border border-gray-700">
+                                <div className="text-gray-300 text-[10px] sm:text-xs font-medium">最低</div>
+                                <div className="text-amber-400 font-bold text-xs sm:text-sm font-mono">${priceStats.low.toFixed(6)}</div>
+                            </div>
+                            <div className="text-center bg-gray-900/70 p-2 sm:p-3 rounded border border-gray-700">
+                                <div className="text-gray-300 text-[10px] sm:text-xs font-medium">涨跌</div>
+                                <div className={`font-bold text-xs sm:text-sm font-mono ${priceStats.change >= 0 ? "text-neon-400" : "text-red-400"}`}>
+                                    {priceStats.change >= 0 ? "+" : ""}{priceStats.change.toFixed(2)}%
+                                </div>
+                            </div>
+                            <div className="text-center bg-gray-900/70 p-2 sm:p-3 rounded border border-gray-700">
+                                <div className="text-gray-300 text-[10px] sm:text-xs font-medium">平均</div>
+                                <div className="text-neon-400 font-bold text-xs sm:text-sm font-mono">${priceStats.avgPrice.toFixed(6)}</div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+
+                <MemoizedPriceChart priceHistory={priceHistory} t={t} />
+
+                {/* Legend */}
+                <div className="mt-3 sm:mt-4 flex flex-wrap gap-2 sm:gap-4 text-[10px] sm:text-xs text-gray-300">
+                    <div className="flex items-center gap-1 sm:gap-2">
+                        <div className="w-2 h-2 sm:w-3 sm:h-3 rounded-full bg-neon-500"></div>
+                        <span>价格</span>
+                    </div>
+                    {priceHistory.length > 5 && (
+                        <div className="flex items-center gap-1 sm:gap-2">
+                            <div className="w-2 h-0.5 sm:w-3 sm:h-1 bg-amber-400"></div>
+                            <span>EMA(7)</span>
+                        </div>
+                    )}
                 </div>
             </div>
 

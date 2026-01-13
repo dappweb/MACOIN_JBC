@@ -120,16 +120,18 @@ function checkConsistency(teamData) {
     
     // 3. 检查等级和团队人数的一致性
     console.log("\n3️⃣ 检查等级和团队人数的一致性...");
+    // 修正后的等级规则（与合约中的_getLevel函数一致）
     const levelRules = {
-        0: { min: 0, max: 0 },
-        1: { min: 1, max: 2 },
-        2: { min: 3, max: 9 },
-        3: { min: 10, max: 29 },
-        4: { min: 30, max: 99 },
-        5: { min: 100, max: 299 },
-        6: { min: 300, max: 999 },
-        7: { min: 1000, max: 2999 },
-        8: { min: 3000, max: Infinity }
+        0: { min: 0, max: 9 },           // V0: 0-9
+        1: { min: 10, max: 29 },          // V1: 10-29
+        2: { min: 30, max: 99 },          // V2: 30-99
+        3: { min: 100, max: 299 },        // V3: 100-299
+        4: { min: 300, max: 999 },        // V4: 300-999
+        5: { min: 1000, max: 2999 },      // V5: 1000-2999
+        6: { min: 3000, max: 9999 },      // V6: 3000-9999
+        7: { min: 10000, max: 29999 },    // V7: 10000-29999
+        8: { min: 30000, max: 99999 },    // V8: 30000-99999
+        9: { min: 100000, max: Infinity } // V9: 100000+
     };
     
     let levelMismatches = 0;

@@ -595,14 +595,26 @@ const MiningPanel: React.FC = () => {
   useEffect(() => {
     const initializeData = async () => {
       setIsInitialLoad(true);
-      await Promise.all([
-        checkTicketStatus(),
-        fetchHistory()
-      ]);
-      setIsInitialLoad(false);
+      try {
+        await Promise.all([
+          checkTicketStatus(),
+          fetchHistory()
+        ]);
+      } catch (error) {
+        console.error("Failed to initialize mining panel data:", error);
+        // 即使加载失败，也要显示页面内容，而不是一直显示加载状态
+      } finally {
+        // 确保无论成功或失败，都会隐藏加载状态
+        setIsInitialLoad(false);
+      }
     };
     
-    initializeData();
+    if (isConnected && account && protocolContract) {
+      initializeData();
+    } else {
+      // 如果未连接，直接隐藏加载状态
+      setIsInitialLoad(false);
+    }
 
     // 定期刷新动态奖励数据
     const dynamicRewardsTimer = setInterval(() => {

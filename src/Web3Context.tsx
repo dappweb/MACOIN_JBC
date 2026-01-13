@@ -95,10 +95,11 @@ export const DAILY_BURN_MANAGER_ABI = [
 
 // Contract Addresses - MC Chain V4 (Native MC Version)
 // 新协议合约地址 (部署时间: 2026-01-04)
+// 优先从环境变量读取，如果没有则使用默认值
 export const CONTRACT_ADDRESSES = {
-  JBC_TOKEN: "0x1Bf9ACe2485BC3391150762a109886d0B85f40Da",
-  PROTOCOL: "0x0897Cee05E43B2eCf331cd80f881c211eb86844E", // 新协议合约地址
-  DAILY_BURN_MANAGER: "0x298578A691f10A85f027BDD2D9a8D007540FCBB4"
+  JBC_TOKEN: import.meta.env.VITE_JBC_CONTRACT_ADDRESS || "0xAAb88c0Bc9f4A73019e4Dbfc5c8De82A8dCb970D",
+  PROTOCOL: import.meta.env.VITE_PROTOCOL_CONTRACT_ADDRESS || "0x0897Cee05E43B2eCf331cd80f881c211eb86844E", // 新协议合约地址
+  DAILY_BURN_MANAGER: import.meta.env.VITE_DAILY_BURN_MANAGER_ADDRESS || "0x298578A691f10A85f027BDD2D9a8D007540FCBB4"
 };
 
 interface Web3ContextType {
@@ -155,19 +156,39 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }
 
   useEffect(() => {
+    // 调试：输出合约地址配置
+    console.log('🔧 [Web3Context] 合约地址配置:', {
+      JBC_TOKEN: CONTRACT_ADDRESSES.JBC_TOKEN,
+      PROTOCOL: CONTRACT_ADDRESSES.PROTOCOL,
+      DAILY_BURN_MANAGER: CONTRACT_ADDRESSES.DAILY_BURN_MANAGER,
+      env_JBC: import.meta.env.VITE_JBC_CONTRACT_ADDRESS,
+      env_PROTOCOL: import.meta.env.VITE_PROTOCOL_CONTRACT_ADDRESS,
+      hasSigner: !!signer,
+      hasProvider: !!provider
+    });
+
     if (signer) {
       // Init Contracts with Signer (Write access) - No MC contract needed
       const _jbc = new ethers.Contract(CONTRACT_ADDRESSES.JBC_TOKEN, ["function transfer(address to, uint256 amount) external returns (bool)", "function transferFrom(address from, address to, uint256 amount) external returns (bool)", "function balanceOf(address account) external view returns (uint256)", "function approve(address spender, uint256 amount) external returns (bool)", "function allowance(address owner, address spender) external view returns (uint256)"], signer)
       const _protocol = new ethers.Contract(CONTRACT_ADDRESSES.PROTOCOL, PROTOCOL_ABI, signer)
+      console.log('✅ [Web3Context] 合约已初始化 (Signer模式)', {
+        jbcAddress: CONTRACT_ADDRESSES.JBC_TOKEN,
+        protocolAddress: CONTRACT_ADDRESSES.PROTOCOL
+      });
       setJbcContract(_jbc)
       setProtocolContract(_protocol)
     } else if (provider) {
       // Init Contracts with Provider (Read only) - No MC contract needed
       const _jbc = new ethers.Contract(CONTRACT_ADDRESSES.JBC_TOKEN, ["function transfer(address to, uint256 amount) external returns (bool)", "function transferFrom(address from, address to, uint256 amount) external returns (bool)", "function balanceOf(address account) external view returns (uint256)", "function approve(address spender, uint256 amount) external returns (bool)", "function allowance(address owner, address spender) external view returns (uint256)"], provider)
       const _protocol = new ethers.Contract(CONTRACT_ADDRESSES.PROTOCOL, PROTOCOL_ABI, provider)
+      console.log('✅ [Web3Context] 合约已初始化 (Provider模式)', {
+        jbcAddress: CONTRACT_ADDRESSES.JBC_TOKEN,
+        protocolAddress: CONTRACT_ADDRESSES.PROTOCOL
+      });
       setJbcContract(_jbc)
       setProtocolContract(_protocol)
     } else {
+      console.warn('⚠️ [Web3Context] 无法初始化合约 - 缺少 Provider 或 Signer');
       setJbcContract(null)
       setProtocolContract(null)
     }

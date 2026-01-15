@@ -1,0 +1,85 @@
+{
+  "timestamp": "2026-01-14T00:17:54.362Z",
+  "totalUsers": 547,
+  "abnormalCount": 3,
+  "statistics": {
+    "critical": 2,
+    "high": 2,
+    "medium": 1
+  },
+  "accounts": [
+    {
+      "user": "0xbacfa51bfbeaa771d2190657e2e8487344ba5055",
+      "referrer": "0x7aA68892F013d981DFfAc7AE403fAA886938552b",
+      "userData": {
+        "teamCount": 392,
+        "activeDirects": 6,
+        "isActive": true
+      },
+      "referrerData": {
+        "teamCount": 368,
+        "activeDirects": 7,
+        "isActive": true
+      },
+      "issues": [
+        {
+          "type": "teamCount",
+          "message": "上级团队人数(368) < 下级团队人数+1(393)",
+          "severity": "high"
+        },
+        {
+          "type": "teamCount_absolute",
+          "message": "上级团队人数(368) < 下级团队人数(392)",
+          "severity": "critical"
+        }
+      ]
+    },
+    {
+      "user": "0xc418c1287c62cde6b8434e88e33f8d4feecf5e95",
+      "referrer": "0xC26731f7b6521B9ddF58B2Ef3F70658Dc28A5513",
+      "userData": {
+        "teamCount": 12561,
+        "activeDirects": 6,
+        "isActive": true
+      },
+      "referrerData": {
+        "teamCount": 443,
+        "activeDirects": 3,
+        "isActive": true
+      },
+      "issues": [
+        {
+          "type": "teamCount",
+          "message": "上级团队人数(443) < 下级团队人数+1(12562)",
+          "severity": "high"
+        },
+        {
+          "type": "teamCount_absolute",
+          "message": "上级团队人数(443) < 下级团队人数(12561)",
+          "severity": "critical"
+        }
+      ]
+    },
+    {
+      "user": "0x90070eb60a6e7dcbe9ea282e0a5c97b3bb1ebf7b",
+      "referrer": "0x64B0B66E7aD150C5e314aFd84e8DE37Ff9aAC64e",
+      "userData": {
+        "teamCount": 1,
+        "activeDirects": 0,
+        "isActive": false
+      },
+      "referrerData": {
+        "teamCount": 2,
+        "activeDirects": 0,
+        "isActive": true
+      },
+      "issues": [
+        {
+          "type": "activeDirects",
+          "message": "上级直推人数(0) = 0，但下级有团队(1)",
+          "severity": "medium"
+        }
+      ]
+    }
+  ]
+}

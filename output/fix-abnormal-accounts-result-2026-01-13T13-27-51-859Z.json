@@ -1,0 +1,64 @@
+{
+  "timestamp": "2026-01-13T13:27:51.859Z",
+  "fixedAccounts": [
+    {
+      "account": "0x4c10831cbcf9884ba72051b5287b6c87e4f74a48",
+      "referrer": "0x3E436e9ef8A44cb65b00FcEFe4Ac1952384Ed21e",
+      "success": true,
+      "fixed": true,
+      "oldTeamCount": 411,
+      "newTeamCount": 52113,
+      "txHash": "0x436c196258f86ce9d47022586f435b3ebae2c044616c2217fa8305c53cffd78b"
+    },
+    {
+      "account": "0xbacfa51bfbeaa771d2190657e2e8487344ba5055",
+      "referrer": "0x7aA68892F013d981DFfAc7AE403fAA886938552b",
+      "success": true,
+      "fixed": true,
+      "oldTeamCount": 188,
+      "newTeamCount": 393,
+      "txHash": "0xa9b8d6222a49526c526e2accf95e6d6faacad99be70543c50ffc8bf55799bcd6"
+    },
+    {
+      "account": "0xc418c1287c62cde6b8434e88e33f8d4feecf5e95",
+      "referrer": "0xC26731f7b6521B9ddF58B2Ef3F70658Dc28A5513",
+      "success": true,
+      "fixed": true,
+      "oldTeamCount": 472,
+      "newTeamCount": 101708,
+      "txHash": "0x18d3efb92561ad8a378644ba3635a3ae4aac09310fd164f24e8fe5e50235b253"
+    }
+  ],
+  "verificationResults": [
+    {
+      "account": "0x4c10831cbcf9884ba72051b5287b6c87e4f74a48",
+      "referrer": "0x3E436e9ef8A44cb65b00FcEFe4Ac1952384Ed21e",
+      "referrerTeamCount": 52113,
+      "userTeamCount": 781,
+      "hasIssues": false,
+      "issues": []
+    },
+    {
+      "account": "0xbacfa51bfbeaa771d2190657e2e8487344ba5055",
+      "referrer": "0x7aA68892F013d981DFfAc7AE403fAA886938552b",
+      "referrerTeamCount": 393,
+      "userTeamCount": 392,
+      "hasIssues": false,
+      "issues": []
+    },
+    {
+      "account": "0xc418c1287c62cde6b8434e88e33f8d4feecf5e95",
+      "referrer": "0xC26731f7b6521B9ddF58B2Ef3F70658Dc28A5513",
+      "referrerTeamCount": 101708,
+      "userTeamCount": 559,
+      "hasIssues": false,
+      "issues": []
+    }
+  ],
+  "summary": {
+    "total": 3,
+    "fixed": 3,
+    "failed": 0,
+    "stillHasIssues": 0
+  }
+}

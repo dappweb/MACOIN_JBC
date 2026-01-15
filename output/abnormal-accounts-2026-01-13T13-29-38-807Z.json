@@ -1,0 +1,33 @@
+{
+  "timestamp": "2026-01-13T13:29:38.807Z",
+  "totalUsers": 544,
+  "abnormalCount": 1,
+  "statistics": {
+    "critical": 0,
+    "high": 0,
+    "medium": 1
+  },
+  "accounts": [
+    {
+      "user": "0x90070eb60a6e7dcbe9ea282e0a5c97b3bb1ebf7b",
+      "referrer": "0x64B0B66E7aD150C5e314aFd84e8DE37Ff9aAC64e",
+      "userData": {
+        "teamCount": 1,
+        "activeDirects": 0,
+        "isActive": false
+      },
+      "referrerData": {
+        "teamCount": 2,
+        "activeDirects": 0,
+        "isActive": true
+      },
+      "issues": [
+        {
+          "type": "activeDirects",
+          "message": "上级直推人数(0) = 0，但下级有团队(1)",
+          "severity": "medium"
+        }
+      ]
+    }
+  ]
+}

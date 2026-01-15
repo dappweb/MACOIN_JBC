@@ -1,0 +1,111 @@
+{
+  "timestamp": "2026-01-13T13:16:00.087Z",
+  "totalUsers": 544,
+  "abnormalCount": 4,
+  "statistics": {
+    "critical": 3,
+    "high": 3,
+    "medium": 1
+  },
+  "accounts": [
+    {
+      "user": "0x4c10831cbcf9884ba72051b5287b6c87e4f74a48",
+      "referrer": "0x3E436e9ef8A44cb65b00FcEFe4Ac1952384Ed21e",
+      "userData": {
+        "teamCount": 781,
+        "activeDirects": 1,
+        "isActive": true
+      },
+      "referrerData": {
+        "teamCount": 411,
+        "activeDirects": 3,
+        "isActive": true
+      },
+      "issues": [
+        {
+          "type": "teamCount",
+          "message": "上级团队人数(411) < 下级团队人数+1(782)",
+          "severity": "high"
+        },
+        {
+          "type": "teamCount_absolute",
+          "message": "上级团队人数(411) < 下级团队人数(781)",
+          "severity": "critical"
+        }
+      ]
+    },
+    {
+      "user": "0xbacfa51bfbeaa771d2190657e2e8487344ba5055",
+      "referrer": "0x7aA68892F013d981DFfAc7AE403fAA886938552b",
+      "userData": {
+        "teamCount": 392,
+        "activeDirects": 6,
+        "isActive": true
+      },
+      "referrerData": {
+        "teamCount": 188,
+        "activeDirects": 7,
+        "isActive": true
+      },
+      "issues": [
+        {
+          "type": "teamCount",
+          "message": "上级团队人数(188) < 下级团队人数+1(393)",
+          "severity": "high"
+        },
+        {
+          "type": "teamCount_absolute",
+          "message": "上级团队人数(188) < 下级团队人数(392)",
+          "severity": "critical"
+        }
+      ]
+    },
+    {
+      "user": "0xc418c1287c62cde6b8434e88e33f8d4feecf5e95",
+      "referrer": "0xC26731f7b6521B9ddF58B2Ef3F70658Dc28A5513",
+      "userData": {
+        "teamCount": 559,
+        "activeDirects": 3,
+        "isActive": true
+      },
+      "referrerData": {
+        "teamCount": 472,
+        "activeDirects": 3,
+        "isActive": true
+      },
+      "issues": [
+        {
+          "type": "teamCount",
+          "message": "上级团队人数(472) < 下级团队人数+1(560)",
+          "severity": "high"
+        },
+        {
+          "type": "teamCount_absolute",
+          "message": "上级团队人数(472) < 下级团队人数(559)",
+          "severity": "critical"
+        }
+      ]
+    },
+    {
+      "user": "0x90070eb60a6e7dcbe9ea282e0a5c97b3bb1ebf7b",
+      "referrer": "0x64B0B66E7aD150C5e314aFd84e8DE37Ff9aAC64e",
+      "userData": {
+        "teamCount": 1,
+        "activeDirects": 0,
+        "isActive": false
+      },
+      "referrerData": {
+        "teamCount": 2,
+        "activeDirects": 0,
+        "isActive": true
+      },
+      "issues": [
+        {
+          "type": "activeDirects",
+          "message": "上级直推人数(0) = 0，但下级有团队(1)",
+          "severity": "medium"
+        }
+      ]
+    }
+  ]
+}

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react"
 import { TEAM_LEVELS } from "../src/constants"
 import { Users, Percent, UserCheck, Copy, Share2, Crown, Star } from "lucide-react"
 import { useLanguage } from "../src/LanguageContext"
-import { useWeb3 } from "../src/Web3Context"
+import { useWeb3, CONTRACT_ADDRESSES, PROTOCOL_ABI } from "../src/Web3Context"
 import { ethers } from "ethers"
 import toast from "react-hot-toast"
 import { useLevelOverride } from "../src/hooks/useLevelOverride"
@@ -24,7 +24,7 @@ interface DirectReferral {
 
 const TeamLevel: React.FC = () => {
   const { t } = useLanguage()
-  const { protocolContract, account, isConnected } = useWeb3()
+  const { protocolContract, account, isConnected, provider } = useWeb3()
   const { overrideLevel, hasOverride } = useLevelOverride(account)
   const [userLevelInfo, setUserLevelInfo] = useState({
     activeDirects: 0,
@@ -81,7 +81,34 @@ const TeamLevel: React.FC = () => {
     const fetchTeamInfo = async () => {
       if (isConnected && account && protocolContract) {
         try {
-          const userInfo = await protocolContract.userInfo(account)
+          let userInfo;
+          let isFromOldContract = false;
+          
+          // 先尝试查询新合约
+          try {
+            userInfo = await protocolContract.userInfo(account);
+          } catch (error) {
+            // 如果新合约中不存在，尝试查询旧合约
+            console.log('⚠️ [TeamLevel] 用户不在新合约中，尝试查询旧合约...', account);
+            if (provider && CONTRACT_ADDRESSES.OLD_PROTOCOL) {
+              try {
+                const oldProtocolContract = new ethers.Contract(
+                  CONTRACT_ADDRESSES.OLD_PROTOCOL,
+                  PROTOCOL_ABI,
+                  provider
+                );
+                userInfo = await oldProtocolContract.userInfo(account);
+                isFromOldContract = true;
+                console.log('✅ [TeamLevel] 从旧合约获取到用户数据');
+              } catch (oldError) {
+                console.error('❌ [TeamLevel] 旧合约查询也失败:', oldError);
+                throw oldError;
+              }
+            } else {
+              throw new Error('无法访问旧合约或provider未连接');
+            }
+          }
+          
           // userInfo: (referrer, activeDirects, teamCount, totalRevenue, currentCap, isActive)
 
           // Calc Level - Updated with more achievable standards
@@ -130,33 +157,39 @@ const TeamLevel: React.FC = () => {
             teamCount: teamCount,
             currentLevel: level + progress, // Add progress display
             baseLevel: level, // Store base level for reward lookup
-            teamTotalVolume: userInfo[7],
-            teamTotalCap: userInfo[8],
+            teamTotalVolume: userInfo[7] || 0n,
+            teamTotalCap: userInfo[8] || 0n,
             isOverride: isOverrideLevel,
           })
 
-          // Fetch Direct Referrals
-          setIsLoadingDirects(true)
-          try {
-            // Fetch direct referrals addresses first
-            const directAddresses = await protocolContract.getDirectReferrals(account)
-            
-            // Then fetch ticket info for each address in parallel
-            const formattedData = await Promise.all(
-              directAddresses.map(async (addr: string) => {
-                const ticket = await protocolContract.userTicket(addr)
-                // ticket: (ticketId, amount, purchaseTime, exited)
-                return {
-                  user: addr,
-                  ticketAmount: ticket[1],
-                  joinTime: ticket[2],
-                }
-              })
-            )
-            setDirectReferrals(formattedData)
-          } catch (e) {
-            console.error("Failed to fetch directs", e)
-          } finally {
+          // Fetch Direct Referrals (只在用户在新合约中时查询)
+          if (!isFromOldContract) {
+            setIsLoadingDirects(true)
+            try {
+              // Fetch direct referrals addresses first
+              const directAddresses = await protocolContract.getDirectReferrals(account)
+              
+              // Then fetch ticket info for each address in parallel
+              const formattedData = await Promise.all(
+                directAddresses.map(async (addr: string) => {
+                  const ticket = await protocolContract.userTicket(addr)
+                  // ticket: (ticketId, amount, purchaseTime, exited)
+                  return {
+                    user: addr,
+                    ticketAmount: ticket[1],
+                    joinTime: ticket[2],
+                  }
+                })
+              )
+              setDirectReferrals(formattedData)
+            } catch (e) {
+              console.error("Failed to fetch directs", e)
+            } finally {
+              setIsLoadingDirects(false)
+            }
+          } else {
+            // 如果用户来自旧合约，清空直推列表（旧合约可能不支持getDirectReferrals）
+            setDirectReferrals([])
             setIsLoadingDirects(false)
           }
         } catch (err) {

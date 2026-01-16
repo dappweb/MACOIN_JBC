@@ -28,3 +28,17 @@ dist-ssr
 output/
 *.zip
 verify-data.cjs
+
+# Backup files
+*.backup
+*.old
+*.orig
+*~
+
+# macOS
+.DS_Store
+
+# Build artifacts (optional - uncomment if you don't want to commit them)
+# artifacts/
+# cache/
+# config/cache/

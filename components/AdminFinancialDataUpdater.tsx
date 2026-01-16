@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useWeb3 } from '../src/Web3Context';
+import { useWeb3, PROTOCOL_ABI } from '../src/Web3Context';
 import { ethers } from 'ethers';
 import toast from 'react-hot-toast';
 import { formatContractError } from '../utils/errorFormatter';
@@ -25,6 +25,9 @@ interface UpdateProgress {
     currentUser: string | null;
 }
 
+// 旧合约地址（用于查询历史数据）
+const OLD_PROTOCOL_ADDRESS = "0x77601aC473dB1195A1A9c82229C9bD008a69987A";
+
 const AdminFinancialDataUpdater: React.FC = () => {
     const { protocolContract, provider, isOwner, account } = useWeb3();
     const [loading, setLoading] = useState(false);
@@ -42,7 +45,7 @@ const AdminFinancialDataUpdater: React.FC = () => {
     const [autoUpdateEnabled, setAutoUpdateEnabled] = useState(false);
     const [autoUpdateInterval, setAutoUpdateInterval] = useState<NodeJS.Timeout | null>(null);
 
-    // 从链上事件扫描用户财务数据
+    // 从链上事件扫描用户财务数据（包括新旧合约）
     const scanUserFinancialData = async () => {
         if (!protocolContract || !provider) {
             toast.error('合约或提供者未连接');
@@ -50,27 +53,71 @@ const AdminFinancialDataUpdater: React.FC = () => {
         }
 
         setScanning(true);
-        toast.loading('正在扫描链上事件...', { id: 'scan-events' });
+        toast.loading('正在扫描链上事件（新旧合约）...', { id: 'scan-events' });
 
         try {
             const currentBlock = await provider.getBlockNumber();
-            const fromBlock = Math.max(0, currentBlock - 200000); // 查询最近20万个区块
+            const fromBlock = 0; // 从区块0开始查询，包含所有历史数据
 
-            console.log(`📊 [FinancialData] 开始扫描事件，区块范围: ${fromBlock} - ${currentBlock}`);
+            console.log(`📊 [FinancialData] 开始扫描事件（新旧合约），区块范围: ${fromBlock} - ${currentBlock}`);
 
-            // 获取所有相关事件
-            const [ticketEvents, stakeEvents, rewardEvents, redeemEvents] = await Promise.all([
+            // 创建旧合约实例
+            const oldProtocolContract = new ethers.Contract(OLD_PROTOCOL_ADDRESS, PROTOCOL_ABI, provider);
+
+            // 获取新合约的所有相关事件
+            const [newTicketEvents, newStakeEvents, newRewardEvents, newRedeemEvents] = await Promise.all([
                 protocolContract.queryFilter(protocolContract.filters.TicketPurchased(), fromBlock, currentBlock),
                 protocolContract.queryFilter(protocolContract.filters.LiquidityStaked(), fromBlock, currentBlock),
                 protocolContract.queryFilter(protocolContract.filters.RewardClaimed(), fromBlock, currentBlock),
                 protocolContract.queryFilter(protocolContract.filters.Redeemed(), fromBlock, currentBlock),
             ]);
 
+            // 获取旧合约的所有相关事件
+            let oldTicketEvents: any[] = [];
+            let oldStakeEvents: any[] = [];
+            let oldRewardEvents: any[] = [];
+            let oldRedeemEvents: any[] = [];
+            
+            try {
+                toast.loading('正在查询旧合约事件...', { id: 'scan-old' });
+                [oldTicketEvents, oldStakeEvents, oldRewardEvents, oldRedeemEvents] = await Promise.all([
+                    oldProtocolContract.queryFilter(oldProtocolContract.filters.TicketPurchased(), fromBlock, currentBlock),
+                    oldProtocolContract.queryFilter(oldProtocolContract.filters.LiquidityStaked(), fromBlock, currentBlock),
+                    oldProtocolContract.queryFilter(oldProtocolContract.filters.RewardClaimed(), fromBlock, currentBlock),
+                    oldProtocolContract.queryFilter(oldProtocolContract.filters.Redeemed(), fromBlock, currentBlock),
+                ]);
+                console.log(`✅ [FinancialData] 旧合约查询成功`);
+            } catch (error: any) {
+                console.warn(`⚠️ [FinancialData] 旧合约查询失败: ${error.message}`);
+                toast.warning('旧合约查询失败，仅显示新合约数据', { id: 'scan-old', duration: 5000 });
+                // 继续使用空数组，不影响新合约数据
+            }
+
+            // 合并新旧合约的事件
+            const ticketEvents = [...newTicketEvents, ...oldTicketEvents];
+            const stakeEvents = [...newStakeEvents, ...oldStakeEvents];
+            const rewardEvents = [...newRewardEvents, ...oldRewardEvents];
+            const redeemEvents = [...newRedeemEvents, ...oldRedeemEvents];
+
             console.log(`📊 [FinancialData] 找到事件:`, {
-                tickets: ticketEvents.length,
-                stakes: stakeEvents.length,
-                rewards: rewardEvents.length,
-                redeems: redeemEvents.length
+                新合约: {
+                    tickets: newTicketEvents.length,
+                    stakes: newStakeEvents.length,
+                    rewards: newRewardEvents.length,
+                    redeems: newRedeemEvents.length
+                },
+                旧合约: {
+                    tickets: oldTicketEvents.length,
+                    stakes: oldStakeEvents.length,
+                    rewards: oldRewardEvents.length,
+                    redeems: oldRedeemEvents.length
+                },
+                总计: {
+                    tickets: ticketEvents.length,
+                    stakes: stakeEvents.length,
+                    rewards: rewardEvents.length,
+                    redeems: redeemEvents.length
+                }
             });
 
             // 处理购买票事件

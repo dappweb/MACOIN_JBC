@@ -129,12 +129,30 @@ jobs:
         echo "🌿 Branch: ${{ github.ref_name }}"
         echo "📝 Commit: ${{ github.sha }}"
         
-        # 部署到生产环境
-        wrangler pages deploy dist \
-          --project-name="$PROJECT_NAME" || {
-            echo "⚠️ First deployment attempt failed, retrying without compatibility flags..."
-            wrangler pages deploy dist --project-name="$PROJECT_NAME"
-          }
+        # 验证 dist 目录存在
+        if [ ! -d "dist" ]; then
+          echo "❌ dist directory not found!"
+          exit 1
+        fi
+        
+        # 部署到生产环境（最多重试3次）
+        MAX_RETRIES=3
+        RETRY_COUNT=0
+        while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+          if wrangler pages deploy dist --project-name="$PROJECT_NAME"; then
+            echo "✅ Deployment successful on attempt $((RETRY_COUNT + 1))"
+            break
+          else
+            RETRY_COUNT=$((RETRY_COUNT + 1))
+            if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
+              echo "⚠️ Deployment attempt $RETRY_COUNT failed, retrying in 5 seconds..."
+              sleep 5
+            else
+              echo "❌ Deployment failed after $MAX_RETRIES attempts"
+              exit 1
+            fi
+          fi
+        done
         
         echo "✅ Frontend deployed to Cloudflare Pages Production with performance optimizations"
         echo "🌐 Production URL: https://${{ env.PRODUCTION_DOMAIN }}"
@@ -149,22 +167,22 @@ jobs:
         
         PROJECT_NAME="${{ env.PRODUCTION_PROJECT }}"
         
-        # 设置生产环境变量
+        # 设置生产环境变量（每个命令都有错误处理）
         if [ -n "${{ secrets.PROD_JBC_CONTRACT_ADDRESS }}" ]; then
-          wrangler pages secret put JBC_CONTRACT_ADDRESS --text "${{ secrets.PROD_JBC_CONTRACT_ADDRESS }}" --project-name="$PROJECT_NAME"
+          wrangler pages secret put JBC_CONTRACT_ADDRESS --text "${{ secrets.PROD_JBC_CONTRACT_ADDRESS }}" --project-name="$PROJECT_NAME" || echo "⚠️ Failed to set JBC_CONTRACT_ADDRESS"
         fi
         
         if [ -n "${{ secrets.PROD_PROTOCOL_CONTRACT_ADDRESS }}" ]; then
-          wrangler pages secret put PROTOCOL_CONTRACT_ADDRESS --text "${{ secrets.PROD_PROTOCOL_CONTRACT_ADDRESS }}" --project-name="$PROJECT_NAME"
+          wrangler pages secret put PROTOCOL_CONTRACT_ADDRESS --text "${{ secrets.PROD_PROTOCOL_CONTRACT_ADDRESS }}" --project-name="$PROJECT_NAME" || echo "⚠️ Failed to set PROTOCOL_CONTRACT_ADDRESS"
         fi
         
         if [ -n "${{ secrets.PROD_PRIVATE_KEY }}" ]; then
-          wrangler pages secret put PRIVATE_KEY --text "${{ secrets.PROD_PRIVATE_KEY }}" --project-name="$PROJECT_NAME"
+          wrangler pages secret put PRIVATE_KEY --text "${{ secrets.PROD_PRIVATE_KEY }}" --project-name="$PROJECT_NAME" || echo "⚠️ Failed to set PRIVATE_KEY"
         fi
         
         # 使用生产网络RPC
         if [ -n "${{ secrets.MC_RPC_URL }}" ]; then
-          wrangler pages secret put RPC_URL --text "${{ secrets.MC_RPC_URL }}" --project-name="$PROJECT_NAME"
+          wrangler pages secret put RPC_URL --text "${{ secrets.MC_RPC_URL }}" --project-name="$PROJECT_NAME" || echo "⚠️ Failed to set RPC_URL"
         fi
         
         # 设置环境标识

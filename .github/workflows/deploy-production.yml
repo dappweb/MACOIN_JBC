@@ -44,7 +44,10 @@ jobs:
     - name: 🔨 Build Frontend (Optimized)
       run: |
         echo "🚀 Building optimized frontend for production environment..."
-        npm run build
+        npm run build || {
+          echo "❌ Build failed"
+          exit 1
+        }
         echo "📊 Build analysis..."
         npm run perf:build-size || echo "⚠️ Build size analysis failed, but continuing..."
         echo "✅ Optimized frontend build completed"
@@ -59,6 +62,7 @@ jobs:
         echo "✅ Test execution completed"
 
     - name: 📊 Upload Build Artifacts
+      if: always()  # 即使前面的步骤失败也上传（如果构建成功）
       uses: actions/upload-artifact@v4
       with:
         name: production-build-artifacts
@@ -66,6 +70,7 @@ jobs:
           dist/
           functions/
         retention-days: 7
+        if-no-files-found: warn  # 如果文件不存在，只警告不失败
 
   # Cloudflare Pages 生产部署阶段
   deploy-frontend-production:
@@ -92,12 +97,16 @@ jobs:
       with:
         name: production-build-artifacts
         path: .
+        continue-on-error: true  # 如果下载失败，继续执行（会重新构建）
 
-    - name: 🔨 Build Frontend (Force Deploy - Optimized)
-      if: github.event.inputs.force_deploy == 'true'
+    - name: 🔨 Build Frontend (Force Deploy or if Artifacts Missing)
+      if: github.event.inputs.force_deploy == 'true' || steps.download-artifacts.outcome == 'failure'
       run: |
-        echo "🚀 Building optimized frontend for forced production deployment..."
-        npm run build
+        echo "🚀 Building optimized frontend for production deployment..."
+        npm run build || {
+          echo "❌ Build failed"
+          exit 1
+        }
         npm run perf:build-size || echo "⚠️ Build size analysis failed, but continuing..."
         echo "✅ Optimized frontend build completed"
 

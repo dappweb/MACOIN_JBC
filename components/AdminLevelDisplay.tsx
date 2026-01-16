@@ -1,15 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { useWeb3 } from '../src/Web3Context';
+import { useWeb3, CONTRACT_ADDRESSES, PROTOCOL_ABI } from '../src/Web3Context';
 import { useEventRefresh } from '../hooks/useGlobalRefresh';
 import LevelDisplay from './LevelDisplay';
 import { RotateCw } from 'lucide-react';
+import { ethers } from 'ethers';
 
 interface AdminLevelDisplayProps {
   account: string;
 }
 
 const AdminLevelDisplay: React.FC<AdminLevelDisplayProps> = ({ account }) => {
-  const { protocolContract } = useWeb3();
+  const { protocolContract, provider } = useWeb3();
   const [teamCount, setTeamCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -21,9 +22,42 @@ const AdminLevelDisplay: React.FC<AdminLevelDisplayProps> = ({ account }) => {
       setLoading(true);
       setError(null);
       
-      const userInfo = await protocolContract.userInfo(account);
-      const count = Number(userInfo[2]); // teamCount is at index 2
-      setTeamCount(count);
+      let teamCount = 0;
+      
+      // 先尝试查询新合约
+      try {
+        const userInfo = await protocolContract.userInfo(account);
+        teamCount = Number(userInfo[2]); // teamCount is at index 2
+      } catch (error) {
+        console.warn('⚠️ [AdminLevelDisplay] 新合约查询失败，尝试旧合约...', error);
+      }
+      
+      // 再尝试查询旧合约，取最大值
+      if (provider && CONTRACT_ADDRESSES.OLD_PROTOCOL) {
+        try {
+          const oldProtocolContract = new ethers.Contract(
+            CONTRACT_ADDRESSES.OLD_PROTOCOL,
+            PROTOCOL_ABI,
+            provider
+          );
+          const oldUserInfo = await oldProtocolContract.userInfo(account);
+          const oldTeamCount = Number(oldUserInfo[2]);
+          
+          // 取新旧合约中的最大值
+          if (oldTeamCount > teamCount) {
+            teamCount = oldTeamCount;
+            console.log(`✅ [AdminLevelDisplay] 使用旧合约的团队人数: ${oldTeamCount}`);
+          }
+        } catch (oldError) {
+          console.warn('⚠️ [AdminLevelDisplay] 旧合约查询失败:', oldError);
+        }
+      }
+      
+      if (teamCount === 0) {
+        throw new Error('无法从新旧合约获取团队数据');
+      }
+      
+      setTeamCount(teamCount);
       
     } catch (err: any) {
       console.error('获取团队数据失败:', err);

@@ -2,7 +2,7 @@ import React, { useEffect, useState, useCallback } from "react"
 import { UserStats } from "../src/types"
 import { Wallet, TrendingUp, Users, Coins, Link, Ticket, Star } from "lucide-react"
 import { useLanguage } from "../src/LanguageContext"
-import { useWeb3 } from "../src/Web3Context"
+import { useWeb3, CONTRACT_ADDRESSES, PROTOCOL_ABI } from "../src/Web3Context"
 import { useGlobalRefresh, useEventRefresh } from "../hooks/useGlobalRefresh"
 import { useRevenueCache } from "../hooks/useRevenueCache"
 import { useIncrementalRevenue } from "../hooks/useIncrementalRevenue"
@@ -99,8 +99,65 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
         // 2. 从链上获取最新数据
         // 余额数据现在从全局状态获取，不需要重复获取
 
-        // Fetch Protocol Info
-        const userInfo = await protocolContract.userInfo(account)
+        // Fetch Protocol Info - 从新旧合约获取数据，取最大值
+        let userInfo;
+        let teamCount = 0;
+        let activeDirects = 0;
+        let totalRevenue = 0n;
+        let currentCap = 0n;
+        let isActive = false;
+        let teamTotalVolume = 0n;
+        let teamTotalCap = 0n;
+        
+        // 先尝试查询新合约
+        try {
+          userInfo = await protocolContract.userInfo(account);
+          teamCount = Number(userInfo[2]);
+          activeDirects = Number(userInfo[1]);
+          totalRevenue = userInfo[3];
+          currentCap = userInfo[4];
+          isActive = userInfo[5];
+          teamTotalVolume = userInfo[7] || 0n;
+          teamTotalCap = userInfo[8] || 0n;
+        } catch (error) {
+          console.warn('⚠️ [StatsPanel] 新合约查询失败，尝试旧合约...', error);
+        }
+        
+        // 再尝试查询旧合约，取最大值
+        if (provider && CONTRACT_ADDRESSES.OLD_PROTOCOL) {
+          try {
+            const oldProtocolContract = new ethers.Contract(
+              CONTRACT_ADDRESSES.OLD_PROTOCOL,
+              PROTOCOL_ABI,
+              provider
+            );
+            const oldUserInfo = await oldProtocolContract.userInfo(account);
+            const oldTeamCount = Number(oldUserInfo[2]);
+            const oldActiveDirects = Number(oldUserInfo[1]);
+            
+            // 取新旧合约中的最大值
+            if (oldTeamCount > teamCount) {
+              teamCount = oldTeamCount;
+              console.log(`✅ [StatsPanel] 使用旧合约的团队人数: ${oldTeamCount} (新合约: ${Number(userInfo?.[2] || 0)})`);
+            }
+            if (oldActiveDirects > activeDirects) {
+              activeDirects = oldActiveDirects;
+            }
+            if (!userInfo) {
+              // 如果新合约没有数据，使用旧合约数据
+              userInfo = oldUserInfo;
+              totalRevenue = oldUserInfo[3] || 0n;
+              currentCap = oldUserInfo[4] || 0n;
+              isActive = oldUserInfo[5] || false;
+            }
+          } catch (oldError) {
+            console.warn('⚠️ [StatsPanel] 旧合约查询失败:', oldError);
+          }
+        }
+        
+        if (!userInfo) {
+          throw new Error('无法从新旧合约获取用户数据');
+        }
         
         // userInfo returns: (referrer, activeDirects, teamCount, totalRevenue, currentCap, isActive, refundFeeAmount, teamTotalVolume, teamTotalCap)
 
@@ -118,10 +175,9 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
           }
         }
 
-        // Calculate Level based on teamCount (userInfo[2]) - Updated standards
+        // Calculate Level based on teamCount - Updated standards
         let level = "V0"
         let isOverrideLevel = false
-        const teamCount = Number(userInfo[2])
         
         // 检查是否有等级覆盖
         if (hasOverride && overrideLevel !== null && overrideLevel >= 1 && overrideLevel <= 9) {
@@ -278,7 +334,7 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
           balanceMC: parseFloat(balances.mc), // 使用全局状态的余额
           balanceJBC: parseFloat(balances.jbc), // 使用全局状态的余额
           totalRevenue: combinedRevenue,
-          teamCount: Number(userInfo[2]),
+          teamCount: teamCount,
           currentLevel: level,
           isOverrideLevel: isOverrideLevel,
         }))

@@ -92,6 +92,7 @@ jobs:
       run: npm ci
 
     - name: 📥 Download Build Artifacts
+      id: download-artifacts
       if: github.event.inputs.force_deploy != 'true'
       uses: actions/download-artifact@v4
       with:
@@ -185,17 +186,20 @@ jobs:
           wrangler pages secret put RPC_URL --text "${{ secrets.MC_RPC_URL }}" --project-name="$PROJECT_NAME" || echo "⚠️ Failed to set RPC_URL"
         fi
         
-        # 设置环境标识
-        wrangler pages secret put ENVIRONMENT --text "production" --project-name="$PROJECT_NAME"
-        wrangler pages secret put BRANCH --text "${{ github.ref_name }}" --project-name="$PROJECT_NAME"
-        wrangler pages secret put DOMAIN --text "${{ env.PRODUCTION_DOMAIN }}" --project-name="$PROJECT_NAME"
+        # 设置环境标识（ENVIRONMENT 是必需的，失败应该报错）
+        wrangler pages secret put ENVIRONMENT --text "production" --project-name="$PROJECT_NAME" || {
+          echo "❌ Failed to set ENVIRONMENT"
+          exit 1
+        }
+        wrangler pages secret put BRANCH --text "${{ github.ref_name }}" --project-name="$PROJECT_NAME" || echo "⚠️ Failed to set BRANCH"
+        wrangler pages secret put DOMAIN --text "${{ env.PRODUCTION_DOMAIN }}" --project-name="$PROJECT_NAME" || echo "⚠️ Failed to set DOMAIN"
         
-        # 性能优化配置
-        wrangler pages secret put CACHE_TTL --text "3600" --project-name="$PROJECT_NAME"
-        wrangler pages secret put MAX_CONCURRENT_REQUESTS --text "100" --project-name="$PROJECT_NAME"
-        wrangler pages secret put RATE_LIMIT_PER_MINUTE --text "1000" --project-name="$PROJECT_NAME"
-        wrangler pages secret put ENABLE_COMPRESSION --text "true" --project-name="$PROJECT_NAME"
-        wrangler pages secret put ENABLE_MINIFICATION --text "true" --project-name="$PROJECT_NAME"
+        # 性能优化配置（可选，失败不中断）
+        wrangler pages secret put CACHE_TTL --text "3600" --project-name="$PROJECT_NAME" || echo "⚠️ Failed to set CACHE_TTL"
+        wrangler pages secret put MAX_CONCURRENT_REQUESTS --text "100" --project-name="$PROJECT_NAME" || echo "⚠️ Failed to set MAX_CONCURRENT_REQUESTS"
+        wrangler pages secret put RATE_LIMIT_PER_MINUTE --text "1000" --project-name="$PROJECT_NAME" || echo "⚠️ Failed to set RATE_LIMIT_PER_MINUTE"
+        wrangler pages secret put ENABLE_COMPRESSION --text "true" --project-name="$PROJECT_NAME" || echo "⚠️ Failed to set ENABLE_COMPRESSION"
+        wrangler pages secret put ENABLE_MINIFICATION --text "true" --project-name="$PROJECT_NAME" || echo "⚠️ Failed to set ENABLE_MINIFICATION"
         
         echo "✅ Production environment variables configured"
 

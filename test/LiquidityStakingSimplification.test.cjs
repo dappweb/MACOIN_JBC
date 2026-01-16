@@ -13,8 +13,8 @@ describe("Liquidity Staking Simplification Tests", function () {
     const MockERC20 = await ethers.getContractFactory("MockERC20");
     mcToken = await MockERC20.deploy("MC Token", "MC", ethers.parseEther("1000000"));
     
-    const MockJBC = await ethers.getContractFactory("MockJBC");
-    jbcToken = await MockJBC.deploy("JBC Token", "JBC", ethers.parseEther("100000000"));
+    // Use MockERC20 for JBC token as well (MockJBC doesn't exist)
+    jbcToken = await MockERC20.deploy("JBC Token", "JBC", ethers.parseEther("100000000"));
 
     // Deploy protocol
     const JinbaoProtocol = await ethers.getContractFactory("JinbaoProtocol");

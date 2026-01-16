@@ -295,7 +295,7 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
           // V2合约或其他错误，保持默认值
         }
 
-        const baseRevenue = parseFloat(ethers.formatEther(userInfo[3]))
+        const baseRevenue = parseFloat(ethers.formatEther(totalRevenue))
         // 累计收益计算说明：
         // - baseRevenue (totalRevenue) 已经包含了所有奖励：挖矿奖励 + 推荐奖励 + 级差奖励
         // - 推荐奖励通过 _distributeReward 函数分配时，会执行 u.totalRevenue += payout

@@ -253,7 +253,21 @@ const SwapPanel: React.FC = () => {
 
   // 从全局状态和原生余额获取余额
   const balanceMC = mcBalance ? ethers.formatEther(mcBalance) : '0';
-  const balanceJBC = balances.jbc;
+  const balanceJBC = balances.jbc || '0';
+  
+  // 调试：输出余额信息
+  useEffect(() => {
+    if (isConnected && account) {
+      console.log('💱 [SwapPanel] 余额状态:', {
+        balanceMC,
+        balanceJBC,
+        mcBalanceRaw: mcBalance?.toString(),
+        hasJbcContract: !!jbcContract,
+        jbcContractAddress: jbcContract?.target,
+        lastUpdated: balances.lastUpdated
+      });
+    }
+  }, [balanceMC, balanceJBC, isConnected, account, jbcContract, balances.lastUpdated, mcBalance]);
 
   // 监听池子数据变化事件
   useEventRefresh('poolDataChanged', () => {
@@ -322,13 +336,20 @@ const SwapPanel: React.FC = () => {
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      calculateEstimate(payAmount);
-      validateSwap(payAmount);
-      checkApprovalStatus(payAmount);
-    }, 1000);
+      if (payAmount && parseFloat(payAmount) > 0) {
+        calculateEstimate(payAmount);
+        validateSwap(payAmount);
+        checkApprovalStatus(payAmount);
+      } else {
+        setGetAmount('');
+        setPriceImpact(null);
+        setValidationResult({ isValid: true });
+        setApprovalStatus({ isApproved: false, isChecking: false, isApproving: false });
+      }
+    }, 500); // 减少延迟时间，提高响应速度
 
     return () => clearTimeout(timer);
-  }, [payAmount, isSelling, poolMC, poolJBC, balanceMC, balanceJBC]);
+  }, [payAmount, isSelling, poolMC, poolJBC, balanceMC, balanceJBC, jbcContract, protocolContract, account]);
 
   // 验证兑换条件
   const validateSwap = async (amount: string) => {
@@ -337,11 +358,21 @@ const SwapPanel: React.FC = () => {
       return;
     }
 
+    // 检查JBC合约是否初始化（卖出JBC时需要）
+    if (isSelling && !jbcContract) {
+      setValidationResult({
+        isValid: false,
+        error: 'JBC合约未初始化，无法进行兑换',
+        suggestion: '请刷新页面或重新连接钱包'
+      });
+      return;
+    }
+
     const result = await SwapErrorHandler.validateSwapConditions(
       amount,
       isSelling,
-      balanceMC,
-      balanceJBC,
+      balanceMC || '0',
+      balanceJBC || '0',
       poolMC,
       poolJBC,
       null, // mcContract no longer needed for native MC
@@ -366,23 +397,34 @@ const SwapPanel: React.FC = () => {
       return;
     }
 
+    // 卖出JBC时需要JBC合约
+    if (!jbcContract) {
+      console.warn('⚠️ [SwapPanel] JBC合约未初始化，无法检查授权状态');
+      setApprovalStatus({ isApproved: false, isChecking: false, isApproving: false });
+      return;
+    }
+
     setApprovalStatus(prev => ({ ...prev, isChecking: true }));
 
     try {
       // 只检查JBC授权
-      if (jbcContract) {
-        const allowance = await jbcContract.allowance(account, CONTRACT_ADDRESSES.PROTOCOL);
-        const requiredAmount = ethers.parseEther(amount);
-        const isApproved = allowance >= requiredAmount;
-        
-        setApprovalStatus({ 
-          isApproved, 
-          isChecking: false, 
-          isApproving: false 
-        });
-      }
+      const allowance = await jbcContract.allowance(account, CONTRACT_ADDRESSES.PROTOCOL);
+      const requiredAmount = ethers.parseEther(amount);
+      const isApproved = allowance >= requiredAmount;
+      
+      console.log('🔐 [SwapPanel] 授权状态检查:', {
+        allowance: ethers.formatEther(allowance),
+        required: amount,
+        isApproved
+      });
+      
+      setApprovalStatus({ 
+        isApproved, 
+        isChecking: false, 
+        isApproving: false 
+      });
     } catch (error) {
-      console.error('检查授权状态失败:', error);
+      console.error('❌ [SwapPanel] 检查授权状态失败:', error);
       setApprovalStatus({ isApproved: false, isChecking: false, isApproving: false });
     }
   };
@@ -427,14 +469,22 @@ const SwapPanel: React.FC = () => {
   };
 
   const handleSwap = async () => {
-      if (!protocolContract || !payAmount) return;
+      if (!protocolContract || !payAmount) {
+        ToastEnhancer.error('请先输入兑换数量');
+        return;
+      }
+      
+      if (!account) {
+        ToastEnhancer.error('请先连接钱包');
+        return;
+      }
       
       // 预验证 - 更新为原生MC验证
       const validation = await SwapErrorHandler.validateSwapConditions(
         payAmount,
         isSelling,
-        balanceMC,
-        balanceJBC,
+        balanceMC || '0',
+        balanceJBC || '0',
         poolMC,
         poolJBC,
         null, // mcContract no longer needed for native MC
@@ -467,6 +517,12 @@ const SwapPanel: React.FC = () => {
 
           if (isSelling) {
               // Sell JBC -> SwapJBCToMC (保持不变)
+              if (!jbcContract) {
+                ToastEnhancer.error('JBC合约未初始化，无法进行兑换');
+                setIsLoading(false);
+                return;
+              }
+              
               ToastEnhancer.transaction.pending('正在执行JBC兑换...', 'swap');
               tx = await protocolContract.swapJBCToMC(amount);
           } else {
@@ -477,27 +533,43 @@ const SwapPanel: React.FC = () => {
               const currentMcBalance = mcBalance || 0n;
               if (currentMcBalance < amount) {
                 ToastEnhancer.error(`MC余额不足，需要 ${payAmount} MC`);
+                setIsLoading(false);
                 return;
               }
               
               // 估算Gas费用
               try {
                 const gasEstimate = await protocolContract.swapMCToJBC.estimateGas({ value: amount });
-                const feeData = await provider.getFeeData();
-                const gasCost = gasEstimate * (feeData.gasPrice || 0n);
-                const totalRequired = amount + gasCost;
-                
-                if (currentMcBalance < totalRequired) {
-                  const shortfall = ethers.formatEther(totalRequired - currentMcBalance);
-                  ToastEnhancer.error(`余额不足，还需要 ${shortfall} MC 作为Gas费用`);
-                  return;
+                const feeData = await provider?.getFeeData();
+                if (feeData?.gasPrice) {
+                  const gasCost = gasEstimate * feeData.gasPrice;
+                  const totalRequired = amount + gasCost;
+                  
+                  if (currentMcBalance < totalRequired) {
+                    const shortfall = ethers.formatEther(totalRequired - currentMcBalance);
+                    ToastEnhancer.error(`余额不足，还需要 ${shortfall} MC 作为Gas费用`);
+                    setIsLoading(false);
+                    return;
+                  }
                 }
               } catch (error) {
                 console.warn("Gas estimation failed, proceeding anyway:", error);
               }
               
               // 执行原生MC交换
+              if (!provider) {
+                ToastEnhancer.error('Provider未初始化');
+                setIsLoading(false);
+                return;
+              }
+              
               tx = await protocolContract.swapMCToJBC({ value: amount });
+          }
+          
+          if (!tx) {
+            ToastEnhancer.error('交易创建失败');
+            setIsLoading(false);
+            return;
           }
           
           await tx.wait();
@@ -510,7 +582,7 @@ const SwapPanel: React.FC = () => {
           // 使用全局刷新机制
           await onTransactionSuccess('swap');
       } catch (err: any) {
-          console.error('兑换失败:', err);
+          console.error('❌ [SwapPanel] 兑换失败:', err);
           
           const errorDetails = SwapErrorHandler.formatSwapError(err);
           ToastEnhancer.transaction.error(errorDetails.message, 'swap');
@@ -629,12 +701,12 @@ const SwapPanel: React.FC = () => {
 
   const handleInput = (val: string) => {
       // Get current balance based on selling or buying
-      const currentBalance = parseFloat(isSelling ? balanceJBC : balanceMC);
+      const currentBalance = parseFloat(isSelling ? (balanceJBC || '0') : (balanceMC || '0'));
       const inputAmount = parseFloat(val);
       
       // Check if input exceeds balance
       if (!isNaN(inputAmount) && inputAmount > currentBalance) {
-          toast.error(`Insufficient balance. Max: ${currentBalance.toFixed(4)} ${isSelling ? 'JBC' : 'MC'}`);
+          toast.error(`余额不足。最大: ${currentBalance.toFixed(4)} ${isSelling ? 'JBC' : 'MC'}`);
           setPayAmount(currentBalance.toString());
           return;
       }
@@ -736,7 +808,12 @@ const SwapPanel: React.FC = () => {
             <div className="bg-gray-800/50 p-3 md:p-4 rounded-lg md:rounded-xl border border-gray-700 transition-all focus-within:ring-2 focus-within:ring-neon-500/50">
                 <div className="flex justify-between text-xs md:text-sm text-gray-400 mb-2">
                     <span>{t.swap.pay}</span>
-                    <span className="truncate ml-2">{t.swap.balance}: {isSelling ? balanceJBC : balanceMC} {isSelling ? 'JBC' : 'MC'}</span>
+                    <span className="truncate ml-2">
+                        {t.swap.balance}: {isSelling ? (balanceJBC || '0') : (balanceMC || '0')} {isSelling ? 'JBC' : 'MC'}
+                        {isSelling && !jbcContract && (
+                            <span className="text-red-400 ml-1" title="JBC合约未初始化">⚠️</span>
+                        )}
+                    </span>
                 </div>
                 <div className="flex items-center justify-between gap-2">
                     <input
@@ -776,7 +853,12 @@ const SwapPanel: React.FC = () => {
             <div className="bg-gray-800/50 p-3 md:p-4 rounded-lg md:rounded-xl border border-gray-700">
                     <div className="flex justify-between text-xs md:text-sm text-gray-400 mb-2">
                     <span>{t.swap.get}</span>
-                    <span className="truncate ml-2">{t.swap.balance}: {!isSelling ? balanceJBC : balanceMC} {!isSelling ? 'JBC' : 'MC'}</span>
+                    <span className="truncate ml-2">
+                        {t.swap.balance}: {!isSelling ? (balanceJBC || '0') : (balanceMC || '0')} {!isSelling ? 'JBC' : 'MC'}
+                        {!isSelling && !jbcContract && (
+                            <span className="text-red-400 ml-1" title="JBC合约未初始化">⚠️</span>
+                        )}
+                    </span>
                 </div>
                 <div className="flex items-center justify-between gap-2">
                     <input
@@ -992,7 +1074,7 @@ const SwapPanel: React.FC = () => {
                 <AnimatedButton 
                     onClick={handleSwap}
                     loading={isLoading}
-                    disabled={!approvalStatus.isApproved}
+                    disabled={isLoading || (isSelling && !approvalStatus.isApproved)}
                     variant="primary"
                     size="lg"
                     fullWidth

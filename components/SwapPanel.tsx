@@ -253,21 +253,7 @@ const SwapPanel: React.FC = () => {
 
   // 从全局状态和原生余额获取余额
   const balanceMC = mcBalance ? ethers.formatEther(mcBalance) : '0';
-  const balanceJBC = balances.jbc || '0';
-  
-  // 调试：输出余额信息
-  useEffect(() => {
-    if (isConnected && account) {
-      console.log('💱 [SwapPanel] 余额状态:', {
-        balanceMC,
-        balanceJBC,
-        mcBalanceRaw: mcBalance?.toString(),
-        hasJbcContract: !!jbcContract,
-        jbcContractAddress: jbcContract?.target,
-        lastUpdated: balances.lastUpdated
-      });
-    }
-  }, [balanceMC, balanceJBC, isConnected, account, jbcContract, balances.lastUpdated, mcBalance]);
+  const balanceJBC = balances.jbc;
 
   // 监听池子数据变化事件
   useEventRefresh('poolDataChanged', () => {
@@ -336,20 +322,13 @@ const SwapPanel: React.FC = () => {
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      if (payAmount && parseFloat(payAmount) > 0) {
-        calculateEstimate(payAmount);
-        validateSwap(payAmount);
-        checkApprovalStatus(payAmount);
-      } else {
-        setGetAmount('');
-        setPriceImpact(null);
-        setValidationResult({ isValid: true });
-        setApprovalStatus({ isApproved: false, isChecking: false, isApproving: false });
-      }
-    }, 500); // 减少延迟时间，提高响应速度
+      calculateEstimate(payAmount);
+      validateSwap(payAmount);
+      checkApprovalStatus(payAmount);
+    }, 1000);
 
     return () => clearTimeout(timer);
-  }, [payAmount, isSelling, poolMC, poolJBC, balanceMC, balanceJBC, jbcContract, protocolContract, account]);
+  }, [payAmount, isSelling, poolMC, poolJBC, balanceMC, balanceJBC]);
 
   // 验证兑换条件
   const validateSwap = async (amount: string) => {
@@ -358,21 +337,11 @@ const SwapPanel: React.FC = () => {
       return;
     }
 
-    // 检查JBC合约是否初始化（卖出JBC时需要）
-    if (isSelling && !jbcContract) {
-      setValidationResult({
-        isValid: false,
-        error: 'JBC合约未初始化，无法进行兑换',
-        suggestion: '请刷新页面或重新连接钱包'
-      });
-      return;
-    }
-
     const result = await SwapErrorHandler.validateSwapConditions(
       amount,
       isSelling,
-      balanceMC || '0',
-      balanceJBC || '0',
+      balanceMC,
+      balanceJBC,
       poolMC,
       poolJBC,
       null, // mcContract no longer needed for native MC
@@ -397,9 +366,9 @@ const SwapPanel: React.FC = () => {
       return;
     }
 
-    // 卖出JBC时需要JBC合约
+    // JBC兑换MC需要检查授权
     if (!jbcContract) {
-      console.warn('⚠️ [SwapPanel] JBC合约未初始化，无法检查授权状态');
+      console.warn('JBC合约未初始化，无法检查授权状态');
       setApprovalStatus({ isApproved: false, isChecking: false, isApproving: false });
       return;
     }
@@ -407,16 +376,10 @@ const SwapPanel: React.FC = () => {
     setApprovalStatus(prev => ({ ...prev, isChecking: true }));
 
     try {
-      // 只检查JBC授权
+      // 检查JBC授权
       const allowance = await jbcContract.allowance(account, CONTRACT_ADDRESSES.PROTOCOL);
       const requiredAmount = ethers.parseEther(amount);
       const isApproved = allowance >= requiredAmount;
-      
-      console.log('🔐 [SwapPanel] 授权状态检查:', {
-        allowance: ethers.formatEther(allowance),
-        required: amount,
-        isApproved
-      });
       
       setApprovalStatus({ 
         isApproved, 
@@ -424,7 +387,7 @@ const SwapPanel: React.FC = () => {
         isApproving: false 
       });
     } catch (error) {
-      console.error('❌ [SwapPanel] 检查授权状态失败:', error);
+      console.error('检查授权状态失败:', error);
       setApprovalStatus({ isApproved: false, isChecking: false, isApproving: false });
     }
   };
@@ -469,22 +432,14 @@ const SwapPanel: React.FC = () => {
   };
 
   const handleSwap = async () => {
-      if (!protocolContract || !payAmount) {
-        ToastEnhancer.error('请先输入兑换数量');
-        return;
-      }
-      
-      if (!account) {
-        ToastEnhancer.error('请先连接钱包');
-        return;
-      }
+      if (!protocolContract || !payAmount) return;
       
       // 预验证 - 更新为原生MC验证
       const validation = await SwapErrorHandler.validateSwapConditions(
         payAmount,
         isSelling,
-        balanceMC || '0',
-        balanceJBC || '0',
+        balanceMC,
+        balanceJBC,
         poolMC,
         poolJBC,
         null, // mcContract no longer needed for native MC
@@ -516,12 +471,13 @@ const SwapPanel: React.FC = () => {
           let tx;
 
           if (isSelling) {
-              // Sell JBC -> SwapJBCToMC (保持不变)
-              if (!jbcContract) {
-                ToastEnhancer.error('JBC合约未初始化，无法进行兑换');
-                setIsLoading(false);
-                return;
-              }
+              // Sell JBC -> SwapJBCToMC
+              console.log('🔄 [SwapPanel] 开始JBC兑换MC:', {
+                jbcAmount: payAmount,
+                parsedAmount: amount.toString(),
+                isApproved: approvalStatus.isApproved,
+                jbcBalance: balanceJBC
+              });
               
               ToastEnhancer.transaction.pending('正在执行JBC兑换...', 'swap');
               tx = await protocolContract.swapJBCToMC(amount);
@@ -533,43 +489,27 @@ const SwapPanel: React.FC = () => {
               const currentMcBalance = mcBalance || 0n;
               if (currentMcBalance < amount) {
                 ToastEnhancer.error(`MC余额不足，需要 ${payAmount} MC`);
-                setIsLoading(false);
                 return;
               }
               
               // 估算Gas费用
               try {
                 const gasEstimate = await protocolContract.swapMCToJBC.estimateGas({ value: amount });
-                const feeData = await provider?.getFeeData();
-                if (feeData?.gasPrice) {
-                  const gasCost = gasEstimate * feeData.gasPrice;
-                  const totalRequired = amount + gasCost;
-                  
-                  if (currentMcBalance < totalRequired) {
-                    const shortfall = ethers.formatEther(totalRequired - currentMcBalance);
-                    ToastEnhancer.error(`余额不足，还需要 ${shortfall} MC 作为Gas费用`);
-                    setIsLoading(false);
-                    return;
-                  }
+                const feeData = await provider.getFeeData();
+                const gasCost = gasEstimate * (feeData.gasPrice || 0n);
+                const totalRequired = amount + gasCost;
+                
+                if (currentMcBalance < totalRequired) {
+                  const shortfall = ethers.formatEther(totalRequired - currentMcBalance);
+                  ToastEnhancer.error(`余额不足，还需要 ${shortfall} MC 作为Gas费用`);
+                  return;
                 }
               } catch (error) {
                 console.warn("Gas estimation failed, proceeding anyway:", error);
               }
               
               // 执行原生MC交换
-              if (!provider) {
-                ToastEnhancer.error('Provider未初始化');
-                setIsLoading(false);
-                return;
-              }
-              
               tx = await protocolContract.swapMCToJBC({ value: amount });
-          }
-          
-          if (!tx) {
-            ToastEnhancer.error('交易创建失败');
-            setIsLoading(false);
-            return;
           }
           
           await tx.wait();
@@ -577,12 +517,28 @@ const SwapPanel: React.FC = () => {
           setPayAmount('');
           setGetAmount('');
           setValidationResult({ isValid: true });
-          setApprovalStatus({ isApproved: false, isChecking: false, isApproving: false });
+          
+          // 交易成功后，重新检查授权状态（而不是重置）
+          // 因为授权是一次性的（MaxUint256），所以应该仍然有效
+          if (isSelling && payAmount) {
+            await checkApprovalStatus(payAmount);
+          } else {
+            // MC兑换JBC不需要授权，保持已授权状态
+            setApprovalStatus({ isApproved: true, isChecking: false, isApproving: false });
+          }
           
           // 使用全局刷新机制
           await onTransactionSuccess('swap');
       } catch (err: any) {
-          console.error('❌ [SwapPanel] 兑换失败:', err);
+          console.error('❌ [SwapPanel] 兑换失败:', {
+            error: err,
+            isSelling,
+            payAmount,
+            isApproved: approvalStatus.isApproved,
+            errorMessage: err?.message,
+            errorCode: err?.code,
+            errorData: err?.data
+          });
           
           const errorDetails = SwapErrorHandler.formatSwapError(err);
           ToastEnhancer.transaction.error(errorDetails.message, 'swap');
@@ -701,12 +657,12 @@ const SwapPanel: React.FC = () => {
 
   const handleInput = (val: string) => {
       // Get current balance based on selling or buying
-      const currentBalance = parseFloat(isSelling ? (balanceJBC || '0') : (balanceMC || '0'));
+      const currentBalance = parseFloat(isSelling ? balanceJBC : balanceMC);
       const inputAmount = parseFloat(val);
       
       // Check if input exceeds balance
       if (!isNaN(inputAmount) && inputAmount > currentBalance) {
-          toast.error(`余额不足。最大: ${currentBalance.toFixed(4)} ${isSelling ? 'JBC' : 'MC'}`);
+          toast.error(`Insufficient balance. Max: ${currentBalance.toFixed(4)} ${isSelling ? 'JBC' : 'MC'}`);
           setPayAmount(currentBalance.toString());
           return;
       }
@@ -808,12 +764,7 @@ const SwapPanel: React.FC = () => {
             <div className="bg-gray-800/50 p-3 md:p-4 rounded-lg md:rounded-xl border border-gray-700 transition-all focus-within:ring-2 focus-within:ring-neon-500/50">
                 <div className="flex justify-between text-xs md:text-sm text-gray-400 mb-2">
                     <span>{t.swap.pay}</span>
-                    <span className="truncate ml-2">
-                        {t.swap.balance}: {isSelling ? (balanceJBC || '0') : (balanceMC || '0')} {isSelling ? 'JBC' : 'MC'}
-                        {isSelling && !jbcContract && (
-                            <span className="text-red-400 ml-1" title="JBC合约未初始化">⚠️</span>
-                        )}
-                    </span>
+                    <span className="truncate ml-2">{t.swap.balance}: {isSelling ? balanceJBC : balanceMC} {isSelling ? 'JBC' : 'MC'}</span>
                 </div>
                 <div className="flex items-center justify-between gap-2">
                     <input
@@ -853,12 +804,7 @@ const SwapPanel: React.FC = () => {
             <div className="bg-gray-800/50 p-3 md:p-4 rounded-lg md:rounded-xl border border-gray-700">
                     <div className="flex justify-between text-xs md:text-sm text-gray-400 mb-2">
                     <span>{t.swap.get}</span>
-                    <span className="truncate ml-2">
-                        {t.swap.balance}: {!isSelling ? (balanceJBC || '0') : (balanceMC || '0')} {!isSelling ? 'JBC' : 'MC'}
-                        {!isSelling && !jbcContract && (
-                            <span className="text-red-400 ml-1" title="JBC合约未初始化">⚠️</span>
-                        )}
-                    </span>
+                    <span className="truncate ml-2">{t.swap.balance}: {!isSelling ? balanceJBC : balanceMC} {!isSelling ? 'JBC' : 'MC'}</span>
                 </div>
                 <div className="flex items-center justify-between gap-2">
                     <input
@@ -972,8 +918,8 @@ const SwapPanel: React.FC = () => {
               />
             )}
 
-            {/* Authorization Status */}
-            {payAmount && parseFloat(payAmount) > 0 && (
+            {/* Authorization Status - 只在JBC兑换MC时显示 */}
+            {payAmount && parseFloat(payAmount) > 0 && isSelling && (
               <div className={`p-3 rounded-lg border text-sm ${
                 approvalStatus.isChecking 
                   ? 'bg-blue-900/20 border-blue-500/30 text-blue-300'
@@ -991,12 +937,12 @@ const SwapPanel: React.FC = () => {
                     ) : approvalStatus.isApproved ? (
                       <>
                         <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                        <span>✅ {isSelling ? 'JBC' : 'MC'} 代币已授权</span>
+                        <span>✅ JBC 代币已授权</span>
                       </>
                     ) : (
                       <>
                         <div className="w-2 h-2 rounded-full bg-amber-500"></div>
-                        <span>⚠️ 需要授权 {isSelling ? 'JBC' : 'MC'} 代币</span>
+                        <span>⚠️ 需要授权 JBC 代币</span>
                       </>
                     )}
                   </div>
@@ -1015,7 +961,7 @@ const SwapPanel: React.FC = () => {
                 
                 {!approvalStatus.isApproved && !approvalStatus.isChecking && (
                   <div className="mt-2 text-xs opacity-80">
-                    💡 授权后可以使用 {isSelling ? 'JBC' : 'MC'} 代币进行兑换，这是一次性操作
+                    💡 授权后可以使用 JBC 代币进行兑换，这是一次性操作
                   </div>
                 )}
               </div>
@@ -1059,7 +1005,8 @@ const SwapPanel: React.FC = () => {
                 >
                     {validationResult.error}
                 </AnimatedButton>
-            ) : !approvalStatus.isApproved && !approvalStatus.isChecking ? (
+            ) : !approvalStatus.isApproved && !approvalStatus.isChecking && isSelling ? (
+                // 只有JBC兑换MC时才需要授权按钮
                 <AnimatedButton 
                     onClick={handleApproval}
                     loading={approvalStatus.isApproving}
@@ -1068,13 +1015,13 @@ const SwapPanel: React.FC = () => {
                     fullWidth
                     icon={approvalStatus.isApproving ? undefined : <RotateCw size={20} />}
                 >
-                    {approvalStatus.isApproving ? '授权中...' : `授权 ${isSelling ? 'JBC' : 'MC'} 代币`}
+                    {approvalStatus.isApproving ? '授权中...' : `授权 JBC 代币`}
                 </AnimatedButton>
             ) : (
                 <AnimatedButton 
                     onClick={handleSwap}
                     loading={isLoading}
-                    disabled={isLoading || (isSelling && !approvalStatus.isApproved)}
+                    disabled={isSelling && !approvalStatus.isApproved}
                     variant="primary"
                     size="lg"
                     fullWidth

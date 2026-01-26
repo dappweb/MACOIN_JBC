@@ -47,73 +47,108 @@ const NoticeBar: React.FC = () => {
 
   // Fetch announcements from API
   const fetchFromAPI = useCallback(async (langKey: string): Promise<string[]> => {
-    if (!API_BASE_URL) return [];
+    if (!API_BASE_URL) {
+      console.warn('[NoticeBar] API_BASE_URL not configured');
+      return [];
+    }
     
     try {
       const response = await fetch(`${API_BASE_URL}/announcement?lang=${langKey}`, {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' },
+        cache: 'no-cache' // 禁用浏览器缓存，确保获取最新数据
       });
       
-      if (!response.ok) return [];
+      if (!response.ok) {
+        console.warn(`[NoticeBar] API request failed: ${response.status} ${response.statusText}`);
+        return [];
+      }
       
       const data = await response.json();
-      if (data.content) {
+      console.log('[NoticeBar] API response:', { langKey, data });
+      
+      // 检查内容是否存在且非空
+      if (data.content && typeof data.content === 'string' && data.content.trim()) {
         // Cache to localStorage
         localStorage.setItem('announcements_api_cache', JSON.stringify({
           [langKey]: data.content,
           timestamp: Date.now()
         }));
-        return [data.content];
+        console.log('[NoticeBar] Cached announcement for', langKey);
+        return [data.content.trim()];
+      } else {
+        console.warn('[NoticeBar] Empty or invalid content from API');
+        // 清除无效缓存
+        const cache = localStorage.getItem('announcements_api_cache');
+        if (cache) {
+          try {
+            const cached = JSON.parse(cache);
+            if (cached[langKey]) {
+              delete cached[langKey];
+              localStorage.setItem('announcements_api_cache', JSON.stringify(cached));
+            }
+          } catch {}
+        }
       }
       return [];
     } catch (err) {
-      console.warn('Failed to fetch announcements from API:', err);
+      console.error('[NoticeBar] Failed to fetch announcements from API:', err);
       return [];
     }
   }, []);
 
   const loadAnnouncement = useCallback(async () => {
     const langKey = (language === 'zh' || language === 'zh-TW') ? 'zh' : 'en';
+    console.log('[NoticeBar] Loading announcements for language:', langKey);
     
-    // Priority 1: Try to fetch from API (for all users)
+    // Priority 1: Try to fetch from API (for all users) - 总是尝试获取最新数据
     const apiAnnouncements = await fetchFromAPI(langKey);
     if (apiAnnouncements.length > 0) {
+      console.log('[NoticeBar] Using API announcements:', apiAnnouncements);
       setAnnouncements(apiAnnouncements);
       setIsVisible(true);
       return;
     }
 
-    // Priority 2: Check localStorage (admin's local announcements or cache)
+    // Priority 2: Check API cache (only if API fetch failed)
+    const apiCache = localStorage.getItem('announcements_api_cache');
+    if (apiCache) {
+      try {
+        const cached = JSON.parse(apiCache);
+        // Cache valid for 1 hour, but allow stale cache if API is down
+        if (cached.timestamp && Date.now() - cached.timestamp < 3600000) {
+          if (cached[langKey] && cached[langKey].trim()) {
+            console.log('[NoticeBar] Using cached API announcement');
+            setAnnouncements([cached[langKey].trim()]);
+            setIsVisible(true);
+            return;
+          }
+        } else if (cached[langKey] && cached[langKey].trim()) {
+          // 即使缓存过期，如果API失败也使用缓存（但标记为过期）
+          console.log('[NoticeBar] Using expired cache (API unavailable)');
+          setAnnouncements([cached[langKey].trim()]);
+          setIsVisible(true);
+          return;
+        }
+      } catch (err) {
+        console.warn('[NoticeBar] Failed to parse API cache:', err);
+      }
+    }
+
+    // Priority 3: Check localStorage (admin's local announcements - only for admin)
     const storedAnnouncements = localStorage.getItem('announcements');
     if (storedAnnouncements) {
       const contents = parseAnnouncements(storedAnnouncements, langKey);
       if (contents.length > 0) {
+        console.log('[NoticeBar] Using local storage announcements');
         setAnnouncements(contents);
         setIsVisible(true);
         return;
       }
     }
 
-    // Priority 3: Check API cache
-    const apiCache = localStorage.getItem('announcements_api_cache');
-    if (apiCache) {
-      try {
-        const cached = JSON.parse(apiCache);
-        // Cache valid for 1 hour
-        if (cached.timestamp && Date.now() - cached.timestamp < 3600000) {
-          if (cached[langKey]) {
-            setAnnouncements([cached[langKey]]);
-            setIsVisible(true);
-            return;
-          }
-        }
-      } catch {
-        // Ignore cache errors
-      }
-    }
-
     // Priority 4: Fallback to demo announcements
+    console.log('[NoticeBar] Using demo announcements');
     setAnnouncements(demoAnnouncements[langKey] || demoAnnouncements['en']);
     setIsVisible(true);
   }, [language, fetchFromAPI, parseAnnouncements]);
@@ -122,17 +157,51 @@ const NoticeBar: React.FC = () => {
     loadAnnouncement();
 
     // Listen for storage events (when other tabs update)
-    const handleStorageChange = () => {
+    const handleStorageChange = (e: StorageEvent) => {
+      // 如果公告相关数据变化，重新加载
+      if (e.key === 'announcements' || e.key === 'announcements_api_cache' || !e.key) {
+        console.log('[NoticeBar] Storage changed, reloading announcements');
+        loadAnnouncement();
+      }
+    };
+
+    // Listen for custom storage events (same-tab updates)
+    const handleCustomStorage = () => {
+      console.log('[NoticeBar] Custom storage event, reloading announcements');
+      loadAnnouncement();
+    };
+
+    // Listen for announcement update events (when admin publishes)
+    const handleAnnouncementUpdate = () => {
+      console.log('[NoticeBar] Announcement updated event, reloading announcements');
+      // 清除缓存，强制从API获取最新数据
+      try {
+        const apiCache = localStorage.getItem('announcements_api_cache');
+        if (apiCache) {
+          const cached = JSON.parse(apiCache);
+          // 清除所有语言的缓存
+          delete cached['zh'];
+          delete cached['en'];
+          localStorage.setItem('announcements_api_cache', JSON.stringify(cached));
+        }
+      } catch {}
       loadAnnouncement();
     };
 
     window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('storage', handleCustomStorage); // 监听自定义事件
+    window.addEventListener('announcement-updated', handleAnnouncementUpdate);
     
-    // Refresh announcements every 5 minutes
-    const refreshInterval = setInterval(loadAnnouncement, 5 * 60 * 1000);
+    // Refresh announcements every 2 minutes (更频繁刷新)
+    const refreshInterval = setInterval(() => {
+      console.log('[NoticeBar] Scheduled refresh');
+      loadAnnouncement();
+    }, 2 * 60 * 1000);
 
     return () => {
       window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('storage', handleCustomStorage);
+      window.removeEventListener('announcement-updated', handleAnnouncementUpdate);
       clearInterval(refreshInterval);
     };
   }, [language, loadAnnouncement]);

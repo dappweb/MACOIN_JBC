@@ -665,6 +665,20 @@ const AdminPanel: React.FC = () => {
         
         if (apiSuccess) {
           console.log('Announcement published to API successfully');
+          // 清除客户端缓存，强制刷新公告
+          try {
+            const apiCache = localStorage.getItem('announcements_api_cache');
+            if (apiCache) {
+              const cached = JSON.parse(apiCache);
+              // 清除对应语言的缓存
+              if (announceZh) delete cached['zh'];
+              if (announceEn) delete cached['en'];
+              localStorage.setItem('announcements_api_cache', JSON.stringify(cached));
+              console.log('Cleared API cache for published languages');
+            }
+          } catch (cacheErr) {
+            console.warn('Failed to clear cache:', cacheErr);
+          }
         } else {
           console.warn('Announcement saved locally but API publish failed:', apiErrors);
         }
@@ -681,15 +695,20 @@ const AdminPanel: React.FC = () => {
       // 显示结果消息
       if (apiSuccess) {
         toast.success(t.admin.announcementSuccess);
+        // 延迟触发刷新，确保API数据已更新
+        setTimeout(() => {
+          window.dispatchEvent(new Event('storage'));
+          // 也触发自定义事件确保NoticeBar刷新
+          window.dispatchEvent(new CustomEvent('announcement-updated'));
+        }, 1000);
       } else {
         // 显示详细错误信息
         apiErrors.forEach(error => {
           toast.error(error, { duration: 5000 });
         });
         toast.error('公告已保存到本地，但API发布失败。请检查控制台获取详细信息。', { duration: 6000 });
+        window.dispatchEvent(new Event('storage'));
       }
-      
-      window.dispatchEvent(new Event('storage'));
     } catch (err) {
       console.error('Failed to publish announcement', err);
       toast.error(t.admin.publishFail);

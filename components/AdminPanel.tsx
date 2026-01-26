@@ -574,7 +574,16 @@ const AdminPanel: React.FC = () => {
 
   const publishAnnouncement = async () => {
     try {
-      if (!announceZh && !announceEn) return;
+      if (!announceZh && !announceEn) {
+        toast.error('请输入至少一种语言的公告内容');
+        return;
+      }
+
+      // 验证管理员地址
+      if (!account) {
+        toast.error('请先连接钱包');
+        return;
+      }
 
       const newAnnouncement = {
         id: Date.now(),
@@ -588,44 +597,98 @@ const AdminPanel: React.FC = () => {
       localStorage.setItem('announcements', JSON.stringify(newList));
       
       // Also publish to API for all users to see
+      let apiSuccess = true;
+      let apiErrors: string[] = [];
+      
       try {
         // Publish Chinese version
         if (announceZh) {
-          await fetch(`${API_BASE_URL}/announcement`, {
+          const zhResponse = await fetch(`${API_BASE_URL}/announcement`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               language: 'zh',
               content: announceZh,
-              adminAddress: account || '',
+              adminAddress: account,
               timestamp: Date.now()
             })
           });
+          
+          if (!zhResponse.ok) {
+            apiSuccess = false;
+            const errorText = await zhResponse.text();
+            if (zhResponse.status === 401) {
+              apiErrors.push(`中文公告发布失败: 未授权 (请检查管理员地址配置)`);
+            } else if (zhResponse.status === 500) {
+              apiErrors.push(`中文公告发布失败: 服务器配置错误 (请检查 ADMIN_ADDRESS 环境变量)`);
+            } else {
+              apiErrors.push(`中文公告发布失败: ${errorText || `HTTP ${zhResponse.status}`}`);
+            }
+            console.error('Failed to publish Chinese announcement:', {
+              status: zhResponse.status,
+              statusText: zhResponse.statusText,
+              error: errorText
+            });
+          }
         }
         
         // Publish English version
         if (announceEn) {
-          await fetch(`${API_BASE_URL}/announcement`, {
+          const enResponse = await fetch(`${API_BASE_URL}/announcement`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               language: 'en',
               content: announceEn,
-              adminAddress: account || '',
+              adminAddress: account,
               timestamp: Date.now()
             })
           });
+          
+          if (!enResponse.ok) {
+            apiSuccess = false;
+            const errorText = await enResponse.text();
+            if (enResponse.status === 401) {
+              apiErrors.push(`英文公告发布失败: 未授权 (请检查管理员地址配置)`);
+            } else if (enResponse.status === 500) {
+              apiErrors.push(`英文公告发布失败: 服务器配置错误 (请检查 ADMIN_ADDRESS 环境变量)`);
+            } else {
+              apiErrors.push(`英文公告发布失败: ${errorText || `HTTP ${enResponse.status}`}`);
+            }
+            console.error('Failed to publish English announcement:', {
+              status: enResponse.status,
+              statusText: enResponse.statusText,
+              error: errorText
+            });
+          }
         }
         
-        console.log('Announcement published to API successfully');
-      } catch (apiErr) {
-        console.warn('Failed to publish to API, saved locally only:', apiErr);
+        if (apiSuccess) {
+          console.log('Announcement published to API successfully');
+        } else {
+          console.warn('Announcement saved locally but API publish failed:', apiErrors);
+        }
+      } catch (apiErr: any) {
+        apiSuccess = false;
+        const errorMsg = apiErr?.message || '网络错误';
+        apiErrors.push(`API请求失败: ${errorMsg}`);
+        console.error('Failed to publish to API:', apiErr);
       }
       
       setAnnounceZh('');
       setAnnounceEn('');
       
-      toast.success(t.admin.announcementSuccess);
+      // 显示结果消息
+      if (apiSuccess) {
+        toast.success(t.admin.announcementSuccess);
+      } else {
+        // 显示详细错误信息
+        apiErrors.forEach(error => {
+          toast.error(error, { duration: 5000 });
+        });
+        toast.error('公告已保存到本地，但API发布失败。请检查控制台获取详细信息。', { duration: 6000 });
+      }
+      
       window.dispatchEvent(new Event('storage'));
     } catch (err) {
       console.error('Failed to publish announcement', err);

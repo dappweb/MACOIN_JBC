@@ -138,6 +138,7 @@ contract JinbaoProtocolNative is Initializable, OwnableUpgradeable, UUPSUpgradea
     error Unauthorized();
     error AlreadyBound();
     error SelfReference();
+    error CircularReference();
     error NotActive();
     error AlreadyExited();
     error Expired();
@@ -486,6 +487,9 @@ contract JinbaoProtocolNative is Initializable, OwnableUpgradeable, UUPSUpgradea
         if (_referrer == msg.sender) revert SelfReference();
         if (_referrer == address(0)) revert InvalidAddress();
         
+        // 检查循环推荐：确保推荐人的推荐链中不包含当前用户
+        if (_hasCircularReference(msg.sender, _referrer)) revert CircularReference();
+        
         userInfo[msg.sender].referrer = _referrer;
         directReferrals[_referrer].push(msg.sender);
         
@@ -493,6 +497,29 @@ contract JinbaoProtocolNative is Initializable, OwnableUpgradeable, UUPSUpgradea
         _updateTeamStats(msg.sender, 0, true);
         
         emit BoundReferrer(msg.sender, _referrer);
+    }
+    
+    /**
+     * @dev 检查是否存在循环推荐
+     * @param user 要设置推荐人的用户
+     * @param newReferrer 新的推荐人地址
+     * @return 如果存在循环推荐返回 true，否则返回 false
+     */
+    function _hasCircularReference(address user, address newReferrer) internal view returns (bool) {
+        address current = newReferrer;
+        uint256 depth = 0;
+        
+        // 向上遍历推荐链，最多检查 50 层
+        while (current != address(0) && depth < 50) {
+            // 如果推荐链中找到了当前用户，说明存在循环
+            if (current == user) {
+                return true;
+            }
+            current = userInfo[current].referrer;
+            depth++;
+        }
+        
+        return false;
     }
 
     /**

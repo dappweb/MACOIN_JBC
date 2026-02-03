@@ -52,87 +52,123 @@ const NoticeBar: React.FC = () => {
       return [];
     }
     
+    const apiUrl = `${API_BASE_URL}/announcement?lang=${langKey}`;
+    console.log('[NoticeBar] Fetching from API:', apiUrl);
+    
     try {
-      const response = await fetch(`${API_BASE_URL}/announcement?lang=${langKey}`, {
+      const response = await fetch(apiUrl, {
         method: 'GET',
-        headers: { 'Content-Type': 'application/json' },
-        cache: 'no-cache' // 禁用浏览器缓存，确保获取最新数据
+        headers: { 
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache'
+        },
+        cache: 'no-store', // 完全禁用缓存
+        credentials: 'omit'
       });
       
+      console.log('[NoticeBar] API response status:', response.status, response.statusText);
+      
       if (!response.ok) {
-        console.warn(`[NoticeBar] API request failed: ${response.status} ${response.statusText}`);
+        const errorText = await response.text().catch(() => 'Unknown error');
+        console.error(`[NoticeBar] API request failed: ${response.status} ${response.statusText}`, errorText);
         return [];
       }
       
       const data = await response.json();
-      console.log('[NoticeBar] API response:', { langKey, data });
+      console.log('[NoticeBar] API response data:', { langKey, data, contentType: typeof data.content, contentLength: data.content?.length });
       
       // 检查内容是否存在且非空
-      if (data.content && typeof data.content === 'string' && data.content.trim()) {
-        // Cache to localStorage
-        localStorage.setItem('announcements_api_cache', JSON.stringify({
-          [langKey]: data.content,
-          timestamp: Date.now()
-        }));
-        console.log('[NoticeBar] Cached announcement for', langKey);
-        return [data.content.trim()];
+      if (data && data.content !== undefined && data.content !== null) {
+        const content = String(data.content).trim();
+        if (content.length > 0) {
+          // Cache to localStorage
+          localStorage.setItem('announcements_api_cache', JSON.stringify({
+            [langKey]: content,
+            timestamp: Date.now()
+          }));
+          console.log('[NoticeBar] Successfully cached announcement for', langKey, 'Length:', content.length);
+          return [content];
+        } else {
+          console.warn('[NoticeBar] Content is empty string from API');
+        }
       } else {
-        console.warn('[NoticeBar] Empty or invalid content from API');
-        // 清除无效缓存
-        const cache = localStorage.getItem('announcements_api_cache');
-        if (cache) {
-          try {
-            const cached = JSON.parse(cache);
-            if (cached[langKey]) {
-              delete cached[langKey];
-              localStorage.setItem('announcements_api_cache', JSON.stringify(cached));
-            }
-          } catch {}
+        console.warn('[NoticeBar] Invalid response format or missing content:', data);
+      }
+      
+      // 清除无效缓存
+      const cache = localStorage.getItem('announcements_api_cache');
+      if (cache) {
+        try {
+          const cached = JSON.parse(cache);
+          if (cached[langKey]) {
+            delete cached[langKey];
+            localStorage.setItem('announcements_api_cache', JSON.stringify(cached));
+            console.log('[NoticeBar] Cleared invalid cache for', langKey);
+          }
+        } catch (e) {
+          console.warn('[NoticeBar] Failed to clear cache:', e);
         }
       }
+      
       return [];
-    } catch (err) {
-      console.error('[NoticeBar] Failed to fetch announcements from API:', err);
+    } catch (err: any) {
+      console.error('[NoticeBar] Failed to fetch announcements from API:', {
+        error: err,
+        message: err?.message,
+        stack: err?.stack,
+        apiUrl
+      });
       return [];
     }
   }, []);
 
   const loadAnnouncement = useCallback(async () => {
     const langKey = (language === 'zh' || language === 'zh-TW') ? 'zh' : 'en';
-    console.log('[NoticeBar] Loading announcements for language:', langKey);
+    console.log('[NoticeBar] Loading announcements for language:', langKey, 'current language:', language);
     
     // Priority 1: Try to fetch from API (for all users) - 总是尝试获取最新数据
     const apiAnnouncements = await fetchFromAPI(langKey);
     if (apiAnnouncements.length > 0) {
-      console.log('[NoticeBar] Using API announcements:', apiAnnouncements);
+      console.log('[NoticeBar] ✅ Using API announcements:', apiAnnouncements);
       setAnnouncements(apiAnnouncements);
       setIsVisible(true);
       return;
     }
+
+    console.log('[NoticeBar] API returned empty, checking cache...');
 
     // Priority 2: Check API cache (only if API fetch failed)
     const apiCache = localStorage.getItem('announcements_api_cache');
     if (apiCache) {
       try {
         const cached = JSON.parse(apiCache);
+        console.log('[NoticeBar] Found API cache:', cached);
+        
         // Cache valid for 1 hour, but allow stale cache if API is down
-        if (cached.timestamp && Date.now() - cached.timestamp < 3600000) {
-          if (cached[langKey] && cached[langKey].trim()) {
-            console.log('[NoticeBar] Using cached API announcement');
+        const cacheAge = cached.timestamp ? Date.now() - cached.timestamp : Infinity;
+        const isValidCache = cacheAge < 3600000; // 1 hour
+        
+        if (cached[langKey] && typeof cached[langKey] === 'string' && cached[langKey].trim()) {
+          if (isValidCache) {
+            console.log('[NoticeBar] ✅ Using valid cached API announcement (age:', Math.round(cacheAge / 1000), 'seconds)');
+            setAnnouncements([cached[langKey].trim()]);
+            setIsVisible(true);
+            return;
+          } else {
+            // 即使缓存过期，如果API失败也使用缓存（但标记为过期）
+            console.log('[NoticeBar] ⚠️ Using expired cache (API unavailable, age:', Math.round(cacheAge / 1000), 'seconds)');
             setAnnouncements([cached[langKey].trim()]);
             setIsVisible(true);
             return;
           }
-        } else if (cached[langKey] && cached[langKey].trim()) {
-          // 即使缓存过期，如果API失败也使用缓存（但标记为过期）
-          console.log('[NoticeBar] Using expired cache (API unavailable)');
-          setAnnouncements([cached[langKey].trim()]);
-          setIsVisible(true);
-          return;
+        } else {
+          console.log('[NoticeBar] Cache exists but no valid content for', langKey);
         }
       } catch (err) {
         console.warn('[NoticeBar] Failed to parse API cache:', err);
       }
+    } else {
+      console.log('[NoticeBar] No API cache found');
     }
 
     // Priority 3: Check localStorage (admin's local announcements - only for admin)
@@ -140,16 +176,19 @@ const NoticeBar: React.FC = () => {
     if (storedAnnouncements) {
       const contents = parseAnnouncements(storedAnnouncements, langKey);
       if (contents.length > 0) {
-        console.log('[NoticeBar] Using local storage announcements');
+        console.log('[NoticeBar] ✅ Using local storage announcements:', contents);
         setAnnouncements(contents);
         setIsVisible(true);
         return;
+      } else {
+        console.log('[NoticeBar] Local storage announcements exist but no content for', langKey);
       }
     }
 
     // Priority 4: Fallback to demo announcements
-    console.log('[NoticeBar] Using demo announcements');
-    setAnnouncements(demoAnnouncements[langKey] || demoAnnouncements['en']);
+    console.log('[NoticeBar] ⚠️ Falling back to demo announcements');
+    const demo = demoAnnouncements[langKey] || demoAnnouncements['en'];
+    setAnnouncements(demo);
     setIsVisible(true);
   }, [language, fetchFromAPI, parseAnnouncements]);
 
@@ -222,7 +261,20 @@ const NoticeBar: React.FC = () => {
     return text.slice(0, maxLength) + '...';
   };
 
-  if (!isVisible || announcements.length === 0) return null;
+  // 调试信息：输出当前状态
+  useEffect(() => {
+    console.log('[NoticeBar] Render state:', {
+      isVisible,
+      announcementsCount: announcements.length,
+      announcements,
+      language
+    });
+  }, [isVisible, announcements, language]);
+
+  if (!isVisible || announcements.length === 0) {
+    console.log('[NoticeBar] Not rendering - isVisible:', isVisible, 'announcements.length:', announcements.length);
+    return null;
+  }
 
   return (
     <>

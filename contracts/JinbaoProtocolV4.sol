@@ -155,6 +155,8 @@ contract JinbaoProtocolV4 is Initializable, OwnableUpgradeable, UUPSUpgradeable,
     error Unauthorized();
     error AlreadyBound();
     error SelfReference();
+    // NOTE: 此合约未在生产环境使用，循环推荐检查已在 JinbaoProtocolNative 中实现
+    // error CircularReference();
     error NotActive();
     error AlreadyExited();
     error LowLiquidity();
@@ -290,6 +292,9 @@ contract JinbaoProtocolV4 is Initializable, OwnableUpgradeable, UUPSUpgradeable,
         if (userInfo[msg.sender].referrer != address(0)) revert AlreadyBound();
         if (_referrer == msg.sender) revert SelfReference();
         if (_referrer == address(0)) revert InvalidAddress();
+        
+        // NOTE: 循环推荐检查已在生产环境使用的 JinbaoProtocolNative 合约中实现
+        // 此合约未在生产环境使用，保持原代码不变
         
         userInfo[msg.sender].referrer = _referrer;
         directReferrals[_referrer].push(msg.sender);

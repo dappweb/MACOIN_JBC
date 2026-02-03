@@ -180,8 +180,8 @@ export class SwapErrorHandler {
       {
         patterns: ['insufficient funds for gas', 'gas'],
         title: 'Gas费不足',
-        message: '账户中的ETH不足以支付交易费用',
-        suggestion: '请确保账户有足够的ETH支付Gas费'
+        message: '账户中的MC不足以支付交易费用',
+        suggestion: '请确保账户有足够的MC支付Gas费'
       },
       {
         patterns: ['execution reverted', 'transaction failed'],

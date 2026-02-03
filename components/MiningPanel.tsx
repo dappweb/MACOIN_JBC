@@ -282,6 +282,8 @@ const MiningPanel: React.FC = () => {
     if (!isConnected) return UserMiningState.NOT_CONNECTED;
     if (isCheckingAllowance) return UserMiningState.NOT_CONNECTED; // Treat as not ready
     if (isExited) return UserMiningState.MINING_COMPLETE;
+    // 检查是否有门票 - 如果没有门票，无法进行流动性质押
+    if (!hasTicket) return UserMiningState.NO_TICKET;
     // Allow continuous staking unless exited
     // if (hasStakedLiquidity) return UserMiningState.ALREADY_STAKED;
     if (!isApproved) return UserMiningState.NEEDS_APPROVAL;

@@ -191,7 +191,7 @@ const SwapPanel: React.FC = () => {
   const { balances, priceData, onTransactionSuccess } = useGlobalRefresh();
   
   // 使用实时价格更新（用于价格图表）
-  const { priceHistory: rawPriceHistory, priceStats, currentPrice } = useRealTimePrice();
+  const { priceHistory: rawPriceHistory, priceStats, currentPrice, emaValues } = useRealTimePrice();
   
   // 格式化价格历史数据用于图表显示
   const priceHistory: PriceDataPoint[] = useMemo(() => {
@@ -200,14 +200,14 @@ const SwapPanel: React.FC = () => {
     }
 
     // 转换实时价格数据为图表格式
-    const formatted = rawPriceHistory.map((point: any) => {
+    const formatted = rawPriceHistory.map((point: any, index: number) => {
       const date = new Date(point.timestamp * 1000)
       const timeStr = `${date.getHours().toString().padStart(2, "0")}:${date.getMinutes().toString().padStart(2, "0")}`
       
       return {
         name: timeStr,
         uv: point.price,
-        ema: point.price, // EMA 计算已在 hook 中处理
+        ema: emaValues && emaValues[index] !== undefined ? emaValues[index] : point.price, // 使用计算出的 EMA 值
         high: point.price,
         low: point.price,
         change: 0
@@ -215,7 +215,7 @@ const SwapPanel: React.FC = () => {
     })
     
     return formatted;
-  }, [rawPriceHistory])
+  }, [rawPriceHistory, emaValues])
   
   const [payAmount, setPayAmount] = useState('');
   const [getAmount, setGetAmount] = useState('');
@@ -368,7 +368,7 @@ const SwapPanel: React.FC = () => {
 
     // JBC兑换MC需要检查授权
     if (!jbcContract) {
-      console.warn('JBC合约未初始化，无法检查授权状态');
+      console.warn('⚠️ [SwapPanel] JBC合约未初始化，无法检查授权状态');
       setApprovalStatus({ isApproved: false, isChecking: false, isApproving: false });
       return;
     }
@@ -381,13 +381,21 @@ const SwapPanel: React.FC = () => {
       const requiredAmount = ethers.parseEther(amount);
       const isApproved = allowance >= requiredAmount;
       
+      console.log('🔐 [SwapPanel] 授权状态检查:', {
+        account,
+        protocolAddress: CONTRACT_ADDRESSES.PROTOCOL,
+        requiredAmount: ethers.formatEther(requiredAmount),
+        currentAllowance: ethers.formatEther(allowance),
+        isApproved
+      });
+      
       setApprovalStatus({ 
         isApproved, 
         isChecking: false, 
         isApproving: false 
       });
     } catch (error) {
-      console.error('检查授权状态失败:', error);
+      console.error('❌ [SwapPanel] 检查授权状态失败:', error);
       setApprovalStatus({ isApproved: false, isChecking: false, isApproving: false });
     }
   };
@@ -460,8 +468,16 @@ const SwapPanel: React.FC = () => {
       }
 
       // 检查授权状态 - 只有JBC需要授权，原生MC不需要
+      // 注意：即使 approvalStatus.isApproved 为 true，Gas 估算时仍可能失败
+      // 所以我们在 Gas 估算失败时也会重新检查授权
       if (isSelling && !approvalStatus.isApproved) {
         ToastEnhancer.error('请先授权JBC代币使用权限');
+        return;
+      }
+      
+      // 如果已授权但仍在检查中，等待检查完成
+      if (isSelling && approvalStatus.isChecking) {
+        ToastEnhancer.error('正在检查授权状态，请稍候...');
         return;
       }
 
@@ -476,8 +492,107 @@ const SwapPanel: React.FC = () => {
                 jbcAmount: payAmount,
                 parsedAmount: amount.toString(),
                 isApproved: approvalStatus.isApproved,
-                jbcBalance: balanceJBC
+                jbcBalance: balanceJBC,
+                mcBalance: mcBalance ? ethers.formatEther(mcBalance) : '0'
               });
+              
+              // JBC兑换MC时，虽然不需要支付MC作为交易金额，但仍需要MC支付Gas费用
+              const currentMcBalance = mcBalance || 0n;
+              
+              // 先检查最小 Gas 储备（避免在授权问题下误判为 Gas 不足）
+              const minGasReserve = ethers.parseEther("0.01");
+              if (currentMcBalance < minGasReserve) {
+                ToastEnhancer.error(`MC余额不足，至少需要 0.01 MC 作为Gas费用`);
+                setIsLoading(false);
+                return;
+              }
+              
+              // 估算Gas费用（只有在已授权的情况下才能成功估算）
+              try {
+                const gasEstimate = await protocolContract.swapJBCToMC.estimateGas(amount);
+                const feeData = await provider.getFeeData();
+                const gasPrice = feeData.gasPrice || feeData.maxFeePerGas || 0n;
+                const gasCost = gasEstimate * gasPrice;
+                
+                console.log('⛽ [SwapPanel] Gas费用估算:', {
+                  gasEstimate: gasEstimate.toString(),
+                  gasPrice: gasPrice.toString(),
+                  gasCost: ethers.formatEther(gasCost),
+                  mcBalance: ethers.formatEther(currentMcBalance)
+                });
+                
+                // 检查是否有足够的MC支付Gas费用（预留10%的缓冲）
+                const gasCostWithBuffer = (gasCost * 110n) / 100n;
+                if (currentMcBalance < gasCostWithBuffer) {
+                  const shortfall = ethers.formatEther(gasCostWithBuffer - currentMcBalance);
+                  ToastEnhancer.error(`Gas费不足，还需要至少 ${shortfall} MC 作为Gas费用`);
+                  setIsLoading(false);
+                  return;
+                }
+              } catch (error: any) {
+                // Gas估算失败可能是因为授权问题或其他原因
+                console.warn("⚠️ [SwapPanel] Gas estimation failed:", error);
+                
+                // 检查错误类型
+                const errorData = error?.data || error?.error?.data || error?.info?.error?.data || '';
+                const errorMessage = error?.message || error?.reason || '';
+                const errorStr = JSON.stringify(error).toLowerCase();
+                
+                // 如果是授权错误（ERC20InsufficientAllowance），提示授权
+                // 错误代码 0xfb8f41b2 = ERC20InsufficientAllowance
+                const isAllowanceError = errorData.includes('fb8f41b2') || 
+                    errorMessage.toLowerCase().includes('allowance') || 
+                    errorMessage.toLowerCase().includes('授权') ||
+                    errorStr.includes('insufficient allowance') ||
+                    errorStr.includes('erc20insufficientallowance') ||
+                    errorStr.includes('transfer amount exceeds allowance');
+                
+                if (isAllowanceError) {
+                  console.log('🔐 [SwapPanel] Gas估算失败：授权不足', {
+                    errorData: errorData.substring(0, 20) + '...',
+                    errorMessage,
+                    errorCode: errorData.substring(0, 10)
+                  });
+                  
+                  // 重新检查授权状态（可能授权状态已过期或不同步）
+                  if (jbcContract && account) {
+                    try {
+                      const currentAllowance = await jbcContract.allowance(account, CONTRACT_ADDRESSES.PROTOCOL);
+                      const requiredAmount = amount;
+                      console.log('🔍 [SwapPanel] 重新检查授权:', {
+                        currentAllowance: ethers.formatEther(currentAllowance),
+                        requiredAmount: ethers.formatEther(requiredAmount),
+                        isApproved: currentAllowance >= requiredAmount
+                      });
+                      
+                      if (currentAllowance < requiredAmount) {
+                        ToastEnhancer.error('JBC代币授权不足，请重新授权');
+                        setIsLoading(false);
+                        // 更新授权状态
+                        setApprovalStatus({ isApproved: false, isChecking: false, isApproving: false });
+                        return;
+                      }
+                    } catch (checkError) {
+                      console.error('❌ [SwapPanel] 重新检查授权失败:', checkError);
+                    }
+                  }
+                  
+                  // 即使授权检查通过，Gas估算失败也可能是因为其他原因
+                  // 但错误代码显示是授权问题，所以提示用户检查授权
+                  ToastEnhancer.error('Gas估算失败：可能是授权问题，请检查JBC代币授权状态');
+                  setIsLoading(false);
+                  return;
+                }
+                
+                // 其他错误，如果余额充足，继续尝试（可能是临时问题）
+                if (currentMcBalance >= minGasReserve) {
+                  console.log('⚠️ [SwapPanel] Gas估算失败但余额充足，继续尝试交易');
+                } else {
+                  ToastEnhancer.error(`MC余额不足，至少需要 0.01 MC 作为Gas费用`);
+                  setIsLoading(false);
+                  return;
+                }
+              }
               
               ToastEnhancer.transaction.pending('正在执行JBC兑换...', 'swap');
               tx = await protocolContract.swapJBCToMC(amount);

@@ -55,10 +55,36 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
     });
   }, [jbcPrice, priceData.lastUpdated]);
 
-  // 监听余额变化事件
+  // 调试：验证JBC余额
+  useEffect(() => {
+    console.log('💰 [StatsPanel] JBC余额更新:', {
+      displayStatsBalanceJBC: displayStats.balanceJBC,
+      balancesJBC: balances.jbc,
+      parsedBalance: parseFloat(balances.jbc),
+      isValid: !isNaN(parseFloat(balances.jbc))
+    });
+  }, [displayStats.balanceJBC, balances.jbc]);
+
+  // 监听余额变化事件，立即更新显示
   useEventRefresh('balanceUpdated', () => {
-    // 余额数据已通过全局状态自动更新
+    // 余额数据已通过全局状态自动更新，立即更新显示
+    setDisplayStats((prev: UserStats) => ({
+      ...prev,
+      balanceMC: parseFloat(balances.mc) || 0,
+      balanceJBC: parseFloat(balances.jbc) || 0,
+    }));
   });
+
+  // 监听 balances 变化，确保余额显示实时更新
+  useEffect(() => {
+    if (balances.mc !== undefined && balances.jbc !== undefined) {
+      setDisplayStats((prev: UserStats) => ({
+        ...prev,
+        balanceMC: parseFloat(balances.mc) || 0,
+        balanceJBC: parseFloat(balances.jbc) || 0,
+      }));
+    }
+  }, [balances.mc, balances.jbc]);
 
   // 监听价格变化事件，强制刷新显示
   useEventRefresh('priceUpdated', () => {
@@ -580,18 +606,26 @@ const StatsPanel: React.FC<StatsPanelProps> = ({ stats: initialStats, onJoinClic
           )}
         </div>
 
-        {/* Stat 2 */}
+        {/* Stat 2 - JBC余额 */}
         <div className="glass-panel p-4 md:p-6 rounded-xl md:rounded-2xl hover:border-amber-500/40 transition-colors bg-black/60 border border-gray-700 backdrop-blur-sm">
           <div className="flex items-center justify-between mb-3 md:mb-4">
             <span className="text-gray-300 text-xs md:text-sm font-medium">{t.stats.holding}</span>
             <Coins className="text-amber-400" size={18} />
           </div>
           <div className="text-2xl md:text-3xl font-bold text-white mb-1 text-right font-mono">
-            {displayStats.balanceJBC.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            {(() => {
+              const jbcBalance = displayStats.balanceJBC ?? parseFloat(balances.jbc) ?? 0;
+              const isValid = !isNaN(jbcBalance) && isFinite(jbcBalance);
+              return isValid ? jbcBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0.00';
+            })()}
           </div>
           <div className="text-xs text-amber-400 text-right font-mono">
-            ≈{(displayStats.balanceJBC * parseFloat(jbcPrice)).toFixed(2)} MC (Price:{" "}
-            {parseFloat(jbcPrice).toFixed(6)})
+            {(() => {
+              const jbcBalance = displayStats.balanceJBC ?? parseFloat(balances.jbc) ?? 0;
+              const isValid = !isNaN(jbcBalance) && isFinite(jbcBalance);
+              const price = parseFloat(jbcPrice) || 1.0;
+              return isValid ? `≈${(jbcBalance * price).toFixed(2)} MC (Price: ${price.toFixed(6)})` : '≈0.00 MC';
+            })()}
           </div>
         </div>
 

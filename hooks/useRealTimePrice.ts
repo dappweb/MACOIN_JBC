@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useWeb3 } from '../src/Web3Context';
 import { ethers } from 'ethers';
 
@@ -31,6 +31,49 @@ export const useRealTimePrice = () => {
   
   // 最后添加的价格点时间戳（用于异常值检测）
   const lastPriceRef = useRef<number | null>(null);
+  
+  // EMA 计算缓存（用于计算 EMA(7)）
+  const emaCacheRef = useRef<number | null>(null);
+
+  // 计算 EMA(7) - 指数移动平均线
+  const calculateEMA = useCallback((prices: PricePoint[], period: number = 7): number[] => {
+    if (prices.length === 0) return [];
+    
+    const emaValues: number[] = [];
+    const multiplier = 2 / (period + 1);
+    
+    // 如果缓存存在且价格历史连续，使用缓存继续计算
+    let previousEMA = emaCacheRef.current;
+    
+    for (let i = 0; i < prices.length; i++) {
+      if (i === 0 || previousEMA === null) {
+        // 第一个值或没有缓存：使用简单移动平均
+        if (i < period - 1) {
+          // 数据点不足，使用平均值
+          const avg = prices.slice(0, i + 1).reduce((sum, p) => sum + p.price, 0) / (i + 1);
+          emaValues.push(avg);
+          previousEMA = avg;
+        } else {
+          // 数据点足够，计算 SMA 作为初始 EMA
+          const sma = prices.slice(i - period + 1, i + 1).reduce((sum, p) => sum + p.price, 0) / period;
+          emaValues.push(sma);
+          previousEMA = sma;
+        }
+      } else {
+        // 使用 EMA 公式：EMA = (Price - PreviousEMA) * Multiplier + PreviousEMA
+        const currentEMA = (prices[i].price - previousEMA) * multiplier + previousEMA;
+        emaValues.push(currentEMA);
+        previousEMA = currentEMA;
+      }
+    }
+    
+    // 更新缓存
+    if (emaValues.length > 0) {
+      emaCacheRef.current = emaValues[emaValues.length - 1];
+    }
+    
+    return emaValues;
+  }, []);
 
   // 计算价格统计
   const calculatePriceStats = useCallback((prices: PricePoint[]) => {
@@ -482,10 +525,16 @@ export const useRealTimePrice = () => {
     };
   }, [protocolContract, calculatePriceFromReserves, addPricePointWithAggregation]);
 
+  // 计算 EMA 值（用于图表显示）
+  const emaValues = useMemo(() => {
+    return calculateEMA(priceHistory, 7);
+  }, [priceHistory, calculateEMA]);
+
   return {
     priceHistory,
     priceStats,
     currentPrice,
-    addPricePoint
+    addPricePoint,
+    emaValues // 导出 EMA 值
   };
 };

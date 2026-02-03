@@ -52,43 +52,19 @@ export const GlobalRefreshProvider = ({ children }: { children: ReactNode }) => 
 
   // 刷新余额 - 使用原生MC余额
   const refreshBalances = useCallback(async () => {
-    if (!isConnected || !account) {
-      console.warn('⚠️ [GlobalRefresh] 余额刷新跳过: 未连接或账户为空', { isConnected, account });
-      return;
-    }
-    
-    if (!jbcContract) {
-      console.warn('⚠️ [GlobalRefresh] JBC合约未初始化，无法获取JBC余额');
-      // 即使JBC合约未初始化，也更新MC余额
-      const mcBalanceFormatted = mcBalance ? ethers.formatEther(mcBalance) : '0';
-      setBalances({
-        mc: mcBalanceFormatted,
-        jbc: '0',
-        lastUpdated: Date.now()
-      });
-      return;
-    }
+    if (!isConnected || !account || !provider || !jbcContract) return;
     
     try {
-      console.log('🔄 [GlobalRefresh] 开始刷新余额...', { account, jbcContractAddress: jbcContract.target });
-      
       const [jbcBal] = await Promise.all([
         jbcContract.balanceOf(account)
       ]);
       
       // 使用Web3Context中的原生MC余额
       const mcBalanceFormatted = mcBalance ? ethers.formatEther(mcBalance) : '0';
-      const jbcBalanceFormatted = ethers.formatEther(jbcBal);
-      
-      console.log('✅ [GlobalRefresh] 余额获取成功:', {
-        mc: mcBalanceFormatted,
-        jbc: jbcBalanceFormatted,
-        jbcRaw: jbcBal.toString()
-      });
       
       const newBalances = {
         mc: mcBalanceFormatted,
-        jbc: jbcBalanceFormatted,
+        jbc: ethers.formatEther(jbcBal),
         lastUpdated: Date.now()
       };
       
@@ -99,23 +75,8 @@ export const GlobalRefreshProvider = ({ children }: { children: ReactNode }) => 
         detail: newBalances 
       }));
       
-    } catch (error: any) {
+    } catch (error) {
       console.error('❌ [GlobalRefresh] 余额更新失败:', error);
-      console.error('错误详情:', {
-        message: error.message,
-        code: error.code,
-        account,
-        hasJbcContract: !!jbcContract,
-        jbcContractAddress: jbcContract?.target
-      });
-      
-      // 即使获取失败，也尝试更新MC余额
-      const mcBalanceFormatted = mcBalance ? ethers.formatEther(mcBalance) : '0';
-      setBalances(prev => ({
-        ...prev,
-        mc: mcBalanceFormatted,
-        lastUpdated: Date.now()
-      }));
     }
   }, [isConnected, account, provider, jbcContract, mcBalance]);
 

@@ -52,8 +52,8 @@ const BuyTicketPanel: React.FC<BuyTicketPanelProps> = ({ onBack }) => {
           
           setUserTicket(ticket)
           
-          // 检查是否有活跃门票
-          const hasActive = ticket.amount > 0 && !ticket.isRedeemed
+          // 检查是否有活跃门票（未退出）
+          const hasActive = ticket.amount > 0n && !ticket.exited
           setHasActiveTicket(hasActive)
 
           // 获取历史最大门票金额
@@ -136,7 +136,7 @@ const BuyTicketPanel: React.FC<BuyTicketPanelProps> = ({ onBack }) => {
       // 重新检查门票状态
       const newTicket = await protocolContract.userTicket(account)
       setUserTicket(newTicket)
-      setHasActiveTicket(newTicket.amount > 0 && !newTicket.isRedeemed)
+      setHasActiveTicket(newTicket.amount > 0n && !newTicket.exited)
       
     } catch (err: any) {
       console.error("Buy ticket failed", err)
@@ -181,7 +181,7 @@ const BuyTicketPanel: React.FC<BuyTicketPanelProps> = ({ onBack }) => {
                 当前门票金额: {ethers.formatEther(userTicket.amount)} MC
               </p>
               <p className="text-blue-300 text-sm">
-                您可以继续购买新门票，新门票将覆盖当前门票
+                您可以继续购买，新购买的门票金额将累加到当前门票
               </p>
             </div>
           {isHigherLiquidity && (

@@ -603,6 +603,7 @@ const AdminPanel: React.FC = () => {
       try {
         // Publish Chinese version
         if (announceZh) {
+          console.log('[AdminPanel] Publishing Chinese announcement:', { contentLength: announceZh.length, adminAddress: account });
           const zhResponse = await fetch(`${API_BASE_URL}/announcement`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -614,26 +615,48 @@ const AdminPanel: React.FC = () => {
             })
           });
           
+          console.log('[AdminPanel] Chinese announcement response:', { 
+            status: zhResponse.status, 
+            statusText: zhResponse.statusText,
+            ok: zhResponse.ok
+          });
+          
           if (!zhResponse.ok) {
             apiSuccess = false;
             const errorText = await zhResponse.text();
-            if (zhResponse.status === 401) {
-              apiErrors.push(`中文公告发布失败: 未授权 (请检查管理员地址配置)`);
-            } else if (zhResponse.status === 500) {
-              apiErrors.push(`中文公告发布失败: 服务器配置错误 (请检查 ADMIN_ADDRESS 环境变量)`);
-            } else {
-              apiErrors.push(`中文公告发布失败: ${errorText || `HTTP ${zhResponse.status}`}`);
+            let errorData;
+            try {
+              errorData = JSON.parse(errorText);
+            } catch {
+              errorData = { error: errorText };
             }
-            console.error('Failed to publish Chinese announcement:', {
+            
+            if (zhResponse.status === 401) {
+              apiErrors.push(`中文公告发布失败: 未授权 (请检查管理员地址配置，当前: ${account})`);
+            } else if (zhResponse.status === 500) {
+              apiErrors.push(`中文公告发布失败: 服务器配置错误 (${errorData.error || '请检查 ADMIN_ADDRESS 环境变量'})`);
+            } else {
+              apiErrors.push(`中文公告发布失败: ${errorData.error || errorText || `HTTP ${zhResponse.status}`}`);
+            }
+            console.error('[AdminPanel] Failed to publish Chinese announcement:', {
               status: zhResponse.status,
               statusText: zhResponse.statusText,
-              error: errorText
+              error: errorData
             });
+          } else {
+            // 验证响应内容
+            const responseData = await zhResponse.json();
+            console.log('[AdminPanel] Chinese announcement published successfully:', responseData);
+            if (!responseData.success) {
+              apiSuccess = false;
+              apiErrors.push(`中文公告发布失败: ${responseData.error || '未知错误'}`);
+            }
           }
         }
         
         // Publish English version
         if (announceEn) {
+          console.log('[AdminPanel] Publishing English announcement:', { contentLength: announceEn.length, adminAddress: account });
           const enResponse = await fetch(`${API_BASE_URL}/announcement`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -645,21 +668,42 @@ const AdminPanel: React.FC = () => {
             })
           });
           
+          console.log('[AdminPanel] English announcement response:', { 
+            status: enResponse.status, 
+            statusText: enResponse.statusText,
+            ok: enResponse.ok
+          });
+          
           if (!enResponse.ok) {
             apiSuccess = false;
             const errorText = await enResponse.text();
-            if (enResponse.status === 401) {
-              apiErrors.push(`英文公告发布失败: 未授权 (请检查管理员地址配置)`);
-            } else if (enResponse.status === 500) {
-              apiErrors.push(`英文公告发布失败: 服务器配置错误 (请检查 ADMIN_ADDRESS 环境变量)`);
-            } else {
-              apiErrors.push(`英文公告发布失败: ${errorText || `HTTP ${enResponse.status}`}`);
+            let errorData;
+            try {
+              errorData = JSON.parse(errorText);
+            } catch {
+              errorData = { error: errorText };
             }
-            console.error('Failed to publish English announcement:', {
+            
+            if (enResponse.status === 401) {
+              apiErrors.push(`英文公告发布失败: 未授权 (请检查管理员地址配置，当前: ${account})`);
+            } else if (enResponse.status === 500) {
+              apiErrors.push(`英文公告发布失败: 服务器配置错误 (${errorData.error || '请检查 ADMIN_ADDRESS 环境变量'})`);
+            } else {
+              apiErrors.push(`英文公告发布失败: ${errorData.error || errorText || `HTTP ${enResponse.status}`}`);
+            }
+            console.error('[AdminPanel] Failed to publish English announcement:', {
               status: enResponse.status,
               statusText: enResponse.statusText,
-              error: errorText
+              error: errorData
             });
+          } else {
+            // 验证响应内容
+            const responseData = await enResponse.json();
+            console.log('[AdminPanel] English announcement published successfully:', responseData);
+            if (!responseData.success) {
+              apiSuccess = false;
+              apiErrors.push(`英文公告发布失败: ${responseData.error || '未知错误'}`);
+            }
           }
         }
         

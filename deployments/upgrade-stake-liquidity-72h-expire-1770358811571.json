@@ -1,0 +1,10 @@
+{
+  "upgradeName": "stake-liquidity-72h-expire",
+  "timestamp": "2026-02-06T06:20:11.566Z",
+  "network": "mc",
+  "chainId": "88813",
+  "proxyAddress": "0x0897Cee05E43B2eCf331cd80f881c211eb86844E",
+  "previousImplementation": "0xb7b1A2a3F1a8bCC0b26eF148F7F086b0123eFf93",
+  "newImplementation": "0xb7b1A2a3F1a8bCC0b26eF148F7F086b0123eFf93",
+  "description": "stakeLiquidity 入口调用 _expireTicketIfNeeded；72h 内未质押则首次质押时门票失效，须重新购票"
+}

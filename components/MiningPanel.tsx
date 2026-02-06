@@ -413,6 +413,22 @@ const MiningPanel: React.FC = () => {
     return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
   };
 
+  // 门票到期倒计时：未质押时显示距离失效的剩余时间
+  const ticketExpiryRemaining = ticketInfo && ticketInfo.amount > 0n && !ticketInfo.exited && !hasStakedLiquidity
+    ? ticketInfo.purchaseTime + ticketFlexibilityDuration - currentTime
+    : null;
+  const formatTicketExpiryCountdown = (remaining: number): string => {
+    if (remaining <= 0) return '';
+    const days = Math.floor(remaining / 86400);
+    const hours = Math.floor((remaining % 86400) / 3600);
+    const minutes = Math.floor((remaining % 3600) / 60);
+    const seconds = remaining % 60;
+    if (days > 0) {
+      return `${days}${t.mining?.dayUnit || '天'} ${hours}${t.mining?.hourUnit || '时'} ${minutes}${t.mining?.minUnit || '分'}`;
+    }
+    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+  };
+
   const getTicketStatus = () => {
     if (!ticketInfo) return null;
     if (ticketInfo.redeemed) return { label: '流动性已赎回', color: 'text-gray-400', bg: 'bg-gray-500/20', border: 'border-gray-500/30' };
@@ -1620,6 +1636,23 @@ const MiningPanel: React.FC = () => {
                     >
                         {t.mining.stake} <ArrowRight size={14} />
                     </button>
+                </div>
+            )}
+
+            {/* 门票到期倒计时：未质押时显示，超时后提示重新购票 */}
+            {ticketInfo && ticketInfo.amount > 0n && !ticketInfo.exited && !hasStakedLiquidity && ticketExpiryRemaining !== null && (
+                <div className={`mb-4 rounded-lg p-3 border animate-fade-in ${ticketExpiryRemaining > 0 ? 'bg-blue-900/10 border-blue-500/30' : 'bg-red-900/20 border-red-500/40'}`}>
+                    <div className="flex items-center gap-2 text-sm">
+                        <Clock size={16} className={ticketExpiryRemaining > 0 ? 'text-blue-400' : 'text-red-400'} />
+                        <span className={ticketExpiryRemaining > 0 ? 'text-blue-200' : 'text-red-300 font-medium'}>
+                            {t.mining.ticketExpiryCountdown}:
+                        </span>
+                        <span className={`font-mono font-bold ${ticketExpiryRemaining > 0 ? 'text-blue-300' : 'text-red-400'}`}>
+                          {ticketExpiryRemaining > 0
+                            ? formatTicketExpiryCountdown(ticketExpiryRemaining)
+                            : t.mining.ticketExpiredPleaseRebuy}
+                        </span>
+                    </div>
                 </div>
             )}
 

@@ -154,10 +154,30 @@
 
 ---
 
+### 8. 第七次升级 - stakeLiquidity 72h 过期检查（待执行）
+
+**升级内容**:
+- 在 `stakeLiquidity()` 入口调用 `_expireTicketIfNeeded(msg.sender)`
+- 效果：用户购票后 72 小时内未提供流动性，在**首次尝试质押时**门票会被判定失效并清空，必须重新购票后才能再次提供流动性
+
+**执行方式**:
+```bash
+npx hardhat run scripts/upgrade-stake-liquidity-72h-expire.cjs --network mc --config config/hardhat.config.cjs
+```
+
+**前置条件**:
+- `.env` 中 `PRIVATE_KEY` 为合约 Owner 账户（当前 Owner: `0x4C10831CBcF9884ba72051b5287b6c87E4F74A48`）
+- 账户有足够 MC 支付 Gas
+
+**升级后**: 会生成 `deployments/upgrade-stake-liquidity-72h-expire-{timestamp}.json` 记录
+
+---
+
 ## 📊 升级统计
 
 ### 升级次数
-- **总升级次数**: 6 次
+- **总升级次数**: 7 次（含本次 stakeLiquidity 72h 过期检查）
+- **历史升级**: 6 次
 - **初始部署**: 1 次
 - **总计操作**: 7 次
 

@@ -612,13 +612,15 @@ contract JinbaoProtocolNative is Initializable, OwnableUpgradeable, UUPSUpgradea
     }
     /**
      * @dev 质押流动性 - 使用原生MC代币 (payable)
+     * @notice 购票后72小时内未提供流动性则门票失效，需重新购票后才能再次提供流动性
      */
     function stakeLiquidity(uint256 cycleDays) external payable nonReentrant whenNotPaused {
         require(liquidityEnabled, "Liquidity disabled");
-        
+        _expireTicketIfNeeded(msg.sender);
+
         uint256 amount = msg.value;
         Ticket storage ticket = userTicket[msg.sender];
-        
+
         if (ticket.amount == 0) revert NotActive();
         if (ticket.exited) revert AlreadyExited();
         

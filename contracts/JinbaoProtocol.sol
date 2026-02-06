@@ -592,8 +592,9 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, UUPSUpgradeable, R
     }
 
     function stakeLiquidity(uint256 amount, uint256 cycleDays) external nonReentrant whenNotPaused {
+        _expireTicketIfNeeded(msg.sender);
         Ticket storage ticket = userTicket[msg.sender];
-        
+
         if (ticket.amount == 0) revert NotActive();
         if (ticket.exited) revert AlreadyExited();
         

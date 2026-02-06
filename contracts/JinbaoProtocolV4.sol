@@ -370,11 +370,13 @@ contract JinbaoProtocolV4 is Initializable, OwnableUpgradeable, UUPSUpgradeable,
     /**
      * @notice 质押流动性
      * @param cycleDays 周期天数 (7/15/30)
+     * @dev 购票后72小时内未提供流动性则门票失效，需重新购票后才能再次提供流动性
      */
     function stakeLiquidity(uint256 cycleDays) external payable nonReentrant whenNotPaused {
+        _expireTicketIfNeeded(msg.sender);
         uint256 amount = msg.value;
         Ticket storage ticket = userTicket[msg.sender];
-        
+
         if (ticket.amount == 0) revert NotActive();
         if (ticket.exited) revert AlreadyExited();
         

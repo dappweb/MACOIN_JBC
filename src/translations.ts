@@ -150,6 +150,9 @@ export const translations = {
       canStake: "可质押",
       invalidAmount: "无效金额",
       redeemInstruction: "请在下方流动性仓位列表中管理您的仓位",
+      ticketExpiryCountdown: "门票到期倒计时",
+      ticketExpiredPleaseRebuy: "门票已过期，请重新购票",
+      ticketPostPurchase72hHint: "请在 72 小时内提供流动性，否则门票将失效，需重新购票。",
     },
     team: {
       title: "V系列 极差裂变机制",
@@ -589,6 +592,9 @@ export const translations = {
       exited: "Exited",
       canStake: "Can Stake",
       invalidAmount: "Invalid Amount",
+      ticketExpiryCountdown: "Ticket expiry countdown",
+      ticketExpiredPleaseRebuy: "Ticket expired. Please buy a new ticket.",
+      ticketPostPurchase72hHint: "Please provide liquidity within 72 hours, or your ticket will expire and you will need to buy again.",
     },
     team: {
       title: "V-Series Differential Mechanism",

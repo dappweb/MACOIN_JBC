@@ -129,6 +129,11 @@ const BuyTicketPanel: React.FC<BuyTicketPanelProps> = ({ onBack }) => {
       await tx.wait()
       
       toast.success(t.mining.ticketBuySuccess, { id: "buy-ticket" })
+      toast(t.mining.ticketPostPurchase72hHint ?? "请在 72 小时内提供流动性，否则门票将失效，需重新购票。", {
+        icon: "⏰",
+        duration: 8000,
+        id: "buy-ticket-72h-hint",
+      })
       
       // 通知全局刷新系统
       await onTransactionSuccess('ticket_purchase')

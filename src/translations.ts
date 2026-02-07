@@ -53,7 +53,7 @@ export const translations = {
       bindSuccess: "推荐人绑定成功！",
     },
     mining: {
-      title: "黄金 RWA 矿池",
+      title: "金宝 RWA 矿池",
       subtitle: "选择门票与流动性周期，开启 DeFi 4.0 双币高收益挖矿",
       step1: "1. 选择门票 (Ticket)",
       liquidity: "流动性",
@@ -484,7 +484,7 @@ export const translations = {
       bindSuccess: "Referrer Bound Successfully!",
     },
     mining: {
-      title: "Gold RWA Pool",
+      title: "Jinbao RWA Pool",
       subtitle: "Select ticket and liquidity cycle to start DeFi 4.0 high-yield mining",
       step1: "1. Select Ticket",
       liquidity: "Liquidity",

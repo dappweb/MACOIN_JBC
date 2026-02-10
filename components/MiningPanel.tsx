@@ -76,6 +76,9 @@ type ButtonState = {
   className: string;
 };
 
+// 72小时有效期生效日期：2026年2月9日 00:00:00 UTC
+const TICKET_EXPIRY_CUTOFF_DATE = Math.floor(Date.UTC(2026, 1, 9, 0, 0, 0) / 1000);
+
 const MiningPanel: React.FC = () => {
   const [selectedTicket, setSelectedTicket] = useState<TicketTier>(TICKET_TIERS[0]);
   const [selectedPlan, setSelectedPlan] = useState<MiningPlan>(MINING_PLANS[0]);
@@ -149,11 +152,17 @@ const MiningPanel: React.FC = () => {
   useEventRefresh('liquidity_stake', () => {
     fetchDynamicRewards(); // 质押流动性可能触发动态奖励
   });
-  // Auto-select ticket tier if user has bought one
+  // Auto-select ticket tier: 使用单张最大金额匹配档位，而非总金额
+  // 用户可能多次购买同档位（如 2 张 1000 MC，总金额 2000 无对应档位），导致之前无法正确选中 1000 MC
   useEffect(() => {
     if (ticketInfo && ticketInfo.amount > 0n) {
-        const amount = parseFloat(ethers.formatEther(ticketInfo.amount));
-        const tier = TICKET_TIERS.find(t => t.amount === amount);
+        let amount = 0;
+        if (ticketInfo.maxSingleTicketAmount && ticketInfo.maxSingleTicketAmount > 0n) {
+            amount = parseFloat(ethers.formatEther(ticketInfo.maxSingleTicketAmount));
+        } else {
+            amount = parseFloat(ethers.formatEther(ticketInfo.amount));
+        }
+        const tier = TICKET_TIERS.find(t => Math.abs(t.amount - amount) < 0.1);
         if (tier) {
             setSelectedTicket(tier);
         }
@@ -414,7 +423,9 @@ const MiningPanel: React.FC = () => {
   };
 
   // 门票到期倒计时：未质押时显示距离失效的剩余时间
-  const ticketExpiryRemaining = ticketInfo && ticketInfo.amount > 0n && !ticketInfo.exited && !hasStakedLiquidity
+  // Only show expiry countdown for tickets purchased on/after Feb 9, 2026
+  const isCurrentTicketSubjectToExpiry = ticketInfo && ticketInfo.purchaseTime >= TICKET_EXPIRY_CUTOFF_DATE;
+  const ticketExpiryRemaining = ticketInfo && ticketInfo.amount > 0n && !ticketInfo.exited && !hasStakedLiquidity && isCurrentTicketSubjectToExpiry
     ? ticketInfo.purchaseTime + ticketFlexibilityDuration - currentTime
     : null;
   const formatTicketExpiryCountdown = (remaining: number): string => {
@@ -621,12 +632,14 @@ const MiningPanel: React.FC = () => {
         }
 
         const now = Math.floor(Date.now() / 1000);
-        // Removed expiration check on frontend to match contract change
-        // historyItems.forEach(item => {
-        //    if (item.status === 'Pending' && now > item.purchaseTime + ticketFlexibilityDuration) {
-        //        item.status = 'Expired';
-        //    }
-        // });
+        // 72-hour expiry only applies to tickets purchased on/after 2026-02-09
+        historyItems.forEach(item => {
+           if (item.status === 'Pending' && 
+               item.purchaseTime >= TICKET_EXPIRY_CUTOFF_DATE && 
+               now > item.purchaseTime + ticketFlexibilityDuration) {
+               item.status = 'Expired';
+           }
+        });
 
         console.log('✅ [fetchHistory] 最终历史记录数量:', historyItems.length);
         setTicketHistory(historyItems.reverse());
@@ -800,14 +813,12 @@ const MiningPanel: React.FC = () => {
   const handleBuyTicket = async () => {
       if (!protocolContract) return;
 
-      // Guard removed: Allow buying multiple tickets or overwriting
-      /*
-      // Guard: Check if user already has an active ticket
-      if (ticketInfo && ticketInfo.amount > 0n && !ticketInfo.exited) {
-          toast.error(t.mining.activeTicketExists || "You already have a ticket. Please stake or redeem first.");
+      // Guard: 已有门票时，禁止购买比单张最大更小的档位
+      const maxSingle = getMaxSingleTicketAmount();
+      if (hasTicket && !isExited && selectedTicket.amount < maxSingle) {
+          toast.error(t.mining.upgradeRestriction || `您已购买过最大单张 ${maxSingle}MC 的门票，只能购买更大金额的门票进行升级。`);
           return;
       }
-      */
       
       setTxPending(true);
       try {
@@ -1827,9 +1838,10 @@ const MiningPanel: React.FC = () => {
                         <div className="space-y-3">
                             {ticketHistory.map((item, idx) => {
                                 // Calculate expiration time for pending tickets
-                                // const expireTime = item.purchaseTime + 72 * 3600;
-                                // const isExpired = now > expireTime;
-                                const isExpired = false; // Tickets no longer expire by time
+                                // Only apply 72-hour expiry to tickets purchased on/after Feb 9, 2026
+                                const isSubjectToExpiry = item.purchaseTime >= TICKET_EXPIRY_CUTOFF_DATE;
+                                const expireTime = item.purchaseTime + ticketFlexibilityDuration;
+                                const isExpired = isSubjectToExpiry && now > expireTime;
                                 const showStakeAction = item.status === 'Pending' && !isExpired && !hasStakedLiquidity && !isExited;
                                 
                                 // Check if this is an add-on (same ticket ID as the next/older item)
@@ -1878,10 +1890,24 @@ const MiningPanel: React.FC = () => {
                                         </div>
                                     )}
 
-                                    {item.status === 'Pending' && !isExpired && (
+                                    {item.status === 'Pending' && !isExpired && isSubjectToExpiry && (
                                         <div className="flex flex-col">
                                             <span className="text-gray-500 mb-0.5">{t.mining.endTime || "Valid Until"}</span>
-                                            <span className="font-mono text-amber-400">长期有效</span>
+                                            <span className={`font-mono ${(expireTime - now) < 3600 ? 'text-red-400' : (expireTime - now) < 12 * 3600 ? 'text-amber-400' : 'text-green-400'}`}>
+                                              {formatTicketExpiryCountdown(expireTime - now)}
+                                            </span>
+                                        </div>
+                                    )}
+                                    {item.status === 'Pending' && !isExpired && !isSubjectToExpiry && (
+                                        <div className="flex flex-col">
+                                            <span className="text-gray-500 mb-0.5">{t.mining.endTime || "Valid Until"}</span>
+                                            <span className="font-mono text-green-400">{language === 'zh' ? '长期有效' : 'Valid Long-term'}</span>
+                                        </div>
+                                    )}
+                                    {item.status === 'Pending' && isExpired && (
+                                        <div className="flex flex-col">
+                                            <span className="text-gray-500 mb-0.5">{t.mining.endTime || "Valid Until"}</span>
+                                            <span className="font-mono text-red-400">{t.mining.expired}</span>
                                         </div>
                                     )}
                                 </div>

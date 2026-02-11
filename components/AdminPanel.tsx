@@ -17,7 +17,7 @@ import AdminFinancialDataUpdater from './AdminFinancialDataUpdater';
 
 const AdminPanel: React.FC = () => {
   const { t } = useLanguage();
-  const { protocolContract, isConnected, account, provider, jbcContract, isOwner, mcBalance, refreshMcBalance, signer } = useWeb3();
+  const { protocolContract, isConnected, account, provider, jbcContract, isOwner, mcBalance, refreshMcBalance, signer, checkOwnerStatus } = useWeb3();
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'levels' | 'settings' | 'burn' | 'jbc' | 'financial'>('overview');
   
@@ -154,6 +154,8 @@ const AdminPanel: React.FC = () => {
         await tx.wait();
         toast.success(t.admin.success);
         setNewOwnerAddress('');
+        // 立即刷新 owner 状态
+        await checkOwnerStatus();
     } catch (err: any) {
         toast.error(formatContractError(err));
     } finally {
@@ -261,6 +263,7 @@ const AdminPanel: React.FC = () => {
 
   // Feature Controls
   const [ticketFlexibility, setTicketFlexibility] = useState('0');
+  const [ticketExpiryCutoffDate, setTicketExpiryCutoffDate] = useState('');
   const [liquidityEnabled, setLiquidityEnabled] = useState(true);
   const [redeemEnabled, setRedeemEnabled] = useState(true);
   
@@ -468,6 +471,12 @@ const AdminPanel: React.FC = () => {
       protocolContract.liquidityEnabled().then(setLiquidityEnabled).catch(console.error);
       protocolContract.redeemEnabled().then(setRedeemEnabled).catch(console.error);
       protocolContract.ticketFlexibilityDuration().then((d: any) => setTicketFlexibility((Number(d) / 3600).toString())).catch(console.error);
+      protocolContract.ticketExpiryCutoffDate().then((timestamp: any) => {
+        if (Number(timestamp) > 0) {
+          const date = new Date(Number(timestamp) * 1000);
+          setTicketExpiryCutoffDate(date.toISOString().split('T')[0]); // YYYY-MM-DD format
+        }
+      }).catch(console.error);
 
       // Fetch current JBC token address
       protocolContract.jbcToken().then((addr: string) => {
@@ -508,6 +517,21 @@ const AdminPanel: React.FC = () => {
       const tx = await protocolContract.setTicketFlexibilityDuration(seconds);
       await tx.wait();
       toast.success(t.admin.success);
+    } catch (err: any) {
+      toast.error(formatContractError(err));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const updateTicketExpiryCutoffDate = async () => {
+    if (!protocolContract || !ticketExpiryCutoffDate) return;
+    setLoading(true);
+    try {
+      const timestamp = Math.floor(new Date(ticketExpiryCutoffDate).getTime() / 1000);
+      const tx = await protocolContract.setTicketExpiryCutoffDate(timestamp);
+      await tx.wait();
+      toast.success('门票过期生效日期更新成功');
     } catch (err: any) {
       toast.error(formatContractError(err));
     } finally {
@@ -2401,6 +2425,23 @@ const AdminPanel: React.FC = () => {
                           {t.admin.updateFlex}
                       </button>
                   </div>
+              </div>
+
+              {/* Ticket Expiry Cutoff Date */}
+              <div className="space-y-2">
+                  <label className="text-sm md:text-base text-gray-300 block">门票过期生效日期</label>
+                  <div className="flex gap-2">
+                      <input 
+                          type="date" 
+                          value={ticketExpiryCutoffDate} 
+                          onChange={e => setTicketExpiryCutoffDate(e.target.value)} 
+                          className="flex-1 p-2 border border-gray-700 bg-gray-900/50 rounded text-white text-sm" 
+                      />
+                      <button onClick={updateTicketExpiryCutoffDate} disabled={loading} className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded disabled:opacity-50 text-sm whitespace-nowrap">
+                          更新
+                      </button>
+                  </div>
+                  <p className="text-xs text-gray-400">此日期之前购买的门票长期有效，此日期及之后购买的门票需在72小时内提供流动性</p>
               </div>
 
               {/* Switches */}

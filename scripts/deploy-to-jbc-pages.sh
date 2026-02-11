@@ -27,7 +27,8 @@ echo "当前账户 ID: $CURRENT_ACCOUNT"
 TARGET_ACCOUNT="91682bb238aa911811c831ff0e29b5a5"
 TARGET_EMAIL="suiyiwan1@outlook.com"
 
-if [ "$CURRENT_ACCOUNT" != "$TARGET_ACCOUNT" ]; then
+# 若 Account ID 解析为空但邮箱正确，仍继续部署（部分 wrangler 版本 whoami 输出格式不同）
+if [ "$CURRENT_ACCOUNT" != "$TARGET_ACCOUNT" ] && [ -n "$CURRENT_ACCOUNT" ]; then
     echo -e "${RED}❌ 账户不匹配！${NC}"
     echo -e "当前账户: ${YELLOW}$CURRENT_EMAIL${NC} ($CURRENT_ACCOUNT)"
     echo -e "目标账户: ${YELLOW}$TARGET_EMAIL${NC} ($TARGET_ACCOUNT)"

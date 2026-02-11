@@ -1,0 +1,9 @@
+{
+  "timestamp": "2026-02-10T14:44:44.226Z",
+  "network": "mc",
+  "proxyAddress": "0x0897Cee05E43B2eCf331cd80f881c211eb86844E",
+  "newImplementation": "0x63F5Fb61FD3A7a194B8716839CA6A1991C7a59f8",
+  "purpose": "redemption-extra-pay-1pct-user-receives-full-principal",
+  "upgradeTx": "0xc79f213936b505a711f3ce26b6a49a53f893e9f04b94c092983aeaf662e196ce",
+  "blockNumber": 3190608
+}

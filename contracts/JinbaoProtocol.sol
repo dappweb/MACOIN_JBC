@@ -97,6 +97,7 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, UUPSUpgradeable, R
     LevelConfig[] public levelConfigs;
     
     uint256 public ticketFlexibilityDuration;
+    uint256 public ticketExpiryCutoffDate; // Only tickets purchased on/after this date expire after 72h
     bool public liquidityEnabled;
     bool public redeemEnabled;
 
@@ -113,7 +114,7 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, UUPSUpgradeable, R
     mapping(uint256 => PendingReward[]) public stakePendingRewards;
     mapping(uint256 => address) public stakeOwner;
     uint256 public levelRewardPool;
-    uint256[47] private __gap;
+    uint256[45] private __gap;
     bool public emergencyPaused;
     address public priceOracle;
     
@@ -181,6 +182,7 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, UUPSUpgradeable, R
     event LiquidityAdded(uint256 mcAmount, uint256 jbcAmount);
     event LevelConfigsUpdated();
     event TicketFlexibilityDurationUpdated(uint256 newDuration);
+    event TicketExpiryCutoffDateUpdated(uint256 newCutoffDate);
     event LiquidityStatusUpdated(bool enabled);
     event RedeemStatusUpdated(bool enabled);
     event WalletsUpdated(address marketing, address treasury, address lpInjection, address buyback);
@@ -231,6 +233,7 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, UUPSUpgradeable, R
         swapSellTax = 25;
 
         ticketFlexibilityDuration = 72 hours;
+        ticketExpiryCutoffDate = 1770595200; // 2026-02-09 00:00:00 UTC
         liquidityEnabled = true;
         redeemEnabled = true;
         lastBurnTime = block.timestamp;
@@ -296,6 +299,11 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, UUPSUpgradeable, R
     function setTicketFlexibilityDuration(uint256 _duration) external onlyOwner {
         ticketFlexibilityDuration = _duration;
         emit TicketFlexibilityDurationUpdated(_duration);
+    }
+
+    function setTicketExpiryCutoffDate(uint256 _cutoffDate) external onlyOwner {
+        ticketExpiryCutoffDate = _cutoffDate;
+        emit TicketExpiryCutoffDateUpdated(_cutoffDate);
     }
 
     function setJbcToken(address _newJbcToken) external onlyOwner {
@@ -644,6 +652,7 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, UUPSUpgradeable, R
     }
 
     function claimRewards() external nonReentrant {
+        _expireTicketIfNeeded(msg.sender);
         Ticket storage ticket = userTicket[msg.sender];
         if (ticket.amount == 0 || ticket.exited) revert NotActive();
         
@@ -1216,6 +1225,9 @@ contract JinbaoProtocol is Initializable, OwnableUpgradeable, UUPSUpgradeable, R
         Ticket storage t = userTicket[user];
         if (t.amount == 0 || t.exited) return;
         if (_getActiveStakeTotal(user) > 0) return;
+        
+        // Only check expiry for tickets purchased on/after cutoff date
+        if (t.purchaseTime < ticketExpiryCutoffDate) return;
         if (block.timestamp <= t.purchaseTime + ticketFlexibilityDuration) return;
 
         uint256 ticketId = t.ticketId;

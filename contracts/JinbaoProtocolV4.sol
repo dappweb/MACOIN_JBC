@@ -120,6 +120,8 @@ contract JinbaoProtocolV4 is Initializable, OwnableUpgradeable, UUPSUpgradeable,
     mapping(uint256 => PendingReward[]) public stakePendingRewards;
     mapping(uint256 => address) public ticketOwner;
     mapping(uint256 => address) public stakeOwner;
+    /// @notice 每笔质押在质押时单独支付的 1% 赎回金，赎回时按笔退还
+    mapping(uint256 => uint256) public stakeRedemptionFeePaid;
     
     /// @notice 操作状态
     uint256 public ticketFlexibilityDuration;
@@ -141,7 +143,7 @@ contract JinbaoProtocolV4 is Initializable, OwnableUpgradeable, UUPSUpgradeable,
     address public priceOracle;
     
     /// @notice 升级预留空间
-    uint256[45] private __gap;
+    uint256[44] private __gap;
 
     uint256 public constant VERSION_DEBUG = 1;
     
@@ -392,12 +394,24 @@ contract JinbaoProtocolV4 is Initializable, OwnableUpgradeable, UUPSUpgradeable,
         }
 
         uint256 requiredAmount = TokenomicsLib.calculateRequiredLiquidity(baseMaxAmount);
-        if (amount != requiredAmount) revert InvalidAmount();
+        // 质押时单独支付 1% 赎回金，赎回时退还
+        uint256 redemptionFee = (baseMaxAmount * redemptionFeePercent) / 100;
+        if (amount != requiredAmount + redemptionFee) revert InvalidAmount();
+
+        // 先退还上次被动退出时的赎回金（若有）
+        uint256 refund = userInfo[msg.sender].refundFeeAmount;
+        if (refund > 0 && swapReserveMC >= refund && address(this).balance >= refund) {
+            userInfo[msg.sender].refundFeeAmount = 0;
+            swapReserveMC -= refund;
+            _transferNativeMC(msg.sender, refund);
+            emit FeeRefunded(msg.sender, refund);
+        }
 
         nextStakeId++;
+        stakeRedemptionFeePaid[nextStakeId] = redemptionFee;
         userStakes[msg.sender].push(Stake({
             id: nextStakeId,
-            amount: amount,
+            amount: requiredAmount,
             startTime: block.timestamp,
             cycleDays: cycleDays,
             active: true,
@@ -407,21 +421,10 @@ contract JinbaoProtocolV4 is Initializable, OwnableUpgradeable, UUPSUpgradeable,
         stakeOwner[nextStakeId] = msg.sender;
         _updateActiveStatus(msg.sender);
 
-        emit LiquidityStaked(msg.sender, amount, cycleDays, nextStakeId);
+        emit LiquidityStaked(msg.sender, requiredAmount, cycleDays, nextStakeId);
 
         // 计算并存储极差奖励
-        _calculateAndStoreDifferentialRewards(msg.sender, amount, nextStakeId);
-
-        // 退还上次手续费
-        uint256 refund = userInfo[msg.sender].refundFeeAmount;
-        if (refund > 0) {
-            userInfo[msg.sender].refundFeeAmount = 0;
-            if (swapReserveMC >= refund && address(this).balance >= refund) {
-                swapReserveMC -= refund;
-                _transferNativeMC(msg.sender, refund);
-                emit FeeRefunded(msg.sender, refund);
-            }
-        }
+        _calculateAndStoreDifferentialRewards(msg.sender, requiredAmount, nextStakeId);
     }
 
     /**
@@ -478,7 +481,6 @@ contract JinbaoProtocolV4 is Initializable, OwnableUpgradeable, UUPSUpgradeable,
         if (!redeemEnabled) revert Unauthorized();
         Stake[] storage stakes = userStakes[msg.sender];
         uint256 totalReturn = 0;
-        uint256 totalFee = 0;
         uint256 totalYield = 0;
         
         for (uint256 i = 0; i < stakes.length; i++) {
@@ -491,21 +493,9 @@ contract JinbaoProtocolV4 is Initializable, OwnableUpgradeable, UUPSUpgradeable,
                 totalYield += pending;
                 stakes[i].paid += pending;
 
-                uint256 feeBase = userInfo[msg.sender].maxTicketAmount;
-                if (feeBase == 0) feeBase = userTicket[msg.sender].amount;
-                
-                uint256 fee = (feeBase * redemptionFeePercent) / 100;
-                
-                uint256 returnAmt = stakes[i].amount;
-                if (returnAmt > fee) {
-                    returnAmt -= fee;
-                    totalFee += fee;
-                } else {
-                    totalFee += returnAmt;
-                    returnAmt = 0;
-                }
-                
-                totalReturn += returnAmt;
+                // 本金 + 质押时单独支付的 1% 赎回金一并退还
+                totalReturn += stakes[i].amount;
+                totalReturn += stakeRedemptionFeePaid[stakes[i].id];
                 stakes[i].active = false;
                 
                 _releaseDifferentialRewards(stakes[i].id);
@@ -513,10 +503,6 @@ contract JinbaoProtocolV4 is Initializable, OwnableUpgradeable, UUPSUpgradeable,
         }
         
         if (totalReturn == 0 && totalYield == 0) revert NothingToRedeem();
-
-        if (totalFee > 0) {
-            swapReserveMC += totalFee;
-        }
 
         if (totalYield > 0) {
             uint256 available = userInfo[msg.sender].currentCap - userInfo[msg.sender].totalRevenue;

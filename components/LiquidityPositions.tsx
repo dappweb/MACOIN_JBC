@@ -145,49 +145,37 @@ const LiquidityPositions: React.FC = () => {
     try {
       const stakeIndex = parseInt(id); // ID is already the array index
       
-      // Get user info to calculate fee
-      const userInfo = await protocolContract.userInfo(account);
-      const userTicket = await protocolContract.userTicket(account);
-      
-      let redemptionFeePercent = 0n;
+      // 使用 getRedeemPreview 获取精确的需额外支付 1% 金额（支持多笔质押合计）
+      let expectedFee = 0n;
       try {
-        // Safe check for function existence
-        if (typeof protocolContract.redemptionFeePercent === 'function') {
-            redemptionFeePercent = await protocolContract.redemptionFeePercent();
+        if (typeof protocolContract.getRedeemPreview === 'function') {
+          const [, fee] = await protocolContract.getRedeemPreview(account);
+          expectedFee = fee;
         } else {
-            console.warn("redemptionFeePercent function not found on contract");
+          const userInfo = await protocolContract.userInfo(account);
+          const userTicket = await protocolContract.userTicket(account);
+          let redemptionFeePercent = 0n;
+          if (typeof protocolContract.redemptionFeePercent === 'function') {
+            redemptionFeePercent = await protocolContract.redemptionFeePercent();
+          }
+          const feeBase = userInfo.maxTicketAmount > 0n ? userInfo.maxTicketAmount : userTicket.amount;
+          expectedFee = (feeBase * redemptionFeePercent) / 100n;
         }
       } catch (err) {
-        console.error("Failed to fetch redemptionFeePercent:", err);
+        console.error("Failed to get redeem preview:", err);
       }
-      
-      // Calculate expected fee - use correct fallback (ticket amount, not refundFeeAmount)
-      const feeBase = userInfo.maxTicketAmount > 0n ? userInfo.maxTicketAmount : userTicket.amount;
-      const expectedFee = (feeBase * redemptionFeePercent) / 100n;
       
       if (expectedFee > 0n) {
-        // Check native MC balance
         const currentMcBalance = mcBalance || 0n;
         if (currentMcBalance < expectedFee) {
-          toast.error(`Insufficient MC balance for redemption fee: ${ethers.formatEther(expectedFee)} MC required`);
+          toast.error(t?.mining?.insufficientRedemptionFee || `Insufficient MC for redemption fee: ${ethers.formatEther(expectedFee)} MC required`);
           return;
         }
-        
-        // For native MC, no approval needed - fee will be deducted from the transaction value
-        console.log('Native MC redemption fee will be handled automatically');
       }
       
-      // Add detailed logging for debugging
-      console.log("Redeem attempt:", {
-        stakeId: id,
-        stakeIndex: parseInt(id),
-        userBalance: ethers.formatEther(mcBalance || 0n),
-        expectedFee: ethers.formatEther(expectedFee),
-        feeBase: ethers.formatEther(feeBase)
-      });
-      
-      // Proceed with redemption - for native MC, send fee as value
-      const tx = await protocolContract.redeem({ value: expectedFee });
+      const tx = expectedFee > 0n
+        ? await protocolContract.redeem({ value: expectedFee })
+        : await protocolContract.redeem();
       
       // 获取预估的奖励信息用于展示
       const targetPos = positions.find(p => p.id === id);

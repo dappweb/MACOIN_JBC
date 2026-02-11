@@ -1,0 +1,11 @@
+{
+  "upgradeName": "ticket-expiry-cutoff-date",
+  "timestamp": "2026-02-08T08:56:29.844Z",
+  "network": "mc",
+  "chainId": "88813",
+  "proxyAddress": "0x0897Cee05E43B2eCf331cd80f881c211eb86844E",
+  "previousImplementation": "0x717411A6e62181e3632D8F3b6Ccd5744440E96C1",
+  "newImplementation": "0x717411A6e62181e3632D8F3b6Ccd5744440E96C1",
+  "description": "添加 ticketExpiryCutoffDate，只有此日期及之后购买的门票才需72小时内提供流动性；之前购买的门票长期有效",
+  "cutoffDate": "2026-02-09 00:00:00 UTC (1770432000)"
+}

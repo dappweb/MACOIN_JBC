@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
-import { TICKET_TIERS, MINING_PLANS } from '../src/constants';
+import { TICKET_TIERS, MINING_PLANS, LIQUIDITY_MULTIPLIER } from '../src/constants';
 import { MiningPlan, TicketTier } from '../src/types';
 import { Zap, Clock, TrendingUp, AlertCircle, ArrowRight, ShieldCheck, Lock, Package, History, ChevronDown, ChevronUp, Loader2 } from 'lucide-react';
 import { useLanguage } from '../src/LanguageContext';
@@ -173,44 +173,19 @@ const MiningPanel: React.FC = () => {
   // useEffect(() => {
   //   if (ticketInfo && ticketInfo.amount > 0n) {
   //       const contractMaxSingle = ticketInfo.maxSingleTicketAmount ? parseFloat(ethers.formatEther(ticketInfo.maxSingleTicketAmount)) : 0;
-  // Calculate 1.5x of max single ticket amount for liquidity input
+  // 按合约公式用 wei 计算所需金额（仅本金 1.5×）；赎回时额外支付 1%，再次提供流动性时退
   useEffect(() => {
-    if (ticketInfo) {
-      const contractMaxSingle = ticketInfo.maxSingleTicketAmount ? parseFloat(ethers.formatEther(ticketInfo.maxSingleTicketAmount)) : 0;
-      
-      // Use maxUnredeemedTicket as fallback if needed, but contractMaxSingle is best
-      const historyMax = maxUnredeemedTicket;
-      
-      let baseAmount = 0;
-
-      // 优先级 1: 合约记录的单张最大值 (最准确)
-      if (contractMaxSingle > 0) {
-          baseAmount = contractMaxSingle;
-      }
-      // 优先级 2: 前端回溯的历史单张最大值 (备选)
-      else if (historyMax > 0) {
-          baseAmount = historyMax;
-      }
-      
-      if (baseAmount > 0) {
-          const required = baseAmount * 1.5;
-          setLiquidityAmountInput(required.toString());
-      }
+    if (!ticketInfo) return;
+    const baseWei = ticketInfo.maxSingleTicketAmount > 0n ? ticketInfo.maxSingleTicketAmount : ticketInfo.amount;
+    if (baseWei > 0n) {
+      const requiredWei = (baseWei * 150n) / 100n;
+      setLiquidityAmountInput(ethers.formatEther(requiredWei));
+      setStakeAmount(requiredWei);
+    } else {
+      setLiquidityAmountInput('');
+      setStakeAmount(0n);
     }
-  }, [ticketInfo, maxUnredeemedTicket]);
-
-  // Handle liquidity amount change (Sync state)
-  useEffect(() => {
-    try {
-        if (liquidityAmountInput) {
-            setStakeAmount(ethers.parseEther(liquidityAmountInput));
-        } else {
-            setStakeAmount(0n);
-        }
-    } catch (e) {
-        setStakeAmount(0n);
-    }
-  }, [liquidityAmountInput]);
+  }, [ticketInfo]);
 
   // Update calculations
   const dailyROI = (Number(liquidityAmountInput || 0) * selectedPlan.dailyRate) / 100;
@@ -361,33 +336,29 @@ const MiningPanel: React.FC = () => {
     }
   };
 
-  // 获取单张最大门票金额的辅助函数
-  const getMaxSingleTicketAmount = useCallback(() => {
-    // 优先使用合约记录的单张最大金额
-    if (ticketInfo?.maxSingleTicketAmount && ticketInfo.maxSingleTicketAmount > 0n) {
-      return parseFloat(ethers.formatEther(ticketInfo.maxSingleTicketAmount));
-    }
-    
-    // 如果合约没有记录（老用户），则必须使用当前门票金额作为基准，
-    // 而不是使用前端的历史记录，因为合约会回退到 ticket.amount。
-    // 如果前端使用历史记录（可能大于当前），会导致计算出的流动性大于合约预期的（当前*1.5），从而导致 InvalidAmount 错误。
-    if (ticketInfo && ticketInfo.amount > 0n) {
-        return parseFloat(ethers.formatEther(ticketInfo.amount));
-    }
+  // 获取单张最大门票金额（wei），与合约一致：maxSingleTicketAmount 或 ticket.amount
+  const getBaseMaxAmountWei = useCallback((): bigint => {
+    if (ticketInfo?.maxSingleTicketAmount && ticketInfo.maxSingleTicketAmount > 0n) return ticketInfo.maxSingleTicketAmount;
+    if (ticketInfo?.amount && ticketInfo.amount > 0n) return ticketInfo.amount;
+    return 0n;
+  }, [ticketInfo]);
 
-    // 备选：使用前端计算的历史单张最大 (仅在没有ticketInfo时使用，实际上很少走到这里)
-    if (maxUnredeemedTicket > 0) {
-      return maxUnredeemedTicket;
-    }
-    
-    // 最后备选：如果当前金额是标准档位，使用当前金额
+  // 所需支付总额（wei）= 仅本金(1.5×)；赎回时额外支付 1%，再次提供流动性时退
+  const getRequiredTotalWei = useCallback((): bigint => {
+    const baseWei = getBaseMaxAmountWei();
+    if (baseWei === 0n) return 0n;
+    return (baseWei * 150n) / 100n;
+  }, [getBaseMaxAmountWei]);
+
+  // 获取单张最大门票金额的辅助函数（用于展示等）
+  const getMaxSingleTicketAmount = useCallback(() => {
+    const baseWei = getBaseMaxAmountWei();
+    if (baseWei > 0n) return parseFloat(ethers.formatEther(baseWei));
+    if (maxUnredeemedTicket > 0) return maxUnredeemedTicket;
     const currentAmount = ticketInfo ? parseFloat(ethers.formatEther(ticketInfo.amount)) : 0;
-    if (TICKET_TIERS.some(t => Math.abs(t.amount - currentAmount) < 0.1)) {
-      return currentAmount;
-    }
-    
+    if (TICKET_TIERS.some(t => Math.abs(t.amount - currentAmount) < 0.1)) return currentAmount;
     return 0;
-  }, [ticketInfo, maxUnredeemedTicket]);
+  }, [getBaseMaxAmountWei, ticketInfo, maxUnredeemedTicket]);
 
   // 移除自动步骤推进逻辑，允许用户自由浏览所有步骤
   // useEffect(() => {
@@ -857,23 +828,52 @@ const MiningPanel: React.FC = () => {
 
   const handleStake = async () => {
       if (!protocolContract || !provider) return;
-      if (stakeAmount <= 0n) {
-          toast.error(t.mining.invalidAmount || "Invalid amount");
+      const requiredAmountWei = getRequiredTotalWei();
+      if (requiredAmountWei <= 0n) {
+          toast.error(t.mining.invalidAmount || "无法计算所需金额，请先购买门票或刷新页面");
+          return;
+      }
+      if (stakeAmount !== requiredAmountWei) {
+          const baseWei = getBaseMaxAmountWei();
+          const principal = baseWei > 0n ? ethers.formatEther((baseWei * 150n) / 100n) : "0";
+          toast.error(t.mining.stakeAmountMismatch || `请按页面显示金额质押（本金 ${principal} MC）`);
           return;
       }
 
       setTxPending(true);
       try {
           // 1. 检查原生MC余额
-          const requiredAmount = stakeAmount;
+          const requiredAmount = requiredAmountWei;
           const currentMcBalance = mcBalance || 0n;
           
           if (currentMcBalance < requiredAmount) {
               toast.error(`${t.mining.insufficientMC} ${t.mining.needsMC} ${liquidityAmountInput} MC，${t.mining.currentBalance}: ${ethers.formatEther(currentMcBalance)} MC`);
+              setTxPending(false);
               return;
           }
 
-          // 2. 检查Gas费用
+          // 2. 若有待退金，检查协议池是否足够（不足时合约会 revert，先提示避免浪费 Gas）
+          if (account) {
+              try {
+                  const [userInfo, poolMc] = await Promise.all([
+                      protocolContract.userInfo(account),
+                      protocolContract.swapReserveMC()
+                  ]);
+                  const refund = userInfo.refundFeeAmount ?? 0n;
+                  if (refund > 0n && poolMc < refund) {
+                      toast.error(
+                          t.mining.stakeFailedPoolRefund ?? 
+                          `协议池子暂时不足，无法退还您的待退金（${ethers.formatEther(refund)} MC），暂时无法提供流动性，请稍后再试或联系客服`
+                      );
+                      setTxPending(false);
+                      return;
+                  }
+              } catch (e) {
+                  console.warn("Pre-check refund/pool failed:", e);
+              }
+          }
+
+          // 3. 检查Gas费用
           try {
               const gasEstimate = await protocolContract.stakeLiquidity.estimateGas(selectedPlan.days, { value: requiredAmount });
               const feeData = await provider.getFeeData();
@@ -889,7 +889,7 @@ const MiningPanel: React.FC = () => {
               console.warn("Gas estimation failed, proceeding anyway:", error);
           }
 
-          // 3. 直接执行质押 - 使用原生MC (payable)
+          // 4. 直接执行质押 - 使用原生MC (payable)
           const tx = await protocolContract.stakeLiquidity(selectedPlan.days, { value: requiredAmount });
           
           toast.loading("💎 Staking liquidity...", { id: "stake-liquidity" });
@@ -962,14 +962,38 @@ const MiningPanel: React.FC = () => {
   };
 
   const handleRedeem = async () => {
-      if (!protocolContract) return;
+      if (!protocolContract || !account) return;
       setTxPending(true);
       try {
-          const tx = await protocolContract.redeem();
+          let expectedFee = 0n;
+          if (typeof protocolContract.getRedeemPreview === 'function') {
+              const [,, fee] = await protocolContract.getRedeemPreview(account);
+              expectedFee = fee;
+          } else {
+              const [userInfo, userTicketData] = await Promise.all([
+                  protocolContract.userInfo(account),
+                  protocolContract.userTicket(account)
+              ]);
+              let redemptionFeePercent = 0n;
+              if (typeof protocolContract.redemptionFeePercent === 'function') {
+                  redemptionFeePercent = await protocolContract.redemptionFeePercent();
+              }
+              const feeBase = userInfo.maxTicketAmount > 0n ? userInfo.maxTicketAmount : userTicketData.amount;
+              expectedFee = (feeBase * redemptionFeePercent) / 100n;
+          }
+          if (expectedFee > 0n) {
+              const balance = mcBalance ?? 0n;
+              if (balance < expectedFee) {
+                  toast.error(t.mining.insufficientRedemptionFee || t.mining.redeemFailed);
+                  setTxPending(false);
+                  return;
+              }
+          }
+          const tx = expectedFee > 0n
+              ? await protocolContract.redeem({ value: expectedFee })
+              : await protocolContract.redeem();
           await tx.wait();
           toast.success(t.mining.redeemSuccess);
-          
-          // 使用全局刷新机制
           await onTransactionSuccess('redeem');
       } catch (err: any) {
           console.error(err);
@@ -1430,7 +1454,7 @@ const MiningPanel: React.FC = () => {
                     <div className="flex justify-between items-center mb-4">
                         <label className="text-sm font-bold text-gray-300 flex items-center gap-2">
                             <Zap className="text-neon-400" size={16} />
-                            {t.mining.liqInv || "Liquidity Amount"} <span className="text-neon-500 text-xs">(Fixed 1.5x Ticket)</span>
+                            {t.mining.liqInv || "Liquidity Amount"} <span className="text-neon-500 text-xs">(本金 1.5×)</span>
                         </label>
                         <span className="text-xs text-gray-500 font-mono">Balance: 10,000 MC</span>
                     </div>
@@ -1445,9 +1469,14 @@ const MiningPanel: React.FC = () => {
                         <div className="absolute right-4 top-1/2 -translate-y-1/2 font-bold text-gray-500 pointer-events-none">MC</div>
                     </div>
 
-                    {/* Fixed Amount Info */}
-                    <div className="text-xs text-gray-400 text-center mb-2">
-                        Required Liquidity: <span className="text-neon-400 font-bold">{liquidityAmountInput} MC</span> (1.5x Ticket Amount)
+                    {/* Fixed Amount Info: 仅本金；赎回时额外支付 1%，再次提供流动性时退 */}
+                    <div className="text-xs text-gray-400 text-center mb-2 space-y-0.5">
+                        <div>
+                            {t.mining.requiredMcLabel ?? "所需支付"}: <span className="text-neon-400 font-bold">{liquidityAmountInput} MC</span>
+                        </div>
+                        <div className="text-gray-500">
+                            {getMaxSingleTicketAmount() > 0 && `${t.mining.principalLabel ?? "本金"} ${(getMaxSingleTicketAmount() * LIQUIDITY_MULTIPLIER).toFixed(0)} MC`}
+                        </div>
                     </div>
                 </div>
             </div>

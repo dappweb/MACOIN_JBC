@@ -1,0 +1,9 @@
+{
+  "timestamp": "2026-02-10T12:19:59.082Z",
+  "network": "mc",
+  "proxyAddress": "0x0897Cee05E43B2eCf331cd80f881c211eb86844E",
+  "newImplementation": "0xb9C803E223fe970E901F9244a5882a387cA32607",
+  "purpose": "redemption-fee-redeem-pay-refund-at-stake",
+  "upgradeTx": "0xce02d0dd3ccd171f0fadbfcd38af567520fc437c7dc435b932c4c140031a271d",
+  "blockNumber": 3187713
+}

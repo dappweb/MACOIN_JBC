@@ -42,6 +42,7 @@ export const PROTOCOL_ABI = [
   "function liquidityEnabled() view returns (bool)",
   "function redeemEnabled() view returns (bool)",
   "function ticketFlexibilityDuration() view returns (uint256)",
+  "function ticketExpiryCutoffDate() view returns (uint256)",
   "function levelRewardPool() view returns (uint256)",
   "function SECONDS_IN_UNIT() view returns (uint256)",
   "function setDistributionConfig(uint256 _direct, uint256 _level, uint256 _marketing, uint256 _buyback, uint256 _lp, uint256 _treasury) external",
@@ -54,6 +55,7 @@ export const PROTOCOL_ABI = [
   "function transferOwnership(address newOwner) external",
   "function setOperationalStatus(bool _liquidityEnabled, bool _redeemEnabled) external",
   "function setTicketFlexibilityDuration(uint256 _duration) external",
+  "function setTicketExpiryCutoffDate(uint256 _cutoffDate) external",
   "function setJbcToken(address _newJbcToken) external",
   "function jbcToken() view returns (address)",
   "function adminSetReferrer(address user, address newReferrer) external",
@@ -120,6 +122,7 @@ interface Web3ContextType {
   isOwner: boolean
   referrerAddress: string | null
   checkReferrerStatus: () => Promise<void>
+  checkOwnerStatus: () => Promise<void>
 }
 
 const Web3Context = createContext<Web3ContextType | undefined>(undefined)
@@ -387,6 +390,7 @@ export const Web3Provider: React.FC<{ children: ReactNode }> = ({ children }) =>
         isOwner,
         referrerAddress,
         checkReferrerStatus,
+        checkOwnerStatus: checkOwner,
       }}
     >
       {children}

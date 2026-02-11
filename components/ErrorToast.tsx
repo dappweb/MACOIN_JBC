@@ -68,7 +68,7 @@ const getContextualMessage = (message: string, context?: string, language: 'zh' 
       '用户取消了交易': '门票购买已取消',
     },
     'stakeLiquidity': {
-      'MC余额不足，请检查钱包余额后重试': '提供流动性失败：MC余额不足。需要150 MC用于流动性质押。',
+      'MC余额不足，请检查钱包余额后重试': '提供流动性失败：请检查MC余额是否足够；若您有待退赎回金，可能是协议池子暂时不足无法退还，请稍后再试或联系客服',
       '交易失败，请重试': '流动性质押失败：请检查MC余额和授权状态',
     },
     'claimRewards': {

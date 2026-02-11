@@ -1,0 +1,10 @@
+{
+  "timestamp": "2026-02-08T08:57:32.446Z",
+  "network": "mc",
+  "proxyAddress": "0x0897Cee05E43B2eCf331cd80f881c211eb86844E",
+  "newImplementation": "0x980149305b14438FCb10d528654419f8A794B33B",
+  "method": "manual-uups",
+  "upgradeTx": "0x65c2a44a94d09e674e088cddde11db06b926431ac8b9135e354c388948318cd4",
+  "blockNumber": 3126064,
+  "cutoffDate": "error"
+}

@@ -1,3 +1,58 @@
+// 从合约动态获取 owner 地址
+async function getContractOwner() {
+  try {
+    const RPC_URL = 'https://chain.mcerscan.com/';
+    const PROTOCOL_ADDRESS = '0x0897Cee05E43B2eCf331cd80f881c211eb86844E';
+    // owner() function selector: 0x8da5cb5b
+    const response = await fetch(RPC_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        jsonrpc: '2.0',
+        id: 1,
+        method: 'eth_call',
+        params: [{ to: PROTOCOL_ADDRESS, data: '0x8da5cb5b' }, 'latest']
+      })
+    });
+    const data = await response.json();
+    if (data.result && data.result !== '0x') {
+      // Result is a 32-byte padded address, extract last 20 bytes
+      const ownerAddress = '0x' + data.result.slice(26);
+      console.log('[API] Contract owner from chain:', ownerAddress);
+      return ownerAddress.toLowerCase();
+    }
+  } catch (e) {
+    console.error('[API] Failed to fetch contract owner from chain:', e);
+  }
+  return null;
+}
+
+// 验证管理员地址：先检查合约 owner，再 fallback 到环境变量
+async function verifyAdmin(adminAddress, env) {
+  if (!adminAddress) return false;
+  
+  // 1. 先从合约动态获取 owner
+  const contractOwner = await getContractOwner();
+  if (contractOwner && adminAddress.toLowerCase() === contractOwner) {
+    console.log('[API] Admin verified via contract owner');
+    return true;
+  }
+  
+  // 2. Fallback: 检查环境变量中的 ADMIN_ADDRESS
+  const envOwner = env.ADMIN_ADDRESS;
+  if (envOwner && adminAddress.toLowerCase() === envOwner.toLowerCase()) {
+    console.log('[API] Admin verified via env ADMIN_ADDRESS');
+    return true;
+  }
+  
+  console.error('[API] Admin verification failed:', { 
+    adminAddress, 
+    contractOwner, 
+    envOwner: envOwner || 'not set' 
+  });
+  return false;
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -72,26 +127,11 @@ export default {
           });
         }
 
-        // ENV.ADMIN_ADDRESS should be set in Cloudflare Dashboard
-        const OWNER = env.ADMIN_ADDRESS; 
+        // 动态验证管理员身份（优先检查合约 owner）
+        const isAdmin = await verifyAdmin(adminAddress, env);
         
-        if (!OWNER) {
-          console.error('[API] ADMIN_ADDRESS not configured');
-          return new Response(JSON.stringify({ 
-            success: false,
-            error: "Server Config Error: ADMIN_ADDRESS not set" 
-          }), { 
-            status: 500,
-            headers: { 
-              "Content-Type": "application/json",
-              "Access-Control-Allow-Origin": "*" 
-            }
-          });
-        }
-
-        // Verify admin address
-        if (!adminAddress || adminAddress.toLowerCase() !== OWNER.toLowerCase()) {
-          console.error('[API] Unauthorized address:', { adminAddress, expected: OWNER });
+        if (!isAdmin) {
+          console.error('[API] Unauthorized address:', { adminAddress });
           return new Response(JSON.stringify({ 
             success: false,
             error: "Unauthorized Address" 
@@ -287,12 +327,10 @@ export default {
         const body = await request.json();
         const { address, level, adminAddress } = body;
 
-        const OWNER = env.ADMIN_ADDRESS;
-        if (!OWNER) {
-          return new Response("Server Config Error: ADMIN_ADDRESS not set", { status: 500 });
-        }
-
-        if (!adminAddress || adminAddress.toLowerCase() !== OWNER.toLowerCase()) {
+        // 动态验证管理员身份
+        const isAdmin = await verifyAdmin(adminAddress, env);
+        
+        if (!isAdmin) {
           return new Response(JSON.stringify({ error: "Unauthorized" }), { 
             status: 401, 
             headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" } 

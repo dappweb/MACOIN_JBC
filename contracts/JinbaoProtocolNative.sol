@@ -116,13 +116,16 @@ contract JinbaoProtocolNative is Initializable, OwnableUpgradeable, UUPSUpgradea
     mapping(uint256 => address) public ticketOwner;
     mapping(uint256 => PendingReward[]) public stakePendingRewards;
     mapping(uint256 => address) public stakeOwner;
+    /// @notice 每笔质押在质押时单独支付的 1% 赎回金，赎回时按笔退还
+    mapping(uint256 => uint256) public stakeRedemptionFeePaid;
     uint256 public levelRewardPool;
     
     // 动态奖励追踪 (用于前端显示)
     mapping(address => uint256) public totalDynamicEarned;
     mapping(address => uint256) public totalDynamicClaimed;
     
-    uint256[45] private __gap;
+    uint256 public ticketExpiryCutoffDate; // Only tickets purchased on/after this date expire after 72h
+    uint256[43] private __gap;
     bool public emergencyPaused;
     address public priceOracle;
     
@@ -194,6 +197,7 @@ contract JinbaoProtocolNative is Initializable, OwnableUpgradeable, UUPSUpgradea
     event LiquidityAdded(uint256 mcAmount, uint256 jbcAmount);
     event LevelConfigsUpdated();
     event TicketFlexibilityDurationUpdated(uint256 newDuration);
+    event TicketExpiryCutoffDateUpdated(uint256 newCutoffDate);
     event LiquidityStatusUpdated(bool enabled);
     event RedeemStatusUpdated(bool enabled);
     event WalletsUpdated(address marketing, address treasury, address lpInjection, address buyback);
@@ -246,6 +250,7 @@ contract JinbaoProtocolNative is Initializable, OwnableUpgradeable, UUPSUpgradea
         swapSellTax = 25;
 
         ticketFlexibilityDuration = 72 hours;
+        ticketExpiryCutoffDate = 1770595200; // 2026-02-09 00:00:00 UTC
         liquidityEnabled = true;
         redeemEnabled = true;
         lastBurnTime = block.timestamp;
@@ -333,6 +338,11 @@ contract JinbaoProtocolNative is Initializable, OwnableUpgradeable, UUPSUpgradea
     function setTicketFlexibilityDuration(uint256 _duration) external onlyOwner {
         ticketFlexibilityDuration = _duration;
         emit TicketFlexibilityDurationUpdated(_duration);
+    }
+
+    function setTicketExpiryCutoffDate(uint256 _cutoffDate) external onlyOwner {
+        ticketExpiryCutoffDate = _cutoffDate;
+        emit TicketExpiryCutoffDateUpdated(_cutoffDate);
     }
     /**
      * @dev 添加流动性 - 原生MC通过payable接收，JBC通过transferFrom
@@ -627,10 +637,28 @@ contract JinbaoProtocolNative is Initializable, OwnableUpgradeable, UUPSUpgradea
         if (cycleDays != 7 && cycleDays != 15 && cycleDays != 30) revert InvalidCycle();
         if (amount == 0) revert InvalidAmount();
 
+        uint256 baseMaxAmount = userInfo[msg.sender].maxSingleTicketAmount;
+        if (baseMaxAmount == 0) {
+            baseMaxAmount = ticket.amount;
+            userInfo[msg.sender].maxSingleTicketAmount = baseMaxAmount;
+        }
+        uint256 requiredAmount = (baseMaxAmount * 150) / 100;
+        if (amount != requiredAmount) revert InvalidAmount();
+
+        // 先退还上次赎回扣的 1% 或被动退出扣费（若有），从 Swap 池子退回到提供流动性的地址
+        uint256 refund = userInfo[msg.sender].refundFeeAmount;
+        if (refund > 0) {
+            if (swapReserveMC < refund) revert InsufficientBalance();
+            userInfo[msg.sender].refundFeeAmount = 0;
+            swapReserveMC -= refund;
+            _transferNativeMC(msg.sender, refund);
+            emit FeeRefunded(msg.sender, refund);
+        }
+
         nextStakeId++;
         userStakes[msg.sender].push(Stake({
             id: nextStakeId,
-            amount: amount,
+            amount: requiredAmount,
             startTime: block.timestamp,
             cycleDays: cycleDays,
             active: true,
@@ -639,35 +667,16 @@ contract JinbaoProtocolNative is Initializable, OwnableUpgradeable, UUPSUpgradea
 
         stakeOwner[nextStakeId] = msg.sender;
 
-        uint256 baseMaxAmount = userInfo[msg.sender].maxSingleTicketAmount;
-        
-        if (baseMaxAmount == 0) {
-            baseMaxAmount = ticket.amount;
-            userInfo[msg.sender].maxSingleTicketAmount = baseMaxAmount;
-        }
-
-        uint256 requiredAmount = (baseMaxAmount * 150) / 100;
-        if (amount != requiredAmount) revert InvalidAmount();
-
         _updateActiveStatus(msg.sender);
 
-        emit LiquidityStaked(msg.sender, amount, cycleDays, nextStakeId);
+        emit LiquidityStaked(msg.sender, requiredAmount, cycleDays, nextStakeId);
 
         // 计算并存储极差奖励
-        _calculateAndStoreDifferentialRewards(msg.sender, amount, nextStakeId);
-
-        uint256 refund = userInfo[msg.sender].refundFeeAmount;
-        if (refund > 0) {
-            userInfo[msg.sender].refundFeeAmount = 0;
-            if (swapReserveMC >= refund && address(this).balance >= refund) {
-                swapReserveMC -= refund;
-                _transferNativeMC(msg.sender, refund);
-                emit FeeRefunded(msg.sender, refund);
-            }
-        }
+        _calculateAndStoreDifferentialRewards(msg.sender, requiredAmount, nextStakeId);
     }
 
     function claimRewards() external nonReentrant {
+        _expireTicketIfNeeded(msg.sender);
         Ticket storage ticket = userTicket[msg.sender];
         if (ticket.amount == 0 || ticket.exited) revert NotActive();
         
@@ -1047,6 +1056,9 @@ contract JinbaoProtocolNative is Initializable, OwnableUpgradeable, UUPSUpgradea
                 totalFee += fee;
                 
                 stakes[i].active = false;
+                
+                // 释放极差奖励给上线用户
+                _releaseDifferentialRewards(stakes[i].id);
             }
             
             if (totalReturn > 0) {
@@ -1062,6 +1074,7 @@ contract JinbaoProtocolNative is Initializable, OwnableUpgradeable, UUPSUpgradea
 
             if (totalFee > 0) {
                 userInfo[user].refundFeeAmount += totalFee;
+                swapReserveMC += totalFee;
             }
             
             bool wasActive = userInfo[user].isActive;
@@ -1234,6 +1247,7 @@ contract JinbaoProtocolNative is Initializable, OwnableUpgradeable, UUPSUpgradea
         Ticket storage t = userTicket[user];
         if (t.amount == 0 || t.exited) return;
         if (_getActiveStakeTotal(user) > 0) return;
+        if (t.purchaseTime < ticketExpiryCutoffDate) return;
         if (block.timestamp <= t.purchaseTime + ticketFlexibilityDuration) return;
 
         uint256 ticketId = t.ticketId;
@@ -1247,6 +1261,10 @@ contract JinbaoProtocolNative is Initializable, OwnableUpgradeable, UUPSUpgradea
         userInfo[user].isActive = false;
         userInfo[user].totalRevenue = 0;
         userInfo[user].currentCap = 0;
+
+        // 清除动态奖励 - 停止本用户的动态奖金
+        totalDynamicEarned[user] = 0;
+        totalDynamicClaimed[user] = 0;
 
         t.ticketId = 0;
         t.amount = 0;
@@ -1294,15 +1312,18 @@ contract JinbaoProtocolNative is Initializable, OwnableUpgradeable, UUPSUpgradea
     // === 管理员用户管理功能 ===
 
     function adminSetReferrer(address user, address newReferrer) external onlyOwner {
-        if (user == address(0) || newReferrer == address(0)) revert InvalidAddress();
+        if (user == address(0)) revert InvalidAddress();
         if (user == newReferrer) revert SelfReference();
         
-        address current = newReferrer;
-        uint256 depth = 0;
-        while (current != address(0) && depth < 50) {
-            if (current == user) revert SelfReference();
-            current = userInfo[current].referrer;
-            depth++;
+        // 当 newReferrer 不为 address(0) 时，检查是否会形成循环
+        if (newReferrer != address(0)) {
+            address current = newReferrer;
+            uint256 depth = 0;
+            while (current != address(0) && depth < 50) {
+                if (current == user) revert SelfReference();
+                current = userInfo[current].referrer;
+                depth++;
+            }
         }
         
         address oldReferrer = userInfo[user].referrer;
@@ -1320,7 +1341,9 @@ contract JinbaoProtocolNative is Initializable, OwnableUpgradeable, UUPSUpgradea
                 }
             }
         }
-        directReferrals[newReferrer].push(user);
+        if (newReferrer != address(0)) {
+            directReferrals[newReferrer].push(user);
+        }
         
         uint256 userTeamSize = userInfo[user].teamCount + 1;
         
@@ -1594,12 +1617,35 @@ contract JinbaoProtocolNative is Initializable, OwnableUpgradeable, UUPSUpgradea
 
     // === 赎回功能 ===
 
-    function redeem() external nonReentrant {
+    /// @notice 预览赎回结果：本金合计、需额外支付的 1% 合计、收益合计（仅视图，不修改状态）
+    function getRedeemPreview(address user) external view returns (uint256 totalReturn, uint256 totalFee, uint256 totalYield) {
+        Stake[] storage stakes = userStakes[user];
+        uint256 feeBase = userInfo[user].maxTicketAmount;
+        if (feeBase == 0) feeBase = userTicket[user].amount;
+        for (uint256 i = 0; i < stakes.length; i++) {
+            if (!stakes[i].active) continue;
+            uint256 endTime = stakes[i].startTime + (stakes[i].cycleDays * SECONDS_IN_UNIT);
+            if (block.timestamp >= endTime) {
+                totalYield += _calculateStakeReward(stakes[i]);
+                if (stakeRedemptionFeePaid[stakes[i].id] > 0) {
+                    totalReturn += stakes[i].amount + stakeRedemptionFeePaid[stakes[i].id];
+                } else {
+                    totalFee += (feeBase * redemptionFeePercent) / 100;
+                    totalReturn += stakes[i].amount;
+                }
+            }
+        }
+    }
+
+    function redeem() external payable nonReentrant {
         if (!redeemEnabled) revert Unauthorized();
         Stake[] storage stakes = userStakes[msg.sender];
         uint256 totalReturn = 0;
         uint256 totalFee = 0;
         uint256 totalYield = 0;
+        
+        uint256 feeBase = userInfo[msg.sender].maxTicketAmount;
+        if (feeBase == 0) feeBase = userTicket[msg.sender].amount;
         
         for (uint256 i = 0; i < stakes.length; i++) {
             if (!stakes[i].active) continue;
@@ -1611,21 +1657,16 @@ contract JinbaoProtocolNative is Initializable, OwnableUpgradeable, UUPSUpgradea
                 totalYield += pending;
                 stakes[i].paid += pending;
 
-                uint256 feeBase = userInfo[msg.sender].maxTicketAmount;
-                if (feeBase == 0) feeBase = userTicket[msg.sender].amount;
-                
-                uint256 fee = (feeBase * redemptionFeePercent) / 100;
-                
-                uint256 returnAmt = stakes[i].amount;
-                if (returnAmt > fee) {
-                    returnAmt -= fee;
-                    totalFee += fee;
+                if (stakeRedemptionFeePaid[stakes[i].id] > 0) {
+                    // 旧逻辑：质押时付过 1%，赎回时退还
+                    totalReturn += stakes[i].amount;
+                    totalReturn += stakeRedemptionFeePaid[stakes[i].id];
                 } else {
-                    totalFee += returnAmt;
-                    returnAmt = 0;
+                    // 新逻辑：用户实收=本金，赎回时额外支付 1%（msg.value），记入待退，再次提供流动性时退
+                    uint256 fee = (feeBase * redemptionFeePercent) / 100;
+                    totalFee += fee;
+                    totalReturn += stakes[i].amount; // 全额退本金
                 }
-                
-                totalReturn += returnAmt;
                 stakes[i].active = false;
                 
                 _releaseDifferentialRewards(stakes[i].id);
@@ -1635,7 +1676,12 @@ contract JinbaoProtocolNative is Initializable, OwnableUpgradeable, UUPSUpgradea
         if (totalReturn == 0 && totalYield == 0) revert NothingToRedeem();
 
         if (totalFee > 0) {
+            if (msg.value < totalFee) revert InsufficientBalance();
+            userInfo[msg.sender].refundFeeAmount += totalFee;
             swapReserveMC += totalFee;
+            if (msg.value > totalFee) {
+                _transferNativeMC(msg.sender, msg.value - totalFee);
+            }
         }
 
         if (totalYield > 0) {

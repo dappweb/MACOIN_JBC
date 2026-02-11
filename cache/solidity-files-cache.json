@@ -1295,17 +1295,17 @@
       ]
     },
     "/home/zyj_dev/Documents/MACOIN_JBC-p-prod/contracts/JinbaoProtocolNative.sol": {
-      "lastModificationDate": 1770727493202,
-      "contentHash": "54de8b7daf741502ec2408562249a0b7",
+      "lastModificationDate": 1770787483493,
+      "contentHash": "820ca516f09ea688d2aec60967d1986e",
       "sourceName": "contracts/JinbaoProtocolNative.sol",
       "solcConfig": {
         "version": "0.8.22",
         "settings": {
-          "viaIR": true,
           "optimizer": {
             "enabled": true,
             "runs": 1
           },
+          "viaIR": true,
           "evmVersion": "paris",
           "outputSelection": {
             "*": {
@@ -1329,8 +1329,7 @@
         "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol",
         "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol",
         "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol",
-        "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol",
-        "./RedemptionLib.sol"
+        "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol"
       ],
       "versionPragmas": [
         "^0.8.20"

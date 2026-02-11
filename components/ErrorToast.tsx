@@ -1,20 +1,30 @@
 import { AlertCircle, Lightbulb, RefreshCw } from 'lucide-react';
-import { useLanguage } from '../src/LanguageContext';
-import { useChineseErrorFormatter } from '../utils/chineseErrorFormatter';
-
 import toast from 'react-hot-toast';
+import { formatChineseError, getErrorSuggestion } from '../utils/chineseErrorFormatter';
+
+// 获取当前语言设置（从 localStorage 或默认值）
+// 注意：这是普通函数，不使用 React Hooks
+const getCurrentLanguage = (): 'zh' | 'en' | 'zh-TW' => {
+  if (typeof window !== 'undefined') {
+    const stored = localStorage.getItem('language');
+    if (stored === 'en' || stored === 'zh' || stored === 'zh-TW') {
+      return stored;
+    }
+  }
+  return 'zh';
+};
 
 /**
  * 用户友好的错误提示组件
  * 将技术错误转换为易懂的中文提示，并提供解决建议
+ * 注意：这是普通函数，不能使用 React Hooks
  */
 export const showFriendlyError = (error: any, context?: string, showSuggestion: boolean = true) => {
-  const { language } = useLanguage();
-  const { formatError, getSuggestion } = useChineseErrorFormatter();
+  const language = getCurrentLanguage();
   
-  // 格式化错误信息
-  const errorMessage = formatError(error);
-  const suggestion = getSuggestion(error);
+  // 使用纯函数格式化错误信息
+  const errorMessage = formatChineseError(error, language);
+  const suggestion = getErrorSuggestion(error, language);
   
   // 根据上下文调整错误信息
   const contextualMessage = getContextualMessage(errorMessage, context, language as 'zh' | 'en' | 'zh-TW');
@@ -93,15 +103,16 @@ const getContextualMessage = (message: string, context?: string, language: 'zh' 
 
 /**
  * 显示余额不足的专用提示
+ * 注意：这是普通函数，不能使用 React Hooks
  */
 export const showInsufficientBalanceError = (requiredAmount: string, currentBalance: string) => {
-  const { language } = useLanguage();
+  const language = getCurrentLanguage();
   
-  const message = language === 'zh' 
+  const message = language === 'zh' || language === 'zh-TW' 
     ? `MC余额不足！需要 ${requiredAmount} MC，当前余额 ${currentBalance} MC`
     : `Insufficient MC balance! Need ${requiredAmount} MC, current balance ${currentBalance} MC`;
     
-  const suggestion = language === 'zh'
+  const suggestion = language === 'zh' || language === 'zh-TW'
     ? '建议：请先获取足够的MC代币，或减少交易金额'
     : 'Suggestion: Please acquire more MC tokens or reduce transaction amount';
   
@@ -138,15 +149,16 @@ export const showInsufficientBalanceError = (requiredAmount: string, currentBala
 
 /**
  * 显示网络错误提示
+ * 注意：这是普通函数，不能使用 React Hooks
  */
 export const showNetworkError = () => {
-  const { language } = useLanguage();
+  const language = getCurrentLanguage();
   
-  const message = language === 'zh'
+  const message = language === 'zh' || language === 'zh-TW'
     ? '网络连接错误：请检查是否连接到MC Chain网络'
     : 'Network Error: Please check MC Chain connection';
     
-  const suggestion = language === 'zh'
+  const suggestion = language === 'zh' || language === 'zh-TW'
     ? '建议：在钱包中切换到MC Chain网络（链ID：88813）'
     : 'Suggestion: Switch to MC Chain network (Chain ID: 88813) in your wallet';
   

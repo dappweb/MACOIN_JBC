@@ -1,8 +1,8 @@
-import path from 'path';
-import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 import autoprefixer from 'autoprefixer';
 import cssnano from 'cssnano';
+import path from 'path';
+import { defineConfig, loadEnv } from 'vite';
 
 export default defineConfig(({ mode }) => {
     const env = loadEnv(mode, '.', '');
@@ -60,55 +60,14 @@ export default defineConfig(({ mode }) => {
         }
       },
       
-      // 构建优化
+      // 构建优化 - 使用 esbuild 替代 terser 避免变量提升问题
       build: {
         target: 'es2020',
-        minify: 'terser',
-        terserOptions: {
-          compress: {
-            drop_console: isProduction,
-            drop_debugger: isProduction,
-            pure_funcs: isProduction ? ['console.log', 'console.warn'] : [],
-            passes: 2 // 多次压缩以获得更好的结果
-          }
-        },
+        minify: 'esbuild', // 使用 esbuild 替代 terser，避免 "Cannot access 'J' before initialization" 错误
         rollupOptions: {
           output: {
-            // 代码分割策略 - 更细粒度分割
-            manualChunks: (id) => {
-              // 核心React库
-              if (id.includes('node_modules/react') || id.includes('node_modules/react-dom')) {
-                return 'react-vendor';
-              }
-              // Web3相关库
-              if (id.includes('node_modules/ethers') || 
-                  id.includes('node_modules/@rainbow-me') || 
-                  id.includes('node_modules/wagmi') || 
-                  id.includes('node_modules/viem')) {
-                return 'web3-vendor';
-              }
-              // UI组件库
-              if (id.includes('node_modules/lucide-react') || 
-                  id.includes('node_modules/recharts') || 
-                  id.includes('node_modules/react-hot-toast')) {
-                return 'ui-vendor';
-              }
-              // 工具库
-              if (id.includes('node_modules/@tanstack')) {
-                return 'utils-vendor';
-              }
-              // 组件代码分割 - 按路由/功能分割
-              if (id.includes('/components/')) {
-                const match = id.match(/components\/([^/]+)/);
-                if (match) {
-                  const componentName = match[1];
-                  // 大型组件单独打包
-                  if (['MiningPanel', 'TeamLevel', 'SwapPanel'].includes(componentName)) {
-                    return `component-${componentName.toLowerCase()}`;
-                  }
-                }
-              }
-            },
+            // 禁用手动代码分割以避免循环依赖问题
+            // manualChunks 会导致模块初始化顺序错误
             // 文件命名优化
             chunkFileNames: 'assets/js/[name]-[hash].js',
             entryFileNames: 'assets/js/[name]-[hash].js',

@@ -1,0 +1,9 @@
+{
+  "timestamp": "2026-02-11T05:00:59.153Z",
+  "network": "mc",
+  "proxyAddress": "0x0897Cee05E43B2eCf331cd80f881c211eb86844E",
+  "newImplementation": "0xe67ed260F45FA6424A84e9078b0327f2E5010C5f",
+  "purpose": "redeem-refactor-finalizeRedemption",
+  "upgradeTx": "0xdece253dc093e624bef3e901997dd9e2514afb1e4199483e342df6018a8640fc",
+  "blockNumber": 3207733
+}

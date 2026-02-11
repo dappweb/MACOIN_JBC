@@ -6,7 +6,6 @@ import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
-import "./RedemptionLib.sol";
 
 interface IJBC is IERC20 {
     function burn(uint256 amount) external;
@@ -18,8 +17,6 @@ interface IJBC is IERC20 {
  * @notice 此版本使用原生 MC 代币而非 ERC20 代币，简化用户交互流程
  */
 contract JinbaoProtocolNative is Initializable, OwnableUpgradeable, UUPSUpgradeable, ReentrancyGuardUpgradeable {
-    using RedemptionLib for RedemptionLib.RedeemParams;
-    
     struct UserInfo {
         address referrer;
         uint256 activeDirects;
@@ -53,11 +50,6 @@ contract JinbaoProtocolNative is Initializable, OwnableUpgradeable, UUPSUpgradea
     struct PendingReward {
         address upline;
         uint256 amount;
-    }
-    struct DirectReferralData {
-        address user;
-        uint256 ticketAmount;
-        uint256 joinTime;
     }
 
     // 移除 mcToken，只保留 JBC 代币
@@ -125,7 +117,8 @@ contract JinbaoProtocolNative is Initializable, OwnableUpgradeable, UUPSUpgradea
     mapping(address => uint256) public totalDynamicClaimed;
     
     uint256 public ticketExpiryCutoffDate; // Only tickets purchased on/after this date expire after 72h
-    uint256[43] private __gap;
+    mapping(address => uint256) public lastStakeDeadlineBase; // 赎回/退出后无质押时72h基准；0=用purchaseTime
+    uint256[42] private __gap;
     bool public emergencyPaused;
     address public priceOracle;
     
@@ -902,10 +895,7 @@ contract JinbaoProtocolNative is Initializable, OwnableUpgradeable, UUPSUpgradea
         // 計算 JBC 價格
         uint256 jbcPrice = _getCurrentJBCPrice();
         uint256 jbcAmount = (jbcValuePart * 1 ether) / jbcPrice;
-        
-        // 記錄詳細的計算信息
-        emit DifferentialRewardCalculated(user, amount, mcPart, jbcValuePart, jbcPrice, jbcAmount);
-        
+
         // 檢查余額並執行安全轉賬
         (uint256 mcTransferred, uint256 jbcTransferred) = _safeTransferDifferentialReward(user, mcPart, jbcAmount);
         
@@ -922,9 +912,6 @@ contract JinbaoProtocolNative is Initializable, OwnableUpgradeable, UUPSUpgradea
             if (u.totalRevenue >= u.currentCap) {
                 _handleExit(user);
             }
-        } else {
-            // 記錄分配失敗的詳細信息
-            emit DifferentialRewardFailed(user, amount, mcPart, jbcAmount, "No tokens transferred");
         }
         
         // 存儲分配詳情供事件使用
@@ -944,9 +931,7 @@ contract JinbaoProtocolNative is Initializable, OwnableUpgradeable, UUPSUpgradea
         
         // 檢查流動性影響
         if (!_checkLiquidityImpact(jbcAmount)) {
-            // 如果影響過大，減少 JBC 分配量
             jbcAmount = swapReserveJBC / 20; // 限制為儲備的 5%
-            emit LiquidityProtectionTriggered(user, jbcAmount);
         }
         
         // 檢查 MC 余額並轉賬 - 使用原生MC
@@ -976,7 +961,6 @@ contract JinbaoProtocolNative is Initializable, OwnableUpgradeable, UUPSUpgradea
         
         // 記錄部分轉賬情況
         if (mcAmount > mcTransferred || jbcAmount > jbcTransferred) {
-            emit PartialRewardTransfer(user, mcAmount, mcTransferred, jbcAmount, jbcTransferred);
         }
     }
     
@@ -1085,6 +1069,7 @@ contract JinbaoProtocolNative is Initializable, OwnableUpgradeable, UUPSUpgradea
                 userInfo[referrer].activeDirects--;
             }
             
+            lastStakeDeadlineBase[user] = block.timestamp;
             emit Redeemed(user, totalReturn, totalFee);
             emit Exited(user, t.ticketId);
         }
@@ -1248,7 +1233,8 @@ contract JinbaoProtocolNative is Initializable, OwnableUpgradeable, UUPSUpgradea
         if (t.amount == 0 || t.exited) return;
         if (_getActiveStakeTotal(user) > 0) return;
         if (t.purchaseTime < ticketExpiryCutoffDate) return;
-        if (block.timestamp <= t.purchaseTime + ticketFlexibilityDuration) return;
+        uint256 deadlineBase = lastStakeDeadlineBase[user] != 0 ? lastStakeDeadlineBase[user] : t.purchaseTime;
+        if (block.timestamp <= deadlineBase + ticketFlexibilityDuration) return;
 
         uint256 ticketId = t.ticketId;
         uint256 ticketAmount = t.amount;
@@ -1617,23 +1603,49 @@ contract JinbaoProtocolNative is Initializable, OwnableUpgradeable, UUPSUpgradea
 
     // === 赎回功能 ===
 
-    /// @notice 预览赎回结果：本金合计、需额外支付的 1% 合计、收益合计（仅视图，不修改状态）
-    function getRedeemPreview(address user) external view returns (uint256 totalReturn, uint256 totalFee, uint256 totalYield) {
-        Stake[] storage stakes = userStakes[user];
-        uint256 feeBase = userInfo[user].maxTicketAmount;
-        if (feeBase == 0) feeBase = userTicket[user].amount;
-        for (uint256 i = 0; i < stakes.length; i++) {
-            if (!stakes[i].active) continue;
-            uint256 endTime = stakes[i].startTime + (stakes[i].cycleDays * SECONDS_IN_UNIT);
-            if (block.timestamp >= endTime) {
-                totalYield += _calculateStakeReward(stakes[i]);
-                if (stakeRedemptionFeePaid[stakes[i].id] > 0) {
-                    totalReturn += stakes[i].amount + stakeRedemptionFeePaid[stakes[i].id];
-                } else {
-                    totalFee += (feeBase * redemptionFeePercent) / 100;
-                    totalReturn += stakes[i].amount;
-                }
+    function _finalizeRedemption(address user, uint256 totalReturn, uint256 totalFee, uint256 totalYield) internal {
+        if (totalFee > 0) {
+            if (msg.value < totalFee) revert InsufficientBalance();
+            userInfo[user].refundFeeAmount += totalFee;
+            swapReserveMC += totalFee;
+            if (msg.value > totalFee) {
+                _transferNativeMC(user, msg.value - totalFee);
             }
+        }
+        if (totalYield > 0) {
+            uint256 available = userInfo[user].currentCap - userInfo[user].totalRevenue;
+            if (totalYield > available) {
+                emit RewardCapped(user, totalYield, available);
+                totalYield = available;
+            }
+            if (totalYield > 0) {
+                userInfo[user].totalRevenue += totalYield;
+                uint256 mcPart = totalYield / 2;
+                uint256 jbcValuePart = totalYield / 2;
+                uint256 mcTransferred = 0;
+                if (address(this).balance >= mcPart && mcPart > 0) {
+                    _transferNativeMC(user, mcPart);
+                    mcTransferred = mcPart;
+                }
+                uint256 jbcPrice = swapReserveJBC == 0 || swapReserveMC < MIN_LIQUIDITY ? 1 ether : (swapReserveMC * 1e18) / swapReserveJBC;
+                uint256 jbcAmount = (jbcValuePart * 1 ether) / jbcPrice;
+                uint256 jbcTransferred = 0;
+                if (jbcToken.balanceOf(address(this)) >= jbcAmount && jbcAmount > 0) {
+                    jbcToken.transfer(user, jbcAmount);
+                    jbcTransferred = jbcAmount;
+                }
+                emit RewardPaid(user, totalYield, REWARD_STATIC);
+                emit RewardClaimed(user, mcTransferred, jbcTransferred, REWARD_STATIC, userTicket[user].ticketId);
+            }
+        }
+        if (totalReturn > 0) {
+            _transferNativeMC(user, totalReturn);
+        }
+        _updateActiveStatus(user);
+        if (userInfo[user].totalRevenue >= userInfo[user].currentCap) {
+            _handleExit(user);
+        } else if (_getActiveStakeTotal(user) == 0) {
+            lastStakeDeadlineBase[user] = block.timestamp;
         }
     }
 
@@ -1643,87 +1655,59 @@ contract JinbaoProtocolNative is Initializable, OwnableUpgradeable, UUPSUpgradea
         uint256 totalReturn = 0;
         uint256 totalFee = 0;
         uint256 totalYield = 0;
-        
+
         uint256 feeBase = userInfo[msg.sender].maxTicketAmount;
         if (feeBase == 0) feeBase = userTicket[msg.sender].amount;
-        
+
         for (uint256 i = 0; i < stakes.length; i++) {
             if (!stakes[i].active) continue;
-            
             uint256 endTime = stakes[i].startTime + (stakes[i].cycleDays * SECONDS_IN_UNIT);
             if (block.timestamp >= endTime) {
                 uint256 pending = _calculateStakeReward(stakes[i]);
-                
                 totalYield += pending;
                 stakes[i].paid += pending;
-
                 if (stakeRedemptionFeePaid[stakes[i].id] > 0) {
-                    // 旧逻辑：质押时付过 1%，赎回时退还
-                    totalReturn += stakes[i].amount;
-                    totalReturn += stakeRedemptionFeePaid[stakes[i].id];
+                    totalReturn += stakes[i].amount + stakeRedemptionFeePaid[stakes[i].id];
                 } else {
-                    // 新逻辑：用户实收=本金，赎回时额外支付 1%（msg.value），记入待退，再次提供流动性时退
-                    uint256 fee = (feeBase * redemptionFeePercent) / 100;
-                    totalFee += fee;
-                    totalReturn += stakes[i].amount; // 全额退本金
+                    totalFee += (feeBase * redemptionFeePercent) / 100;
+                    totalReturn += stakes[i].amount;
                 }
                 stakes[i].active = false;
-                
                 _releaseDifferentialRewards(stakes[i].id);
             }
         }
-        
         if (totalReturn == 0 && totalYield == 0) revert NothingToRedeem();
+        _finalizeRedemption(msg.sender, totalReturn, totalFee, totalYield);
+    }
 
-        if (totalFee > 0) {
-            if (msg.value < totalFee) revert InsufficientBalance();
-            userInfo[msg.sender].refundFeeAmount += totalFee;
-            swapReserveMC += totalFee;
-            if (msg.value > totalFee) {
-                _transferNativeMC(msg.sender, msg.value - totalFee);
-            }
-        }
+    /// @notice 单笔赎回：仅赎回指定 stakeId 的质押（需已到期）
+    function redeemStake(uint256 stakeId) external payable nonReentrant {
+        if (!redeemEnabled || stakeOwner[stakeId] != msg.sender) revert Unauthorized();
 
-        if (totalYield > 0) {
-            uint256 available = userInfo[msg.sender].currentCap - userInfo[msg.sender].totalRevenue;
-            if (totalYield > available) {
-                emit RewardCapped(msg.sender, totalYield, available);
-                totalYield = available;
-            }
-            
-            if (totalYield > 0) {
-                userInfo[msg.sender].totalRevenue += totalYield;
-                
-                uint256 mcPart = totalYield / 2;
-                uint256 jbcValuePart = totalYield / 2;
-                
-                uint256 mcTransferred = 0;
-                if (address(this).balance >= mcPart && mcPart > 0) {
-                    _transferNativeMC(msg.sender, mcPart);
-                    mcTransferred = mcPart;
-                }
-                
-                uint256 jbcPrice = swapReserveJBC == 0 || swapReserveMC < MIN_LIQUIDITY ? 1 ether : (swapReserveMC * 1e18) / swapReserveJBC;
-                uint256 jbcAmount = (jbcValuePart * 1 ether) / jbcPrice;
-                uint256 jbcTransferred = 0;
-                if (jbcToken.balanceOf(address(this)) >= jbcAmount && jbcAmount > 0) {
-                    jbcToken.transfer(msg.sender, jbcAmount);
-                    jbcTransferred = jbcAmount;
-                }
-                
-                emit RewardPaid(msg.sender, totalYield, REWARD_STATIC);
-                emit RewardClaimed(msg.sender, mcTransferred, jbcTransferred, REWARD_STATIC, userTicket[msg.sender].ticketId);
-            }
-        }
+        Stake[] storage stakes = userStakes[msg.sender];
+        for (uint256 i = 0; i < stakes.length; i++) {
+            if (stakes[i].id != stakeId) continue;
+            Stake storage s = stakes[i];
+            if (!s.active) revert Unauthorized();
+            if (block.timestamp < s.startTime + (s.cycleDays * SECONDS_IN_UNIT)) revert ActionTooEarly();
 
-        if (totalReturn > 0) {
-            _transferNativeMC(msg.sender, totalReturn);
+            uint256 pending = _calculateStakeReward(s);
+            s.paid += pending;
+            uint256 totalReturn;
+            uint256 totalFee;
+            if (stakeRedemptionFeePaid[s.id] > 0) {
+                totalReturn = s.amount + stakeRedemptionFeePaid[s.id];
+            } else {
+                uint256 fb = userInfo[msg.sender].maxTicketAmount;
+                if (fb == 0) fb = userTicket[msg.sender].amount;
+                totalFee = (fb * redemptionFeePercent) / 100;
+                totalReturn = s.amount;
+            }
+            s.active = false;
+            _releaseDifferentialRewards(s.id);
+            _finalizeRedemption(msg.sender, totalReturn, totalFee, pending);
+            return;
         }
-        
-        _updateActiveStatus(msg.sender);
-        
-        if (userInfo[msg.sender].totalRevenue >= userInfo[msg.sender].currentCap) {
-            _handleExit(msg.sender);
-        }
+        revert Unauthorized();
     }
 }

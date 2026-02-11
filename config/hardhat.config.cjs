@@ -24,7 +24,7 @@ module.exports = {
             enabled: true,
             runs: 1,
           },
-          viaIR: true, // Enable IR-based code generation to avoid "Stack too deep" errors
+          viaIR: true,
         },
       },
     ],

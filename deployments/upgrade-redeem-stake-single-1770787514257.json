@@ -1,0 +1,9 @@
+{
+  "timestamp": "2026-02-11T05:25:14.257Z",
+  "network": "mc",
+  "proxyAddress": "0x0897Cee05E43B2eCf331cd80f881c211eb86844E",
+  "newImplementation": "0x7a1Ce60f589eD0F69188Ff082eC096c3e64c68F9",
+  "purpose": "add-redeemStake-single-stake-redemption",
+  "upgradeTx": "0xd94801ac9259ad8e8e163e9fba7a8ba36b4ee01bafc6c0e186d810041a1e1b78",
+  "blockNumber": 3208218
+}

@@ -1,15 +1,15 @@
-import React, { useState, useMemo, useEffect, useCallback } from 'react';
-import { TICKET_TIERS, MINING_PLANS, LIQUIDITY_MULTIPLIER } from '../src/constants';
-import { MiningPlan, TicketTier } from '../src/types';
-import { Zap, Clock, TrendingUp, AlertCircle, ArrowRight, ShieldCheck, Lock, Package, History, ChevronDown, ChevronUp, Loader2 } from 'lucide-react';
-import { useLanguage } from '../src/LanguageContext';
-import { useWeb3 } from '../src/Web3Context';
-import { useGlobalRefresh, useEventRefresh } from '../hooks/useGlobalRefresh';
 import { ethers } from 'ethers';
+import { AlertCircle, ArrowRight, ChevronDown, ChevronUp, Clock, History, Loader2, Lock, Package, ShieldCheck, TrendingUp, Zap } from 'lucide-react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { showFriendlyError } from '../components/ErrorToast';
-import LiquidityPositions from './LiquidityPositions';
+import { useEventRefresh, useGlobalRefresh } from '../hooks/useGlobalRefresh';
+import { LIQUIDITY_MULTIPLIER, MINING_PLANS, TICKET_TIERS } from '../src/constants';
+import { useLanguage } from '../src/LanguageContext';
+import { MiningPlan, TicketTier } from '../src/types';
+import { useWeb3 } from '../src/Web3Context';
 import GoldenProgressBar from './GoldenProgressBar';
+import LiquidityPositions from './LiquidityPositions';
 
 // Skeleton components for loading states
 const SkeletonCard: React.FC<{ className?: string }> = ({ className = "" }) => (
@@ -104,7 +104,8 @@ const MiningPanel: React.FC = () => {
   const [liquidityAmountInput, setLiquidityAmountInput] = useState('');
   const [stakeAmount, setStakeAmount] = useState<bigint>(0n);
   const [ticketFlexibilityDuration, setTicketFlexibilityDuration] = useState<number>(72 * 3600);
-  const [secondsInUnit, setSecondsInUnit] = useState<number>(60); // 从合约获取的时间单位
+  const [secondsInUnit, setSecondsInUnit] = useState<number>(86400); // 从合约获取的时间单位，生产默认86400(1天)
+  const [lastStakeDeadlineBaseVal, setLastStakeDeadlineBaseVal] = useState<number>(0); // 用户最近一次质押的deadline基准
   const [contractStatus, setContractStatus] = useState({
     paused: false,
     liquidityEnabled: true,
@@ -246,10 +247,10 @@ const MiningPanel: React.FC = () => {
       return ticketHistory.some(item => (item.status === 'Mining' || item.status === 'Completed'));
   }, [ticketHistory, ticketInfo, hasStaked]);
   
-  // 简化逻辑：只检查是否已达到3倍出局
-  const canStakeLiquidity = !isExited;
+  // 检查是否可质押：未出局 且 门票未过期（含僵尸门票检测）
+  const canStakeLiquidity = !isExited && !isTicketExpired;
   const isTicketBought = hasTicket && !isExited;
-  const hasValidTicket = hasTicket && !isExited; // Renamed from hasActiveTicket to avoid confusion
+  const hasValidTicket = hasTicket && !isExited && !isTicketExpired;
 
   // Check if any mining stake is expired and redeemable
   const isRedeemable = useMemo(() => {
@@ -401,9 +402,19 @@ const MiningPanel: React.FC = () => {
   // 门票到期倒计时：未质押时显示距离失效的剩余时间
   // Only show expiry countdown for tickets purchased on/after Feb 9, 2026
   const isCurrentTicketSubjectToExpiry = ticketInfo && ticketInfo.purchaseTime >= TICKET_EXPIRY_CUTOFF_DATE;
-  const ticketExpiryRemaining = ticketInfo && ticketInfo.amount > 0n && !ticketInfo.exited && !hasStakedLiquidity && isCurrentTicketSubjectToExpiry
-    ? ticketInfo.purchaseTime + ticketFlexibilityDuration - currentTime
+  // 使用 lastStakeDeadlineBase（如有）代替 purchaseTime 计算过期倒计时，与合约逻辑一致
+  const ticketExpiryDeadlineBase = lastStakeDeadlineBaseVal > 0 ? lastStakeDeadlineBaseVal : (ticketInfo?.purchaseTime || 0);
+  // 合约逻辑：有活跃质押时门票不会过期，所以有质押时不显示倒计时
+  const hasAnyActiveStakeForExpiry = !!(activeStake && activeStake.active) || hasStakedLiquidity;
+  const ticketExpiryRemaining = ticketInfo && ticketInfo.amount > 0n && !ticketInfo.exited && !hasAnyActiveStakeForExpiry && isCurrentTicketSubjectToExpiry
+    ? ticketExpiryDeadlineBase + ticketFlexibilityDuration - currentTime
     : null;
+
+  // 僵尸门票检测：门票存储中 amount > 0 但实际已过期（72h无活跃质押）
+  // 合约 _expireTicketIfNeeded 在 stakeLiquidity revert 时回滚，导致存储未清除
+  const isTicketExpired = !!(ticketInfo && ticketInfo.amount > 0n && !ticketInfo.exited
+    && !hasAnyActiveStakeForExpiry && isCurrentTicketSubjectToExpiry
+    && ticketExpiryRemaining !== null && ticketExpiryRemaining <= 0);
   const formatTicketExpiryCountdown = (remaining: number): string => {
     if (remaining <= 0) return '';
     const days = Math.floor(remaining / 86400);
@@ -420,6 +431,7 @@ const MiningPanel: React.FC = () => {
     if (!ticketInfo) return null;
     if (ticketInfo.redeemed) return { label: '流动性已赎回', color: 'text-gray-400', bg: 'bg-gray-500/20', border: 'border-gray-500/30' };
     if (isExited) return { label: t.mining.exited, color: 'text-red-400', bg: 'bg-red-500/20', border: 'border-red-500/30' };
+    if (isTicketExpired) return { label: '门票已过期', color: 'text-orange-400', bg: 'bg-orange-500/20', border: 'border-orange-500/30' };
     if (hasStakedLiquidity) return { label: t.mining.mining, color: 'text-green-400', bg: 'bg-green-500/20', border: 'border-green-500/30' };
     return { label: t.mining.canStake, color: 'text-blue-400', bg: 'bg-blue-500/20', border: 'border-blue-500/30' };
   };
@@ -706,11 +718,27 @@ const MiningPanel: React.FC = () => {
         const s = await protocolContract.SECONDS_IN_UNIT();
         setSecondsInUnit(Number(s));
       } catch (e) {
-        console.warn("Failed to fetch SECONDS_IN_UNIT, using default 60", e);
+        console.warn("Failed to fetch SECONDS_IN_UNIT, using default 86400", e);
       }
     };
     fetchSecondsInUnit();
   }, [protocolContract]);
+
+  // 获取 lastStakeDeadlineBase（门票过期倒计时用）
+  useEffect(() => {
+    const fetchLastStakeDeadlineBase = async () => {
+      if (!protocolContract || !account) return;
+      try {
+        const lsdb = await protocolContract.lastStakeDeadlineBase(account);
+        if (lsdb > 0n) {
+          setLastStakeDeadlineBaseVal(Number(lsdb));
+        }
+      } catch (e) {
+        // 合约可能不支持此方法，忽略
+      }
+    };
+    fetchLastStakeDeadlineBase();
+  }, [protocolContract, account]);
 
   // 获取合约状态（暂停、功能开关）
   useEffect(() => {
@@ -888,11 +916,24 @@ const MiningPanel: React.FC = () => {
           }
 
           // 0c. 检查门票是否过期（72小时规则）
+          // 与合约 _expireTicketIfNeeded 保持一致：有活跃质押时不会过期
           if (ticketInfo && ticketInfo.amount > 0n && !ticketInfo.exited) {
               const now = Math.floor(Date.now() / 1000);
               const isSubjectToExpiry = ticketInfo.purchaseTime >= TICKET_EXPIRY_CUTOFF_DATE;
               
               if (isSubjectToExpiry) {
+                  // 合约逻辑：有活跃质押时 _expireTicketIfNeeded 不会触发过期
+                  let hasAnyActiveStake = false;
+                  try {
+                      for (let idx = 0; idx < 50; idx++) {
+                          try {
+                              const s = await protocolContract.userStakes(account, idx);
+                              if (s.active) { hasAnyActiveStake = true; break; }
+                          } catch (e) { break; }
+                      }
+                  } catch (e) {}
+
+                  if (!hasAnyActiveStake) {
                   // 获取 lastStakeDeadlineBase
                   let deadlineBase = ticketInfo.purchaseTime;
                   try {
@@ -920,6 +961,7 @@ const MiningPanel: React.FC = () => {
                           toast.warning(`门票即将过期，剩余时间：${Math.floor(remaining / 60)} 分钟`, { duration: 5000 });
                       }
                   }
+                  } // end if (!hasAnyActiveStake)
               }
           }
 
@@ -1793,16 +1835,24 @@ const MiningPanel: React.FC = () => {
                     </div>
                     <h3 className="text-xl font-bold text-gray-300 mb-2">{t.mining.unknownStatus || "No Mining Activity"}</h3>
                     <p className="text-gray-500 max-w-md mx-auto mb-6">
-                        {canStakeLiquidity 
-                            ? "您可以随时提供流动性开始挖矿" 
-                            : "您已达到3倍出局，无法继续提供流动性"}
+                        {isTicketExpired
+                            ? "您的门票已过期（72小时未质押），请重新购买门票"
+                            : canStakeLiquidity 
+                                ? "您可以随时提供流动性开始挖矿" 
+                                : "您已达到3倍出局，无法继续提供流动性"}
                     </p>
                     <button 
-                        onClick={() => setCurrentStep(canStakeLiquidity ? 2 : 1)}
-                        className="px-6 py-2 bg-gray-800 hover:bg-gray-700 text-white font-bold rounded-lg border border-gray-600 transition-colors"
-                        disabled={!canStakeLiquidity}
+                        onClick={() => setCurrentStep(isTicketExpired || !canStakeLiquidity ? 1 : 2)}
+                        className={`px-6 py-2 font-bold rounded-lg border transition-colors ${
+                            isTicketExpired
+                                ? 'bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-400 hover:to-amber-400 text-black border-orange-400 shadow-lg shadow-orange-500/20'
+                                : canStakeLiquidity
+                                    ? 'bg-gray-800 hover:bg-gray-700 text-white border-gray-600'
+                                    : 'bg-gray-800 text-gray-500 border-gray-700 cursor-not-allowed'
+                        }`}
+                        disabled={!canStakeLiquidity && !isTicketExpired}
                     >
-                        {canStakeLiquidity ? t.mining.stake : "已出局"}
+                        {isTicketExpired ? '重新购买门票' : canStakeLiquidity ? t.mining.stake : "已出局"}
                     </button>
                 </div>
             ) : (
@@ -1835,18 +1885,35 @@ const MiningPanel: React.FC = () => {
                 </div>
             )}
 
+            {/* 僵尸门票过期提示：门票已过期（72h未质押），引导用户重新购买 */}
+            {isTicketExpired && (
+                <div className="mb-4 rounded-lg p-4 border animate-fade-in bg-orange-900/20 border-orange-500/40">
+                    <div className="flex items-center gap-2 mb-2">
+                        <AlertCircle size={18} className="text-orange-400" />
+                        <span className="text-orange-300 font-bold text-sm">门票已过期</span>
+                    </div>
+                    <p className="text-orange-200/80 text-sm mb-3">
+                        您的门票因超过72小时未提供流动性已失效。请重新购买门票后再进行质押操作。
+                    </p>
+                    <button
+                        onClick={() => setCurrentStep(1)}
+                        className="px-4 py-2 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-400 hover:to-amber-400 text-black font-bold rounded-lg text-sm shadow-lg shadow-orange-500/20 transition-all flex items-center gap-1"
+                    >
+                        重新购买门票 <ArrowRight size={14} />
+                    </button>
+                </div>
+            )}
+
             {/* 门票到期倒计时：未质押时显示，超时后提示重新购票 */}
-            {ticketInfo && ticketInfo.amount > 0n && !ticketInfo.exited && !hasStakedLiquidity && ticketExpiryRemaining !== null && (
-                <div className={`mb-4 rounded-lg p-3 border animate-fade-in ${ticketExpiryRemaining > 0 ? 'bg-blue-900/10 border-blue-500/30' : 'bg-red-900/20 border-red-500/40'}`}>
+            {!isTicketExpired && ticketInfo && ticketInfo.amount > 0n && !ticketInfo.exited && !hasStakedLiquidity && ticketExpiryRemaining !== null && ticketExpiryRemaining > 0 && (
+                <div className="mb-4 rounded-lg p-3 border animate-fade-in bg-blue-900/10 border-blue-500/30">
                     <div className="flex items-center gap-2 text-sm">
-                        <Clock size={16} className={ticketExpiryRemaining > 0 ? 'text-blue-400' : 'text-red-400'} />
-                        <span className={ticketExpiryRemaining > 0 ? 'text-blue-200' : 'text-red-300 font-medium'}>
+                        <Clock size={16} className="text-blue-400" />
+                        <span className="text-blue-200">
                             {t.mining.ticketExpiryCountdown}:
                         </span>
-                        <span className={`font-mono font-bold ${ticketExpiryRemaining > 0 ? 'text-blue-300' : 'text-red-400'}`}>
-                          {ticketExpiryRemaining > 0
-                            ? formatTicketExpiryCountdown(ticketExpiryRemaining)
-                            : t.mining.ticketExpiredPleaseRebuy}
+                        <span className="font-mono font-bold text-blue-300">
+                          {formatTicketExpiryCountdown(ticketExpiryRemaining)}
                         </span>
                     </div>
                 </div>

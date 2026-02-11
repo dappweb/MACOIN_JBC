@@ -58,6 +58,10 @@ const LiquidityPositions: React.FC = () => {
   const [secondsInUnit, setSecondsInUnit] = useState(86400);
   const [redeemingId, setRedeemingId] = useState<string | null>(null);
   const [reserves, setReserves] = useState<{mc: bigint, jbc: bigint}>({ mc: 0n, jbc: 0n });
+  const [contractStatus, setContractStatus] = useState({
+    paused: false,
+    redeemEnabled: true
+  });
 
   // Update current time every second for countdown/progress
   useEffect(() => {
@@ -86,6 +90,17 @@ const LiquidityPositions: React.FC = () => {
         } catch (e) {
            console.warn("Failed to fetch reserves", e);
         }
+
+        // 获取合约状态
+        try {
+          const [paused, redeemEnabled] = await Promise.all([
+            protocolContract.emergencyPaused(),
+            protocolContract.redeemEnabled()
+          ]);
+          setContractStatus({ paused, redeemEnabled });
+        } catch (e) {
+          console.warn("Failed to fetch contract status", e);
+        }
       }
     };
     fetchConstants();
@@ -108,7 +123,7 @@ const LiquidityPositions: React.FC = () => {
           const stakeData = await protocolContract.userStakes(account, index);
           // struct Stake { id, amount, startTime, cycleDays, active, paid }
           
-          const id = index.toString(); // Use array index as ID instead of stake ID
+          const id = stakeData[0].toString(); // stake.id from contract (for redeemStake)
           const amount = stakeData[1];
           const startTime = Number(stakeData[2]);
           const cycleDays = Number(stakeData[3]);
@@ -141,41 +156,65 @@ const LiquidityPositions: React.FC = () => {
 
   const handleRedeem = async (id: string) => {
     if (!protocolContract) return;
+    
+    // 检查合约状态
+    if (contractStatus.paused) {
+      toast.error("合约已紧急暂停，暂时无法赎回");
+      return;
+    }
+    if (!contractStatus.redeemEnabled) {
+      toast.error("赎回功能已暂停，请联系管理员");
+      return;
+    }
+    
     setRedeemingId(id);
     try {
-      const stakeIndex = parseInt(id); // ID is already the array index
-      
-      // 使用 getRedeemPreview 获取精确的需额外支付 1% 金额（支持多笔质押合计）
+      const stakeId = BigInt(id); // contract stake.id (e.g. 366)
+
+      // 单笔赎回手续费：feeBase * 1%（新逻辑）；stakeRedemptionFeePaid>0 时为 0
       let expectedFee = 0n;
       try {
-        if (typeof protocolContract.getRedeemPreview === 'function') {
-          const [, fee] = await protocolContract.getRedeemPreview(account);
-          expectedFee = fee;
-        } else {
-          const userInfo = await protocolContract.userInfo(account);
-          const userTicket = await protocolContract.userTicket(account);
-          let redemptionFeePercent = 0n;
-          if (typeof protocolContract.redemptionFeePercent === 'function') {
-            redemptionFeePercent = await protocolContract.redemptionFeePercent();
-          }
-          const feeBase = userInfo.maxTicketAmount > 0n ? userInfo.maxTicketAmount : userTicket.amount;
+        const [userInfo, userTicketData] = await Promise.all([
+          protocolContract.userInfo(account),
+          protocolContract.userTicket(account)
+        ]);
+        let redemptionFeePercent = 0n;
+        if (typeof protocolContract.redemptionFeePercent === 'function') {
+          redemptionFeePercent = await protocolContract.redemptionFeePercent();
+        }
+        // 检查是否为旧逻辑（质押时已付 1%）：需查询 stakeRedemptionFeePaid
+        let feePaid = 0n;
+        if (typeof protocolContract.stakeRedemptionFeePaid === 'function') {
+          feePaid = await protocolContract.stakeRedemptionFeePaid(stakeId);
+        }
+        if (feePaid === 0n) {
+          const feeBase = userInfo.maxTicketAmount > 0n ? userInfo.maxTicketAmount : userTicketData.amount;
           expectedFee = (feeBase * redemptionFeePercent) / 100n;
         }
       } catch (err) {
-        console.error("Failed to get redeem preview:", err);
+        console.error("Failed to get redeem fee:", err);
       }
-      
+
       if (expectedFee > 0n) {
         const currentMcBalance = mcBalance || 0n;
         if (currentMcBalance < expectedFee) {
           toast.error(t?.mining?.insufficientRedemptionFee || `Insufficient MC for redemption fee: ${ethers.formatEther(expectedFee)} MC required`);
+          setRedeemingId(null);
           return;
         }
       }
-      
-      const tx = expectedFee > 0n
-        ? await protocolContract.redeem({ value: expectedFee })
-        : await protocolContract.redeem();
+
+      // 优先使用 redeemStake 单笔赎回，不支持时回退到 redeem()
+      let tx;
+      if (typeof protocolContract.redeemStake === 'function') {
+        tx = expectedFee > 0n
+          ? await protocolContract.redeemStake(stakeId, { value: expectedFee })
+          : await protocolContract.redeemStake(stakeId);
+      } else {
+        tx = expectedFee > 0n
+          ? await protocolContract.redeem({ value: expectedFee })
+          : await protocolContract.redeem();
+      }
       
       // 获取预估的奖励信息用于展示
       const targetPos = positions.find(p => p.id === id);
@@ -194,14 +233,21 @@ const LiquidityPositions: React.FC = () => {
       console.error("Redeem error details:", err);
       
       // Enhanced error handling with specific messages
-      if (err.message?.includes("Invalid stake")) {
+      const errorMessage = err.message?.toLowerCase?.() || '';
+      const errorReason = err.reason?.toLowerCase?.() || '';
+      
+      if (errorMessage.includes("invalid stake") || errorReason.includes("invalid stake")) {
         toast.error("质押无效，请刷新页面重试");
-      } else if (err.message?.includes("Not expired")) {
+      } else if (errorMessage.includes("not expired") || errorReason.includes("not expired") || errorReason.includes("actiontooearly")) {
         toast.error("质押尚未到期，请等待到期后再试");
-      } else if (err.message?.includes("Disabled")) {
+      } else if (errorMessage.includes("disabled") || errorReason.includes("disabled")) {
         toast.error("赎回功能暂时禁用，请联系管理员");
-      } else if (err.message?.includes("Transfer failed")) {
+      } else if (errorMessage.includes("transfer failed") || errorReason.includes("transfer failed")) {
         toast.error("转账失败，请检查余额和授权");
+      } else if (errorMessage.includes("unauthorized") || errorReason.includes("unauthorized")) {
+        toast.error("无权操作该质押，请确认质押归属");
+      } else if (errorMessage.includes("insufficient balance") || errorReason.includes("insufficientbalance")) {
+        toast.error("合约余额不足，请联系管理员");
       } else {
         toast.error(formatContractError(err));
       }

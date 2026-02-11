@@ -105,6 +105,11 @@ const MiningPanel: React.FC = () => {
   const [stakeAmount, setStakeAmount] = useState<bigint>(0n);
   const [ticketFlexibilityDuration, setTicketFlexibilityDuration] = useState<number>(72 * 3600);
   const [secondsInUnit, setSecondsInUnit] = useState<number>(60); // 从合约获取的时间单位
+  const [contractStatus, setContractStatus] = useState({
+    paused: false,
+    liquidityEnabled: true,
+    redeemEnabled: true
+  });
   const [currentTime, setCurrentTime] = useState(Math.floor(Date.now() / 1000)); // 用于倒计时
   
   // 动态奖励状态
@@ -707,6 +712,27 @@ const MiningPanel: React.FC = () => {
     fetchSecondsInUnit();
   }, [protocolContract]);
 
+  // 获取合约状态（暂停、功能开关）
+  useEffect(() => {
+    const fetchContractStatus = async () => {
+      if (!protocolContract) return;
+      try {
+        const [paused, liquidityEnabled, redeemEnabled] = await Promise.all([
+          protocolContract.emergencyPaused(),
+          protocolContract.liquidityEnabled(),
+          protocolContract.redeemEnabled()
+        ]);
+        setContractStatus({ paused, liquidityEnabled, redeemEnabled });
+      } catch (e) {
+        console.warn("Failed to fetch contract status", e);
+      }
+    };
+    fetchContractStatus();
+    // 每30秒刷新一次合约状态
+    const interval = setInterval(fetchContractStatus, 30000);
+    return () => clearInterval(interval);
+  }, [protocolContract]);
+
   // 每秒更新 currentTime 用于倒计时显示
   useEffect(() => {
     const timer = setInterval(() => {
@@ -842,6 +868,61 @@ const MiningPanel: React.FC = () => {
 
       setTxPending(true);
       try {
+          // 0a. 检查合约状态
+          if (contractStatus.paused) {
+              toast.error("合约已紧急暂停，暂时无法操作");
+              setTxPending(false);
+              return;
+          }
+          if (!contractStatus.liquidityEnabled) {
+              toast.error("质押功能已暂停，请联系管理员");
+              setTxPending(false);
+              return;
+          }
+
+          // 0b. 检查是否达到收益上限
+          if (ticketInfo && ticketInfo.currentCap > 0n && ticketInfo.totalRevenue >= ticketInfo.currentCap) {
+              toast.error("已达到3倍收益上限，请重新购买门票");
+              setTxPending(false);
+              return;
+          }
+
+          // 0c. 检查门票是否过期（72小时规则）
+          if (ticketInfo && ticketInfo.amount > 0n && !ticketInfo.exited) {
+              const now = Math.floor(Date.now() / 1000);
+              const isSubjectToExpiry = ticketInfo.purchaseTime >= TICKET_EXPIRY_CUTOFF_DATE;
+              
+              if (isSubjectToExpiry) {
+                  // 获取 lastStakeDeadlineBase
+                  let deadlineBase = ticketInfo.purchaseTime;
+                  try {
+                      const lastStakeDeadlineBase = await protocolContract.lastStakeDeadlineBase(account);
+                      if (lastStakeDeadlineBase > 0n) {
+                          deadlineBase = Number(lastStakeDeadlineBase);
+                      }
+                  } catch (e) {
+                      console.warn("Failed to fetch lastStakeDeadlineBase", e);
+                  }
+                  
+                  const deadline = deadlineBase + ticketFlexibilityDuration;
+                  
+                  if (now > deadline) {
+                      toast.error(
+                          t.mining.ticketExpiredPleaseRebuy || 
+                          "门票已过期（72小时未质押），请重新购买门票"
+                      );
+                      setTxPending(false);
+                      return;
+                  } else {
+                      // 显示即将过期的警告
+                      const remaining = deadline - now;
+                      if (remaining < 3600) { // 少于1小时
+                          toast.warning(`门票即将过期，剩余时间：${Math.floor(remaining / 60)} 分钟`, { duration: 5000 });
+                      }
+                  }
+              }
+          }
+
           // 1. 检查原生MC余额
           const requiredAmount = requiredAmountWei;
           const currentMcBalance = mcBalance || 0n;
@@ -965,35 +1046,110 @@ const MiningPanel: React.FC = () => {
       if (!protocolContract || !account) return;
       setTxPending(true);
       try {
+          // 0. 检查合约状态
+          if (contractStatus.paused) {
+              toast.error("合约已紧急暂停，暂时无法赎回");
+              setTxPending(false);
+              return;
+          }
+          if (!contractStatus.redeemEnabled) {
+              toast.error("赎回功能已暂停，请联系管理员");
+              setTxPending(false);
+              return;
+          }
+
+          // 1. 获取用户质押列表并计算到期的质押
+          const stakes: any[] = [];
+          let index = 0;
+          const now = Math.floor(Date.now() / 1000);
+          
+          // 获取合约时间单位
+          let secondsInUnitVal = 86400; // 默认1天
+          try {
+              secondsInUnitVal = Number(await protocolContract.SECONDS_IN_UNIT());
+          } catch (e) {
+              console.warn("Failed to fetch SECONDS_IN_UNIT, using default 86400", e);
+          }
+          
+          // 遍历获取所有质押
+          while (index < 50) {
+              try {
+                  const stakeData = await protocolContract.userStakes(account, index);
+                  const id = stakeData[0];
+                  const amount = stakeData[1];
+                  const startTime = Number(stakeData[2]);
+                  const cycleDays = Number(stakeData[3]);
+                  const active = stakeData[4];
+                  
+                  if (active) {
+                      const endTime = startTime + (cycleDays * secondsInUnitVal);
+                      if (now >= endTime) {
+                          stakes.push({ id, amount, startTime, cycleDays, active });
+                      }
+                  }
+                  index++;
+              } catch (e) {
+                  break;
+              }
+          }
+          
+          // 2. 计算手续费：统计需要付费的质押数量（新逻辑）
           let expectedFee = 0n;
-          if (typeof protocolContract.getRedeemPreview === 'function') {
-              const [,, fee] = await protocolContract.getRedeemPreview(account);
-              expectedFee = fee;
-          } else {
+          let maturedCount = 0;
+          let newLogicCount = 0;
+          
+          if (stakes.length > 0) {
               const [userInfo, userTicketData] = await Promise.all([
                   protocolContract.userInfo(account),
                   protocolContract.userTicket(account)
               ]);
+              
               let redemptionFeePercent = 0n;
               if (typeof protocolContract.redemptionFeePercent === 'function') {
                   redemptionFeePercent = await protocolContract.redemptionFeePercent();
               }
+              
               const feeBase = userInfo.maxTicketAmount > 0n ? userInfo.maxTicketAmount : userTicketData.amount;
-              expectedFee = (feeBase * redemptionFeePercent) / 100n;
+              const singleFee = (feeBase * redemptionFeePercent) / 100n;
+              
+              // 检查每笔质押的 stakeRedemptionFeePaid
+              for (const stake of stakes) {
+                  maturedCount++;
+                  let feePaid = 0n;
+                  if (typeof protocolContract.stakeRedemptionFeePaid === 'function') {
+                      feePaid = await protocolContract.stakeRedemptionFeePaid(stake.id);
+                  }
+                  // 只有新逻辑（未预付手续费）才需要付费
+                  if (feePaid === 0n) {
+                      newLogicCount++;
+                      expectedFee += singleFee;
+                  }
+              }
+              
+              console.log(`[handleRedeem] 到期质押: ${maturedCount}, 新逻辑: ${newLogicCount}, 总手续费: ${ethers.formatEther(expectedFee)} MC`);
+              
+              // 显示手续费提示
+              if (expectedFee > 0n) {
+                  toast.info(`检测到 ${maturedCount} 笔到期质押，需支付 ${ethers.formatEther(expectedFee)} MC 手续费`, { duration: 3000 });
+              }
           }
+          
+          // 3. 检查余额
           if (expectedFee > 0n) {
               const balance = mcBalance ?? 0n;
               if (balance < expectedFee) {
-                  toast.error(t.mining.insufficientRedemptionFee || t.mining.redeemFailed);
+                  toast.error(`${t.mining.insufficientRedemptionFee || '手续费不足'}: 需要 ${ethers.formatEther(expectedFee)} MC，当前余额 ${ethers.formatEther(balance)} MC`);
                   setTxPending(false);
                   return;
               }
           }
+          
+          // 4. 执行赎回
           const tx = expectedFee > 0n
               ? await protocolContract.redeem({ value: expectedFee })
               : await protocolContract.redeem();
           await tx.wait();
-          toast.success(t.mining.redeemSuccess);
+          toast.success(`${t.mining.redeemSuccess}${maturedCount > 1 ? ` (共赎回 ${maturedCount} 笔质押)` : ''}`);
           await onTransactionSuccess('redeem');
       } catch (err: any) {
           console.error(err);

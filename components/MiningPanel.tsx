@@ -247,6 +247,19 @@ const MiningPanel: React.FC = () => {
       return ticketHistory.some(item => (item.status === 'Mining' || item.status === 'Completed'));
   }, [ticketHistory, ticketInfo, hasStaked]);
   
+  // 门票到期倒计时和过期检测（必须在 canStakeLiquidity 之前定义）
+  const isCurrentTicketSubjectToExpiry = ticketInfo && ticketInfo.purchaseTime >= TICKET_EXPIRY_CUTOFF_DATE;
+  const ticketExpiryDeadlineBase = lastStakeDeadlineBaseVal > 0 ? lastStakeDeadlineBaseVal : (ticketInfo?.purchaseTime || 0);
+  const hasAnyActiveStakeForExpiry = !!(activeStake && activeStake.active) || hasStakedLiquidity;
+  const ticketExpiryRemaining = ticketInfo && ticketInfo.amount > 0n && !ticketInfo.exited && !hasAnyActiveStakeForExpiry && isCurrentTicketSubjectToExpiry
+    ? ticketExpiryDeadlineBase + ticketFlexibilityDuration - currentTime
+    : null;
+  
+  // 僵尸门票检测：门票存储中 amount > 0 但实际已过期（72h无活跃质押）
+  const isTicketExpired = !!(ticketInfo && ticketInfo.amount > 0n && !ticketInfo.exited
+    && !hasAnyActiveStakeForExpiry && isCurrentTicketSubjectToExpiry
+    && ticketExpiryRemaining !== null && ticketExpiryRemaining <= 0);
+  
   // 检查是否可质押：未出局 且 门票未过期（含僵尸门票检测）
   const canStakeLiquidity = !isExited && !isTicketExpired;
   const isTicketBought = hasTicket && !isExited;
@@ -399,22 +412,7 @@ const MiningPanel: React.FC = () => {
     return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
   };
 
-  // 门票到期倒计时：未质押时显示距离失效的剩余时间
-  // Only show expiry countdown for tickets purchased on/after Feb 9, 2026
-  const isCurrentTicketSubjectToExpiry = ticketInfo && ticketInfo.purchaseTime >= TICKET_EXPIRY_CUTOFF_DATE;
-  // 使用 lastStakeDeadlineBase（如有）代替 purchaseTime 计算过期倒计时，与合约逻辑一致
-  const ticketExpiryDeadlineBase = lastStakeDeadlineBaseVal > 0 ? lastStakeDeadlineBaseVal : (ticketInfo?.purchaseTime || 0);
-  // 合约逻辑：有活跃质押时门票不会过期，所以有质押时不显示倒计时
-  const hasAnyActiveStakeForExpiry = !!(activeStake && activeStake.active) || hasStakedLiquidity;
-  const ticketExpiryRemaining = ticketInfo && ticketInfo.amount > 0n && !ticketInfo.exited && !hasAnyActiveStakeForExpiry && isCurrentTicketSubjectToExpiry
-    ? ticketExpiryDeadlineBase + ticketFlexibilityDuration - currentTime
-    : null;
-
-  // 僵尸门票检测：门票存储中 amount > 0 但实际已过期（72h无活跃质押）
-  // 合约 _expireTicketIfNeeded 在 stakeLiquidity revert 时回滚，导致存储未清除
-  const isTicketExpired = !!(ticketInfo && ticketInfo.amount > 0n && !ticketInfo.exited
-    && !hasAnyActiveStakeForExpiry && isCurrentTicketSubjectToExpiry
-    && ticketExpiryRemaining !== null && ticketExpiryRemaining <= 0);
+  // 格式化门票过期倒计时显示
   const formatTicketExpiryCountdown = (remaining: number): string => {
     if (remaining <= 0) return '';
     const days = Math.floor(remaining / 86400);

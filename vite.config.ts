@@ -48,10 +48,12 @@ export default defineConfig(({ mode }) => {
           'wagmi',
           'viem',
           'react-hot-toast',
-          'recharts',
           'lucide-react',
           '@tanstack/react-query'
         ],
+        // 排除 recharts 以避免 "Cannot access 'ot' before initialization" 错误
+        // recharts 将通过动态导入在运行时加载
+        exclude: ['recharts'],
         esbuildOptions: {
           define: {
             global: 'globalThis'
@@ -64,6 +66,13 @@ export default defineConfig(({ mode }) => {
       build: {
         target: 'es2020',
         minify: 'esbuild', // 使用 esbuild 替代 terser，避免 "Cannot access 'J' before initialization" 错误
+        // 禁用代码分割以避免 TDZ (Temporal Dead Zone) 问题
+        // 某些库（如 recharts）在代码分割时可能出现 "Cannot access 'ot' before initialization" 错误
+        cssCodeSplit: false,
+        // Esbuild 选项 - 保持类名和函数名以便调试
+        minifySyntax: true,
+        minifyWhitespace: true,
+        keepNames: true,
         rollupOptions: {
           output: {
             // 禁用手动代码分割以避免循环依赖问题

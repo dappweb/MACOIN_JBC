@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, lazy, Suspense } from 'react';
 import { useLanguage } from '../src/LanguageContext';
 import { useWeb3, CONTRACT_ADDRESSES } from '../src/Web3Context';
 import { useGlobalRefresh, useEventRefresh } from '../hooks/useGlobalRefresh';
@@ -15,7 +15,20 @@ import DailyBurnPanel from './DailyBurnPanel';
 import { SkeletonSwapPanel } from './LoadingSkeletons';
 import ToastEnhancer from '../utils/toastEnhancer';
 import AnimatedButton from './AnimatedButton';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import type { AreaChart as AreaChartType, Area as AreaType, XAxis as XAxisType, YAxis as YAxisType, CartesianGrid as CartesianGridType, Tooltip as TooltipType, ResponsiveContainer as ResponsiveContainerType } from 'recharts';
+
+// 动态导入 recharts 以避免 "Cannot access 'ot' before initialization" 错误
+const RechartsComponents = lazy(() => import('recharts').then(module => ({
+  default: {
+    AreaChart: module.AreaChart,
+    Area: module.Area,
+    XAxis: module.XAxis,
+    YAxis: module.YAxis,
+    CartesianGrid: module.CartesianGrid,
+    Tooltip: module.Tooltip,
+    ResponsiveContainer: module.ResponsiveContainer,
+  }
+})));
 
 // 价格数据点类型定义
 interface PriceDataPoint {
@@ -46,19 +59,29 @@ const generateMockPriceData = (): PriceDataPoint[] => {
   return data
 }
 
-// Memoized Chart Component
-const MemoizedPriceChart = React.memo(({ priceHistory, t }: { priceHistory: PriceDataPoint[], t: any }) => {
-  console.log('📈 [MemoizedPriceChart] 渲染图表，数据点数量:', priceHistory.length);
-  
-  if (!priceHistory || priceHistory.length === 0) {
-    console.warn('⚠️ [MemoizedPriceChart] 价格历史数据为空，显示占位符');
+// 动态加载的图表组件
+const PriceChartContent: React.FC<{ priceHistory: PriceDataPoint[] }> = ({ priceHistory }) => {
+  const [components, setComponents] = useState<typeof import('recharts') | null>(null);
+
+  useEffect(() => {
+    // 动态导入 recharts 组件
+    import('recharts').then(mod => {
+      setComponents(mod);
+    }).catch(err => {
+      console.error('Failed to load recharts:', err);
+    });
+  }, []);
+
+  if (!components) {
     return (
       <div className="h-[200px] sm:h-[300px] md:h-[400px] w-full flex items-center justify-center bg-gray-900/50 rounded border border-gray-700">
-        <p className="text-gray-400 text-sm">暂无价格数据</p>
+        <RotateCw className="w-8 h-8 text-neon-400 animate-spin" />
       </div>
     );
   }
-  
+
+  const { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip } = components;
+
   return (
     <div className="h-[200px] sm:h-[300px] md:h-[400px] w-full overflow-x-auto">
       <ResponsiveContainer width="100%" height="100%" minWidth={300}>
@@ -84,10 +107,10 @@ const MemoizedPriceChart = React.memo(({ priceHistory, t }: { priceHistory: Pric
           />
           <YAxis
             stroke="#9ca3af"
-            tickFormatter={(value) => value.toFixed(4)}
+            tickFormatter={(value: number) => value.toFixed(4)}
             width={60}
             tick={{ fontSize: 10 }}
-            domain={([dataMin, dataMax]) => {
+            domain={([dataMin, dataMax]: [number, number]) => {
               const range = dataMax - dataMin
               if (range <= 0.000001) {
                 const buffer = dataMin * 0.1 || 0.1
@@ -125,7 +148,7 @@ const MemoizedPriceChart = React.memo(({ priceHistory, t }: { priceHistory: Pric
               }
               return value
             }}
-            labelFormatter={(label) => `时间: ${label}`}
+            labelFormatter={(label: string) => `时间: ${label}`}
             cursor={{
               stroke: "#01FEAE",
               strokeWidth: 2,
@@ -180,7 +203,23 @@ const MemoizedPriceChart = React.memo(({ priceHistory, t }: { priceHistory: Pric
         </AreaChart>
       </ResponsiveContainer>
     </div>
-  )
+  );
+};
+
+// Memoized Chart Component
+const MemoizedPriceChart = React.memo(({ priceHistory, t }: { priceHistory: PriceDataPoint[], t: any }) => {
+  console.log('📈 [MemoizedPriceChart] 渲染图表，数据点数量:', priceHistory.length);
+  
+  if (!priceHistory || priceHistory.length === 0) {
+    console.warn('⚠️ [MemoizedPriceChart] 价格历史数据为空，显示占位符');
+    return (
+      <div className="h-[200px] sm:h-[300px] md:h-[400px] w-full flex items-center justify-center bg-gray-900/50 rounded border border-gray-700">
+        <p className="text-gray-400 text-sm">暂无价格数据</p>
+      </div>
+    );
+  }
+  
+  return <PriceChartContent priceHistory={priceHistory} />;
 });
 
 const SwapPanel: React.FC = () => {
